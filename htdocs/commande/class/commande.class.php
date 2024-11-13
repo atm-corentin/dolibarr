@@ -3130,9 +3130,11 @@ class Commande extends CommonOrder
 	 * 	@param		int				$notrigger			disable line update trigger
 	 * 	@param		string			$ref_ext			external reference
 	 *	@param		int				$rang				line rank
+	 *	@param		float			$marge_tx			marge_tx
+	 *	@param		float			$marque_tx			marque_tx
 	 *  @return   	int              					Return integer < 0 if KO, > 0 if OK
 	 */
-	public function updateline($rowid, $desc, $pu, $qty, $remise_percent, $txtva, $txlocaltax1 = 0.0, $txlocaltax2 = 0.0, $price_base_type = 'HT', $info_bits = 0, $date_start = '', $date_end = '', $type = 0, $fk_parent_line = 0, $skip_update_total = 0, $fk_fournprice = null, $pa_ht = 0, $label = '', $special_code = 0, $array_options = array(), $fk_unit = null, $pu_ht_devise = 0, $notrigger = 0, $ref_ext = '', $rang = 0)
+	public function updateline($rowid, $desc, $pu, $qty, $remise_percent, $txtva, $txlocaltax1 = 0.0, $txlocaltax2 = 0.0, $price_base_type = 'HT', $info_bits = 0, $date_start = '', $date_end = '', $type = 0, $fk_parent_line = 0, $skip_update_total = 0, $fk_fournprice = null, $pa_ht = 0, $label = '', $special_code = 0, $array_options = array(), $fk_unit = null, $pu_ht_devise = 0, $notrigger = 0, $ref_ext = '', $rang = 0, $marge_tx=0, $marque_tx=0)
 	{
 		global $conf, $mysoc, $langs, $user;
 
@@ -3177,6 +3179,8 @@ class Commande extends CommonOrder
 			$pu = price2num($pu);
 			$pa_ht = (float) price2num($pa_ht);
 			$pu_ht_devise = price2num($pu_ht_devise);
+			$marque_tx = price2num($marque_tx);
+			$marge_tx = price2num($marge_tx);
 			if (!preg_match('/\((.*)\)/', (string) $txtva)) {
 				$txtva = price2num($txtva); // $txtva can have format '5.0(XXX)' or '5'
 			}
@@ -3292,6 +3296,8 @@ class Commande extends CommonOrder
 			$this->line->fk_parent_line = $fk_parent_line;
 			$this->line->skip_update_total = $skip_update_total;
 			$this->line->fk_unit        = $fk_unit;
+			$this->line->marge_tx        = $marge_tx;
+			$this->line->marque_tx        = $marque_tx;
 
 			$this->line->fk_fournprice = $fk_fournprice;
 			$this->line->pa_ht = $pa_ht;
