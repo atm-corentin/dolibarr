@@ -25729,12 +25729,6 @@ parameters:
 			path: ../../../htdocs/societe/ajax/ajaxcompanies.php
 
 		-
-			message: '#^Left side of && is always true\.$#'
-			identifier: booleanAnd.leftAlwaysTrue
-			count: 1
-			path: ../../../htdocs/societe/ajax/company.php
-
-		-
 			message: '#^Variable \$formfile might not be defined\.$#'
 			identifier: variable.undefined
 			count: 1
@@ -25817,12 +25811,6 @@ parameters:
 			identifier: ternary.alwaysTrue
 			count: 3
 			path: ../../../htdocs/societe/card.php
-
-		-
-			message: '#^Variable \$messagetoshow might not be defined\.$#'
-			identifier: variable.undefined
-			count: 1
-			path: ../../../htdocs/societe/checkvat/checkVatPopup.php
 
 		-
 			message: '#^Property Contact\:\:\$no_email \(int\) in isset\(\) is not nullable\.$#'
@@ -26125,43 +26113,13 @@ parameters:
 			path: ../../../htdocs/societe/consumption.php
 
 		-
-			message: '#^Variable \$dateprint might not be defined\.$#'
-			identifier: variable.undefined
-			count: 1
-			path: ../../../htdocs/societe/consumption.php
-
-		-
-			message: '#^Variable \$doc_number might not be defined\.$#'
-			identifier: variable.undefined
-			count: 1
-			path: ../../../htdocs/societe/consumption.php
-
-		-
-			message: '#^Variable \$documentstatic might not be defined\.$#'
-			identifier: variable.undefined
-			count: 14
-			path: ../../../htdocs/societe/consumption.php
-
-		-
 			message: '#^Variable \$newlang in empty\(\) always exists and is always falsy\.$#'
 			identifier: empty.variable
 			count: 1
 			path: ../../../htdocs/societe/consumption.php
 
 		-
-			message: '#^Variable \$num might not be defined\.$#'
-			identifier: variable.undefined
-			count: 1
-			path: ../../../htdocs/societe/consumption.php
-
-		-
 			message: '#^Variable \$sql might not be defined\.$#'
-			identifier: variable.undefined
-			count: 1
-			path: ../../../htdocs/societe/consumption.php
-
-		-
-			message: '#^Variable \$tables_from might not be defined\.$#'
 			identifier: variable.undefined
 			count: 1
 			path: ../../../htdocs/societe/consumption.php
@@ -26177,12 +26135,6 @@ parameters:
 			identifier: variable.undefined
 			count: 1
 			path: ../../../htdocs/societe/document.php
-
-		-
-			message: '#^Variable \$newcardbutton might not be defined\.$#'
-			identifier: variable.undefined
-			count: 1
-			path: ../../../htdocs/societe/list.php
 
 		-
 			message: '#^Variable \$contextpage in empty\(\) always exists and is not falsy\.$#'
@@ -26235,7 +26187,7 @@ parameters:
 		-
 			message: '#^Variable \$rib might not be defined\.$#'
 			identifier: variable.undefined
-			count: 3
+			count: 2
 			path: ../../../htdocs/societe/paymentmodes.php
 
 		-
