@@ -76,7 +76,7 @@ class modClichaumeil extends DolibarrModules
 		$this->editor_squarred_logo = '';					// Must be image filename into the module/img directory followed with @modulename. Example: 'myimage.png@clichaumeil'
 
 		// Possible values for version are: 'development', 'experimental', 'dolibarr', 'dolibarr_deprecated', 'experimental_deprecated' or a version string like 'x.y.z'
-		$this->version = '1.0';
+		$this->version = '1.0.0';
 		// Url to the file with your last numberversion of this module
 		//$this->url_last_version = 'http://www.example.com/versionmodule.txt';
 
@@ -87,7 +87,7 @@ class modClichaumeil extends DolibarrModules
 		// If file is in theme/yourtheme/img directory under name object_pictovalue.png, use this->picto='pictovalue'
 		// If file is in module/img directory under name object_pictovalue.png, use this->picto='pictovalue@module'
 		// To use a supported fa-xxx css style of font awesome, use this->picto='xxx'
-		$this->picto = 'fa-file';
+		$this->picto = 'technic';
 
 		// Define some features supported by module (triggers, login, substitutions, menus, css, etc...)
 		$this->module_parts = array(
@@ -318,21 +318,21 @@ class modClichaumeil extends DolibarrModules
 		$r = 0;
 		// Add here entries to declare new menus
 		/* BEGIN MODULEBUILDER TOPMENU */
-		$this->menu[$r++] = array(
-			'fk_menu' => '', // Will be stored into mainmenu + leftmenu. Use '' if this is a top menu. For left menu, use 'fk_mainmenu=xxx' or 'fk_mainmenu=xxx,fk_leftmenu=yyy' where xxx is mainmenucode and yyy is a leftmenucode
-			'type' => 'top', // This is a Top menu entry
-			'titre' => 'ModuleClichaumeilName',
-			'prefix' => img_picto('', $this->picto, 'class="pictofixedwidth valignmiddle"'),
-			'mainmenu' => 'clichaumeil',
-			'leftmenu' => '',
-			'url' => '/clichaumeil/clichaumeilindex.php',
-			'langs' => 'clichaumeil@clichaumeil', // Lang file to use (without .lang) by module. File must be in langs/code_CODE/ directory.
-			'position' => 1000 + $r,
-			'enabled' => 'isModEnabled("clichaumeil")', // Define condition to show or hide menu entry. Use 'isModEnabled("clichaumeil")' if entry must be visible if module is enabled.
-			'perms' => '1', // Use 'perms'=>'$user->hasRight("clichaumeil", "myobject", "read")' if you want your menu with a permission rules
-			'target' => '',
-			'user' => 2, // 0=Menu for internal users, 1=external users, 2=both
-		);
+//		$this->menu[$r++] = array(
+//			'fk_menu' => '', // Will be stored into mainmenu + leftmenu. Use '' if this is a top menu. For left menu, use 'fk_mainmenu=xxx' or 'fk_mainmenu=xxx,fk_leftmenu=yyy' where xxx is mainmenucode and yyy is a leftmenucode
+//			'type' => 'top', // This is a Top menu entry
+//			'titre' => 'ModuleClichaumeilName',
+//			'prefix' => img_picto('', $this->picto, 'class="pictofixedwidth valignmiddle"'),
+//			'mainmenu' => 'clichaumeil',
+//			'leftmenu' => '',
+//			'url' => '/clichaumeil/clichaumeilindex.php',
+//			'langs' => 'clichaumeil@clichaumeil', // Lang file to use (without .lang) by module. File must be in langs/code_CODE/ directory.
+//			'position' => 1000 + $r,
+//			'enabled' => 'isModEnabled("clichaumeil")', // Define condition to show or hide menu entry. Use 'isModEnabled("clichaumeil")' if entry must be visible if module is enabled.
+//			'perms' => '1', // Use 'perms'=>'$user->hasRight("clichaumeil", "myobject", "read")' if you want your menu with a permission rules
+//			'target' => '',
+//			'user' => 2, // 0=Menu for internal users, 1=external users, 2=both
+//		);
 		/* END MODULEBUILDER TOPMENU */
 
 		/* BEGIN MODULEBUILDER LEFTMENU MYOBJECT */
