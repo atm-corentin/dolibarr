@@ -1,0 +1,42 @@
+# Translation file
+
+#
+# Generic
+#
+
+# Module label 'ModuleClichaumeilName'
+ModuleClichaumeilName = Clichaumeil
+# Module description 'ModuleClichaumeilDesc'
+ModuleClichaumeilDesc = Clichaumeil description
+
+#
+# Admin page
+#
+ClichaumeilSetup = Clichaumeil setup
+Settings = Settings
+ClichaumeilSetupPage = Clichaumeil setup page
+NewSection=New section
+CLICHAUMEIL_MYPARAM1 = My param 1
+CLICHAUMEIL_MYPARAM1Tooltip = My param 1 tooltip
+CLICHAUMEIL_MYPARAM2=My param 2
+CLICHAUMEIL_MYPARAM2Tooltip=My param 2 tooltip
+
+
+#
+# About page
+#
+About = About
+ClichaumeilAbout = About Clichaumeil
+ClichaumeilAboutPage = Clichaumeil about page
+
+#
+# Sample page
+#
+ClichaumeilArea = Home Clichaumeil
+MyPageName = My page name
+
+#
+# Sample widget
+#
+MyWidget = My widget
+MyWidgetDescription = My widget description
