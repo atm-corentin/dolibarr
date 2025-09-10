@@ -7,12 +7,6 @@
 
 namespace cliChaumeil;
 
-use cliChaumeil\DolibarrModules;
-use cliChaumeil\DoliDb;
-use cliChaumeil\http_response_header;
-use cliChaumeil\reponse_code;
-use cliChaumeil\TResponseHeader;
-
 class TechATM
 {
 
