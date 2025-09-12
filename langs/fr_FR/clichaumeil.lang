@@ -40,3 +40,35 @@ MyPageName = My page name
 #
 MyWidget = My widget
 MyWidgetDescription = My widget description
+
+ClichaumeilSetup = Paramètrages CliChaumeil
+Settings = Paramètrages
+ClichaumeilSetupPage = Paramètrages CliChaumeil
+
+CliChaumeilReviewRate=Taux de révision (en %%)
+CliChaumeilReviewDate=Date de révision
+
+CLICHAUMEIL_REVIEW_YEAR_DELAY=Décalage de la date de révision après renouvellement (en années)
+CLICHAUMEIL_PRICING_UPDATE_MANAGERS=Responsables de la mise à jour tarifaire
+CLICHAUMEIL_CRON_EMAIL_TEMPLATE=Modèle de mail à utiliser pour l’alerte par mail
+CLICHAUMEIL_CRON_NOTIF_USERS= Abonnés aux notifications de renouvellement
+CliChaumeilAutomaticRenewalContract=Mise à jour automatique des révisions de contrats
+CliChaumeilApplyRenewalRate=Applique le taux de révision sur les lignes de contrat échues
+CliChaumeilCronNoLinesToUpdate=Aucune ligne de contrat ne nécessitait de mise à jour.
+CliChaumeilCronSuccessSummary=Mise à jour terminée. %s contrat(s) impacté(s) (%s ligne(s) modifiée(s)).
+CliChaumeilCronError=Une erreur est survenue durant l'exécution
+CliChaumeilCronSectionSummary=📊 RÉSUMÉ
+CliChaumeilCronSectionDetails=📋 DÉTAILS DES MODIFICATIONS
+CliChaumeilCronSectionNotifications=🔔 NOTIFICATIONS
+CliChaumeilCronContractHeader=Contrat %s :
+CliChaumeilCronLineDetail=Ligne ID %s : Prix %s -> %s | Date de révision %s -> %s
+CliChaumeilCronEmailSent=Un e-mail de récapitulatif a été envoyé à %s responsable(s).
+CliChaumeilCronEmailNotConfigured=Aucun utilisateur responsable configuré pour l'alerte e-mail.
+CliChaumeilCronNotifSent=Une notification "bulle" a été envoyée à %s abonné(s).
+CliChaumeilCronNotifNotConfigured=Aucun utilisateur abonné configuré pour la notification "bulle".
+CliChaumeilCronSectionWarnings=⚠️ AVERTISSEMENTS (non-bloquants)
+CliChaumeilWarningNoEmailTemplate=Aucun modèle d'e-mail n'est configuré, les notifications par e-mail ont été ignorées.
+CliChaumeilWarningSkipLine=La ligne ID %s n'a pas pu être chargée et a été ignorée.
+CliChaumeilWarningEmailFailed=L'envoi de l'e-mail à %s a échoué (Erreur: %s).
+CliChaumeilWarningUserNotFound=L'utilisateur pour notification (ID: %s) est introuvable.
+CliChaumeilWarningAdvancedNotifierMissing=Le module Advanced Notifier est introuvable, les notifications "bulles" ont été ignorées.
