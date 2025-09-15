@@ -130,7 +130,6 @@ $item->fieldAttr = [
     'step' => 1,
 ];
 $item->defaultFieldValue = 1;
-$item->entity = 0;
 
 
 // --- Field 2: Responsible Managers (User Select) ---
@@ -145,7 +144,6 @@ $formmail->fetchAllEMailTemplate('contract', $user, $langs);
 $templates = !empty($formmail->lines_model) ? array_column($formmail->lines_model, 'label', 'id') : [];
 
 $item = $formSetup->newItem(EMAIL_TEMPLATE_KEY)->setAsSelect($templates);
-$item->entity = 0;
 
 
 // --- Field 4: Users to Notify (User Select) ---
@@ -254,5 +252,4 @@ $userFilter,    // SQL filter
 true,           // Show empty field option
 0
 );
-$item->entity = 0;
 }

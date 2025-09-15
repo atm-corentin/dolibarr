@@ -110,6 +110,9 @@ class CronJobUpdateContractRevision
 				}
 
 				// Add details for the verbose report
+				//TODO staticontract $contract = new Contrat
+				// $contract->fetch($lineData['contract_ref']);
+				// voir pour avoir le getnomurl
 				$processedDetails[] = [
 					'contract_ref' => $lineData['contract_ref'],
 					'line_id' => $lineData['line_id'],
@@ -236,7 +239,8 @@ class CronJobUpdateContractRevision
 		$sql .= " AND cde." . self::EXTRAFIELD_REVISION_DATE . " <= '" . $this->db->escape($now->format('Y-m-d H:i:s')) . "'";
 		$sql .= " AND cde." . self::EXTRAFIELD_REVISION_DATE . " IS NOT NULL";
 		$sql .= " AND ce." . self::EXTRAFIELD_REVISION_RATE . " IS NOT NULL";
-		
+		//TODO Check sur l'entité, en attente la réponse soit =conf->entity soit getEntity(Contrat)
+
 		$resql = $this->db->query($sql);
 		if (!$resql) {
 			dol_syslog(__METHOD__ . ' - ' . $this->db->lasterror(), LOG_ERR);
@@ -264,9 +268,13 @@ class CronJobUpdateContractRevision
 		//TODO
 		//		$subject = $langs->trans("CliChaumeilContractRevisionUpdate");
 //		$contractListString = "- " . implode("\n- ", $contractsList);
+		//TODO getnomurl
+		//TODO Completesubsitionarray avec les substit de l'objet en cours
+
 //		$substitutions = ['__CONTRACTS_LIST__' => $contractListString];
 //
 //		foreach ($userIds as $userId) {
+
 //			$user = new User($this->db);
 //			if ($user->fetch($userId) > 0 && !empty($user->email)) {
 //				$mail = new CMailFile($subject, $user->email, $this->conf->global->MAIN_MAIL_SENDER, '', '', $emailTemplate, '', $substitutions);
