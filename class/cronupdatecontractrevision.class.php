@@ -182,14 +182,12 @@ class CronJobUpdateContractRevision
 		foreach ($detailsByContract as $contractRef => $contractDetails) {
 			$reportLines[] = $langs->trans("CliChaumeilCronContractHeader", $contractRef);
 			foreach ($contractDetails as $detail) {
-				$reportLines[] = "- " . sprintf(
-						$langs->trans("CliChaumeilCronLineDetail"),
+				$reportLines[] = "- " .
+						$langs->trans("CliChaumeilCronLineDetail",
 						$detail['line_id'],
 						price($detail['old_price']),
 						price($detail['new_price']),
-						dol_print_date($detail['old_date'], 'day'),
-						dol_print_date($detail['new_date'], 'day')
-					);
+						$detail['old_date']->format('Y-m-d') .' -> ' 	. $detail['new_date']->format('Y-m-d'));
 			}
 		}
 		$reportLines[] = "";
@@ -238,7 +236,7 @@ class CronJobUpdateContractRevision
 		$sql .= " AND cde." . self::EXTRAFIELD_REVISION_DATE . " <= '" . $this->db->escape($now->format('Y-m-d H:i:s')) . "'";
 		$sql .= " AND cde." . self::EXTRAFIELD_REVISION_DATE . " IS NOT NULL";
 		$sql .= " AND ce." . self::EXTRAFIELD_REVISION_RATE . " IS NOT NULL";
-
+		
 		$resql = $this->db->query($sql);
 		if (!$resql) {
 			dol_syslog(__METHOD__ . ' - ' . $this->db->lasterror(), LOG_ERR);
