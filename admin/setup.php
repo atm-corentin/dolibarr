@@ -219,6 +219,7 @@ print dol_get_fiche_end();
 
 llxFooter();
 $db->close();
+
 /**
 * Builds a multi-select field for active users.
 *

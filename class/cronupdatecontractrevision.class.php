@@ -12,6 +12,7 @@ if (!$res) {
 require_once DOL_DOCUMENT_ROOT . '/contrat/class/contrat.class.php';
 require_once DOL_DOCUMENT_ROOT . '/user/class/user.class.php';
 require_once DOL_DOCUMENT_ROOT . '/core/class/CMailFile.class.php';
+require_once DOL_DOCUMENT_ROOT . '/core/class/html.formmail.class.php';
 
 class CronJobUpdateContractRevision
 {
@@ -62,7 +63,7 @@ class CronJobUpdateContractRevision
 		// --- 1. Load configuration ---
 		$revisionYearToAdd = (int) (getDolGlobalInt(self::CONF_YEARS_TO_ADD) ?? 1);
 		$responsibleUserIds = array_filter(array_map('intval', explode(',', getDolGlobalString(self::CONF_RESPONSIBLE_USERS) ?? '')));
-		$emailTemplate = getDolGlobalString(self::CONF_EMAIL_TEMPLATE) ?? ''; // String, not int
+		$emailTemplate = getDolGlobalInt(self::CONF_EMAIL_TEMPLATE) ?? '';
 		$subscribedUserIds = array_filter(array_map('intval', explode(',', getDolGlobalString(self::CONF_SUBSCRIBED_USERS) ?? '')));
 
 		if (empty($emailTemplate) && !empty($responsibleUserIds)) {
@@ -82,6 +83,7 @@ class CronJobUpdateContractRevision
 		// --- 3. Process each line and collect detailed data for the report ---
 		$this->db->begin();
 		$processedDetails = []; // Array to store verbose details for the output
+		$cachedContracts = [];
 
 		try {
 			foreach ($linesToUpdateData as $lineData) {
@@ -91,6 +93,24 @@ class CronJobUpdateContractRevision
 					$this->warnings[] = $warningMsg;
 					dol_syslog(__METHOD__ . "::warning - " . $warningMsg, LOG_WARNING);
 					continue;
+				}
+
+				$contractId = $contractLine->fk_contrat;
+				$contractUrl = '';
+
+				// We check if we have already processed this contract to avoid reloading it
+				if (isset($cachedContracts[$contractId])) {
+					$contractUrl = $cachedContracts[$contractId];
+				} else {
+					$contract = new Contrat($this->db);
+					if ($contract->fetch($contractId) > 0) {
+						$contractUrl = $contract->getNomUrl(1);
+						$cachedContracts[$contractId] = $contractUrl;
+					}
+				}
+
+				if (empty($contractUrl)) {
+					$contractUrl = $lineData['contract_ref'];
 				}
 
 				// Store old values for the report
@@ -109,12 +129,11 @@ class CronJobUpdateContractRevision
 					throw new Exception("Failed to update contract line ID " . $lineData['line_id'] . ". Error: " . $contractLine->errorsToString());
 				}
 
-				// Add details for the verbose report
-				//TODO staticontract $contract = new Contrat
-				// $contract->fetch($lineData['contract_ref']);
-				// voir pour avoir le getnomurl
+
 				$processedDetails[] = [
+					'contract_id' => $contractId,
 					'contract_ref' => $lineData['contract_ref'],
+					'contract_url' => $contractUrl,
 					'line_id' => $lineData['line_id'],
 					'old_price' => $oldPrice,
 					'new_price' => $newPrice,
@@ -126,13 +145,21 @@ class CronJobUpdateContractRevision
 			$this->db->commit();
 
 			// --- 4. Send notifications ---
-			$modifiedContractsRefs = array_unique(array_column($processedDetails, 'contract_ref'));
-			if (!empty($modifiedContractsRefs)) {
+			// We prepare a unique associative array [ref => url] for notifications.
+			$modifiedContractsInfo = [];
+			foreach ($processedDetails as $detail) {
+				if (!isset($modifiedContractsInfo[$detail['contract_ref']])) {
+					$modifiedContractsInfo[$detail['contract_ref']] = $detail['contract_url'];
+				}
+			}
+
+			if (!empty($modifiedContractsInfo)) {
+				$modifiedContractsRefs = array_keys($modifiedContractsInfo);
 				if (!empty($responsibleUserIds) && !empty($emailTemplate)) {
 					$this->sendRecapEmail($responsibleUserIds, $emailTemplate, $modifiedContractsRefs);
 				}
 				if (!empty($subscribedUserIds)) {
-					$this->sendAdvancedNotification($subscribedUserIds, $modifiedContractsRefs);
+					$this->sendAdvancedNotification($subscribedUserIds, $modifiedContractsInfo);
 				}
 			}
 
@@ -182,8 +209,9 @@ class CronJobUpdateContractRevision
 			$detailsByContract[$detail['contract_ref']][] = $detail;
 		}
 
-		foreach ($detailsByContract as $contractRef => $contractDetails) {
-			$reportLines[] = $langs->trans("CliChaumeilCronContractHeader", $contractRef);
+		foreach ($detailsByContract as $contractDetails) {
+			$contractUrl = $contractDetails[0]['contract_url'];
+			$reportLines[] = $langs->trans("CliChaumeilCronContractHeader", $contractUrl);
 			foreach ($contractDetails as $detail) {
 				$reportLines[] = "- " .
 						$langs->trans("CliChaumeilCronLineDetail",
@@ -227,6 +255,8 @@ class CronJobUpdateContractRevision
 	 */
 	private function getLinesToUpdateData(): array
 	{
+		global $conf;
+
 		$lines = [];
 		$now = new DateTime();
 
@@ -239,7 +269,7 @@ class CronJobUpdateContractRevision
 		$sql .= " AND cde." . self::EXTRAFIELD_REVISION_DATE . " <= '" . $this->db->escape($now->format('Y-m-d H:i:s')) . "'";
 		$sql .= " AND cde." . self::EXTRAFIELD_REVISION_DATE . " IS NOT NULL";
 		$sql .= " AND ce." . self::EXTRAFIELD_REVISION_RATE . " IS NOT NULL";
-		//TODO Check sur l'entité, en attente la réponse soit =conf->entity soit getEntity(Contrat)
+		$sql .= " AND c.entity = " . $conf->entity;
 
 		$resql = $this->db->query($sql);
 		if (!$resql) {
@@ -257,68 +287,122 @@ class CronJobUpdateContractRevision
 	/**
 	 * Sends a summary email to responsible users.
 	 *
-	 * @param int[] $userIds Array of user IDs to notify.
-	 * @param string $emailTemplate The name of the email template.
-	 * @param string[] $contractsList Array of modified contract references.
+	 * @param int[]    $userIds         Array of user IDs to notify.
+	 * @param string   $emailTemplate   The name of the email template.
+	 * @param string[] $contractsRefs   Array of modified contract references.
 	 * @return void
 	 */
-	private function sendRecapEmail(array $userIds, string $emailTemplate, array $contractsList): void
+	private function sendRecapEmail(array $userIds, int $templateCode, array $contractsRefs): void
 	{
-		$warnings = [];
-		//TODO
-		//		$subject = $langs->trans("CliChaumeilContractRevisionUpdate");
-//		$contractListString = "- " . implode("\n- ", $contractsList);
-		//TODO getnomurl
-		//TODO Completesubsitionarray avec les substit de l'objet en cours
+		global $langs, $conf, $user;
 
-//		$substitutions = ['__CONTRACTS_LIST__' => $contractListString];
-//
-//		foreach ($userIds as $userId) {
+		$contractList = '';
+		$contract = new Contrat($this->db);
+		foreach ($contractsRefs as $ref) {
+			if ($contract->fetch(null, $ref) > 0) {
+				$contractList .= "- " . $contract->getNomUrl(1) . "\n";
+			} else {
+				$contractList .= "- " . $ref . " (contract not found)\n";
+			}
+		}
+		$substitutions = ['__CONTRACTS_LIST__' => $contractList];
 
-//			$user = new User($this->db);
-//			if ($user->fetch($userId) > 0 && !empty($user->email)) {
-//				$mail = new CMailFile($subject, $user->email, $this->conf->global->MAIN_MAIL_SENDER, '', '', $emailTemplate, '', $substitutions);
-//				if (!$mail->sendfile()) {
-//					$warningMsg = $langs->trans("CliChaumeilWarningEmailFailed", $user->email, $mail->error);
-//                   $this->warnings[] = $warningMsg;
-//                    dol_syslog(__METHOD__ . " - " . $warningMsg, LOG_WARNING);
-//
-//				}
-//			}
-		//	else {
-		//		$warningMsg = $langs->trans("CliChaumeilWarningUserNotFound", $userId);
-		//		$this->warnings[] = $warningMsg;
-		//		dol_syslog(__METHOD__ . " - " . $warningMsg, LOG_WARNING);
-		//	}
-//		}
+		$formmail = new FormMail($this->db);
+		$template = $formmail->getEMailTemplate($this->db, 'contract', $user, $langs, $templateCode);
+		if ($template <= 0) {
+			$this->warnings[] = $langs->trans("CliChaumeilWarningTemplateNotFound", $templateCode);
+			return;
+		}
+
+		$body    = make_substitutions($template->content, $substitutions, $langs);
+
+		$recipientEmails = [];
+		foreach ($userIds as $userId) {
+			$u = new User($this->db);
+			if ($u->fetch($userId) > 0 && !empty($u->email)) {
+				$recipientEmails[] = $u->email;
+			} else {
+				$this->warnings[] = $langs->trans("CliChaumeilWarningUserNotFoundOrNoEmail", $userId);
+			}
+		}
+
+		if (!empty($recipientEmails)) {
+
+			$recipients = implode(',', $recipientEmails);
+
+			$mail = new CMailFile(
+				$template->topic,
+				$recipients,
+				$user->email,
+				$body,
+				[], [], [],
+				'',
+				'',
+				0,
+				1
+			);
+
+			if (!$mail->sendfile()) {
+				$this->warnings[] = $langs->trans("CliChaumeilWarningEmailFailed", '(group)', $mail->error);
+			}
+		}
 	}
 
 	/**
-	 * Sends a notification using the Advanced Notifier module.
-	 *
-	 * @param int[] $userIds Array of user IDs to notify.
-	 * @param string[] $contractsList Array of modified contract references.
-	 * @return void
+	 * Envoie UNE notification (push) contenant la liste des contrats modifiés (liens HTML).
+	 * $contractsInfo doit être de la forme [ 'REF1' => '<a href="...">REF1</a>', ... ].
 	 */
-	private function sendAdvancedNotification(array $userIds, array $contractsList): void
+	private function sendAdvancedNotification(array $userIds, array $contractsInfo): void
 	{
-		//TODO
-//		$advancedNotifierPath = DOL_DOCUMENT_ROOT . '/advancednotifier/class/advancednotifier.class.php';
-//		if (!file_exists($advancedNotifierPath)) {
-//			$warningMsg = $langs->trans("CliChaumeilWarningAdvancedNotifierMissing");
-//            $this->warnings[] = $warningMsg;
-//            dol_syslog(__METHOD__ . " - " . $warningMsg, LOG_WARNING);
-//			return;
-//		}
-//
-//		require_once $advancedNotifierPath;
-//
-//		$message = $langs->trans("TheFollowingContractsHaveBeenUpdated") . ":\n- " . implode("\n- ", $contractsList);
-//		$icon = 'fa-file-text-o';
-//		$url = dol_buildpath('/contrat/list.php', 1);
-//
-//		foreach ($userIds as $userId) {
-//			AdvancedNotifier::notify($userId, 'clichaumeil@clichaumeil', $message, $url, $icon);
-//		}
+		global $langs, $conf, $user;
+
+		$res = dol_include_once('/advancednotifier/class/advnotification.class.php');
+		if (!$res) {
+			$warningMsg = $langs->trans("CliChaumeilWarningAdvancedNotifierMissing");
+			$this->warnings[] = $warningMsg;
+			dol_syslog(__METHOD__ . " - " . $warningMsg, LOG_WARNING);
+			return;
+		}
+		$langs->load('advancednotifier@advancednotifier');
+
+		$triggerCode = 'CLICHAUMEIL_CONTRACT_REVISION';
+		$icon       = 'advancednotifier/img/notifpic/order_warn.png';
+		$expireTs   = time() + 3600;
+
+		// Construire le body en mode liste
+		$lines = [];
+		foreach ($contractsInfo as $ref => $linkHtml) {
+			$lines[] = '- ' . $linkHtml; // Chaque contrat en puce
+		}
+		$body  = $langs->trans('CliChaumeilNotifBodyIntro') ;
+
+		$title = $langs->trans('CliChaumeilNotifTitle', count($contractsInfo));
+		$url   = dol_buildpath('contrat/list.php', 2);
+
+
+		foreach ($userIds as $uid) {
+			$uid = (int) $uid;
+			if ($uid <= 0) continue;
+
+			$notif = new AdvNotification($this->db);
+			$notif->entity      = (int) $conf->entity;
+			$notif->fk_user     = $uid;      // destinataire
+			$notif->fk_trigger  = $triggerCode;
+			$notif->fk_object   = 0;         // récap global
+			$notif->fk_element  = 'contrat';
+			$notif->send_method = 'push';    // bulle/cloche
+			$notif->title       = $title;
+			$notif->body        = $body;     // HTML autorisé (liens cliquables)
+			$notif->url         = $url;
+			$notif->icon        = $icon;
+			$notif->expire      = $expireTs;
+
+			$resCreate = $notif->create($user);
+			if ($resCreate <= 0) {
+				$this->warnings[] = $langs->trans("CliChaumeilWarningNotifFailed", $uid);
+				dol_syslog(__METHOD__ . " - Failed to create notification for user #$uid: " . $notif->error, LOG_WARNING);
+			}
+		}
 	}
+
 }

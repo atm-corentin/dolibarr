@@ -97,7 +97,7 @@ class modClichaumeil extends DolibarrModules
 			// Set this to 1 if module has its own login method file (core/login)
 			'login' => 0,
 			// Set this to 1 if module has its own substitution function file (core/substitutions)
-			'substitutions' => 0,
+			'substitutions' => 1,
 			// Set this to 1 if module has its own menus handler directory (core/menus)
 			'menus' => 0,
 			// Set this to 1 if module overwrite template dir (core/tpl)
@@ -275,8 +275,8 @@ class modClichaumeil extends DolibarrModules
 				'method' => 'run',
 				'parameters' => '',
 				'comment' => $langs->trans('CliChaumeilApplyRenewalRate'),
-				'frequency' => '86400', // Every 24 hours (86400 seconds)
-				'unitfrequency' => 's',
+				'frequency' => 24,
+				'unitfrequency' => 3600,
 				'status' => 0, // 0 for disabled by default, 1 for enabled
 				'priority' => 50,
 			)
