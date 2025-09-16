@@ -40,3 +40,9 @@ MyPageName = My page name
 #
 MyWidget = My widget
 MyWidgetDescription = My widget description
+
+CliChaumeilWarningAdvancedNotifierMissing=The Advanced Notifier module is missing or could not be loaded.
+CliChaumeilNotifTitleSingle=Contract Revision: %s
+CliChaumeilNotifBodySingle=Le contrat %s a été modifié.
+CliChaumeilWarningNotifFailed=Failed to send notification to user #%s for contract %s.
+CliChaumeilErrorNotifCreationFailed=Failed to create notification for user #%s and contract #%s

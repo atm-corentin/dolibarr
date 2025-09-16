@@ -145,21 +145,26 @@ class CronJobUpdateContractRevision
 			$this->db->commit();
 
 			// --- 4. Send notifications ---
-			// We prepare a unique associative array [ref => url] for notifications.
-			$modifiedContractsInfo = [];
+			$modifiedContracts = [];
 			foreach ($processedDetails as $detail) {
-				if (!isset($modifiedContractsInfo[$detail['contract_ref']])) {
-					$modifiedContractsInfo[$detail['contract_ref']] = $detail['contract_url'];
+				// On utilise l'ID du contrat comme clé pour s'assurer que chaque contrat n'est traité qu'une seule fois.
+				if (!isset($modifiedContracts[$detail['contract_id']])) {
+					$modifiedContracts[$detail['contract_id']] = [
+						'ref' => $detail['contract_ref'],
+						'url' => $detail['contract_url']
+					];
 				}
 			}
 
-			if (!empty($modifiedContractsInfo)) {
-				$modifiedContractsRefs = array_keys($modifiedContractsInfo);
+			if (!empty($modifiedContracts)) {
+				$modifiedContractsRefs = array_column($modifiedContracts, 'ref');
 				if (!empty($responsibleUserIds) && !empty($emailTemplate)) {
 					$this->sendRecapEmail($responsibleUserIds, $emailTemplate, $modifiedContractsRefs);
 				}
 				if (!empty($subscribedUserIds)) {
-					$this->sendAdvancedNotification($subscribedUserIds, $modifiedContractsInfo);
+					foreach ($modifiedContracts as $contractId => $contractData) {
+						$this->sendAdvancedNotification($subscribedUserIds,	$contractId, $contractData['ref'], $contractData['url']);
+					}
 				}
 			}
 
@@ -349,10 +354,15 @@ class CronJobUpdateContractRevision
 	}
 
 	/**
-	 * Envoie UNE notification (push) contenant la liste des contrats modifiés (liens HTML).
-	 * $contractsInfo doit être de la forme [ 'REF1' => '<a href="...">REF1</a>', ... ].
+	 * Sends a push notification for ONE specific contract.
+	 *
+	 * @param int[]  $userIds      Array of user IDs to notify.
+	 * @param int    $contractId   The contract ID.
+	 * @param string $contractRef  The contract reference.
+	 * @param string $contractLink HTML link to the contract.
+	 * @return void
 	 */
-	private function sendAdvancedNotification(array $userIds, array $contractsInfo): void
+	private function sendAdvancedNotification(array $userIds, int $contractId, string $contractRef, string $contractLink): void
 	{
 		global $langs, $conf, $user;
 
@@ -366,19 +376,12 @@ class CronJobUpdateContractRevision
 		$langs->load('advancednotifier@advancednotifier');
 
 		$triggerCode = 'CLICHAUMEIL_CONTRACT_REVISION';
-		$icon       = 'advancednotifier/img/notifpic/order_warn.png';
-		$expireTs   = time() + 3600;
+		$icon        = 'advancednotifier/img/notifpic/order_warn.png';
+		$expireTs    = time() + 3600;
 
-		// Construire le body en mode liste
-		$lines = [];
-		foreach ($contractsInfo as $ref => $linkHtml) {
-			$lines[] = '- ' . $linkHtml; // Chaque contrat en puce
-		}
-		$body  = $langs->trans('CliChaumeilNotifBodyIntro') ;
-
-		$title = $langs->trans('CliChaumeilNotifTitle', count($contractsInfo));
-		$url   = dol_buildpath('contrat/list.php', 2);
-
+		$title = $langs->trans('CliChaumeilNotifTitleSingle', $contractRef);
+		$body  = $langs->trans('CliChaumeilNotifBodySingle',$contractRef) ;
+		$url   = dol_buildpath('/contrat/card.php', 2) . '?id=' . $contractId;
 
 		foreach ($userIds as $uid) {
 			$uid = (int) $uid;
@@ -386,21 +389,23 @@ class CronJobUpdateContractRevision
 
 			$notif = new AdvNotification($this->db);
 			$notif->entity      = (int) $conf->entity;
-			$notif->fk_user     = $uid;      // destinataire
+			$notif->fk_user     = $uid;
 			$notif->fk_trigger  = $triggerCode;
-			$notif->fk_object   = 0;         // récap global
+			$notif->fk_object   = $contractId;
 			$notif->fk_element  = 'contrat';
-			$notif->send_method = 'push';    // bulle/cloche
+			$notif->send_method = 'push';
 			$notif->title       = $title;
-			$notif->body        = $body;     // HTML autorisé (liens cliquables)
+			$notif->body        = $body;
 			$notif->url         = $url;
 			$notif->icon        = $icon;
 			$notif->expire      = $expireTs;
 
 			$resCreate = $notif->create($user);
 			if ($resCreate <= 0) {
-				$this->warnings[] = $langs->trans("CliChaumeilWarningNotifFailed", $uid);
-				dol_syslog(__METHOD__ . " - Failed to create notification for user #$uid: " . $notif->error, LOG_WARNING);
+				$this->warnings[] = $langs->trans("CliChaumeilWarningNotifFailed", $uid, $contractRef);
+				// La ligne suivante utilise maintenant une clé de traduction
+				$errorMsg = $langs->trans("CliChaumeilErrorNotifCreationFailed", $uid, $contractId);
+				dol_syslog(__METHOD__ . " - " . $errorMsg . ": " . $notif->error, LOG_WARNING);
 			}
 		}
 	}
