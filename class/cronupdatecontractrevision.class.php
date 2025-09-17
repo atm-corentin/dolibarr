@@ -310,7 +310,7 @@ class CronJobUpdateContractRevision
 				$contractList .= "- " . $ref . " (contract not found)\n";
 			}
 		}
-		$substitutions = ['__CONTRACTS_LIST__' => $contractList];
+
 
 		$formmail = new FormMail($this->db);
 		$template = $formmail->getEMailTemplate($this->db, 'contract', $user, $langs, $templateCode);
@@ -318,6 +318,10 @@ class CronJobUpdateContractRevision
 			$this->warnings[] = $langs->trans("CliChaumeilWarningTemplateNotFound", $templateCode);
 			return;
 		}
+
+		$substitutions = getCommonSubstitutionArray($langs);
+		complete_substitutions_array($substitutions, $langs);
+		$substitutions['__CONTRACTS_LIST__'] = $contractList;
 
 		$body    = make_substitutions($template->content, $substitutions, $langs);
 
@@ -403,7 +407,6 @@ class CronJobUpdateContractRevision
 			$resCreate = $notif->create($user);
 			if ($resCreate <= 0) {
 				$this->warnings[] = $langs->trans("CliChaumeilWarningNotifFailed", $uid, $contractRef);
-				// La ligne suivante utilise maintenant une clé de traduction
 				$errorMsg = $langs->trans("CliChaumeilErrorNotifCreationFailed", $uid, $contractId);
 				dol_syslog(__METHOD__ . " - " . $errorMsg . ": " . $notif->error, LOG_WARNING);
 			}

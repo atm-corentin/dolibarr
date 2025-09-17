@@ -17,18 +17,17 @@
  */
 
 /**
- * \file multicompany/core/substitution/functions_multicompany.lib.php
+ * \file clichaumeil/core/substitution/functions_clichaumeil.lib.php
  * \ingroup multicompany
  * \brief Some display function
  */
 
 
 function clichaumeil_completesubstitutionarray(&$substitutionarray, $outputlangs, $object, $parameters) {
-	global $conf, $mysoc;
 
-	if (is_object($object) && $object->entity != $conf->entity && isset($substitutionarray['__CONTRACTS_LIST__'])) {
-		$substitutionarray['__CONTRACTS_LIST__'] = '__CONTRACTS_LIST__';
-	}
+
+	$outputlangs->load('clichaumeil@clichaumeil');
+	$substitutionarray['__CONTRACTS_LIST__'] = $outputlangs->trans('CliChaumeilContractsList');
 
 	return $substitutionarray;
 }
