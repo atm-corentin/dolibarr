@@ -169,7 +169,7 @@ class CronJobUpdateContractRevision
 			}
 
 			// Build the verbose output string
-			$this->output = $this->buildVerboseOutput($processedDetails, $responsibleUserIds, $subscribedUserIds);
+			$this->output = preg_replace('/[\x{10000}-\x{10FFFF}]/u', '', $this->buildVerboseOutput($processedDetails, $responsibleUserIds, $subscribedUserIds));
 			dol_syslog(__METHOD__ . "::end - Cron job finished.", LOG_INFO);
 			return 0;
 
