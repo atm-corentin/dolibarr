@@ -147,7 +147,8 @@ class CronJobUpdateContractRevision
 			// --- 4. Send notifications ---
 			$modifiedContracts = [];
 			foreach ($processedDetails as $detail) {
-				// On utilise l'ID du contrat comme clé pour s'assurer que chaque contrat n'est traité qu'une seule fois.
+
+				// We use the contract ID as a key to ensure that each contract is only processed once.
 				if (!isset($modifiedContracts[$detail['contract_id']])) {
 					$modifiedContracts[$detail['contract_id']] = [
 						'ref' => $detail['contract_ref'],
@@ -197,7 +198,7 @@ class CronJobUpdateContractRevision
 		$contractCount = count(array_unique(array_column($details, 'contract_ref')));
 
 		$reportLines = [];
-		$reportLines[] = "--- RAPPORT DE MISE À JOUR TARIFAIRE ---";
+		$reportLines[] = $langs->trans("CliChaumeilCronReportTitle");
 		$reportLines[] = "";
 
 		// --- Summary Section ---

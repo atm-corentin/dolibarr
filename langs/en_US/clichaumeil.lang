@@ -81,3 +81,4 @@ CliChaumeilNotifBodySingle=The tariff revision has been applied to the contract 
 CliChaumeilWarningNotifFailed=Failed to send notification to user #%s for contract %s
 CliChaumeilErrorNotifCreationFailed=Failed to create notification for user #%s and contract #%s
 CliChaumeilContractsList = The list of contracts ( only used for Scheduled jobs on tariff revisions)
+CliChaumeilCronReportTitle=--- CliChaumeil Cron Report ---

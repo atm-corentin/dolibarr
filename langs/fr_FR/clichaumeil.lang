@@ -83,3 +83,4 @@ CliChaumeilNotifBodySingle=La révision tarifaire a été appliqué au contrat %
 CliChaumeilWarningNotifFailed=Échec de l'envoi de la notification à l'utilisateur #%s pour le contrat %s
 CliChaumeilErrorNotifCreationFailed=Échec de la création de la notification pour l'utilisateur #%s et le contrat #%s
 CliChaumeilContractsList=La liste des contrats (uniquement utilisé pour le travail planifié sur les révisions tarifaires)
+CliChaumeilCronReportTitle=--- RAPPORT DE MISE À JOUR TARIFAIRE ---
