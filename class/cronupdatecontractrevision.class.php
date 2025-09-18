@@ -196,9 +196,9 @@ class CronJobUpdateContractRevision
 	 */
 	private function sendAllNotifications(array $processedDetails, array $responsibleUserIds, int $emailTemplateId, array $subscribedUserIds): void
 	{
-		global $conf; // On a besoin de la conf globale ici
+		global $conf;
 
-		// Group processed details by contract...
+		// Group processed details by contract
 		$modifiedContracts = [];
 		foreach ($processedDetails as $detail) {
 			if (!isset($modifiedContracts[$detail['contract_id']])) {
@@ -218,7 +218,6 @@ class CronJobUpdateContractRevision
 			$this->sendRecapEmail($responsibleUserIds, $emailTemplateId, $modifiedContracts);
 		}
 
-		// --- MODIFICATION ICI ---
 		// Send push notification ONLY IF the module is enabled and class exists
 		if (!empty($conf->advancednotifier->enabled) && class_exists('AdvNotification')) {
 			if (!empty($subscribedUserIds)) {
