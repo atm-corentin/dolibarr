@@ -4,35 +4,35 @@
 # Generic
 #
 
-# Module label 'ModuleClichaumeilName'
-ModuleClichaumeilName = Clichaumeil
-# Module description 'ModuleClichaumeilDesc'
-ModuleClichaumeilDesc = Clichaumeil description
+# Module label 'ModuleMyModuleName'
+ModuleMyModuleName = MyModule
+# Module description 'ModuleMyModuleDesc'
+ModuleMyModuleDesc = MyModule description
 
 #
 # Admin page
 #
-ClichaumeilSetup = Clichaumeil setup
+MyModuleSetup = MyModule setup
 Settings = Settings
-ClichaumeilSetupPage = Clichaumeil setup page
+MyModuleSetupPage = MyModule setup page
 NewSection=New section
-CLICHAUMEIL_MYPARAM1 = My param 1
-CLICHAUMEIL_MYPARAM1Tooltip = My param 1 tooltip
-CLICHAUMEIL_MYPARAM2=My param 2
-CLICHAUMEIL_MYPARAM2Tooltip=My param 2 tooltip
+MYMODULE_MYPARAM1 = My param 1
+MYMODULE_MYPARAM1Tooltip = My param 1 tooltip
+MYMODULE_MYPARAM2=My param 2
+MYMODULE_MYPARAM2Tooltip=My param 2 tooltip
 
 
 #
 # About page
 #
 About = About
-ClichaumeilAbout = About Clichaumeil
-ClichaumeilAboutPage = Clichaumeil about page
+MyModuleAbout = About MyModule
+MyModuleAboutPage = MyModule about page
 
 #
 # Sample page
 #
-ClichaumeilArea = Home Clichaumeil
+MyModuleArea = Home MyModule
 MyPageName = My page name
 
 #
@@ -40,3 +40,45 @@ MyPageName = My page name
 #
 MyWidget = My widget
 MyWidgetDescription = My widget description
+
+ClichaumeilSetup = CliChaumeil Settings
+Settings = Settings
+ClichaumeilSetupPage = CliChaumeil Settings
+
+CliChaumeilReviewRate=Review rate (in %%)
+CliChaumeilReviewDate=Review date
+
+CLICHAUMEIL_REVIEW_YEAR_DELAY=Review date offset after renewal (in years)
+CLICHAUMEIL_PRICING_UPDATE_MANAGERS=Managers for pricing updates
+CLICHAUMEIL_CRON_EMAIL_TEMPLATE=Email template to use for email alerts
+CLICHAUMEIL_CRON_NOTIF_USERS=Subscribers to renewal notifications
+CliChaumeilAutomaticRenewalContract=Automatic update of contract revisions
+CliChaumeilApplyRenewalRate=Applies the review rate to expired contract lines
+CliChaumeilCronNoLinesToUpdate=No contract lines needed an update.
+CliChaumeilCronSuccessSummary=Update complete. %s contract(s) affected (%s line(s) modified).
+CliChaumeilCronError=An error occurred during execution.
+CliChaumeilCronSectionSummary=SUMMARY
+CliChaumeilCronSectionDetails=CHANGE DETAILS
+CliChaumeilCronSectionNotifications=NOTIFICATIONS
+CliChaumeilCronContractHeader=Contract %s:
+CliChaumeilCronLineDetail=Line ID %s: Price %s -> %s | Review date %s
+CliChaumeilCronEmailSent=A summary email has been sent to %s manager(s).
+CliChaumeilCronEmailNotConfigured=No responsible user configured for the email alert.
+CliChaumeilCronNotifSent=A "push" notification has been sent to %s subscriber(s).
+CliChaumeilCronNotifNotConfigured=No subscribed user configured for the "push" notification.
+CliChaumeilCronSectionWarnings=WARNINGS (non-blocking)
+CliChaumeilWarningNoEmailTemplate=No email template is configured, email notifications have been skipped.
+CliChaumeilWarningSkipLine=Line ID %s could not be loaded and was skipped.
+CliChaumeilWarningEmailFailed=Failed to send email to %s (Error: %s).
+CliChaumeilWarningUserNotFound=User for notification (ID: %s) not found.
+CliChaumeilWarningAdvancedNotifierMissing=The Advanced Notifier module was not found, "push" notifications have been skipped.
+CliChaumeilContractRevisionUpdate=Automatic update of contract review rates
+CliChaumeilWarningUserNotFoundOrNoEmail=Could not send email to user ID %s: user not found or has no email address.
+CliChaumeilNotifTitle=Price update for %s contracts
+CliChaumeilNotifBodyIntro=The following contracts have been updated
+CliChaumeilNotifTitleSingle=Contract revision: %s
+CliChaumeilNotifBodySingle=The tariff revision has been applied to the contract %s
+CliChaumeilWarningNotifFailed=Failed to send notification to user #%s for contract %s
+CliChaumeilErrorNotifCreationFailed=Failed to create notification for user #%s and contract #%s
+CliChaumeilContractsList = The list of contracts ( only used for Scheduled jobs on tariff revisions)
+CliChaumeilCronReportTitle=--- CliChaumeil Cron Report ---

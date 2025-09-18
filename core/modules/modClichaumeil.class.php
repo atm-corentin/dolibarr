@@ -43,6 +43,7 @@ class modClichaumeil extends DolibarrModules
 	{
 		global $conf, $langs;
 
+		$langs->load('clichaumeil@clichaumeil');
 		$this->db = $db;
 
 		// Id for module (must be unique).
@@ -76,7 +77,7 @@ class modClichaumeil extends DolibarrModules
 		$this->editor_squarred_logo = '';					// Must be image filename into the module/img directory followed with @modulename. Example: 'myimage.png@clichaumeil'
 
 		// Possible values for version are: 'development', 'experimental', 'dolibarr', 'dolibarr_deprecated', 'experimental_deprecated' or a version string like 'x.y.z'
-		$this->version = '1.0.0';
+		$this->version = '1.1.0';
 		// Url to the file with your last numberversion of this module
 		//$this->url_last_version = 'http://www.example.com/versionmodule.txt';
 
@@ -96,7 +97,7 @@ class modClichaumeil extends DolibarrModules
 			// Set this to 1 if module has its own login method file (core/login)
 			'login' => 0,
 			// Set this to 1 if module has its own substitution function file (core/substitutions)
-			'substitutions' => 0,
+			'substitutions' => 1,
 			// Set this to 1 if module has its own menus handler directory (core/menus)
 			'menus' => 0,
 			// Set this to 1 if module overwrite template dir (core/tpl)
@@ -266,20 +267,19 @@ class modClichaumeil extends DolibarrModules
 		// unit_frequency must be 60 for minute, 3600 for hour, 86400 for day, 604800 for week
 		/* BEGIN MODULEBUILDER CRON */
 		$this->cronjobs = array(
-			//  0 => array(
-			//      'label' => 'MyJob label',
-			//      'jobtype' => 'method',
-			//      'class' => '/clichaumeil/class/myobject.class.php',
-			//      'objectname' => 'MyObject',
-			//      'method' => 'doScheduledJob',
-			//      'parameters' => '',
-			//      'comment' => 'Comment',
-			//      'frequency' => 2,
-			//      'unitfrequency' => 3600,
-			//      'status' => 0,
-			//      'test' => 'isModEnabled("clichaumeil")',
-			//      'priority' => 50,
-			//  ),
+			0 => array(
+				'label' => $langs->trans('CliChaumeilAutomaticRenewalContract'),
+				'jobtype' => 'method',
+				'class' => '/clichaumeil/class/cronupdatecontractrevision.class.php',
+				'objectname' => 'CronJobUpdateContractRevision',
+				'method' => 'run',
+				'parameters' => '',
+				'comment' => $langs->trans('CliChaumeilApplyRenewalRate'),
+				'frequency' => 24,
+				'unitfrequency' => 3600,
+				'status' => 0, // 0 for disabled by default, 1 for enabled
+				'priority' => 50,
+			)
 		);
 		/* END MODULEBUILDER CRON */
 		// Example: $this->cronjobs=array(
@@ -468,57 +468,22 @@ class modClichaumeil extends DolibarrModules
 		global $conf, $langs;
 
 		// Create tables of module at module activation
-		//$result = $this->_load_tables('/install/mysql/', 'clichaumeil');
 		$result = $this->_load_tables('/clichaumeil/sql/');
 		if ($result < 0) {
 			return -1; // Do not activate module if error 'not allowed' returned when loading module SQL queries (the _load_table run sql with run_sql with the error allowed parameter set to 'default')
 		}
 
 		// Create extrafields during init
-		//include_once DOL_DOCUMENT_ROOT.'/core/class/extrafields.class.php';
-		//$extrafields = new ExtraFields($this->db);
-		//$result0=$extrafields->addExtraField('clichaumeil_separator1', "Separator 1", 'separator', 1,  0, 'thirdparty',   0, 0, '', array('options'=>array(1=>1)), 1, '', 1, 0, '', '', 'clichaumeil@clichaumeil', 'isModEnabled("clichaumeil")');
-		//$result1=$extrafields->addExtraField('clichaumeil_myattr1', "New Attr 1 label", 'boolean', 1,  3, 'thirdparty',   0, 0, '', '', 1, '', -1, 0, '', '', 'clichaumeil@clichaumeil', 'isModEnabled("clichaumeil")');
-		//$result2=$extrafields->addExtraField('clichaumeil_myattr2', "New Attr 2 label", 'varchar', 1, 10, 'project',      0, 0, '', '', 1, '', -1, 0, '', '', 'clichaumeil@clichaumeil', 'isModEnabled("clichaumeil")');
-		//$result3=$extrafields->addExtraField('clichaumeil_myattr3', "New Attr 3 label", 'varchar', 1, 10, 'bank_account', 0, 0, '', '', 1, '', -1, 0, '', '', 'clichaumeil@clichaumeil', 'isModEnabled("clichaumeil")');
-		//$result4=$extrafields->addExtraField('clichaumeil_myattr4', "New Attr 4 label", 'select',  1,  3, 'thirdparty',   0, 1, '', array('options'=>array('code1'=>'Val1','code2'=>'Val2','code3'=>'Val3')), 1,'', -1, 0, '', '', 'clichaumeil@clichaumeil', 'isModEnabled("clichaumeil")');
-		//$result5=$extrafields->addExtraField('clichaumeil_myattr5', "New Attr 5 label", 'text',    1, 10, 'user',         0, 0, '', '', 1, '', -1, 0, '', '', 'clichaumeil@clichaumeil', 'isModEnabled("clichaumeil")');
+		include_once DOL_DOCUMENT_ROOT.'/core/class/extrafields.class.php';
+		$extrafields = new ExtraFields($this->db);
+		$extrafields->addExtraField('clichaumeilreviewrate', 'CliChaumeilReviewRate', 'double', 100, '24,2', 'contrat', 0, 0, '', array ( 'options' => array ( '' => NULL, ), ), 1, '', '1', '', '', 0, 'clichaumeil@clichaumeil', 'isModEnabled("clichaumeil")', 0, '0', array ( 'css' => '', 'cssview' => '', 'csslist' => ''));
+		$extrafields->addExtraField('clichaumeil_reviewdate', 'CliChaumeilReviewDate', 'date', 100, '', 'contratdet', 0, 0, '', array ( 'options' => array ( '' => NULL, ), ), 1, '', '1', '', '', 0, 'clichaumeil@clichaumeil', 'isModEnabled("clichaumeil")', 0, '0', array ( 'css' => '', 'cssview' => '', 'csslist' => '', ));
 
 		// Permissions
 		$this->remove($options);
 
 		$sql = array();
 
-		// Document templates
-		$moduledir = dol_sanitizeFileName('clichaumeil');
-		$myTmpObjects = array();
-		$myTmpObjects['MyObject'] = array('includerefgeneration' => 0, 'includedocgeneration' => 0);
-
-		foreach ($myTmpObjects as $myTmpObjectKey => $myTmpObjectArray) {
-			if ($myTmpObjectArray['includerefgeneration']) {
-				$src = DOL_DOCUMENT_ROOT.'/install/doctemplates/'.$moduledir.'/template_myobjects.odt';
-				$dirodt = DOL_DATA_ROOT.($conf->entity > 1 ? '/'.$conf->entity : '').'/doctemplates/'.$moduledir;
-				$dest = $dirodt.'/template_myobjects.odt';
-
-				if (file_exists($src) && !file_exists($dest)) {
-					require_once DOL_DOCUMENT_ROOT.'/core/lib/files.lib.php';
-					dol_mkdir($dirodt);
-					$result = dol_copy($src, $dest, '0', 0);
-					if ($result < 0) {
-						$langs->load("errors");
-						$this->error = $langs->trans('ErrorFailToCopyFile', $src, $dest);
-						return 0;
-					}
-				}
-
-				$sql = array_merge($sql, array(
-					"DELETE FROM ".MAIN_DB_PREFIX."document_model WHERE nom = 'standard_".strtolower($myTmpObjectKey)."' AND type = '".$this->db->escape(strtolower($myTmpObjectKey))."' AND entity = ".((int) $conf->entity),
-					"INSERT INTO ".MAIN_DB_PREFIX."document_model (nom, type, entity) VALUES('standard_".strtolower($myTmpObjectKey)."', '".$this->db->escape(strtolower($myTmpObjectKey))."', ".((int) $conf->entity).")",
-					"DELETE FROM ".MAIN_DB_PREFIX."document_model WHERE nom = 'generic_".strtolower($myTmpObjectKey)."_odt' AND type = '".$this->db->escape(strtolower($myTmpObjectKey))."' AND entity = ".((int) $conf->entity),
-					"INSERT INTO ".MAIN_DB_PREFIX."document_model (nom, type, entity) VALUES('generic_".strtolower($myTmpObjectKey)."_odt', '".$this->db->escape(strtolower($myTmpObjectKey))."', ".((int) $conf->entity).")"
-				));
-			}
-		}
 
 		return $this->_init($sql, $options);
 	}
