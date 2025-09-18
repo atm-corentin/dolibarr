@@ -63,10 +63,10 @@ class CronJobUpdateContractRevision
 		// --- 1. Load configuration ---
 		$revisionYearToAdd = (int) (getDolGlobalInt(self::CONF_YEARS_TO_ADD) ?? 1);
 		$responsibleUserIds = array_filter(array_map('intval', explode(',', getDolGlobalString(self::CONF_RESPONSIBLE_USERS) ?? '')));
-		$emailTemplate = getDolGlobalInt(self::CONF_EMAIL_TEMPLATE) ?? '';
+		$emailTemplateId = getDolGlobalInt(self::CONF_EMAIL_TEMPLATE) ?? 0;
 		$subscribedUserIds = array_filter(array_map('intval', explode(',', getDolGlobalString(self::CONF_SUBSCRIBED_USERS) ?? '')));
 
-		if (empty($emailTemplate) && !empty($responsibleUserIds)) {
+		if (empty($emailTemplateId) && !empty($responsibleUserIds)) {
 			$warningMsg = $langs->trans("CliChaumeilWarningNoEmailTemplate");
 			$this->warnings[] = $warningMsg;
 			dol_syslog(__METHOD__ . "::warning - " . $warningMsg, LOG_WARNING);
@@ -80,16 +80,47 @@ class CronJobUpdateContractRevision
 			return 0;
 		}
 
-		// --- 3. Process each line and collect detailed data for the report ---
-		$this->db->begin();
-		$processedDetails = []; // Array to store verbose details for the output
+		try {
+			// --- 3. Process lines (Core logic is now in its own method) ---
+			$processedDetails = $this->processContractLines($linesToUpdateData, $revisionYearToAdd);
+
+			// --- 4. Send notifications (Notification logic is now in its own method) ---
+			$this->sendAllNotifications($processedDetails, $responsibleUserIds, $emailTemplateId, $subscribedUserIds);
+
+			// --- 5. Build the verbose output string ---
+			$this->output = $this->buildVerboseOutput($processedDetails, $responsibleUserIds, $subscribedUserIds);
+			dol_syslog(__METHOD__ . "::end - Cron job finished.", LOG_INFO);
+			return 0;
+
+		} catch (Exception $e) {
+			$this->error = $e->getMessage();
+			$this->output = $langs->trans("CliChaumeilCronError") . ': ' . $this->error;
+			dol_syslog(__METHOD__ . "::error - " . $this->error, LOG_ERR);
+			return -1;
+		}
+	}
+
+	/**
+	 * Processes each contract line, updates it in the database, and returns detailed results.
+	 * This method handles the database transaction.
+	 *
+	 * @param array $linesToUpdateData Array of lines to process from getLinesToUpdateData().
+	 * @param int   $revisionYearToAdd Number of years to add to the revision date.
+	 * @return array Array of processed line details.
+	 * @throws Exception if a database update fails.
+	 */
+	private function processContractLines(array $linesToUpdateData, int $revisionYearToAdd): array
+	{
+		global $user;
+		$processedDetails = [];
 		$cachedContracts = [];
 
+		$this->db->begin();
 		try {
 			foreach ($linesToUpdateData as $lineData) {
 				$contractLine = new ContratLigne($this->db);
 				if ($contractLine->fetch($lineData['line_id']) <= 0) {
-					$warningMsg = $langs->trans("CliChaumeilWarningSkipLine", $lineData['line_id']);
+					$warningMsg = $this->langs->trans("CliChaumeilWarningSkipLine", $lineData['line_id']);
 					$this->warnings[] = $warningMsg;
 					dol_syslog(__METHOD__ . "::warning - " . $warningMsg, LOG_WARNING);
 					continue;
@@ -98,7 +129,6 @@ class CronJobUpdateContractRevision
 				$contractId = $contractLine->fk_contrat;
 				$contractUrl = '';
 
-				// We check if we have already processed this contract to avoid reloading it
 				if (isset($cachedContracts[$contractId])) {
 					$contractUrl = $cachedContracts[$contractId];
 				} else {
@@ -113,22 +143,18 @@ class CronJobUpdateContractRevision
 					$contractUrl = $lineData['contract_ref'];
 				}
 
-				// Store old values for the report
 				$oldPrice = (float)$lineData['subprice'];
 				$oldRevisionDate = new DateTime($lineData['date_revision']);
 
-				// Calculate new values
 				$newPrice = $oldPrice * (1 + ((float)$lineData['taux_revision'] / 100));
 				$newRevisionDate = (clone $oldRevisionDate)->add(new DateInterval('P' . $revisionYearToAdd . 'Y'));
 
-				// Update the Dolibarr object
 				$contractLine->subprice = $newPrice;
 				$contractLine->array_options['options_' . self::EXTRAFIELD_REVISION_DATE] = $newRevisionDate->format('Y-m-d H:i:s');
-				$result = $contractLine->update($user);
-				if ($result < 0) {
+
+				if ($contractLine->update($user) < 0) {
 					throw new Exception("Failed to update contract line ID " . $lineData['line_id'] . ". Error: " . $contractLine->errorsToString());
 				}
-
 
 				$processedDetails[] = [
 					'contract_id' => $contractId,
@@ -141,44 +167,52 @@ class CronJobUpdateContractRevision
 					'new_date' => $newRevisionDate
 				];
 			}
-
 			$this->db->commit();
-
-			// --- 4. Send notifications ---
-			$modifiedContracts = [];
-			foreach ($processedDetails as $detail) {
-
-				// We use the contract ID as a key to ensure that each contract is only processed once.
-				if (!isset($modifiedContracts[$detail['contract_id']])) {
-					$modifiedContracts[$detail['contract_id']] = [
-						'ref' => $detail['contract_ref'],
-						'url' => $detail['contract_url']
-					];
-				}
-			}
-
-			if (!empty($modifiedContracts)) {
-				if (!empty($responsibleUserIds) && !empty($emailTemplate)) {
-					$this->sendRecapEmail($responsibleUserIds, $emailTemplate, $modifiedContracts);
-				}
-				if (!empty($subscribedUserIds)) {
-					foreach ($modifiedContracts as $contractId => $contractData) {
-						$this->sendAdvancedNotification($subscribedUserIds,	$contractId, $contractData['ref'], $contractData['url']);
-					}
-				}
-			}
-
-			// Build the verbose output string
-			$this->output = preg_replace('/[\x{10000}-\x{10FFFF}]/u', '', $this->buildVerboseOutput($processedDetails, $responsibleUserIds, $subscribedUserIds));
-			dol_syslog(__METHOD__ . "::end - Cron job finished.", LOG_INFO);
-			return 0;
+			return $processedDetails;
 
 		} catch (Exception $e) {
 			$this->db->rollback();
-			$this->error = $e->getMessage();
-			$this->output = $langs->trans("CliChaumeilCronError") . ': ' . $this->error;
-			dol_syslog(__METHOD__ . "::error - " . $this->error, LOG_ERR);
-			return -1;
+			// Re-throw the exception to be caught by the run() method
+			throw $e;
+		}
+	}
+
+	/**
+	 * Prepares and sends all required notifications (email, push) based on processed details.
+	 *
+	 * @param array $processedDetails   Array of details from processContractLines().
+	 * @param array $responsibleUserIds Array of user IDs for email notifications.
+	 * @param int   $emailTemplateId    ID of the email template to use.
+	 * @param array $subscribedUserIds  Array of user IDs for push notifications.
+	 * @return void
+	 */
+	private function sendAllNotifications(array $processedDetails, array $responsibleUserIds, int $emailTemplateId, array $subscribedUserIds): void
+	{
+		// Group processed details by contract to avoid sending multiple notifications for the same contract
+		$modifiedContracts = [];
+		foreach ($processedDetails as $detail) {
+			if (!isset($modifiedContracts[$detail['contract_id']])) {
+				$modifiedContracts[$detail['contract_id']] = [
+					'ref' => $detail['contract_ref'],
+					'url' => $detail['contract_url']
+				];
+			}
+		}
+
+		if (empty($modifiedContracts)) {
+			return;
+		}
+
+		// Send recap email to responsible users
+		if (!empty($responsibleUserIds) && !empty($emailTemplateId)) {
+			$this->sendRecapEmail($responsibleUserIds, $emailTemplateId, $modifiedContracts);
+		}
+
+		// Send push notification to subscribed users for each modified contract
+		if (!empty($subscribedUserIds)) {
+			foreach ($modifiedContracts as $contractId => $contractData) {
+				$this->sendAdvancedNotification($subscribedUserIds, $contractId, $contractData['ref'], $contractData['url']);
+			}
 		}
 	}
 
