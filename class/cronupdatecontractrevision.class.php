@@ -14,6 +14,14 @@ require_once DOL_DOCUMENT_ROOT . '/user/class/user.class.php';
 require_once DOL_DOCUMENT_ROOT . '/core/class/CMailFile.class.php';
 require_once DOL_DOCUMENT_ROOT . '/core/class/html.formmail.class.php';
 
+global $conf, $langs;
+if (!empty($conf->advancednotifier->enabled)) {
+	$res = dol_include_once('/advancednotifier/class/advnotification.class.php');
+	if ($res) {
+		$langs->load('advancednotifier@advancednotifier');
+	}
+}
+
 class CronJobUpdateContractRevision
 {
 
@@ -188,7 +196,9 @@ class CronJobUpdateContractRevision
 	 */
 	private function sendAllNotifications(array $processedDetails, array $responsibleUserIds, int $emailTemplateId, array $subscribedUserIds): void
 	{
-		// Group processed details by contract to avoid sending multiple notifications for the same contract
+		global $conf; // On a besoin de la conf globale ici
+
+		// Group processed details by contract...
 		$modifiedContracts = [];
 		foreach ($processedDetails as $detail) {
 			if (!isset($modifiedContracts[$detail['contract_id']])) {
@@ -208,10 +218,13 @@ class CronJobUpdateContractRevision
 			$this->sendRecapEmail($responsibleUserIds, $emailTemplateId, $modifiedContracts);
 		}
 
-		// Send push notification to subscribed users for each modified contract
-		if (!empty($subscribedUserIds)) {
-			foreach ($modifiedContracts as $contractId => $contractData) {
-				$this->sendAdvancedNotification($subscribedUserIds, $contractId, $contractData['ref'], $contractData['url']);
+		// --- MODIFICATION ICI ---
+		// Send push notification ONLY IF the module is enabled and class exists
+		if (!empty($conf->advancednotifier->enabled) && class_exists('AdvNotification')) {
+			if (!empty($subscribedUserIds)) {
+				foreach ($modifiedContracts as $contractId => $contractData) {
+					$this->sendAdvancedNotification($subscribedUserIds, $contractId, $contractData['ref'], $contractData['url']);
+				}
 			}
 		}
 	}
