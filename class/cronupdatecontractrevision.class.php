@@ -15,7 +15,7 @@ require_once DOL_DOCUMENT_ROOT . '/core/class/CMailFile.class.php';
 require_once DOL_DOCUMENT_ROOT . '/core/class/html.formmail.class.php';
 
 global $conf, $langs;
-if (!empty($conf->advancednotifier->enabled)) {
+if (isModEnabled('advancednotifier')) {
 	$res = dol_include_once('/advancednotifier/class/advnotification.class.php');
 	if ($res) {
 		$langs->load('advancednotifier@advancednotifier');
