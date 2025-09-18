@@ -158,9 +158,8 @@ class CronJobUpdateContractRevision
 			}
 
 			if (!empty($modifiedContracts)) {
-				$modifiedContractsRefs = array_column($modifiedContracts, 'ref');
 				if (!empty($responsibleUserIds) && !empty($emailTemplate)) {
-					$this->sendRecapEmail($responsibleUserIds, $emailTemplate, $modifiedContractsRefs);
+					$this->sendRecapEmail($responsibleUserIds, $emailTemplate, $modifiedContracts);
 				}
 				if (!empty($subscribedUserIds)) {
 					foreach ($modifiedContracts as $contractId => $contractData) {
@@ -293,25 +292,19 @@ class CronJobUpdateContractRevision
 	/**
 	 * Sends a summary email to responsible users.
 	 *
-	 * @param int[]    $userIds         Array of user IDs to notify.
-	 * @param string   $emailTemplate   The name of the email template.
-	 * @param string[] $contractsRefs   Array of modified contract references.
+	 * @param int[]    $userIds           Array of user IDs to notify.
+	 * @param int      $templateCode      The code of the email template.
+	 * @param array    $modifiedContracts Array of modified contracts with their 'ref' and 'url'.
 	 * @return void
 	 */
-	private function sendRecapEmail(array $userIds, int $templateCode, array $contractsRefs): void
+	private function sendRecapEmail(array $userIds, int $templateCode, array $modifiedContracts): void
 	{
 		global $langs, $conf, $user;
 
 		$contractList = '';
-		$contract = new Contrat($this->db);
-		foreach ($contractsRefs as $ref) {
-			if ($contract->fetch(null, $ref) > 0) {
-				$contractList .= "- " . $contract->getNomUrl(1) . "\n";
-			} else {
-				$contractList .= "- " . $ref . " (contract not found)\n";
-			}
+		foreach ($modifiedContracts as $contractData) {
+			$contractList .= "- " . $contractData['url'] . "\n";
 		}
-
 
 		$formmail = new FormMail($this->db);
 		$template = $formmail->getEMailTemplate($this->db, 'contract', $user, $langs, $templateCode);
