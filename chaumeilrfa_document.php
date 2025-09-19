@@ -141,6 +141,7 @@ if ($id > 0 || !empty($ref)) {
 // (There are several ways to check permission.)
 // Set $enablepermissioncheck to 1 to enable a minimum low level of checks
 $enablepermissioncheck = getDolGlobalInt('CLICHAUMEIL_ENABLE_PERMISSION_CHECK');
+$enablepermissioncheck = 1;
 if ($enablepermissioncheck) {
 	$permissiontoread = $user->hasRight('clichaumeil', 'chaumeilrfa', 'read');
 	$permissiontoadd  = $user->hasRight('clichaumeil', 'chaumeilrfa', 'write'); // Used by the include of actions_addupdatedelete.inc.php and actions_linkedfiles.inc.php

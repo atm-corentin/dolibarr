@@ -3,4 +3,5 @@
 ## 1.0
 
 ### Unreleased
+- NEW : Create clichaumeil_chaumeilrfa object : - Initial version *19/09/2025* - 1.0.0
 - NEW : Create/Clean clichaumeil module : - Initial version *09/09/2025* - 1.0.0

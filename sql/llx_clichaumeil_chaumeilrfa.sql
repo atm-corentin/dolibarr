@@ -18,17 +18,17 @@ CREATE TABLE llx_clichaumeil_chaumeilrfa(
 	-- BEGIN MODULEBUILDER FIELDS
 	rowid integer AUTO_INCREMENT PRIMARY KEY NOT NULL, 
 	ref varchar(128) NOT NULL, 
-	label varchar(255), 
-	fk_soc integer, 
+	label varchar(255) NOT NULL, 
+	fk_soc integer NOT NULL, 
 	date_creation datetime NOT NULL, 
 	tms timestamp DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, 
 	fk_user_creat integer NOT NULL, 
 	fk_user_modif integer, 
 	import_key varchar(14), 
 	status integer NOT NULL, 
-	datestart date, 
-	dateend date, 
-	palier integer, 
-	vatrfa double
+	datestart date NOT NULL, 
+	dateend date NOT NULL, 
+	palier double NOT NULL, 
+	raterfa double NOT NULL
 	-- END MODULEBUILDER FIELDS
 ) ENGINE=innodb;

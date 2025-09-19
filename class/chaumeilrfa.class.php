@@ -51,7 +51,7 @@ class ChaumeilRfa extends CommonObject
 	/**
 	 * @var string 	If permission must be checkec with hasRight('clichaumeil', 'read') and not hasright('mymodyle', 'chaumeilrfa', 'read'), you can uncomment this line
 	 */
-	//public $element_for_permission = 'clichaumeil';
+	public $element_for_permission = 'clichaumeil';
 
 	/**
 	 * @var string 	String with name of icon for chaumeilrfa. Must be a 'fa-xxx' fontawesome code (or 'fa-xxx_fa_color_size') or 'chaumeilrfa@clichaumeil' if picto is file 'img/object_chaumeilrfa.png'.
@@ -113,19 +113,19 @@ class ChaumeilRfa extends CommonObject
 	 */
 	public $fields = array(
 		"rowid" => array("type" => "integer", "label" => "TechnicalID", "enabled" => "1", 'position' => 1, 'notnull' => 1, "visible" => "0", "noteditable" => "1", "index" => "1", "css" => "left", "comment" => "Id"),
-		"ref" => array("type" => "varchar(128)", "label" => "Ref", "enabled" => "1", 'position' => 20, 'notnull' => 1, "visible" => "1", "index" => "1", "searchall" => "1", "showoncombobox" => "1", "validate" => "1", "comment" => "Reference of object"),
-		"label" => array("type" => "varchar(255)", "label" => "Label", "enabled" => "1", 'position' => 30, 'notnull' => 0, "visible" => "1", "alwayseditable" => "1", "searchall" => "1", "css" => "minwidth300", "cssview" => "wordbreak", "help" => "Help text", "showoncombobox" => "2", "validate" => "1",),
-		"fk_soc" => array("type" => "integer:Societe:societe/class/societe.class.php:1:((status:=:1) AND (entity:IN:__SHARED_ENTITIES__))", "label" => "ThirdParty", "picto" => "company", "enabled" => "isModEnabled('societe')", 'position' => 50, 'notnull' => -1, "visible" => "1", "index" => "1", "css" => "maxwidth500 widthcentpercentminusxx", "csslist" => "tdoverflowmax150", "help" => "OrganizationEventLinkToThirdParty", "validate" => "1",),
+		"ref" => array("type" => "varchar(128)", "label" => "Ref", "enabled" => "1", 'position' => 10, 'notnull' => 1, "visible" => "4", "noteditable" => "1", "index" => "1", "searchall" => "1", "validate" => "1", "comment" => "Reference of object"),
+		"label" => array("type" => "varchar(255)", "label" => "Label", "enabled" => "1", 'position' => 20, 'notnull' => 1, "visible" => "1", "searchall" => "1", "css" => "minwidth300", "cssview" => "wordbreak", "help" => "Help text", "validate" => "1",),
+		"fk_soc" => array("type" => "integer:societe:societe/class/societe.class.php:1:((status:=:1))", "label" => "ThirdParty", "enabled" => "isModEnabled('societe')", 'position' => 70, 'notnull' => 1, "visible" => "0", "index" => "1", "css" => "maxwidth500 widthcentpercentminusxx", "csslist" => "tdoverflowmax150", "help" => "OrganizationEventLinkToThirdParty", "validate" => "1",),
 		"date_creation" => array("type" => "datetime", "label" => "DateCreation", "enabled" => "1", 'position' => 500, 'notnull' => 1, "visible" => "-2",),
 		"tms" => array("type" => "timestamp", "label" => "DateModification", "enabled" => "1", 'position' => 501, 'notnull' => 0, "visible" => "-2",),
 		"fk_user_creat" => array("type" => "integer:User:user/class/user.class.php", "label" => "UserAuthor", "picto" => "user", "enabled" => "1", 'position' => 510, 'notnull' => 1, "visible" => "-2", "csslist" => "tdoverflowmax150",),
 		"fk_user_modif" => array("type" => "integer:User:user/class/user.class.php", "label" => "UserModif", "picto" => "user", "enabled" => "1", 'position' => 511, 'notnull' => -1, "visible" => "-2", "csslist" => "tdoverflowmax150",),
 		"import_key" => array("type" => "varchar(14)", "label" => "ImportId", "enabled" => "1", 'position' => 1000, 'notnull' => -1, "visible" => "-2",),
-		"status" => array("type" => "integer", "label" => "Status", "enabled" => "1", 'position' => 2000, 'notnull' => 1, "visible" => "1", "index" => "1", "arrayofkeyval" => array("0" => "Brouillon", "1" => "Valid&eacute;", "9" => "Annul&eacute;"), "validate" => "1",),
-		"datestart" => array("type" => "date", "label" => "DateStart", "enabled" => "1", 'position' => 0, 'notnull' => 0, "visible" => "1",),
-		"dateend" => array("type" => "date", "label" => "DateEnd", "enabled" => "1", 'position' => 0, 'notnull' => 0, "visible" => "1",),
-		"palier" => array("type" => "integer", "label" => "Palier", "enabled" => "1", 'position' => 0, 'notnull' => 0, "visible" => "1",),
-		"vatrfa" => array("type" => "double", "label" => "VatRfa", "enabled" => "1", 'position' => 0, 'notnull' => 0, "visible" => "1",),
+		"status" => array("type" => "integer", "label" => "Status", "enabled" => "1", 'position' => 2000, 'notnull' => 1, "visible" => "1", "default" => "0", "index" => "1", "arrayofkeyval" => array("0" => "Brouillon", "1" => "Gagné", "9" => "Perdu"), "validate" => "1",),
+		"datestart" => array("type" => "date", "label" => "DateStart", "enabled" => "1", 'position' => 30, 'notnull' => 1, "visible" => "1",),
+		"dateend" => array("type" => "date", "label" => "DateEnd", "enabled" => "1", 'position' => 40, 'notnull' => 1, "visible" => "1",),
+		"palier" => array("type" => "price", "label" => "Palier", "enabled" => "1", 'position' => 50, 'notnull' => 1, "visible" => "1",),
+		"raterfa" => array("type" => "double(24,2)", "label" => "RateRfa", "enabled" => "1", 'position' => 60, 'notnull' => 1, "visible" => "1",),
 	);
 	public $rowid;
 	public $ref;
@@ -140,7 +140,7 @@ class ChaumeilRfa extends CommonObject
 	public $datestart;
 	public $dateend;
 	public $palier;
-	public $vatrfa;
+	public $raterfa;
 	// END MODULEBUILDER PROPERTIES
 
 
@@ -234,6 +234,8 @@ class ChaumeilRfa extends CommonObject
 	 */
 	public function create(User $user, $notrigger = 0)
 	{
+		$this->ref = $this->getNextNumRef();
+		$this->prefix = 'RFA';
 		$resultcreate = $this->createCommon($user, $notrigger);
 
 		// uncomment lines below if you want to validate object after creation
@@ -529,92 +531,7 @@ class ChaumeilRfa extends CommonObject
 
 		$this->db->begin();
 
-		// Define new ref
-		if (!$error && (preg_match('/^[\(]?PROV/i', $this->ref) || empty($this->ref))) { // empty should not happened, but when it occurs, the test save life
-			$num = $this->getNextNumRef();
-		} else {
-			$num = $this->ref;
-		}
-		$this->newref = $num;
 
-		if (!empty($num)) {
-			// Validate
-			$sql = "UPDATE ".MAIN_DB_PREFIX.$this->table_element;
-			$sql .= " SET ";
-			if (!empty($this->fields['ref'])) {
-				$sql .= " ref = '".$this->db->escape($num)."',";
-			}
-			$sql .= " status = ".self::STATUS_VALIDATED;
-			if (!empty($this->fields['date_validation'])) {
-				$sql .= ", date_validation = '".$this->db->idate($now)."'";
-			}
-			if (!empty($this->fields['fk_user_valid'])) {
-				$sql .= ", fk_user_valid = ".((int) $user->id);
-			}
-			$sql .= " WHERE rowid = ".((int) $this->id);
-
-			dol_syslog(get_class($this)."::validate()", LOG_DEBUG);
-			$resql = $this->db->query($sql);
-			if (!$resql) {
-				dol_print_error($this->db);
-				$this->error = $this->db->lasterror();
-				$error++;
-			}
-
-			if (!$error && !$notrigger) {
-				// Call trigger
-				$result = $this->call_trigger('MYOBJECT_VALIDATE', $user);
-				if ($result < 0) {
-					$error++;
-				}
-				// End call triggers
-			}
-		}
-
-		if (!$error) {
-			$this->oldref = $this->ref;
-
-			// Rename directory if dir was a temporary ref
-			if (preg_match('/^[\(]?PROV/i', $this->ref)) {
-				// Now we rename also files into index
-				$sql = 'UPDATE '.MAIN_DB_PREFIX."ecm_files set filename = CONCAT('".$this->db->escape($this->newref)."', SUBSTR(filename, ".(strlen($this->ref) + 1).")), filepath = 'chaumeilrfa/".$this->db->escape($this->newref)."'";
-				$sql .= " WHERE filename LIKE '".$this->db->escape($this->ref)."%' AND filepath = 'chaumeilrfa/".$this->db->escape($this->ref)."' and entity = ".$conf->entity;
-				$resql = $this->db->query($sql);
-				if (!$resql) {
-					$error++;
-					$this->error = $this->db->lasterror();
-				}
-				$sql = 'UPDATE '.MAIN_DB_PREFIX."ecm_files set filepath = 'chaumeilrfa/".$this->db->escape($this->newref)."'";
-				$sql .= " WHERE filepath = 'chaumeilrfa/".$this->db->escape($this->ref)."' and entity = ".$conf->entity;
-				$resql = $this->db->query($sql);
-				if (!$resql) {
-					$error++;
-					$this->error = $this->db->lasterror();
-				}
-
-				// We rename directory ($this->ref = old ref, $num = new ref) in order not to lose the attachments
-				$oldref = dol_sanitizeFileName($this->ref);
-				$newref = dol_sanitizeFileName($num);
-				$dirsource = $conf->clichaumeil->dir_output.'/chaumeilrfa/'.$oldref;
-				$dirdest = $conf->clichaumeil->dir_output.'/chaumeilrfa/'.$newref;
-				if (!$error && file_exists($dirsource)) {
-					dol_syslog(get_class($this)."::validate() rename dir ".$dirsource." into ".$dirdest);
-
-					if (@rename($dirsource, $dirdest)) {
-						dol_syslog("Rename ok");
-						// Rename docs starting with $oldref with $newref
-						$listoffiles = dol_dir_list($conf->clichaumeil->dir_output.'/chaumeilrfa/'.$newref, 'files', 1, '^'.preg_quote($oldref, '/'));
-						foreach ($listoffiles as $fileentry) {
-							$dirsource = $fileentry['name'];
-							$dirdest = preg_replace('/^'.preg_quote($oldref, '/').'/', $newref, $dirsource);
-							$dirsource = $fileentry['path'].'/'.$dirsource;
-							$dirdest = $fileentry['path'].'/'.$dirdest;
-							@rename($dirsource, $dirdest);
-						}
-					}
-				}
-			}
-		}
 
 		// Set new ref and current status
 		if (!$error) {
@@ -767,8 +684,13 @@ class ChaumeilRfa extends CommonObject
 		} else {
 			$label = implode($this->getTooltipContentArray($params));
 		}
+		global $user;
+		if ($user->hasRight('clichaumeil', 'chaumeilrfa', 'write')) {
+			$url = dol_buildpath('/clichaumeil/chaumeilrfa_card.php', 1).'?id='.$this->id.'&action=edit&socid='.$this->fk_soc;
+		} else {
+			$url = '';
+		}
 
-		$url = dol_buildpath('/clichaumeil/chaumeilrfa_card.php', 1).'?id='.$this->id;
 
 		if ($option !== 'nolink') {
 			// Add param to save lastsearch_values or not
@@ -940,11 +862,11 @@ class ChaumeilRfa extends CommonObject
 			global $langs;
 			//$langs->load("clichaumeil@clichaumeil");
 			$this->labelStatus[self::STATUS_DRAFT] = $langs->transnoentitiesnoconv('Draft');
-			$this->labelStatus[self::STATUS_VALIDATED] = $langs->transnoentitiesnoconv('Enabled');
-			$this->labelStatus[self::STATUS_CANCELED] = $langs->transnoentitiesnoconv('Disabled');
+			$this->labelStatus[self::STATUS_VALIDATED] = $langs->transnoentitiesnoconv('RfaStatusWon');
+			$this->labelStatus[self::STATUS_CANCELED] = $langs->transnoentitiesnoconv('RfaStatusLost');
 			$this->labelStatusShort[self::STATUS_DRAFT] = $langs->transnoentitiesnoconv('Draft');
-			$this->labelStatusShort[self::STATUS_VALIDATED] = $langs->transnoentitiesnoconv('Enabled');
-			$this->labelStatusShort[self::STATUS_CANCELED] = $langs->transnoentitiesnoconv('Disabled');
+			$this->labelStatusShort[self::STATUS_VALIDATED] = $langs->transnoentitiesnoconv('RfaStatusWon');
+			$this->labelStatusShort[self::STATUS_CANCELED] = $langs->transnoentitiesnoconv('RfaStatusLost');
 		}
 
 		$statusType = 'status'.$status;
@@ -1083,7 +1005,7 @@ class ChaumeilRfa extends CommonObject
 			if (class_exists($classname)) {
 				$obj = new $classname();
 				'@phan-var-force ModeleNumRefChaumeilRfa $obj';
-				$numref = $obj->getNextValue($this);
+				$numref = 'RFA'.$obj->getNextValue($this);
 
 				if ($numref != '' && $numref != '-1') {
 					return $numref;

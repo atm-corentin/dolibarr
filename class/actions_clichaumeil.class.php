@@ -73,6 +73,7 @@ class ActionsClichaumeil extends CommonHookActions
 		$this->db = $db;
 	}
 
+	public $rfa_tab_added = false;
 
 	/**
 	 * Execute action
@@ -341,6 +342,10 @@ class ActionsClichaumeil extends CommonHookActions
 	{
 		global $langs, $conf, $user;
 
+		if ($this->rfa_tab_added == true) {
+			return 0; // déjà passé une fois
+		}
+
 		if (!isset($parameters['object']->element)) {
 			return 0;
 		}
@@ -355,15 +360,30 @@ class ActionsClichaumeil extends CommonHookActions
 			$id = $parameters['object']->id;
 			// verifier le type d'onglet comme member_stats où ça ne doit pas apparaitre
 			// if (in_array($element, ['societe', 'member', 'contrat', 'fichinter', 'project', 'propal', 'commande', 'facture', 'order_supplier', 'invoice_supplier'])) {
-			if (in_array($element, ['context1', 'context2'])) {
+			if ($element == 'societe' && $user->hasRight('clichaumeil', 'chaumeilrfa', 'read')){
 				$datacount = 0;
 
-				$parameters['head'][$counter][0] = dol_buildpath('/clichaumeil/clichaumeil_tab.php', 1) . '?id=' . $id . '&amp;module='.$element;
-				$parameters['head'][$counter][1] = $langs->trans('ClichaumeilTab');
+				//SQL COUNT RFA by socid
+				$rfaCountsql = "SELECT COUNT(*) as count FROM ".$this->db->prefix()."clichaumeil_chaumeilrfa WHERE fk_soc = ".$id;
+
+				$resql = $this->db->query($rfaCountsql);
+				if ($resql) {
+					$obj = $this->db->fetch_object($resql);
+					$datacount = $obj->count;
+				} else {
+					dol_print_error($this->db);
+				}
+
+				if ($object->fournisseur && $this->rfa_tab_added == false ) {
+					$parameters['head'][$counter][0] = dol_buildpath('/clichaumeil/chaumeilrfa_list.php', 1) . '?socid=' . $id;
+					$parameters['head'][$counter][1] = $langs->trans('ClichaumeilTabRfa');
+					$this->rfa_tab_added = true;
+				}
+
 				if ($datacount > 0) {
 					$parameters['head'][$counter][1] .= '<span class="badge marginleftonlyshort">' . $datacount . '</span>';
 				}
-				$parameters['head'][$counter][2] = 'clichaumeilemails';
+				$parameters['head'][$counter][2] = 'clichaumeilrfa';
 				$counter++;
 			}
 			if ($counter > 0 && (int) DOL_VERSION < 14) {  // @phpstan-ignore-line

@@ -120,11 +120,9 @@ class modClichaumeil extends DolibarrModules
 			// Set here all hooks context managed by module. To find available hook context, make a "grep -r '>initHooks(' *" on source code. You can also set hook context to 'all'
 			/* BEGIN MODULEBUILDER HOOKSCONTEXTS */
 			'hooks' => array(
-				//   'data' => array(
-				//       'hookcontext1',
-				//       'hookcontext2',
-				//   ),
-				//   'entity' => '0',
+				'thirdpartycard',
+				'globalcard',
+				'projectthirdparty'
 			),
 			/* END MODULEBUILDER HOOKSCONTEXTS */
 			// Set this to 1 if features of module are opened to external users
@@ -172,6 +170,7 @@ class modClichaumeil extends DolibarrModules
 		//                             2 => array('CLICHAUMEIL_MYNEWCONST2', 'chaine', 'myvalue', 'This is another constant to add', 0, 'current', 1)
 		// );
 		$this->const = array();
+		$this->rfa_tab_added = false;
 
 		// Some keys to add into the overwriting translation tables
 		/*$this->overwrite_translation = array(
@@ -293,17 +292,17 @@ class modClichaumeil extends DolibarrModules
 		// Add here entries to declare new permissions
 		/* BEGIN MODULEBUILDER PERMISSIONS */
 		$this->rights[$r][0] = $this->numero . sprintf('%02d', (0 * 10) + 0 + 1);
-		$this->rights[$r][1] = 'Read ChaumeilRfa object of Clichaumeil';
+		$this->rights[$r][1] = 'ReadRightsChaumeilRfa';
 		$this->rights[$r][4] = 'chaumeilrfa';
 		$this->rights[$r][5] = 'read';
 		$r++;
 		$this->rights[$r][0] = $this->numero . sprintf('%02d', (0 * 10) + 1 + 1);
-		$this->rights[$r][1] = 'Create/Update ChaumeilRfa object of Clichaumeil';
+		$this->rights[$r][1] = 'CreateUpadteRightsChaumeilRfa';
 		$this->rights[$r][4] = 'chaumeilrfa';
 		$this->rights[$r][5] = 'write';
 		$r++;
 		$this->rights[$r][0] = $this->numero . sprintf('%02d', (0 * 10) + 2 + 1);
-		$this->rights[$r][1] = 'Delete ChaumeilRfa object of Clichaumeil';
+		$this->rights[$r][1] = 'DeleteRightsChaumeilRfa';
 		$this->rights[$r][4] = 'chaumeilrfa';
 		$this->rights[$r][5] = 'delete';
 		$r++;
@@ -436,7 +435,7 @@ class modClichaumeil extends DolibarrModules
 		// Exports profiles provided by this module
 		$r = 0;
 		/* BEGIN MODULEBUILDER EXPORT MYOBJECT */
-		/*
+
 		$langs->load("clichaumeil@clichaumeil");
 		$this->export_code[$r] = $this->rights_class.'_'.$r;
 		$this->export_label[$r] = 'ChaumeilRfaLines';	// Translation key (used only if key ExportDataset_xxx_z not found)
@@ -460,8 +459,8 @@ class modClichaumeil extends DolibarrModules
 		$this->export_sql_end[$r]  =' FROM '.MAIN_DB_PREFIX.'clichaumeil_chaumeilrfa as t';
 		//$this->export_sql_end[$r]  .=' LEFT JOIN '.MAIN_DB_PREFIX.'clichaumeil_chaumeilrfa_line as tl ON tl.fk_chaumeilrfa = t.rowid';
 		$this->export_sql_end[$r] .=' WHERE 1 = 1';
-		$this->export_sql_end[$r] .=' AND t.entity IN ('.getEntity('chaumeilrfa').')';
-		$r++; */
+		//$this->export_sql_end[$r] .=' AND t.entity IN ('.getEntity('chaumeilrfa').')';
+		$r++;
 		/* END MODULEBUILDER EXPORT MYOBJECT */
 
 		// Imports profiles provided by this module

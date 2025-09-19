@@ -113,6 +113,8 @@ $backtopageforcancel = GETPOST('backtopageforcancel', 'alpha');	// if not set, $
 $backtopagejsfields = GETPOST('backtopagejsfields', 'alpha');
 $optioncss = GETPOST('optioncss', 'aZ'); // Option for the css output (always '' except when 'print')
 $dol_openinpopup = GETPOST('dol_openinpopup', 'aZ09');
+$socid = GETPOST('socid','alpha');
+$fksoc = GETPOST('fk_soc','alpha');
 
 if (!empty($backtopagejsfields)) {
 	$tmpbacktopagejsfields = explode(':', $backtopagejsfields);
@@ -151,6 +153,7 @@ include DOL_DOCUMENT_ROOT.'/core/actions_fetchobject.inc.php'; // Must be 'inclu
 // There is several ways to check permission.
 // Set $enablepermissioncheck to 1 to enable a minimum low level of checks
 $enablepermissioncheck = getDolGlobalInt('CLICHAUMEIL_ENABLE_PERMISSION_CHECK');
+$enablepermissioncheck = 1;
 if ($enablepermissioncheck) {
 	$permissiontoread = $user->hasRight('clichaumeil', 'chaumeilrfa', 'read');
 	$permissiontoadd = $user->hasRight('clichaumeil', 'chaumeilrfa', 'write'); // Used by the include of actions_addupdatedelete.inc.php and actions_lineupdown.inc.php
@@ -193,14 +196,14 @@ if ($reshook < 0) {
 }
 
 if (empty($reshook)) {
-	$backurlforlist = dol_buildpath('/clichaumeil/chaumeilrfa_list.php', 1);
+	$backurlforlist = dol_buildpath('/clichaumeil/chaumeilrfa_list.php?socid='.$socid, 1);
 
 	if (empty($backtopage) || ($cancel && empty($id))) {
 		if (empty($backtopage) || ($cancel && strpos($backtopage, '__ID__'))) {
 			if (empty($id) && (($action != 'add' && $action != 'create') || $cancel)) {
 				$backtopage = $backurlforlist;
 			} else {
-				$backtopage = dol_buildpath('/clichaumeil/chaumeilrfa_card.php', 1).'?id='.((!empty($id) && $id > 0) ? $id : '__ID__');
+				$backtopage = dol_buildpath('/clichaumeil/chaumeilrfa_list.php?socid='.$socid, 1);
 			}
 		}
 	}
@@ -274,14 +277,17 @@ llxHeader('', $title, $help_url, '', 0, 0, '', '', '', 'mod-clichaumeil page-car
 
 // Part to create
 if ($action == 'create') {
+	if (empty($socid)) {
+		$socid = $fksoc;
+	}
 	if (empty($permissiontoadd)) {
 		accessforbidden('NotEnoughPermissions', 0, 1);
 	}
-
+	$object->fk_soc = $socid;
 	print load_fiche_titre($title, '', $object->picto);
-
 	print '<form method="POST" action="'.$_SERVER["PHP_SELF"].'">';
 	print '<input type="hidden" name="token" value="'.newToken().'">';
+	print '<input type="hidden" name="fk_soc" value="'.$socid.'">';
 	print '<input type="hidden" name="action" value="add">';
 	if ($backtopage) {
 		print '<input type="hidden" name="backtopage" value="'.$backtopage.'">';
@@ -319,7 +325,7 @@ if ($action == 'create') {
 }
 
 // Part to edit record
-if (($id || $ref) && $action == 'edit') {
+if (($id || $ref) && $action == 'edit' && $permissiontoadd) {
 	print load_fiche_titre($langs->trans("ChaumeilRfa"), '', $object->picto);
 
 	print '<form method="POST" action="'.$_SERVER["PHP_SELF"].'">';

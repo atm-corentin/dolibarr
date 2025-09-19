@@ -94,6 +94,7 @@ include DOL_DOCUMENT_ROOT.'/core/actions_fetchobject.inc.php'; // Must be 'inclu
 // There is several ways to check permission.
 // Set $enablepermissioncheck to 1 to enable a minimum low level of checks
 $enablepermissioncheck = getDolGlobalInt('CLICHAUMEIL_ENABLE_PERMISSION_CHECK');
+$enablepermissioncheck = 1;
 if ($enablepermissioncheck) {
 	$permissiontoread = $user->hasRight('clichaumeil', 'chaumeilrfa', 'read');
 	$permissiontoadd = $user->hasRight('clichaumeil', 'chaumeilrfa', 'write');
