@@ -82,3 +82,4 @@ CliChaumeilWarningNotifFailed=Failed to send notification to user #%s for contra
 CliChaumeilErrorNotifCreationFailed=Failed to create notification for user #%s and contract #%s
 CliChaumeilContractsList = The list of contracts ( only used for Scheduled jobs on tariff revisions)
 CliChaumeilCronReportTitle=--- CliChaumeil Cron Report ---
+ClichaumeilDescription = Description of CliChaumeil
