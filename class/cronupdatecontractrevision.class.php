@@ -121,7 +121,6 @@ class CronJobUpdateContractRevision
 	{
 		global $user;
 		$processedDetails = [];
-		$cachedContracts = [];
 
 		$this->db->begin();
 		try {
@@ -135,17 +134,8 @@ class CronJobUpdateContractRevision
 				}
 
 				$contractId = $contractLine->fk_contrat;
-				$contractUrl = '';
+				$contractUrl = '<a href="'.dol_buildpath('/contrat/card.php',2).'?id='.$contractId.'">'.$lineData['contract_ref'].'</a>';
 
-				if (isset($cachedContracts[$contractId])) {
-					$contractUrl = $cachedContracts[$contractId];
-				} else {
-					$contract = new Contrat($this->db);
-					if ($contract->fetch($contractId) > 0) {
-						$contractUrl = $contract->getNomUrl(1);
-						$cachedContracts[$contractId] = $contractUrl;
-					}
-				}
 
 				if (empty($contractUrl)) {
 					$contractUrl = $lineData['contract_ref'];
@@ -351,7 +341,6 @@ class CronJobUpdateContractRevision
 		foreach ($modifiedContracts as $contractData) {
 			$contractList .= "- " . $contractData['url'] . "\n";
 		}
-
 		$formmail = new FormMail($this->db);
 		$template = $formmail->getEMailTemplate($this->db, 'contract', $user, $langs, $templateCode);
 		if ($template <= 0) {
