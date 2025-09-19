@@ -84,4 +84,4 @@ CliChaumeilWarningNotifFailed=Échec de l'envoi de la notification à l'utilisat
 CliChaumeilErrorNotifCreationFailed=Échec de la création de la notification pour l'utilisateur #%s et le contrat #%s
 CliChaumeilContractsList=La liste des contrats (uniquement utilisé pour le travail planifié sur les révisions tarifaires)
 CliChaumeilCronReportTitle=--- RAPPORT DE MISE À JOUR TARIFAIRE ---
-ClichaumeilDescription = Description de CliWeneos
+ClichaumeilDescription = Description de CliChaumeil
