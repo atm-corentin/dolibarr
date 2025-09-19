@@ -265,20 +265,19 @@ class modClichaumeil extends DolibarrModules
 		// unit_frequency must be 60 for minute, 3600 for hour, 86400 for day, 604800 for week
 		/* BEGIN MODULEBUILDER CRON */
 		$this->cronjobs = array(
-			//  0 => array(
-			//      'label' => 'MyJob label',
-			//      'jobtype' => 'method',
-			//      'class' => '/clichaumeil/class/chaumeilrfa.class.php',
-			//      'objectname' => 'ChaumeilRfa',
-			//      'method' => 'doScheduledJob',
-			//      'parameters' => '',
-			//      'comment' => 'Comment',
-			//      'frequency' => 2,
-			//      'unitfrequency' => 3600,
-			//      'status' => 0,
-			//      'test' => 'isModEnabled("clichaumeil")',
-			//      'priority' => 50,
-			//  ),
+			0 => array(
+				'label' => $langs->trans('CliChaumeilAutomaticRenewalContract'),
+				'jobtype' => 'method',
+				'class' => '/clichaumeil/class/cronupdatecontractrevision.class.php',
+				'objectname' => 'CronJobUpdateContractRevision',
+				'method' => 'run',
+				'parameters' => '',
+				'comment' => $langs->trans('CliChaumeilApplyRenewalRate'),
+				'frequency' => 24,
+				'unitfrequency' => 3600,
+				'status' => 0, // 0 for disabled by default, 1 for enabled
+				'priority' => 50,
+			)
 		);
 		/* END MODULEBUILDER CRON */
 		// Example: $this->cronjobs=array(
@@ -520,14 +519,10 @@ class modClichaumeil extends DolibarrModules
 		}
 
 		// Create extrafields during init
-		//include_once DOL_DOCUMENT_ROOT.'/core/class/extrafields.class.php';
-		//$extrafields = new ExtraFields($this->db);
-		//$result0=$extrafields->addExtraField('clichaumeil_separator1', "Separator 1", 'separator', 1,  0, 'thirdparty',   0, 0, '', array('options'=>array(1=>1)), 1, '', 1, 0, '', '', 'clichaumeil@clichaumeil', 'isModEnabled("clichaumeil")');
-		//$result1=$extrafields->addExtraField('clichaumeil_myattr1', "New Attr 1 label", 'boolean', 1,  3, 'thirdparty',   0, 0, '', '', 1, '', -1, 0, '', '', 'clichaumeil@clichaumeil', 'isModEnabled("clichaumeil")');
-		//$result2=$extrafields->addExtraField('clichaumeil_myattr2', "New Attr 2 label", 'varchar', 1, 10, 'project',      0, 0, '', '', 1, '', -1, 0, '', '', 'clichaumeil@clichaumeil', 'isModEnabled("clichaumeil")');
-		//$result3=$extrafields->addExtraField('clichaumeil_myattr3', "New Attr 3 label", 'varchar', 1, 10, 'bank_account', 0, 0, '', '', 1, '', -1, 0, '', '', 'clichaumeil@clichaumeil', 'isModEnabled("clichaumeil")');
-		//$result4=$extrafields->addExtraField('clichaumeil_myattr4', "New Attr 4 label", 'select',  1,  3, 'thirdparty',   0, 1, '', array('options'=>array('code1'=>'Val1','code2'=>'Val2','code3'=>'Val3')), 1,'', -1, 0, '', '', 'clichaumeil@clichaumeil', 'isModEnabled("clichaumeil")');
-		//$result5=$extrafields->addExtraField('clichaumeil_myattr5', "New Attr 5 label", 'text',    1, 10, 'user',         0, 0, '', '', 1, '', -1, 0, '', '', 'clichaumeil@clichaumeil', 'isModEnabled("clichaumeil")');
+		include_once DOL_DOCUMENT_ROOT.'/core/class/extrafields.class.php';
+		$extrafields = new ExtraFields($this->db);
+		$extrafields->addExtraField('clichaumeilreviewrate', 'CliChaumeilReviewRate', 'double', 100, '24,2', 'contrat', 0, 0, '', array ( 'options' => array ( '' => NULL, ), ), 1, '', '1', '', '', 0, 'clichaumeil@clichaumeil', 'isModEnabled("clichaumeil")', 0, '0', array ( 'css' => '', 'cssview' => '', 'csslist' => ''));
+		$extrafields->addExtraField('clichaumeil_reviewdate', 'CliChaumeilReviewDate', 'date', 100, '', 'contratdet', 0, 0, '', array ( 'options' => array ( '' => NULL, ), ), 1, '', '1', '', '', 0, 'clichaumeil@clichaumeil', 'isModEnabled("clichaumeil")', 0, '0', array ( 'css' => '', 'cssview' => '', 'csslist' => '', ));
 
 		// Permissions
 		$this->remove($options);
