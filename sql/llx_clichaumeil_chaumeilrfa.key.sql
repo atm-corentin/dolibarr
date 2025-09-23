@@ -17,13 +17,8 @@
 -- BEGIN MODULEBUILDER INDEXES
 ALTER TABLE llx_clichaumeil_chaumeilrfa ADD INDEX idx_clichaumeil_chaumeilrfa_rowid (rowid);
 ALTER TABLE llx_clichaumeil_chaumeilrfa ADD UNIQUE INDEX uk_clichaumeil_chaumeilrfa_ref (ref);
---ALTER TABLE llx_clichaumeil_chaumeilrfa ADD INDEX idx_clichaumeil_chaumeilrfa_fk_soc (fk_soc);
 ALTER TABLE llx_clichaumeil_chaumeilrfa ADD INDEX idx_clichaumeil_chaumeilrfa_status (status);
 -- END MODULEBUILDER INDEXES
-
---ALTER TABLE llx_clichaumeil_chaumeilrfa ADD UNIQUE INDEX uk_clichaumeil_chaumeilrfa_fieldxy(fieldx, fieldy);
-
---ALTER TABLE llx_clichaumeil_chaumeilrfa ADD CONSTRAINT llx_clichaumeil_chaumeilrfa_fk_field FOREIGN KEY (fk_field) REFERENCES llx_clichaumeil_myotherobject(rowid);
 
 -- Delete cascade RFA on delete soc
 ALTER TABLE llx_clichaumeil_chaumeilrfa ADD CONSTRAINT fk_chaumeilrfa_societe FOREIGN KEY (fk_soc) REFERENCES llx_societe (rowid) ON DELETE CASCADE;

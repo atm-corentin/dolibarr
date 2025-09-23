@@ -1,6 +1,6 @@
 <?php
 /* Copyright (C) 2023		Laurent Destailleur			<eldy@users.sourceforge.net>
- * Copyright (C) 2025		SuperAdmin
+ * Copyright (C) 2025		Grégory Maza             <gregory.maza@atm-consulting.fr>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -92,75 +92,6 @@ class ActionsClichaumeil extends CommonHookActions
 		return 0;
 	}
 
-	/**
-	 * Overload the doActions function : replacing the parent's function with the one below
-	 *
-	 * @param	array<string,mixed>	$parameters		Hook metadata (context, etc...)
-	 * @param	CommonObject		$object			The object to process (an invoice if you are in invoice module, a propale in propale's module, etc...)
-	 * @param	?string				$action			Current action (if set). Generally create or edit or null
-	 * @param	HookManager			$hookmanager	Hook manager propagated to allow calling another hook
-	 * @return	int									Return integer < 0 on error, 0 on success, 1 to replace standard code
-	 */
-	public function doActions($parameters, &$object, &$action, $hookmanager)
-	{
-		global $conf, $user, $langs;
-
-		$error = 0; // Error counter
-
-		/* print_r($parameters); print_r($object); echo "action: " . $action; */
-		// @phan-suppress-next-line PhanPluginEmptyStatementIf
-		if (in_array($parameters['currentcontext'], array('somecontext1', 'somecontext2'))) {	    // do something only for the context 'somecontext1' or 'somecontext2'
-			// Do what you want here...
-			// You can for example load and use call global vars like $fieldstosearchall to overwrite them, or update the database depending on $action and GETPOST values.
-
-			if (!$error) {
-				$this->results = array('myreturn' => 999);
-				$this->resprints = 'A text to show';
-				return 0; // or return 1 to replace standard code
-			} else {
-				$this->errors[] = 'Error message';
-				return -1;
-			}
-		}
-
-		return 0;
-	}
-
-
-	/**
-	 * Overload the doMassActions function : replacing the parent's function with the one below
-	 *
-	 * @param	array<string,mixed>	$parameters		Hook metadata (context, etc...)
-	 * @param	CommonObject		$object			The object to process (an invoice if you are in invoice module, a propale in propale's module, etc...)
-	 * @param	?string				$action			Current action (if set). Generally create or edit or null
-	 * @param	HookManager			$hookmanager	Hook manager propagated to allow calling another hook
-	 * @return	int									Return integer < 0 on error, 0 on success, 1 to replace standard code
-	 */
-	public function doMassActions($parameters, &$object, &$action, $hookmanager)
-	{
-		global $conf, $user, $langs;
-
-		$error = 0; // Error counter
-
-		/* print_r($parameters); print_r($object); echo "action: " . $action; */
-		if (in_array($parameters['currentcontext'], array('somecontext1', 'somecontext2'))) {		// do something only for the context 'somecontext1' or 'somecontext2'
-			// @phan-suppress-next-line PhanPluginEmptyStatementForeachLoop
-			foreach ($parameters['toselect'] as $objectid) {
-				// Do action on each object id
-			}
-
-			if (!$error) {
-				$this->results = array('myreturn' => 999);
-				$this->resprints = 'A text to show';
-				return 0; // or return 1 to replace standard code
-			} else {
-				$this->errors[] = 'Error message';
-				return -1;
-			}
-		}
-
-		return 0;
-	}
 
 
 	/**
@@ -190,67 +121,6 @@ class ActionsClichaumeil extends CommonHookActions
 			$this->errors[] = 'Error message';
 			return -1;
 		}
-	}
-
-
-
-	/**
-	 * Execute action before PDF (document) creation
-	 *
-	 * @param	array<string,mixed>	$parameters	Array of parameters
-	 * @param	CommonObject		$object		Object output on PDF
-	 * @param	string				$action		'add', 'update', 'view'
-	 * @return	int								Return integer <0 if KO,
-	 *											=0 if OK but we want to process standard actions too,
-	 *											>0 if OK and we want to replace standard actions.
-	 */
-	public function beforePDFCreation($parameters, &$object, &$action)
-	{
-		global $conf, $user, $langs;
-		global $hookmanager;
-
-		$outputlangs = $langs;
-
-		$ret = 0;
-		$deltemp = array();
-		dol_syslog(get_class($this).'::executeHooks action='.$action);
-
-		/* print_r($parameters); print_r($object); echo "action: " . $action; */
-		// @phan-suppress-next-line PhanPluginEmptyStatementIf
-		if (in_array($parameters['currentcontext'], array('somecontext1', 'somecontext2'))) {		// do something only for the context 'somecontext1' or 'somecontext2'
-		}
-
-		return $ret;
-	}
-
-	/**
-	 * Execute action after PDF (document) creation
-	 *
-	 * @param	array<string,mixed>	$parameters	Array of parameters
-	 * @param	CommonDocGenerator	$pdfhandler	PDF builder handler
-	 * @param	string				$action		'add', 'update', 'view'
-	 * @return	int								Return integer <0 if KO,
-	 * 											=0 if OK but we want to process standard actions too,
-	 *											>0 if OK and we want to replace standard actions.
-	 */
-	public function afterPDFCreation($parameters, &$pdfhandler, &$action)
-	{
-		global $conf, $user, $langs;
-		global $hookmanager;
-
-		$outputlangs = $langs;
-
-		$ret = 0;
-		$deltemp = array();
-		dol_syslog(get_class($this).'::executeHooks action='.$action);
-
-		/* print_r($parameters); print_r($object); echo "action: " . $action; */
-		// @phan-suppress-next-line PhanPluginEmptyStatementIf
-		if (in_array($parameters['currentcontext'], array('somecontext1', 'somecontext2'))) {
-			// do something only for the context 'somecontext1' or 'somecontext2'
-		}
-
-		return $ret;
 	}
 
 
@@ -364,7 +234,7 @@ class ActionsClichaumeil extends CommonHookActions
 				$datacount = 0;
 
 				//SQL COUNT RFA by socid
-				$rfaCountsql = "SELECT COUNT(*) as count FROM ".$this->db->prefix()."clichaumeil_chaumeilrfa WHERE fk_soc = ".$id;
+				$rfaCountsql = "SELECT COUNT(*) as count FROM ".$this->db->prefix()."clichaumeil_chaumeilrfa WHERE fk_soc = ".(int)$id;
 
 				$resql = $this->db->query($rfaCountsql);
 				if ($resql) {
@@ -398,6 +268,21 @@ class ActionsClichaumeil extends CommonHookActions
 			// Bad value for $parameters['mode']
 			return -1;
 		}
+	}
+
+	/**
+	 * Function used to replace a thirdparty id with another one.
+	 *
+	 * @param 	DoliDB 	$dbs 		Database handler, because function is static we name it $dbs not $db to avoid breaking coding test
+	 * @param 	int 	$origin_id 	Old thirdparty id
+	 * @param 	int 	$dest_id 	New thirdparty id
+	 * @return 	bool
+	 */
+	public static function replaceThirdparty(DoliDB $dbs, $origin_id, $dest_id)
+	{
+		$tables = array('clichaumeil_chaumeilrfa');
+
+		return CommonObject::commonReplaceThirdparty($dbs, $origin_id, $dest_id, $tables);
 	}
 
 	/* Add other hook methods here... */

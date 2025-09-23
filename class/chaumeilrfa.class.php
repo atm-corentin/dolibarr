@@ -1,7 +1,7 @@
 <?php
 /* Copyright (C) 2017       Laurent Destailleur      <eldy@users.sourceforge.net>
  * Copyright (C) 2023-2024  Frédéric France          <frederic.france@free.fr>
- * Copyright (C) 2025		SuperAdmin
+ * Copyright (C) 2025		Grégory Maza             <gregory.maza@atm-consulting.fr>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -56,12 +56,12 @@ class ChaumeilRfa extends CommonObject
 	/**
 	 * @var string 	String with name of icon for chaumeilrfa. Must be a 'fa-xxx' fontawesome code (or 'fa-xxx_fa_color_size') or 'chaumeilrfa@clichaumeil' if picto is file 'img/object_chaumeilrfa.png'.
 	 */
-	public $picto = 'fa-file';
+	public $picto = 'fa-money-bill';
 
 
 	const STATUS_DRAFT = 0;
-	const STATUS_VALIDATED = 1;
-	const STATUS_CANCELED = 9;
+	const STATUS_WON = 1;
+	const STATUS_LOST = 9;
 
 	/**
 	 *  'type' field format:
@@ -121,7 +121,7 @@ class ChaumeilRfa extends CommonObject
 		"fk_user_creat" => array("type" => "integer:User:user/class/user.class.php", "label" => "UserAuthor", "picto" => "user", "enabled" => "1", 'position' => 510, 'notnull' => 1, "visible" => "-2", "csslist" => "tdoverflowmax150",),
 		"fk_user_modif" => array("type" => "integer:User:user/class/user.class.php", "label" => "UserModif", "picto" => "user", "enabled" => "1", 'position' => 511, 'notnull' => -1, "visible" => "-2", "csslist" => "tdoverflowmax150",),
 		"import_key" => array("type" => "varchar(14)", "label" => "ImportId", "enabled" => "1", 'position' => 1000, 'notnull' => -1, "visible" => "-2",),
-		"status" => array("type" => "integer", "label" => "Status", "enabled" => "1", 'position' => 2000, 'notnull' => 1, "visible" => "1", "default" => "0", "index" => "1", "arrayofkeyval" => array("0" => "Brouillon", "1" => "Gagné", "9" => "Perdu"), "validate" => "1",),
+		"status" => array("type" => "integer", "label" => "Status", "enabled" => "1", 'position' => 2000, 'notnull' => 1, "visible" => "1", "default" => "0", "index" => "1", "arrayofkeyval" => array("0" => "RfaStatusDraft", "1" => "RfaStatusWon", "9" => "RfaStatusLost"), "validate" => "1",),
 		"datestart" => array("type" => "date", "label" => "DateStart", "enabled" => "1", 'position' => 30, 'notnull' => 1, "visible" => "1",),
 		"dateend" => array("type" => "date", "label" => "DateEnd", "enabled" => "1", 'position' => 40, 'notnull' => 1, "visible" => "1",),
 		"palier" => array("type" => "price", "label" => "Palier", "enabled" => "1", 'position' => 50, 'notnull' => 1, "visible" => "1",),
@@ -143,43 +143,6 @@ class ChaumeilRfa extends CommonObject
 	public $raterfa;
 	// END MODULEBUILDER PROPERTIES
 
-
-	// If this object has a subtable with lines
-
-	// /**
-	//  * @var string    Name of subtable line
-	//  */
-	// public $table_element_line = 'clichaumeil_chaumeilrfaline';
-
-	// /**
-	//  * @var string    Field with ID of parent key if this object has a parent
-	//  */
-	// public $fk_element = 'fk_chaumeilrfa';
-
-	// /**
-	//  * @var string    Name of subtable class that manage subtable lines
-	//  */
-	// public $class_element_line = 'ChaumeilRfaline';
-
-	// /**
-	//  * @var array	List of child tables. To test if we can delete object.
-	//  */
-	// protected $childtables = array('mychildtable' => array('name'=>'ChaumeilRfa', 'fk_element'=>'fk_chaumeilrfa'));
-
-	// /**
-	//  * @var array    List of child tables. To know object to delete on cascade.
-	//  *               If name matches '@ClassNAme:FilePathClass;ParentFkFieldName' it will
-	//  *               call method deleteByParentField(parentId, ParentFkFieldName) to fetch and delete child object
-	//  */
-	// protected $childtablesoncascade = array('clichaumeil_chaumeilrfadet');
-
-	// /**
-	//  * @var ChaumeilRfaLine[]     Array of subtable lines
-	//  */
-	// public $lines = array();
-
-
-
 	/**
 	 * Constructor
 	 *
@@ -199,12 +162,6 @@ class ChaumeilRfa extends CommonObject
 		if (!isModEnabled('multicompany') && isset($this->fields['entity'])) {
 			$this->fields['entity']['enabled'] = 0;
 		}
-
-		// Example to show how to set values of fields definition dynamically
-		/*if ($user->hasRight('clichaumeil', 'chaumeilrfa', 'read')) {
-			$this->fields['myfield']['visible'] = 1;
-			$this->fields['myfield']['noteditable'] = 0;
-		}*/
 
 		// Unset fields that are disabled
 		foreach ($this->fields as $key => $val) {
@@ -234,114 +191,13 @@ class ChaumeilRfa extends CommonObject
 	 */
 	public function create(User $user, $notrigger = 0)
 	{
-		$this->ref = $this->getNextNumRef();
 		$this->prefix = 'RFA';
+		var_dump($this->prefix);
+		//exit;
+		$this->ref = $this->getNextNumRef();
 		$resultcreate = $this->createCommon($user, $notrigger);
 
-		// uncomment lines below if you want to validate object after creation
-		// $this->fetch($this->id); // needed to retrieve some fields (ie date_creation for masked ref)
-		// $resultcreate = $this->validate($user, $notrigger);
-
 		return $resultcreate;
-	}
-
-	/**
-	 * Clone an object into another one
-	 *
-	 * @param	User 	$user		User that creates
-	 * @param	int 	$fromid		Id of object to clone
-	 * @return	self|int<-1,-1>		New object created, <0 if KO
-	 */
-	public function createFromClone(User $user, $fromid)
-	{
-		global $langs, $extrafields;
-		$error = 0;
-
-		dol_syslog(__METHOD__, LOG_DEBUG);
-
-		$object = new self($this->db);
-
-		$this->db->begin();
-
-		// Load source object
-		$result = $object->fetchCommon($fromid);
-		if ($result > 0 && !empty($object->table_element_line)) {
-			$object->fetchLines();
-		}
-
-		// get lines so they will be clone
-		//foreach($this->lines as $line)
-		//	$line->fetch_optionals();
-
-		// Reset some properties
-		unset($object->id);
-		unset($object->fk_user_creat);
-		unset($object->import_key);
-
-		// Clear fields
-		if (property_exists($object, 'ref')) {
-			$object->ref = empty($this->fields['ref']['default']) ? "Copy_Of_".$object->ref : $this->fields['ref']['default'];
-		}
-		if (property_exists($object, 'label')) {
-			$object->label = empty($this->fields['label']['default']) ? $langs->trans("CopyOf")." ".$object->label : $this->fields['label']['default'];
-		}
-		if (property_exists($object, 'status')) {
-			$object->status = self::STATUS_DRAFT;
-		}
-		if (property_exists($object, 'date_creation')) {
-			$object->date_creation = dol_now();
-		}
-		if (property_exists($object, 'date_modification')) {
-			$object->date_modification = null;
-		}
-		// ...
-		// Clear extrafields that are unique
-		if (is_array($object->array_options) && count($object->array_options) > 0) {
-			$extrafields->fetch_name_optionals_label($this->table_element);
-			foreach ($object->array_options as $key => $option) {
-				$shortkey = preg_replace('/options_/', '', $key);
-				if (!empty($extrafields->attributes[$this->table_element]['unique'][$shortkey])) {
-					//var_dump($key);
-					//var_dump($clonedObj->array_options[$key]); exit;
-					unset($object->array_options[$key]);
-				}
-			}
-		}
-
-		// Create clone
-		$object->context['createfromclone'] = 'createfromclone';
-		$result = $object->createCommon($user);
-		if ($result < 0) {
-			$error++;
-			$this->setErrorsFromObject($object);
-		}
-
-		if (!$error) {
-			// copy internal contacts
-			if ($this->copy_linked_contact($object, 'internal') < 0) {
-				$error++;
-			}
-		}
-
-		if (!$error) {
-			// copy external contacts if same company
-			if (!empty($object->socid) && property_exists($this, 'fk_soc') && $this->fk_soc == $object->socid) {
-				if ($this->copy_linked_contact($object, 'external') < 0) {
-					$error++;
-				}
-			}
-		}
-
-		unset($object->context['createfromclone']);
-
-		// End
-		if (!$error) {
-			$this->db->commit();
-			return $object;
-		} else {
-			$this->db->rollback();
-			return -1;
-		}
 	}
 
 	/**
@@ -361,21 +217,6 @@ class ChaumeilRfa extends CommonObject
 		}
 		return $result;
 	}
-
-	/**
-	 * Load object lines in memory from the database
-	 *
-	 * @param	int<0,1>	$noextrafields	0=Default to load extrafields, 1=No extrafields
-	 * @return 	int<-1,1>					Return integer <0 if KO, 0 if not found, >0 if OK
-	 */
-	public function fetchLines($noextrafields = 0)
-	{
-		$this->lines = array();
-
-		$result = $this->fetchLinesCommon('', $noextrafields);
-		return $result;
-	}
-
 
 	/**
 	 * Load list of objects in memory from the database.
@@ -476,149 +317,6 @@ class ChaumeilRfa extends CommonObject
 	public function delete(User $user, $notrigger = 0)
 	{
 		return $this->deleteCommon($user, $notrigger);
-		//return $this->deleteCommon($user, $notrigger, 1);
-	}
-
-	/**
-	 *  Delete a line of object in database
-	 *
-	 *	@param	User		$user		User that delete
-	 *  @param	int			$idline		Id of line to delete
-	 *  @param	int<0,1>	$notrigger	0=launch triggers after, 1=disable triggers
-	 *  @return	int<-2,1>				>0 if OK, <0 if KO
-	 */
-	public function deleteLine(User $user, $idline, $notrigger = 0)
-	{
-		if ($this->status < 0) {
-			$this->error = 'ErrorDeleteLineNotAllowedByObjectStatus';
-			return -2;
-		}
-
-		return $this->deleteLineCommon($user, $idline, $notrigger);
-	}
-
-
-	/**
-	 *	Validate object
-	 *
-	 *	@param	User		$user		User making status change
-	 *  @param	int<0,1>	$notrigger	1=Does not execute triggers, 0= execute triggers
-	 *	@return	int<-1,1>				Return integer <=0 if OK, 0=Nothing done, >0 if KO
-	 */
-	public function validate($user, $notrigger = 0)
-	{
-		global $conf;
-
-		require_once DOL_DOCUMENT_ROOT.'/core/lib/files.lib.php';
-
-		$error = 0;
-
-		// Protection
-		if ($this->status == self::STATUS_VALIDATED) {
-			dol_syslog(get_class($this)."::validate action abandoned: already validated", LOG_WARNING);
-			return 0;
-		}
-
-		/* if (! ((!getDolGlobalInt('MAIN_USE_ADVANCED_PERMS') && $user->hasRight('clichaumeil', 'chaumeilrfa', 'write'))
-		 || (getDolGlobalInt('MAIN_USE_ADVANCED_PERMS') && $user->hasRight('clichaumeil', 'chaumeilrfa_advance', 'validate')))
-		 {
-		 $this->error='NotEnoughPermissions';
-		 dol_syslog(get_class($this)."::valid ".$this->error, LOG_ERR);
-		 return -1;
-		 }*/
-
-		$now = dol_now();
-
-		$this->db->begin();
-
-
-
-		// Set new ref and current status
-		if (!$error) {
-			$this->ref = $num;
-			$this->status = self::STATUS_VALIDATED;
-		}
-
-		if (!$error) {
-			$this->db->commit();
-			return 1;
-		} else {
-			$this->db->rollback();
-			return -1;
-		}
-	}
-
-
-	/**
-	 *	Set draft status
-	 *
-	 *	@param	User		$user		Object user that modify
-	 *  @param	int<0,1>	$notrigger	1=Does not execute triggers, 0=Execute triggers
-	 *	@return	int<0,1>				Return integer <0 if KO, >0 if OK
-	 */
-	public function setDraft($user, $notrigger = 0)
-	{
-		// Protection
-		if ($this->status <= self::STATUS_DRAFT) {
-			return 0;
-		}
-
-		/* if (! ((!getDolGlobalInt('MAIN_USE_ADVANCED_PERMS') && $user->hasRight('clichaumeil','write'))
-		 || (getDolGlobalInt('MAIN_USE_ADVANCED_PERMS') && $user->hasRight('clichaumeil','clichaumeil_advance','validate'))))
-		 {
-		 $this->error='Permission denied';
-		 return -1;
-		 }*/
-
-		return $this->setStatusCommon($user, self::STATUS_DRAFT, $notrigger, 'CLICHAUMEIL_MYOBJECT_UNVALIDATE');
-	}
-
-	/**
-	 *	Set cancel status
-	 *
-	 *	@param	User		$user		Object user that modify
-	 *  @param	int<0,1>	$notrigger	1=Does not execute triggers, 0=Execute triggers
-	 *	@return	int<-1,1>				Return integer <0 if KO, 0=Nothing done, >0 if OK
-	 */
-	public function cancel($user, $notrigger = 0)
-	{
-		// Protection
-		if ($this->status != self::STATUS_VALIDATED) {
-			return 0;
-		}
-
-		/* if (! ((!getDolGlobalInt('MAIN_USE_ADVANCED_PERMS') && $user->hasRight('clichaumeil','write'))
-		 || (getDolGlobalInt('MAIN_USE_ADVANCED_PERMS') && $user->hasRight('clichaumeil','clichaumeil_advance','validate'))))
-		 {
-		 $this->error='Permission denied';
-		 return -1;
-		 }*/
-
-		return $this->setStatusCommon($user, self::STATUS_CANCELED, $notrigger, 'CLICHAUMEIL_MYOBJECT_CANCEL');
-	}
-
-	/**
-	 *	Set back to validated status
-	 *
-	 *	@param	User		$user			Object user that modify
-	 *  @param	int<0,1>	$notrigger		1=Does not execute triggers, 0=Execute triggers
-	 *	@return	int<-1,1>					Return integer <0 if KO, 0=Nothing done, >0 if OK
-	 */
-	public function reopen($user, $notrigger = 0)
-	{
-		// Protection
-		if ($this->status == self::STATUS_VALIDATED) {
-			return 0;
-		}
-
-		/*if (! ((!getDolGlobalInt('MAIN_USE_ADVANCED_PERMS') && $user->hasRight('clichaumeil','write'))
-		 || (getDolGlobalInt('MAIN_USE_ADVANCED_PERMS') && $user->hasRight('clichaumeil','clichaumeil_advance','validate'))))
-		 {
-		 $this->error='Permission denied';
-		 return -1;
-		 }*/
-
-		return $this->setStatusCommon($user, self::STATUS_VALIDATED, $notrigger, 'CLICHAUMEIL_MYOBJECT_REOPEN');
 	}
 
 	/**
@@ -862,16 +560,16 @@ class ChaumeilRfa extends CommonObject
 			global $langs;
 			//$langs->load("clichaumeil@clichaumeil");
 			$this->labelStatus[self::STATUS_DRAFT] = $langs->transnoentitiesnoconv('Draft');
-			$this->labelStatus[self::STATUS_VALIDATED] = $langs->transnoentitiesnoconv('RfaStatusWon');
-			$this->labelStatus[self::STATUS_CANCELED] = $langs->transnoentitiesnoconv('RfaStatusLost');
+			$this->labelStatus[self::STATUS_WON] = $langs->transnoentitiesnoconv('RfaStatusWon');
+			$this->labelStatus[self::STATUS_LOST] = $langs->transnoentitiesnoconv('RfaStatusLost');
 			$this->labelStatusShort[self::STATUS_DRAFT] = $langs->transnoentitiesnoconv('Draft');
-			$this->labelStatusShort[self::STATUS_VALIDATED] = $langs->transnoentitiesnoconv('RfaStatusWon');
-			$this->labelStatusShort[self::STATUS_CANCELED] = $langs->transnoentitiesnoconv('RfaStatusLost');
+			$this->labelStatusShort[self::STATUS_WON] = $langs->transnoentitiesnoconv('RfaStatusWon');
+			$this->labelStatusShort[self::STATUS_LOST] = $langs->transnoentitiesnoconv('RfaStatusLost');
 		}
 
 		$statusType = 'status'.$status;
-		//if ($status == self::STATUS_VALIDATED) $statusType = 'status1';
-		if ($status == self::STATUS_CANCELED) {
+		//if ($status == self::STATUS_WON) $statusType = 'status1';
+		if ($status == self::STATUS_LOST) {
 			$statusType = 'status6';
 		}
 
@@ -900,7 +598,7 @@ class ChaumeilRfa extends CommonObject
 		if (!empty($this->fields['fk_user_valid'])) {
 			$sql .= ", fk_user_valid";
 		}
-		$sql .= " FROM ".MAIN_DB_PREFIX.$this->table_element." as t";
+		$sql .= " FROM ".$this->db->prefix().$this->table_element." as t";
 		$sql .= " WHERE t.rowid = ".((int) $id);
 
 		$result = $this->db->query($sql);
@@ -948,27 +646,6 @@ class ChaumeilRfa extends CommonObject
 	}
 
 	/**
-	 * 	Create an array of lines
-	 *
-	 * 	@return	CommonObjectLine[]|int		array of lines if OK, <0 if KO
-	 */
-	public function getLinesArray()
-	{
-		$this->lines = array();
-
-		$objectline = new ChaumeilRfaLine($this->db);
-		$result = $objectline->fetchAll('ASC', 'position', 0, 0, '(fk_chaumeilrfa:=:'.((int) $this->id).')');
-
-		if (is_numeric($result)) {
-			$this->setErrorsFromObject($objectline);
-			return $result;
-		} else {
-			$this->lines = $result;
-			return $this->lines;
-		}
-	}
-
-	/**
 	 *  Returns the reference to the following non used object depending on the active numbering module.
 	 *
 	 *  @return	string      		Object free reference
@@ -978,15 +655,15 @@ class ChaumeilRfa extends CommonObject
 		global $langs, $conf;
 		$langs->load("clichaumeil@clichaumeil");
 
-		if (!getDolGlobalString('CLICHAUMEIL_MYOBJECT_ADDON')) {
-			$conf->global->CLICHAUMEIL_MYOBJECT_ADDON = 'mod_chaumeilrfa_standard';
+		if (!getDolGlobalString('CHAUMEILRFA_ADDON')) {
+			$conf->global->CHAUMEILRFA_ADDON = 'mod_chaumeilrfa_standard';
 		}
 
-		if (getDolGlobalString('CLICHAUMEIL_MYOBJECT_ADDON')) {
+		if (getDolGlobalString('CHAUMEILRFA_ADDON')) {
 			$mybool = false;
 
-			$file = getDolGlobalString('CLICHAUMEIL_MYOBJECT_ADDON').".php";
-			$classname = getDolGlobalString('CLICHAUMEIL_MYOBJECT_ADDON');
+			$file = getDolGlobalString('CHAUMEILRFA_ADDON').".php";
+			$classname = getDolGlobalString('CHAUMEILRFA_ADDON');
 
 			// Include file with class
 			$dirmodels = array_merge(array('/'), (array) $conf->modules_parts['models']);
@@ -1025,45 +702,6 @@ class ChaumeilRfa extends CommonObject
 	}
 
 	/**
-	 *  Create a document onto disk according to template module.
-	 *
-	 *  @param	string		$modele			Force template to use ('' to not force)
-	 *  @param	Translate	$outputlangs	object lang a utiliser pour traduction
-	 *  @param	int<0,1>	$hidedetails    Hide details of lines
-	 *  @param	int<0,1>	$hidedesc       Hide description
-	 *  @param	int<0,1>	$hideref        Hide ref
-	 *  @param	?array<string,string>  $moreparams     Array to provide more information
-	 *  @return	int         				0 if KO, 1 if OK
-	 */
-	public function generateDocument($modele, $outputlangs, $hidedetails = 0, $hidedesc = 0, $hideref = 0, $moreparams = null)
-	{
-		global $langs;
-
-		$result = 0;
-		$includedocgeneration = 1;
-
-		$langs->load("clichaumeil@clichaumeil");
-
-		if (!dol_strlen($modele)) {
-			$modele = 'standard_chaumeilrfa';
-
-			if (!empty($this->model_pdf)) {
-				$modele = $this->model_pdf;
-			} elseif (getDolGlobalString('MYOBJECT_ADDON_PDF')) {
-				$modele = getDolGlobalString('MYOBJECT_ADDON_PDF');
-			}
-		}
-
-		$modelpath = "core/modules/clichaumeil/doc/";
-
-		if ($includedocgeneration && !empty($modele)) {
-			$result = $this->commonGenerateDocument($modelpath, $modele, $outputlangs, $hidedetails, $hidedesc, $hideref, $moreparams);
-		}
-
-		return $result;
-	}
-
-	/**
 	 * Return validation test result for a field.
 	 * Need MAIN_ACTIVATE_VALIDATION_RESULT to be called.
 	 *
@@ -1078,73 +716,5 @@ class ChaumeilRfa extends CommonObject
 		// ...
 
 		return parent::validateField($fields, $fieldKey, $fieldValue);
-	}
-
-	/**
-	 * Action executed by scheduler
-	 * CAN BE A CRON TASK. In such a case, parameters come from the schedule job setup field 'Parameters'
-	 * Use public function doScheduledJob($param1, $param2, ...) to get parameters
-	 *
-	 * @return	int			0 if OK, <>0 if KO (this function is used also by cron so only 0 is OK)
-	 */
-	public function doScheduledJob()
-	{
-		//global $conf, $langs;
-
-		//$conf->global->SYSLOG_FILE = 'DOL_DATA_ROOT/dolibarr_mydedicatedlogfile.log';
-
-		$error = 0;
-		$this->output = '';
-		$this->error = '';
-
-		dol_syslog(__METHOD__." start", LOG_INFO);
-
-		$now = dol_now();
-
-		$this->db->begin();
-
-		// ...
-
-		$this->db->commit();
-
-		dol_syslog(__METHOD__." end", LOG_INFO);
-
-		return $error;
-	}
-}
-
-
-require_once DOL_DOCUMENT_ROOT.'/core/class/commonobjectline.class.php';
-
-/**
- * Class ChaumeilRfaLine. You can also remove this and generate a CRUD class for lines objects.
- */
-class ChaumeilRfaLine extends CommonObjectLine
-{
-	// To complete with content of an object ChaumeilRfaLine
-	// We should have a field rowid, fk_chaumeilrfa and position
-
-	/**
-	 * To overload
-	 * @see CommonObjectLine
-	 */
-	public $parent_element = '';		// Example: '' or 'chaumeilrfa'
-
-	/**
-	 * To overload
-	 * @see CommonObjectLine
-	 */
-	public $fk_parent_attribute = '';	// Example: '' or 'fk_chaumeilrfa'
-
-	/**
-	 * Constructor
-	 *
-	 * @param	DoliDB $db Database handler
-	 */
-	public function __construct(DoliDB $db)
-	{
-		$this->db = $db;
-
-		$this->isextrafieldmanaged = 0;
 	}
 }

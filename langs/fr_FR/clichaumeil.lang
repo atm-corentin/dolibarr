@@ -43,6 +43,7 @@ MyWidgetDescription = My widget description
 
 RfaStatusWon=Gagné
 RfaStatusLost=Perdu
+RfaStatusDraft=Brouillon
 ClichaumeilTabRfa=RFA
 ChaumeilRfa=Remise de fin d'année
 ChaumeilRfas=Remises fin d'année

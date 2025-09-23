@@ -2,7 +2,7 @@
 /* Copyright (C) 2005-2010	Laurent Destailleur			<eldy@users.sourceforge.net>
  * Copyright (C) 2005-2009	Regis Houssin				<regis.houssin@inodbox.com>
  * Copyright (C) 2024		MDW							<mdeweerd@users.noreply.github.com>
- * Copyright (C) 2025		SuperAdmin
+ * Copyright (C) 2025		Grégory Maza             <gregory.maza@atm-consulting.fr>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -41,7 +41,7 @@ class mod_chaumeilrfa_standard extends ModeleNumRefChaumeilRfa
 	/**
 	 * @var string
 	 */
-	public $prefix = 'MYOBJECT';
+	public $prefix = 'RFA';
 
 	/**
 	 * @var string Error code (or message)
@@ -93,7 +93,7 @@ class mod_chaumeilrfa_standard extends ModeleNumRefChaumeilRfa
 
 		$posindice = strlen($this->prefix) + 6;
 		$sql = "SELECT MAX(CAST(SUBSTRING(ref FROM ".$posindice.") AS SIGNED)) as max";
-		$sql .= " FROM ".MAIN_DB_PREFIX."clichaumeil_chaumeilrfa";
+		$sql .= " FROM ".$db->prefix()."clichaumeil_chaumeilrfa";
 		$sql .= " WHERE ref LIKE '".$db->escape($this->prefix)."____-%'";
 		if ($object->ismultientitymanaged == 1) {
 			$sql .= " AND entity = ".$conf->entity;
@@ -132,7 +132,7 @@ class mod_chaumeilrfa_standard extends ModeleNumRefChaumeilRfa
 		// first we get the max value
 		$posindice = strlen($this->prefix) + 6;
 		$sql = "SELECT MAX(CAST(SUBSTRING(ref FROM ".$posindice.") AS SIGNED)) as max";
-		$sql .= " FROM ".MAIN_DB_PREFIX."clichaumeil_chaumeilrfa";
+		$sql .= " FROM ".$db->prefix()."clichaumeil_chaumeilrfa";
 		$sql .= " WHERE ref LIKE '".$db->escape($this->prefix)."RFA-%'";
 		if ($object->ismultientitymanaged == 1) {
 			$sql .= " AND entity = ".$conf->entity;
