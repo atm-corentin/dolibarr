@@ -192,8 +192,6 @@ class ChaumeilRfa extends CommonObject
 	public function create(User $user, $notrigger = 0)
 	{
 		$this->prefix = 'RFA';
-		var_dump($this->prefix);
-		//exit;
 		$this->ref = $this->getNextNumRef();
 		$resultcreate = $this->createCommon($user, $notrigger);
 
@@ -682,7 +680,7 @@ class ChaumeilRfa extends CommonObject
 			if (class_exists($classname)) {
 				$obj = new $classname();
 				'@phan-var-force ModeleNumRefChaumeilRfa $obj';
-				$numref = 'RFA'.$obj->getNextValue($this);
+				$numref = $obj->getNextValue($this);
 
 				if ($numref != '' && $numref != '-1') {
 					return $numref;

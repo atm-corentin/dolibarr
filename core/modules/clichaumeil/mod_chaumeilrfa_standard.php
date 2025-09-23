@@ -126,14 +126,13 @@ class mod_chaumeilrfa_standard extends ModeleNumRefChaumeilRfa
 	 */
 	public function getNextValue($object)
 	{
-		$this->prefix = '';
 		global $db, $conf;
 
 		// first we get the max value
-		$posindice = strlen($this->prefix) + 6;
+		$posindice = strlen($this->prefix) + 3;
 		$sql = "SELECT MAX(CAST(SUBSTRING(ref FROM ".$posindice.") AS SIGNED)) as max";
 		$sql .= " FROM ".$db->prefix()."clichaumeil_chaumeilrfa";
-		$sql .= " WHERE ref LIKE '".$db->escape($this->prefix)."RFA-%'";
+		$sql .= " WHERE ref LIKE '".$db->escape($this->prefix)."%'";
 		if ($object->ismultientitymanaged == 1) {
 			$sql .= " AND entity = ".$conf->entity;
 		} elseif ($object->ismultientitymanaged == 2) {
