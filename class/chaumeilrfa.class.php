@@ -191,7 +191,6 @@ class ChaumeilRfa extends CommonObject
 	 */
 	public function create(User $user, $notrigger = 0)
 	{
-		$this->prefix = 'RFA';
 		$this->ref = $this->getNextNumRef();
 		$resultcreate = $this->createCommon($user, $notrigger);
 
