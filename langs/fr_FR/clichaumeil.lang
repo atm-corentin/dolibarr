@@ -41,6 +41,18 @@ MyPageName = My page name
 MyWidget = My widget
 MyWidgetDescription = My widget description
 
+RfaStatusWon=Gagné
+RfaStatusLost=Perdu
+RfaStatusDraft=Brouillon
+ClichaumeilTabRfa=RFA
+ChaumeilRfa=Remise de fin d'année
+ChaumeilRfas=Remises fin d'année
+RateRfa=Taux de RFA
+
+ReadRightsChaumeilRfa=Consulter les remises de fin d'année (RFA)
+CreateUpadteRightsChaumeilRfa=Créer/Modifier les remises de fin d'année (RFA)
+DeleteRightsChaumeilRfa=Supprimer les remises de fin d'année (RFA)
+
 ClichaumeilSetup = Paramètrages CliChaumeil
 Settings = Paramètrages
 ClichaumeilSetupPage = Paramètrages CliChaumeil
