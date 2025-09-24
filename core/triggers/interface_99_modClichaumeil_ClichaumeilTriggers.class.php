@@ -96,8 +96,10 @@ class InterfaceClichaumeilTriggers extends DolibarrTriggers
 			case 'LINEPROPAL_MODIFY':
 
 			global $db;
-			$height = ChaumeilRfa::cleanNumericField($object->array_options["options_clichaumeil_height"]);
-			$length = ChaumeilRfa::cleanNumericField($object->array_options["options_clichaumeil_length"]);
+
+			//Clean fields
+			$height = abs(price2num($object->array_options["options_clichaumeil_height"]));
+			$length = abs(price2num($object->array_options["options_clichaumeil_length"]));
 			$object->array_options["options_clichaumeil_height"] = $height;
 			$object->array_options["options_clichaumeil_length"] = $length;
 

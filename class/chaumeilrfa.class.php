@@ -714,30 +714,4 @@ class ChaumeilRfa extends CommonObject
 
 		return parent::validateField($fields, $fieldKey, $fieldValue);
 	}
-
-	/**
-	 * Cleans a value to keep only numbers and decimal point, removes all minus signs
-	 *
-	 * @param string $value Raw value (e.g., "12.5abc" or "-12.5")
-	 * @return string Cleaned value (e.g., "12.5") or empty string if invalid
-	 */
-	public static function cleanNumericField($value) {
-		// Replace comma with dot (Dolibarr usually uses dot as decimal separator)
-		$value = str_replace(',', '.', $value);
-
-		// Remove all minus signs
-		$value = str_replace('-', '', $value);
-
-		// Remove all characters except digits and dot
-		$value = preg_replace('/[^0-9.]/', '', $value);
-
-		// Keep only one dot (the first one)
-		$parts = explode('.', $value);
-		if (count($parts) > 1) {
-			$value = $parts[0] . '.' . implode('', array_slice($parts, 1));
-		}
-
-		return $value;
-	}
-
 }

@@ -102,10 +102,8 @@ ClichaumeilDescription = Description de CliChaumeil
 # Extrafields
 #
 
-CliChaumeilHeightPropalDet=Hauteur(cm)
-CliChaumeilLengthPropalDet=Longeur(cm)
-CliChaumeilHeightCommandeDet=Hauteur(cm)
-CliChaumeilLengthCommandeDet=Longeur(cm)
+CliChaumeilHeight=Hauteur(cm)
+CliChaumeilLength=Longeur(cm)
 
 #
 # ERRORS

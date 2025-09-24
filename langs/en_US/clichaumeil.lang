@@ -99,10 +99,8 @@ DeleteRightsChaumeilRfa=Delete year-end rebates (RFA)
 #
 # Extrafields
 #
-CliChaumeilHeightPropalDet=Height (cm)
-CliChaumeilLengthPropalDet=Length (cm)
-CliChaumeilHeightCommandeDet=Height (cm)
-CliChaumeilLengthCommandeDet=Length (cm)
+CliChaumeilHeight=Height (cm)
+CliChaumeilLength=Length (cm)
 
 #
 # ERRORS
