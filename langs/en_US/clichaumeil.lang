@@ -95,3 +95,21 @@ RateRfa=RFA rate
 ReadRightsChaumeilRfa=View year-end rebates (RFA)
 CreateUpadteRightsChaumeilRfa=Create/Update year-end rebates (RFA)
 DeleteRightsChaumeilRfa=Delete year-end rebates (RFA)
+
+#
+# Extrafields
+#
+CliChaumeilHeightPropalDet=Height (cm)
+CliChaumeilLengthPropalDet=Length (cm)
+CliChaumeilHeightCommandeDet=Height (cm)
+CliChaumeilLengthCommandeDet=Length (cm)
+
+#
+# ERRORS
+#
+ErrorFieldsMustBeNumeric=Length/Height: numeric values required
+WarningFieldHeightMustBeNumeric=Height not defined: numeric value required
+WarningFieldLengthMustBeNumeric=Length not defined: numeric value required
+WarningFieldsHeightLengthNotDefined=Height and Length not defined: numeric values required to calculate surface (in cm²)
+RollbackUnitsQtyforProduct=Product unit and quantity reset
+SurfaceRecalculatedInCm2=Surface recalculated (in cm²)
