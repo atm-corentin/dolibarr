@@ -121,7 +121,12 @@ class InterfaceClichaumeilTriggers extends DolibarrTriggers
 				}
 			}
 			//For escape infinity loop ! use notriggers 1 !
-			$object->update($user, 1);
+			$result = $object->update($user, 1);
+			if ($result < 0) {
+				setEventMessages($object->error, $object->errors, 'warnings');
+				dol_syslog(__METHOD__.' '.implode(',', $this->errors), LOG_ERR);
+				return -1;
+			}
 
 			default:
 				dol_syslog("Trigger '".$this->name."' for action '".$action."' launched by ".__FILE__.". id=".$object->id);
