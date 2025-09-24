@@ -96,10 +96,10 @@ class InterfaceClichaumeilTriggers extends DolibarrTriggers
 			case 'LINEPROPAL_MODIFY':
 
 			global $db;
-			$height = ChaumeilRfa::cleanNumericField($object->array_options["options_clichaumeil_height_$object->element"]);
-			$length = ChaumeilRfa::cleanNumericField($object->array_options["options_clichaumeil_length_$object->element"]);
-			$object->array_options["options_clichaumeil_height_$object->element"] = $height;
-			$object->array_options["options_clichaumeil_length_$object->element"] = $length;
+			$height = ChaumeilRfa::cleanNumericField($object->array_options["options_clichaumeil_height"]);
+			$length = ChaumeilRfa::cleanNumericField($object->array_options["options_clichaumeil_length"]);
+			$object->array_options["options_clichaumeil_height"] = $height;
+			$object->array_options["options_clichaumeil_length"] = $length;
 
 			if ($height > 0 && $length > 0) {
 				// Get rowid from c_units dictionary for the 'CM2' code
@@ -107,23 +107,14 @@ class InterfaceClichaumeilTriggers extends DolibarrTriggers
 				$object->qty = (float)$height * (float)$length;
 				setEventMessages($langs->trans('SurfaceRecalculatedInCm2'), null, 'mesgs');
 			} else {
-				// If empty → restore product unit
-				$object->fk_unit = (int)dol_getIdFromCode($db, $object->fk_product, 'product', 'rowid', 'fk_unit');
-				$object->qty = 1;
 
 				if ($height === '' && $length === '') {
 					if ($action !== 'LINEORDER_INSERT' && $action !== 'LINEPROPAL_INSERT') {
 						setEventMessages($langs->trans('WarningFieldsHeightLengthNotDefined'), null, 'warnings');
 					}
 				} elseif ($length === '') {
-					if ($action !== 'LINEORDER_INSERT' && $action !== 'LINEPROPAL_INSERT') {
-						setEventMessages($langs->trans('RollbackUnitsQtyforProduct'), null, 'mesgs');
-					}
 					setEventMessages($langs->trans('WarningFieldLengthMustBeNumeric'), null, 'warnings');
 				} elseif ($height === '') {
-					if ($action !== 'LINEORDER_INSERT' && $action !== 'LINEPROPAL_INSERT') {
-						setEventMessages($langs->trans('RollbackUnitsQtyforProduct'), null, 'mesgs');
-					}
 					setEventMessages($langs->trans('WarningFieldHeightMustBeNumeric'), null, 'warnings');
 				}
 			}
