@@ -97,7 +97,7 @@ class InterfaceClichaumeilTriggers extends DolibarrTriggers
 			if ($height > 0 && $length > 0) {
 				// Get rowid from c_units dictionary for the 'CM2' code
 				$object->fk_unit = (int)dol_getIdFromCode($db, 'CM2', 'c_units', 'code', 'rowid');
-				if ($object->fk_unit < 0) {
+				if ($object->fk_unit <= 0) {
 					setEventMessages($object->error, $object->errors, 'errors');
 					dol_syslog(__METHOD__.' '.implode(',', $this->errors), LOG_ERR);
 					return -1;
@@ -114,7 +114,7 @@ class InterfaceClichaumeilTriggers extends DolibarrTriggers
 			}
 			//For escape infinity loop ! use notriggers 1 !
 			$result = $object->update($user, 1);
-			if ($result < 0) {
+			if ($result <= 0) {
 				setEventMessages($object->error, $object->errors, 'errors');
 				dol_syslog(__METHOD__.' '.implode(',', $this->errors), LOG_ERR);
 				return -1;
