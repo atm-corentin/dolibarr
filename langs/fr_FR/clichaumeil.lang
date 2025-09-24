@@ -97,3 +97,4 @@ CliChaumeilErrorNotifCreationFailed=Échec de la création de la notification po
 CliChaumeilContractsList=La liste des contrats (uniquement utilisé pour le travail planifié sur les révisions tarifaires)
 CliChaumeilCronReportTitle=--- RAPPORT DE MISE À JOUR TARIFAIRE ---
 ClichaumeilDescription = Description de CliChaumeil
+CliChaumeilGeneralExpenses=Frais généraux (en %)

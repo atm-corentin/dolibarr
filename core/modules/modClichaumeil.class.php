@@ -122,7 +122,8 @@ class modClichaumeil extends DolibarrModules
 			'hooks' => array(
 				'thirdpartycard',
 				'globalcard',
-				'projectthirdparty'
+				'projectthirdparty',
+				'bomcard'
 			),
 			/* END MODULEBUILDER HOOKSCONTEXTS */
 			// Set this to 1 if features of module are opened to external users
@@ -523,6 +524,7 @@ class modClichaumeil extends DolibarrModules
 		$extrafields = new ExtraFields($this->db);
 		$extrafields->addExtraField('clichaumeilreviewrate', 'CliChaumeilReviewRate', 'double', 100, '24,2', 'contrat', 0, 0, '', array ( 'options' => array ( '' => NULL, ), ), 1, '', '1', '', '', 0, 'clichaumeil@clichaumeil', 'isModEnabled("clichaumeil")', 0, '0', array ( 'css' => '', 'cssview' => '', 'csslist' => ''));
 		$extrafields->addExtraField('clichaumeil_reviewdate', 'CliChaumeilReviewDate', 'date', 100, '', 'contratdet', 0, 0, '', array ( 'options' => array ( '' => NULL, ), ), 1, '', '1', '', '', 0, 'clichaumeil@clichaumeil', 'isModEnabled("clichaumeil")', 0, '0', array ( 'css' => '', 'cssview' => '', 'csslist' => '', ));
+		$extrafields->addExtraField('clichaumeil_generalexpenses', 'CliChaumeilGeneralExpenses', 'double', 100, '24,2', 'bom_bom', 0, 0, '', array ( 'options' => array ( '' => NULL, ), ), 1, '', '1', '', '', 0, 'clichaumeil@clichaumeil', 1, 0, '0', array ( 'css' => '', 'cssview' => '', 'csslist' => '', ));
 
 		// Permissions
 		$this->remove($options);
