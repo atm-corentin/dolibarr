@@ -104,6 +104,7 @@ ClichaumeilDescription = Description de CliChaumeil
 
 CliChaumeilHeight=Hauteur(cm)
 CliChaumeilLength=Longeur(cm)
+CliChaumeilRefRequired=Référence client obligatoire
 
 #
 # ERRORS

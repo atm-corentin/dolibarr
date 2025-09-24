@@ -78,15 +78,6 @@ class InterfaceClichaumeilTriggers extends DolibarrTriggers
 
 		// You can isolate code for each action in a separate method: this method should be named like the trigger in camelCase.
 		// For example : COMPANY_CREATE => public function companyCreate($action, $object, User $user, Translate $langs, Conf $conf)
-		$methodName = lcfirst(str_replace(' ', '', ucwords(str_replace('_', ' ', strtolower($action)))));
-		$callback = array($this, $methodName);
-		if (is_callable($callback)) {
-			dol_syslog(
-				"Trigger '".$this->name."' for action '$action' launched by ".__FILE__.". id=".$object->id
-			);
-
-			return call_user_func($callback, $action, $object, $user, $langs, $conf);
-		}
 
 		// Or you can execute some code here
 		switch ($action) {  // @phan-suppress-current-line PhanNoopSwitchCases
@@ -106,6 +97,11 @@ class InterfaceClichaumeilTriggers extends DolibarrTriggers
 			if ($height > 0 && $length > 0) {
 				// Get rowid from c_units dictionary for the 'CM2' code
 				$object->fk_unit = (int)dol_getIdFromCode($db, 'CM2', 'c_units', 'code', 'rowid');
+				if ($object->fk_unit < 0) {
+					setEventMessages($object->error, $object->errors, 'errors');
+					dol_syslog(__METHOD__.' '.implode(',', $this->errors), LOG_ERR);
+					return -1;
+				}
 				$object->qty = (float)$height * (float)$length;
 				setEventMessages($langs->trans('SurfaceRecalculatedInCm2'), null, 'mesgs');
 			} else {
@@ -114,16 +110,12 @@ class InterfaceClichaumeilTriggers extends DolibarrTriggers
 					if ($action !== 'LINEORDER_INSERT' && $action !== 'LINEPROPAL_INSERT') {
 						setEventMessages($langs->trans('WarningFieldsHeightLengthNotDefined'), null, 'warnings');
 					}
-				} elseif ($length === '') {
-					setEventMessages($langs->trans('WarningFieldLengthMustBeNumeric'), null, 'warnings');
-				} elseif ($height === '') {
-					setEventMessages($langs->trans('WarningFieldHeightMustBeNumeric'), null, 'warnings');
 				}
 			}
 			//For escape infinity loop ! use notriggers 1 !
 			$result = $object->update($user, 1);
 			if ($result < 0) {
-				setEventMessages($object->error, $object->errors, 'warnings');
+				setEventMessages($object->error, $object->errors, 'errors');
 				dol_syslog(__METHOD__.' '.implode(',', $this->errors), LOG_ERR);
 				return -1;
 			}
