@@ -86,8 +86,6 @@ class InterfaceClichaumeilTriggers extends DolibarrTriggers
 			case 'LINEPROPAL_INSERT':
 			case 'LINEPROPAL_MODIFY':
 
-			global $db;
-
 			//Clean fields
 			$height = abs(price2num($object->array_options["options_clichaumeil_height"]));
 			$length = abs(price2num($object->array_options["options_clichaumeil_length"]));
@@ -96,7 +94,7 @@ class InterfaceClichaumeilTriggers extends DolibarrTriggers
 
 			if ($height > 0 && $length > 0) {
 				// Get rowid from c_units dictionary for the 'CM2' code
-				$object->fk_unit = (int)dol_getIdFromCode($db, 'CM2', 'c_units', 'code', 'rowid');
+				$object->fk_unit = (int)dol_getIdFromCode($this->db, 'CM2', 'c_units', 'code', 'rowid');
 				if ($object->fk_unit <= 0) {
 					setEventMessages($object->error, $object->errors, 'errors');
 					dol_syslog(__METHOD__.' '.implode(',', $this->errors), LOG_ERR);
@@ -104,13 +102,6 @@ class InterfaceClichaumeilTriggers extends DolibarrTriggers
 				}
 				$object->qty = (float)$height * (float)$length;
 				setEventMessages($langs->trans('SurfaceRecalculatedInCm2'), null, 'mesgs');
-			} else {
-
-				if ($height === '' && $length === '') {
-					if ($action !== 'LINEORDER_INSERT' && $action !== 'LINEPROPAL_INSERT') {
-						setEventMessages($langs->trans('WarningFieldsHeightLengthNotDefined'), null, 'warnings');
-					}
-				}
 			}
 			//For escape infinity loop ! use notriggers 1 !
 			$result = $object->update($user, 1);
