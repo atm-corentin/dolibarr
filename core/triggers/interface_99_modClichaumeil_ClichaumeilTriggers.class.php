@@ -97,17 +97,16 @@ class InterfaceClichaumeilTriggers extends DolibarrTriggers
 
 
 			if ($height > 0 && $length > 0) {
-				if (!empty($height) && !empty($length)) {
-					// Get rowid from c_units dictionary for the 'CM2' code
-					$object->fk_unit = (int)dol_getIdFromCode($this->db, 'CM2', 'c_units', 'code', 'rowid');
-					if ($object->fk_unit <= 0) {
-						setEventMessages($object->error, $object->errors, 'errors');
-						dol_syslog(__METHOD__.' '.implode(',', $this->errors), LOG_ERR);
-						return -1;
-					}
-					$object->qty = (float)$height * (float)$length;
-					setEventMessages($langs->trans('SurfaceRecalculatedInCm2'), null, 'mesgs');
+				// Get rowid from c_units dictionary for the 'CM2' code
+				$object->fk_unit = (int)dol_getIdFromCode($this->db, 'CM2', 'c_units', 'code', 'rowid');
+				if ($object->fk_unit <= 0) {
+					setEventMessages($object->error, $object->errors, 'errors');
+					dol_syslog(__METHOD__ . ' ' . implode(',', $this->errors), LOG_ERR);
+					return -1;
 				}
+				$object->qty = (float)$height * (float)$length;
+				setEventMessages($langs->trans('SurfaceRecalculatedInCm2'), null, 'mesgs');
+
 			}
 			//For escape infinity loop ! use notriggers 1 !
 			$result = $object->update($user, 1);
