@@ -101,6 +101,8 @@ DeleteRightsChaumeilRfa=Delete year-end rebates (RFA)
 #
 CliChaumeilHeight=Height (cm)
 CliChaumeilLength=Length (cm)
+CliChaumeilRefRequired=Customer reference required
+CliChaumeilCustomerRefRequired=Customer reference required for %s
 
 #
 # ERRORS

@@ -86,21 +86,27 @@ class InterfaceClichaumeilTriggers extends DolibarrTriggers
 			case 'LINEPROPAL_MODIFY':
 
 			//Clean fields
-			$height = abs(price2num($object->array_options["options_clichaumeil_height"]));
-			$length = abs(price2num($object->array_options["options_clichaumeil_length"]));
-			$object->array_options["options_clichaumeil_height"] = $height;
-			$object->array_options["options_clichaumeil_length"] = $length;
+			$height = 0;
+			$length = 0;
+			if (!empty($object->array_options["options_clichaumeil_height"]) && !empty($object->array_options["options_clichaumeil_length"])){
+				$height = abs(price2num($object->array_options["options_clichaumeil_height"]));
+				$length = abs(price2num($object->array_options["options_clichaumeil_length"]));
+				$object->array_options["options_clichaumeil_height"] = $height;
+				$object->array_options["options_clichaumeil_length"] = $length;
+			}
+
 
 			if ($height > 0 && $length > 0) {
 				// Get rowid from c_units dictionary for the 'CM2' code
 				$object->fk_unit = (int)dol_getIdFromCode($this->db, 'CM2', 'c_units', 'code', 'rowid');
 				if ($object->fk_unit <= 0) {
 					setEventMessages($object->error, $object->errors, 'errors');
-					dol_syslog(__METHOD__.' '.implode(',', $this->errors), LOG_ERR);
+					dol_syslog(__METHOD__ . ' ' . implode(',', $this->errors), LOG_ERR);
 					return -1;
 				}
 				$object->qty = (float)$height * (float)$length;
 				setEventMessages($langs->trans('SurfaceRecalculatedInCm2'), null, 'mesgs');
+
 			}
 			//For escape infinity loop ! use notriggers 1 !
 			$result = $object->update($user, 1);
@@ -113,6 +119,22 @@ class InterfaceClichaumeilTriggers extends DolibarrTriggers
 			default:
 				dol_syslog("Trigger '".$this->name."' for action '".$action."' launched by ".__FILE__.". id=".$object->id);
 				break;
+
+			case 'ORDER_VALIDATE':
+
+				//Check for massaction
+				if (empty($object->thirdparty)){
+					$object->fetch_thirdparty();
+				}
+
+				//Check extrafield(Thirdparty) ref_required & field object->ref_client(Commande)
+				$customerRefRequired = $object->thirdparty->array_options['options_clichaumeil_ref_required'];
+				$customerRefCommande = $object->ref_client;
+
+				if ($customerRefRequired == 1 && empty($customerRefCommande)){
+					setEventMessages($langs->trans('CliChaumeilCustomerRefRequired',$object->getNomUrl()), null, 'errors');
+					return -1;
+				}
 		}
 
 		return 0;
