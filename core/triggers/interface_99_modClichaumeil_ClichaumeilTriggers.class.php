@@ -86,8 +86,8 @@ class InterfaceClichaumeilTriggers extends DolibarrTriggers
 			case 'LINEPROPAL_MODIFY':
 
 			//Clean fields
-			$height = '';
-			$length = '';
+			$height = (int)0;
+			$length = (int)0;
 			if (!empty($object->array_options["options_clichaumeil_height"]) && !empty($object->array_options["options_clichaumeil_length"])){
 				$height = abs(price2num($object->array_options["options_clichaumeil_height"]));
 				$length = abs(price2num($object->array_options["options_clichaumeil_length"]));
