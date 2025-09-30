@@ -3,6 +3,7 @@
 ## 1.0
 
 ### Unreleased
+- NEW : Warning icon displayed for negative margin on propal lines. *30/09/2025* - 1.2.0
 - NEW : automated contract tariff revision feature that updates contracts line prices on a scheduled date and notifies relevant users of the change  - 1.1.0 
 - NEW: Add management of year-end rebates (RFA) for suppliers *19/09/2025* - 1.1.0
 - NEW : Create/Clean clichaumeil module : - Initial version *09/09/2025* - 1.0.0

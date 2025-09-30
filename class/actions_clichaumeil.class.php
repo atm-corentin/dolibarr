@@ -61,7 +61,7 @@ class ActionsClichaumeil extends CommonHookActions
 	 * @var int		Priority of hook (50 is used if value is not defined)
 	 */
 	public $priority;
-
+	private static $lineData = [];
 
 	/**
 	 * Constructor
@@ -285,5 +285,97 @@ class ActionsClichaumeil extends CommonHookActions
 		return CommonObject::commonReplaceThirdparty($dbs, $origin_id, $dest_id, $tables);
 	}
 
+	/**
+	 * Inject margin data into the page footer and load the JS script.
+	 *
+	 * This hook outputs a `<script>` tag containing JSON data used by
+	 * `margin_check_warning.js` to detect negative margins. It also includes
+	 * the external JS file automatically.
+	 *
+	 * @param array         $parameters   Hook metadata (context, etc.)
+	 * @param CommonObject  $object       The business object being processed (propal, order, invoice...)
+	 * @param string        $action       Current action
+	 * @param HookManager   $hookmanager  Hook manager instance
+	 *
+	 * @return int Returns 0 on success, <0 on error
+	 */
+	public function llxFooter($parameters, &$object, &$action, $hookmanager): int
+	{
+		// If there's no data to send, do nothing
+		if (empty(self::$lineData)) {
+			return 0;
+		}
+
+		// 1️⃣ Prepare the data payload for JS
+		$dataForJs = ['lines' => self::$lineData];
+
+		// 2️⃣ Output the JSON payload in a <script> tag
+		echo '<script type="application/json" id="margins-pagedata">'
+			. json_encode($dataForJs, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT)
+			. '</script>';
+
+		// 3️⃣ Build the URL of your JS file
+		// ⚠️ Adapte bien le chemin vers ton module !
+		$jsUrl = dol_buildpath('/custom/clichaumeil/js/margin_check_warning.js', 1);
+
+		// 4️⃣ Load the JS file
+		echo '<script src="' . $jsUrl . '" defer></script>';
+
+		// 5️⃣ Reset static data to prevent leakage
+		self::$lineData = [];
+
+		return 0;
+	}
+
+
+	/**
+	 * Overload the printObjectLine method to prepare margin-related data for each line.
+	 *
+	 * This hook collects necessary pricing information (unit price and cost price)
+	 * for each object line (propal, order, invoice...) and stores them in a static array.
+	 * The data will later be used by the JavaScript file `margin_check_warning.js`
+	 * to check for negative margins and display a warning icon when needed.
+	 *
+	 * @param array         $parameters   Hook metadata (context, current line, etc.)
+	 * @param CommonObject  $object       The business object being processed (proposal, order, invoice...)
+	 * @param string        $action       Current action (e.g., 'create', 'edit', or '')
+	 * @param HookManager   $hookmanager  Hook manager instance
+	 *
+	 * @return int Returns < 0 on error, 0 on success, 1 to bypass standard code
+	 */
+	public function printObjectLine($parameters, &$object, &$action, $hookmanager): int
+	{
+		global $db, $langs;
+
+		$TContexts = explode(':', $parameters['context']);
+		$TAllowedContexts = ['propalcard', 'ordercard', 'invoicecard'];
+		$commonContexts = array_intersect($TContexts, $TAllowedContexts);
+
+		if (!empty($commonContexts)) {
+
+			$line = $parameters['line'];
+			$costPrice = 0;
+			if (!empty($line->pa_ht)) {
+				$costPrice = $line->pa_ht;
+			}
+
+			// 💸 Get unit price (PU HT)
+			$pu_ht = (float) $line->subprice;
+
+			// ⚠️ Prepare the warning icon HTML
+			$warningIcon = img_warning(
+				$langs->trans("WarningNegativeMargin")
+			);
+
+			// 📦 Store the data for the JS script
+			self::$lineData[$line->id] = [
+				'pu_ht'        => $pu_ht,
+				'cost_price'   => $costPrice,
+				'warning_icon' => $warningIcon,
+			];
+		}
+
+		return 0;
+	}
 	/* Add other hook methods here... */
 }
