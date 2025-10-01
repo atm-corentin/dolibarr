@@ -46,75 +46,151 @@
 
 (() => {
 	document.addEventListener('DOMContentLoaded', () => {
-
 		const dataElement = document.getElementById('margins-pagedata');
 		if (!dataElement) return;
 
-		const pageData = JSON.parse(dataElement.textContent);
-		const linesData = pageData.lines;
-		console.log(linesData);
+		const pageData = JSON.parse(dataElement.textContent || '{}');
+		const linesData = pageData.lines || {};
 
-		// Attacher les données à chaque ligne <tr>
+		// Attacher les données initiales aux lignes
 		for (const lineId in linesData) {
 			const row = document.getElementById(`row-${lineId}`);
 			if (row) {
-				row.dataset.puHt = linesData[lineId].pu_ht;
 				row.dataset.costPrice = linesData[lineId].cost_price;
 				row.dataset.warningIcon = linesData[lineId].warning_icon;
 			}
 		}
 
-		// Vérifier chaque ligne
-		document.querySelectorAll('tr[id^="row"]').forEach((tr) => {
-			const puHt = parseFloat(tr.dataset.puHt);
-			const costPrice = parseFloat(tr.dataset.costPrice);
-			if (!isNaN(puHt) && !isNaN(costPrice) && puHt < costPrice) {
+		// Utilitaire : extraire la première valeur numérique d'une chaîne (gère HTML dans la string)
+		const extractNumber = (raw) => {
+			if (!raw && raw !== 0) return NaN;
+			// Si raw est un élément DOM, prendre son texte
+			if (raw.nodeType) raw = raw.textContent;
+			// si raw contient du HTML, nettoyer
+			const tmp = document.createElement('div');
+			tmp.innerHTML = String(raw);
+			const text = tmp.textContent.trim();
+			const m = text.match(/-?\d+(?:[.,]\d+)?/);
+			return m ? parseFloat(m[0].replace(',', '.')) : NaN;
+		};
 
-				// Cibler la cellule contenant le PU HT
-				const targetTd = tr.querySelector('.linecoluht');
-				if (!targetTd) return;
+		// Créer un élément warning DOM à partir du HTML stocké
+		const buildWarningElement = (html) => {
+			const tmp = document.createElement('div');
+			tmp.innerHTML = (html || '').trim();
+			const el = tmp.firstElementChild || tmp.firstChild;
+			if (!el) {
+				// fallback simple
+				const span = document.createElement('span');
+				span.className = 'negative-margin-warning pictowarning';
+				span.textContent = '⚠️';
+				return span;
+			}
+			el.classList.add('negative-margin-warning');
+			return el;
+		};
 
-				// Supprimer un ancien warning s’il existe
-				targetTd.querySelector('.negative-margin-warning')?.remove();
+		/**
+		 * Check a single <tr> and add/remove warning.
+		 * Ensures the warning is inserted AFTER the editable anchor (so Dolibarr doesn't include it in the input value).
+		 */
+		const checkLineMargin = (tr) => {
+			if (!tr) return;
 
-				// Créer le warning
-				const tempDiv = document.createElement('div');
-				tempDiv.innerHTML = tr.dataset.warningIcon;
-				const warningElement = tempDiv.firstChild;
+			const targetTd = tr.querySelector('.linecoluht');
+			if (!targetTd) return;
 
-				if (warningElement) {
-					warningElement.classList.add('negative-margin-warning');
-					warningElement.style.marginLeft = '4px';
-					warningElement.title = "Attention : le prix de revient est supérieur au prix de vente. Marge négative.";
-					targetTd.appendChild(warningElement);
+			// remove previous warnings in this cell (wherever they are)
+			targetTd.querySelectorAll('.negative-margin-warning').forEach(n => n.remove());
+
+			// 1) Try to find an input (inline editor). If present, read its value (robustly).
+			const puInput = tr.querySelector('input[name^="price"], input[name*="subprice"], input[name^="pvp"]');
+			let puHt = NaN;
+			if (puInput) {
+				// input.value might contain HTML string if previous code injected badly. Clean it and extract number.
+				puHt = extractNumber(puInput.value || puInput.getAttribute('value') || puInput.textContent);
+			} else {
+				// fallback : take text / HTML content of the cell but strip HTML tags
+				// prefer the editable anchor's text if present
+				const editableAnchor = targetTd.querySelector('a, .edit, .line-edit');
+				if (editableAnchor) {
+					puHt = extractNumber(editableAnchor.innerHTML);
+				} else {
+					puHt = extractNumber(targetTd.innerHTML);
 				}
 			}
-		});
 
-		// ⚡ Mettre à jour le warning quand on modifie une ligne
+			// 2) cost price is stored in dataset by PHP; but could contain HTML - be robust
+			const costPrice = extractNumber(tr.dataset.costPrice);
+
+			// 3) if negative margin, create warning and insert AFTER the editable anchor (if any), else append to cell
+			if (!isNaN(puHt) && !isNaN(costPrice) && puHt < costPrice) {
+				const warningEl = buildWarningElement(tr.dataset.warningIcon);
+				warningEl.title = "⚠️ Attention : le prix de revient est supérieur au prix de vente. Marge négative.";
+
+				const editableAnchor = targetTd.querySelector('a, .edit, .line-edit');
+				if (editableAnchor && editableAnchor.parentNode === targetTd) {
+					// insert after the anchor to avoid being included in anchor.innerHTML
+					editableAnchor.insertAdjacentElement('afterend', warningEl);
+				} else {
+					// append at the end of TD (still outside inputs/anchors when possible)
+					targetTd.appendChild(warningEl);
+				}
+			}
+		};
+
+		// Check all rows once
+		const checkAllRows = () => {
+			document.querySelectorAll('tr[id^="row"]').forEach(checkLineMargin);
+		};
+
+		// Initial check
+		checkAllRows();
+
+		// Listen for input changes (live typing)
 		const table = document.getElementById('tablelines');
 		if (table) {
-			table.addEventListener('change', (event) => {
-				if (event.target.matches('input[name^="qty"], input[name^="price"], input[name^="remise_percent"]')) {
+			table.addEventListener('input', (event) => {
+				if (event.target.matches('input[name^="price"], input[name^="qty"], input[name^="remise_percent"], input')) {
 					const changedRow = event.target.closest('tr');
 					if (changedRow) {
-						setTimeout(() => {
-							const puHt = parseFloat(changedRow.dataset.puHt);
-							const costPrice = parseFloat(changedRow.dataset.costPrice);
-							const targetTd = changedRow.querySelector('.linecoluht');
-							if (targetTd && puHt < costPrice) {
-								targetTd.querySelector('.negative-margin-warning')?.remove();
-								const tempDiv = document.createElement('div');
-								tempDiv.innerHTML = changedRow.dataset.warningIcon;
-								const warningElement = tempDiv.firstChild;
-								warningElement.title = "Attention : Marge négative.";
-								targetTd.appendChild(warningElement);
-							}
-						}, 100);
+						// small delay to let other handlers update things if needed
+						setTimeout(() => checkLineMargin(changedRow), 30);
 					}
 				}
 			});
+
+			// Also listen for change event (blur/save)
+			table.addEventListener('change', (event) => {
+				const changedRow = event.target.closest('tr');
+				if (changedRow) setTimeout(() => checkLineMargin(changedRow), 30);
+			});
+
+			// MutationObserver: watches for DOM updates from Dolibarr (AJAX re-rendering / inline replace)
+			const debounced = (() => {
+				let t = null;
+				return () => {
+					if (t) clearTimeout(t);
+					t = setTimeout(() => checkAllRows(), 50);
+				};
+			})();
+
+			const observer = new MutationObserver((mutations) => {
+				// if rows are added/updated, re-check (debounced)
+				let relevant = false;
+				for (const m of mutations) {
+					// small heuristic: if changes are inside tablelines, consider relevant
+					if (m.type === 'childList' || m.type === 'characterData' || m.type === 'subtree') {
+						relevant = true;
+						break;
+					}
+				}
+				if (relevant) debounced();
+			});
+
+			observer.observe(table, { childList: true, subtree: true, characterData: true });
 		}
 	});
 })();
+
 
