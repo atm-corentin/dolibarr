@@ -287,11 +287,15 @@ class ActionsClichaumeil extends CommonHookActions
 
 	public function calculateCostsBomAfter($parameters, &$object, &$action, $hookmanager):int
 	{
-		if(!empty($object->array_options['options_clichaumeil_generalexpenses'])) {
+		$action = GETPOST('action', 'alphanohtml');
+		if($action == 'update_extras' || $action == 'update') {
 			$generalExpenses = GETPOSTFLOAT('options_clichaumeil_generalexpenses');
-			if(empty($generalExpenses)) $generalExpenses = $object->array_options['options_clichaumeil_generalexpenses'];
-			$object->total_cost = $object->total_cost * (1+$generalExpenses / 100);
 		}
+		else {
+			$generalExpenses = $object->array_options['options_clichaumeil_generalexpenses'];
+		}
+		$object->total_cost = $object->total_cost * (1+(float) $generalExpenses / 100);
+
 		return 0;
 	}
 }
