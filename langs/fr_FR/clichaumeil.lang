@@ -97,3 +97,22 @@ CliChaumeilErrorNotifCreationFailed=Échec de la création de la notification po
 CliChaumeilContractsList=La liste des contrats (uniquement utilisé pour le travail planifié sur les révisions tarifaires)
 CliChaumeilCronReportTitle=--- RAPPORT DE MISE À JOUR TARIFAIRE ---
 ClichaumeilDescription = Description de CliChaumeil
+
+#
+# Extrafields
+#
+
+CliChaumeilHeight=Hauteur(cm)
+CliChaumeilLength=Longeur(cm)
+CliChaumeilRefRequired=Référence client obligatoire
+CliChaumeilCustomerRefRequired=Référence client obligatoire pour %s
+
+#
+# ERRORS
+#
+ErrorFieldsMustBeNumeric=Longueur/Hauteur : valeurs numériques requises
+WarningFieldHeightMustBeNumeric=Hauteur non définie : valeur numérique requise
+WarningFieldLengthMustBeNumeric=Longeur non définie : valeur numérique requise
+WarningFieldsHeightLengthNotDefined=Hauteur et Longueur non définies : valeurs numériques requises pour calculer la surface (en cm²)
+RollbackUnitsQtyforProduct=Réinitialisation de l’unité et de la quantité du produit
+SurfaceRecalculatedInCm2=Surface recalculée (en cm²)
