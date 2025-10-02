@@ -315,8 +315,7 @@ class ActionsClichaumeil extends CommonHookActions
 			. '</script>';
 
 		// 3️⃣ Build the URL of your JS file
-		// ⚠️ Adapte bien le chemin vers ton module !
-		$jsUrl = dol_buildpath('/custom/clichaumeil/js/margin_check_warning.js', 1);
+		$jsUrl = dol_buildpath('/clichaumeil/js/margin_check_warning.js', 1);
 
 		// 4️⃣ Load the JS file
 		echo '<script src="' . $jsUrl . '" defer></script>';
@@ -356,7 +355,7 @@ class ActionsClichaumeil extends CommonHookActions
 			$line = $parameters['line'];
 			$costPrice = 0;
 			if (!empty($line->pa_ht)) {
-				$costPrice = $line->pa_ht;
+				$costPrice = (float)$line->pa_ht;
 			}
 
 			// 💸 Get unit price (PU HT)
