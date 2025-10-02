@@ -3,6 +3,7 @@
 ## 1.0
 
 ### Unreleased
+- NEW : Warning icon displayed for negative margin on propal lines. *30/09/2025* - 1.2.0
 - NEW : Update total cost of bom with general expenses extrafield - *01/10/2025* - 1.2.0
 - NEW : add Extrafield thirdparty ref required(boolean) use on trigger order_validate & massaction *24/09/2025* - 1.2.0
 - NEW : Surface calculation from length and height on order/propal lines *24/09/2025* - 1.2.0
