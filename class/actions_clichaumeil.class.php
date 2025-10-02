@@ -285,5 +285,17 @@ class ActionsClichaumeil extends CommonHookActions
 		return CommonObject::commonReplaceThirdparty($dbs, $origin_id, $dest_id, $tables);
 	}
 
-	/* Add other hook methods here... */
+	public function calculateCostsBomAfter($parameters, &$object, &$action, $hookmanager):int
+	{
+		$action = GETPOST('action', 'alphanohtml');
+		if($action == 'update_extras' || $action == 'update') {
+			$generalExpenses = GETPOSTFLOAT('options_clichaumeil_generalexpenses');
+		}
+		else {
+			$generalExpenses = $object->array_options['options_clichaumeil_generalexpenses'];
+		}
+		$object->total_cost = $object->total_cost * (1+(float) $generalExpenses / 100);
+
+		return 0;
+	}
 }

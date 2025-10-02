@@ -116,3 +116,4 @@ WarningFieldLengthMustBeNumeric=Longeur non définie : valeur numérique requise
 WarningFieldsHeightLengthNotDefined=Hauteur et Longueur non définies : valeurs numériques requises pour calculer la surface (en cm²)
 RollbackUnitsQtyforProduct=Réinitialisation de l’unité et de la quantité du produit
 SurfaceRecalculatedInCm2=Surface recalculée (en cm²)
+CliChaumeilGeneralExpenses=Frais généraux (en %)
