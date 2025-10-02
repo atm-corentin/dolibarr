@@ -376,7 +376,7 @@ class ActionsClichaumeil extends CommonHookActions
 
 		return 0;
 	}
-	
+
 	public function calculateCostsBomAfter($parameters, &$object, &$action, $hookmanager):int
 	{
 		$action = GETPOST('action', 'alphanohtml');
@@ -391,5 +391,4 @@ class ActionsClichaumeil extends CommonHookActions
 		return 0;
 	}
 
-/* Add other hook methods here... */
 }

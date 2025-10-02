@@ -114,3 +114,4 @@ WarningFieldsHeightLengthNotDefined=Height and Length not defined: numeric value
 RollbackUnitsQtyforProduct=Product unit and quantity reset
 SurfaceRecalculatedInCm2=Surface recalculated (in cm²)
 CliChaumeilGeneralExpenses=General expenses (%)
+WarningNegativeMargin=Warning: the cost price is higher than the selling price. Negative margin.
