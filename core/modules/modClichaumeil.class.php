@@ -334,13 +334,13 @@ class modClichaumeil extends DolibarrModules
 
 		/* BEGIN MODULEBUILDER LEFTMENU CHAUMEILRFA */
 		$this->menu[$r++] = array(
-			'fk_menu' => 'fk_mainmenu=clichaumeil',
+			'fk_menu' => 'fk_mainmenu=companies',
 			'type' => 'left',
 			'titre' => 'ChaumeilRfa',
 			'prefix' => img_picto('', $this->picto, 'class="paddingright pictofixedwidth valignmiddle"'),
-			'mainmenu' => 'clichaumeil',
+			'mainmenu' => 'companies',
 			'leftmenu' => 'chaumeilrfa',
-			'url' => '/clichaumeil/chaumeilrfa_list.php',
+			'url' => '/clichaumeil/chaumeilrfa_list_fourn.php',
 			'langs' => 'clichaumeil@clichaumeil',
 			'position' => 1000 + $r,
 			'enabled' => 'isModEnabled("clichaumeil")',
