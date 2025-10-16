@@ -284,7 +284,6 @@ $morecss = array();
 
 // Build and execute select
 // --------------------------------------------------------------------
-//$year = date('Y');
 
 // -- Main SELECT --
 // Selects the necessary fields: supplier ID, their calculated turnover, the applicable discount rate,
@@ -691,7 +690,6 @@ while ($i < $imaxinloop) {
 				} elseif ($key == 'rowid') {
 					print $object->showOutputField($val, $key, $object->id, '');
 				} elseif ($key == 'ca_achats') {
-					//$year = (int)(GETPOST('search_year', 'int') ? GETPOST('search_year', 'int') : (isset($obj->datestart) ? substr($obj->datestart, 0, 4) : date('Y')));
 
 					$url = DOL_URL_ROOT . '/fourn/facture/list.php'
 						. '?socid=' . (int)$obj->fk_soc
