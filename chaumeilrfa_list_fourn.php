@@ -97,10 +97,9 @@ $groupby = GETPOST('groupby', 'aZ09');	// Example: $groupby = 'p.fk_opp_status' 
 
 $id = GETPOSTINT('id');
 $ref = GETPOST('ref', 'alpha');
-$socid = GETPOSTINT('socid');
-$search_year = GETPOST('yearid', 'int');
-if (empty($search_year)){
-	$search_year = date('Y');
+$searchYear = GETPOSTINT('yearid');
+if (empty($searchYear)){
+	$searchYear = date('Y');
 }
 
 
@@ -121,7 +120,7 @@ $pagenext = $page + 1;
 $object = new ChaumeilRfa($db);
 $object->fields = $arrayfields = array(
 	'fk_soc' => array(
-		'label'   => 'Fournisseur',
+		'label'   => $langs->trans('Suppliers'),
 		'checked' => 1,
 		'type' => 'integer:Societe:societe/class/societe.class.php:1',
 		'enabled' => 1,
@@ -129,52 +128,42 @@ $object->fields = $arrayfields = array(
 		'position'=> 10
 	),
 	'ca_achats' => array(
-		'label'   => 'CA achats année HT',
+		'label'   => $langs->trans('ClichaumeilCaYearHT'),
 		'checked' => 1,
 		'type' => 'price',
 		'enabled' => 1,
 		'visible' => 1,
 		'position'=> 20,
-		'help'    => 'Montant HT achats sur l’année en cours'
+		'help'    => $langs->trans('ClichaumeilHelpAmountCaYearHT'),
 	),
 	'taux_rfa' => array(
-		'label' => 'Taux %',
+		'label' => $langs->trans('ClichaumeilRate') .' %',
 		'checked' => 1,
 		'type' => 'float',
 		'enabled' => 1,
 		'visible' => 1,
 		'position' => 20,
-		'help' => 'Taux du palier atteint'
+		'help' => $langs->trans('ClichaumeilLevelReachedRate')
 	),
 	'discount_amount_rfa' => array(
-		'label'   => 'Remise',
+		'label'   => $langs->trans('ClichaumeilDiscount'),
 		'checked' => 1,
 		'type' => 'price',
 		'enabled' => 1,
 		'visible' => 1,
 		'position'=> 20,
 		'search'=> 0,
-		'help'    => 'Montant estimé de la remise à percevoir'
+		'help'    => $langs->trans('ClichaumeilEstimatedAmountDiscount'),
 	),
-//	'datestart' => array(
-//		'label'   => 'Date début',
-//		'checked' => 1,
-//		'type' => 'timestamp',
-//		'enabled' => 1,
-//		'visible' => 0,
-//		'position'=> 20,
-//		'search'=> 0,
-//		'help'    => 'Date de début de la RFA'
-//	),
 	'status' => array(
-		'label'   => 'État',
+		'label'   => $langs->trans('Status'),
 		'checked' => 1,
 		'type' => 'status',
 		'enabled' => 1,
 		'visible' => 1,
 		'position'=> 20,
-		'arrayofkeyval' => array("0" =>$langs->trans("RfaStatusDraft") , "1" =>$langs->trans("RfaStatusWon") , "9" =>$langs->trans("RfaStatusLost")),
-		'help'    => 'État de la RFA'
+		'arrayofkeyval' => array($object::STATUS_DRAFT =>$langs->trans("RfaStatusDraft") , $object::STATUS_WON =>$langs->trans("RfaStatusWon") , $object::STATUS_LOST =>$langs->trans("RfaStatusLost")),
+		'help'    => $langs->trans('ClichaumeilRfaStatus'),
 	)
 );
 $extrafields = new ExtraFields($db);
@@ -195,7 +184,6 @@ if (!$sortorder) {
 }
 
 // Initialize array of search criteria
-$search_all = trim(GETPOST('search_all', 'alphanohtml'));
 $search = array();
 foreach ($arrayfields as $key => $val) {
 	if (GETPOST('search_'.$key, 'alpha') !== '') {
@@ -239,13 +227,9 @@ if ($user->socid > 0) {
 //$socid = 0; if ($user->socid > 0) $socid = $user->socid;
 //$isdraft = (($object->status == $object::STATUS_DRAFT) ? 1 : 0);
 //restrictedArea($user, $object->module, 0, $object->table_element, $object->element, 'fk_soc', 'rowid', $isdraft);
-if (!isModEnabled("clichaumeil")) {
+if (!isModEnabled("clichaumeil") && !$permissiontoread) {
 	accessforbidden('Module clichaumeil not enabled');
 }
-if (!$permissiontoread) {
-	accessforbidden();
-}
-
 
 /*
  * Actions
@@ -274,7 +258,6 @@ if (empty($reshook)) {
 				$search[$key.'_dtend'] = '';
 			}
 		}
-		$search_all = '';
 		$toselect = array();
 		$search_array_options = array();
 	}
@@ -320,7 +303,7 @@ $sqlRfaFourn .= "  LEFT JOIN (";
 $sqlRfaFourn .= "     SELECT fk_soc, SUM(total_ht) AS ca_achats";
 $sqlRfaFourn .= "       FROM ".$db->prefix()."facture_fourn";
 $sqlRfaFourn .= "      WHERE fk_statut = ".FactureFournisseur::STATUS_CLOSED;
-$sqlRfaFourn .= "        AND YEAR(datef) = ".$search_year;
+$sqlRfaFourn .= "        AND YEAR(datef) = ".$searchYear;
 $sqlRfaFourn .= "      GROUP BY fk_soc";
 $sqlRfaFourn .= "  ) AS ffsum ON ffsum.fk_soc = s.rowid";
 
@@ -331,7 +314,7 @@ $sqlRfaFourn .= "  LEFT JOIN ".$db->prefix()."clichaumeil_chaumeilrfa AS rfr ON 
 $sqlRfaFourn .= "     SELECT r.rowid";
 $sqlRfaFourn .= "       FROM ".$db->prefix()."clichaumeil_chaumeilrfa AS r";
 $sqlRfaFourn .= "      WHERE r.fk_soc = s.rowid"; // Correlates the subquery with the main supplier.
-$sqlRfaFourn .= "        AND ".$search_year." BETWEEN YEAR(r.datestart) AND YEAR(r.dateend)"; // Filters for tiers valid in the selected year.
+$sqlRfaFourn .= "        AND ".$searchYear." BETWEEN YEAR(r.datestart) AND YEAR(r.dateend)"; // Filters for tiers valid in the selected year.
 $sqlRfaFourn .= "        AND r.palier <= ffsum.ca_achats"; // The key condition: only selects tiers the supplier has actually reached.
 $sqlRfaFourn .= "      ORDER BY r.palier DESC"; // Orders the reached tiers from highest to lowest...
 $sqlRfaFourn .= "      LIMIT 1"; // ...and picks only the top one (the highest achieved tier).
@@ -346,117 +329,23 @@ $sqlRfaFourn .= " WHERE s.fournisseur = 1"; // Ensures we only select companies 
 $sqlRfaFourn .= "   AND EXISTS (";
 $sqlRfaFourn .= "       SELECT 1 FROM ".$db->prefix()."clichaumeil_chaumeilrfa AS r_exists";
 $sqlRfaFourn .= "       WHERE r_exists.fk_soc = s.rowid";
-$sqlRfaFourn .= "         AND ".$search_year." BETWEEN YEAR(r_exists.datestart) AND YEAR(r_exists.dateend)";
+$sqlRfaFourn .= "         AND ".$searchYear." BETWEEN YEAR(r_exists.datestart) AND YEAR(r_exists.dateend)";
 $sqlRfaFourn .= "   )";
 
 // This final condition ensures that only suppliers with a positive purchase turnover are displayed.
 $sqlRfaFourn .= "   AND COALESCE(ffsum.ca_achats, 0) > 0";
 
-
-$sqlwhere = ''; // <= conditions dynamiques
-
-//RECHERCHE GLOBAL - PAS LE TRI
-foreach ($search as $key => $val) {
-	if (array_key_exists($key, $arrayfields)) {
-		//var_dump('RECHERCHE GLOBAL - PAS LE TRI');exit;
-		//if ($key == 'status' && $search[$key] == -1) continue;
-
-		$mode_search = (($object->isInt($arrayfields[$key]) || $object->isFloat($arrayfields[$key])) ? 1 : 0);
-
-		if ($key == 'taux_rfa' && $search[$key] != '') {
-			$sqlwhere .= " AND COALESCE(rfr.raterfa, 0) LIKE '%".$db->escape($search[$key])."%'";
-			continue; // On saute le reste pour ce champ
-		}
-
-		if ((strpos($arrayfields[$key]['type'], 'integer:') === 0)
-			|| (strpos($arrayfields[$key]['type'], 'sellist:') === 0)
-			|| !empty($arrayfields[$key]['arrayofkeyval'])) {
-			if ($search[$key] == '-1'
-				|| ($search[$key] === '0' && (empty($arrayfields[$key]['arrayofkeyval'])
-						|| !array_key_exists('0', $arrayfields[$key]['arrayofkeyval'])))) {
-				$search[$key] = '';
-			}
-			$mode_search = 2;
-		}
-
-		if (empty($arrayfields[$key]['searchmulti'])) {
-			if (!is_array($search[$key]) && $search[$key] != '') {
-				if ($key == 'fk_soc') {
-					$sqlwhere .= " AND s.rowid IN (" . $db->escape($search[$key]) . ")";
-				} elseif ($key == 'status') {
-					$sqlwhere .= " AND rfr.status = " . intval($search[$key]);
-				} else {
-					$sqlwhere .= " AND rfr.status = " . intval($val);
-				}
-			}
-		} else {
-			if (is_array($search[$key]) && !empty($search[$key])) {
-				if ($key == 'fk_soc') {
-					$sqlwhere .= " AND s.rowid IN (" . $db->sanitize(implode(',', $search[$key])) . ")";
-				} elseif ($key == 'status') {
-					$sqlwhere .= natural_search("rfr.status", implode(',', $search[$key]), 2); // <-- alias ici
-				} else {
-					$sqlwhere .= natural_search($db->escape($key), implode(',', $search[$key]), $mode_search);
-				}
-			}
-		}
-
-	} else {
-		if (preg_match('/(_dtstart|_dtend)$/', $key) && $search[$key] != '') {
-			$columnName = preg_replace('/(_dtstart|_dtend)$/', '', $key);
-			if (preg_match('/^(date|timestamp|datetime)/', $arrayfields[$columnName]['type'])) {
-				if (preg_match('/_dtstart$/', $key)) {
-					$sqlwhere .= " AND ".$db->sanitize($columnName)." >= '".$db->idate($search[$key])."'";
-				}
-				if (preg_match('/_dtend$/', $key)) {
-					$sqlwhere .= " AND ".$db->sanitize($columnName)." <= '".$db->idate($search[$key])."'";
-				}
-			}
-		}
-	}
-}
-if (!empty($search_year)) {
-	$sqlwhere .= " AND YEAR(rfr.datestart) = ".((int) $search_year);
-}
-
-if ($search_all) {
-	$sqlwhere .= natural_search(array_keys($fieldstosearchall), $search_all);
-}
-
 // ORDER BY séparé
 $sqlorder = " ORDER BY s.nom ASC";
 
 
-$sql = "SELECT";
-$sql .= " ".$object->getFieldList('t');
-
-// Add fields from extrafields
-if (!empty($extrafields->attributes[$object->table_element]['label'])) {
-	foreach ($extrafields->attributes[$object->table_element]['label'] as $key => $val) {
-		$sql .= ($extrafields->attributes[$object->table_element]['type'][$key] != 'separate' ? ", ef.".$key." as options_".$key : "");
-	}
-}
 // Add fields from hooks
 $parameters = array();
 $reshook = $hookmanager->executeHooks('printFieldListSelect', $parameters, $object, $action); // Note that $action and $object may have been modified by hook
-$sql .= $hookmanager->resPrint;
-$sql = preg_replace('/,\s*$/', '', $sql);
 
-$sqlfields = $sql; // $sql fields to remove for count total
-
-$sql .= " FROM ".$db->prefix().$object->table_element." as t";
-if (isset($extrafields->attributes[$object->table_element]['label']) && is_array($extrafields->attributes[$object->table_element]['label']) && count($extrafields->attributes[$object->table_element]['label'])) {
-	$sql .= " LEFT JOIN ".$db->prefix().$object->table_element."_extrafields as ef on (t.rowid = ef.fk_object)";
-}
-// Add table from hooks
 $parameters = array();
 $reshook = $hookmanager->executeHooks('printFieldListFrom', $parameters, $object, $action); // Note that $action and $object may have been modified by hook
-$sql .= $hookmanager->resPrint;
-if ($object->ismultientitymanaged == 1) {
-	$sql .= " WHERE t.entity IN (".getEntity($object->element, (GETPOSTINT('search_current_entity') ? 0 : 1)).")";
-} else {
-	$sql .= " WHERE 1 = 1";
-}
+
 //SEARCH
 foreach ($search as $key => $val) {
 
@@ -481,44 +370,18 @@ foreach ($search as $key => $val) {
 					$sqlRfaFourn .= " AND rfr.status = " . intval($search[$key]);
 				}
 			}
-		} else {
-			if (is_array($search[$key]) && !empty($search[$key])) {
-				$sql .= natural_search("t.".$db->escape($key), implode(',', $search[$key]), (($key == 'status') ? 2 : $mode_search));
-			}
-		}
-	} else {
-		if (preg_match('/(_dtstart|_dtend)$/', $key) && $search[$key] != '') {
-			$columnName = preg_replace('/(_dtstart|_dtend)$/', '', $key);
-			if (preg_match('/^(date|timestamp|datetime)/', $arrayfields[$columnName]['type'])) {
-				if (preg_match('/_dtstart$/', $key)) {
-					$sql .= " AND t.".$db->sanitize($columnName)." >= '".$db->idate($search[$key])."'";
-				}
-				if (preg_match('/_dtend$/', $key)) {
-					$sql .= " AND t.".$db->sanitize($columnName)." <= '".$db->idate($search[$key])."'";
-				}
-			}
 		}
 	}
 }
 
-if ($search_all) {
-	$sql .= natural_search(array_keys($fieldstosearchall), $search_all);
-}
 
 // Add where from extra fields
 include DOL_DOCUMENT_ROOT.'/core/tpl/extrafields_list_search_sql.tpl.php';
 // Add where from hooks
 $parameters = array();
 $reshook = $hookmanager->executeHooks('printFieldListWhere', $parameters, $object, $action); // Note that $action and $object may have been modified by hook
-$sql .= $hookmanager->resPrint;
+$sqlRfaFourn .= $hookmanager->resPrint;
 
-
-
-$nbtotalofrecords = '';
-
-if (!empty($socid)){
-	$sql .= " AND t.fk_soc = ".$socid;
-}
 
 // Complete request and execute it with limit
 $sqlRfaFourn .= $db->order($sortfield, $sortorder);
@@ -528,26 +391,18 @@ if ($limit) {
 
 $resql = $db->query($sqlRfaFourn);
 if (!$resql) {
+	dol_syslog("sqlRfaFourn",LOG_ERR);
 	dol_print_error($sqlRfaFourn);
 	exit;
 }
 $num = $db->num_rows($resql);
 
-// Direct jump if only one record found
-if ($num == 1 && getDolGlobalInt('MAIN_SEARCH_DIRECT_OPEN_IF_ONLY_ONE') && $search_all && !$page) {
-	$obj = $db->fetch_object($resql);
-	$id = $obj->rowid;
-	header("Location: ".dol_buildpath('/clichaumeil/chaumeilrfa_card.php', 1).'?id='.((int) $id));
-	exit;
-}
 
 // Output page
 // --------------------------------------------------------------------
 
 llxHeader('', $title, $help_url, '', 0, 0, $morejs, $morecss, '', 'mod-clichaumeil page-list bodyforlist');	// Can use also classforhorizontalscrolloftabs instead of bodyforlist for a horizontal scroll in the table instead of page
 
-
-$arrayofselected = is_array($toselect) ? $toselect : array();
 
 $param = '';
 if (!empty($mode)) {
@@ -580,8 +435,7 @@ foreach ($search as $key => $val) {
 		$param .= '&search_'.$key.'='.urlencode($search[$key]);
 	}
 }
-$param .= '&socid='.$socid;
-$param .= '&yearid='.$search_year;
+$param .= '&yearid='.$searchYear;
 
 // Add $param from extra fields
 include DOL_DOCUMENT_ROOT.'/core/tpl/extrafields_list_search_param.tpl.php';
@@ -604,33 +458,20 @@ print '<input type="hidden" name="page" value="'.$page.'">';
 print '<input type="hidden" name="contextpage" value="'.$contextpage.'">';
 print '<input type="hidden" name="page_y" value="">';
 print '<input type="hidden" name="mode" value="'.$mode.'">';
-print '<input type="hidden" name="socid" value="'.$socid.'">';
 
 
 $newcardbutton = '';
 $newcardbutton .= dolGetButtonTitle($langs->trans('ViewList'), '', 'fa fa-bars imgforviewmode', $_SERVER["PHP_SELF"].'?mode=common'.preg_replace('/(&|\?)*mode=[^&]+/', '', $param), '', ((empty($mode) || $mode == 'common') ? 2 : 1), array('morecss' => 'reposition'));
-$newcardbutton .= dolGetButtonTitleSeparator();
 
-print_barre_liste($title, $page, $_SERVER["PHP_SELF"], $param, $sortfield, $sortorder, '', $num, $nbtotalofrecords, $object->picto, 0, $newcardbutton, '', $limit, 0, 0, 1);
+print_barre_liste($title, $page, $_SERVER["PHP_SELF"], $param, $sortfield, $sortorder, '', $num, '', $object->picto, 0, $newcardbutton, '', $limit, 0, 0, 1);
 
-
-if ($search_all) {
-	$setupstring = '';
-	// @phan-suppress-next-line PhanEmptyForeach
-	foreach ($fieldstosearchall as $key => $val) {
-		$fieldstosearchall[$key] = $langs->trans($val);
-		$setupstring .= $key."=".$val.";";
-	}
-	print '<!-- Search done like if CHAUMEILRFA_QUICKSEARCH_ON_FIELDS = '.$setupstring.' -->'."\n";
-	print '<div class="divsearchfieldfilter">'.$langs->trans("FilterOnInto", $search_all).implode(', ', $fieldstosearchall).'</div>'."\n";
-}
 
 $moreforfilter = '';
+//Search Year
+$moreforfilter .= $langs->trans('ByYear') ." : ". $formother->selectyear($searchYear);
 
 $moreforfilter = '<div class="divsearchfield">'.$moreforfilter.'</div>';
 
-//Search Year
-$moreforfilter .= $langs->trans('ByYear') ." : ". $formother->selectyear($search_year);
 
 $parameters = array();
 $reshook = $hookmanager->executeHooks('printFieldPreListTitle', $parameters, $object, $action); // Note that $action and $object may have been modified by hook
@@ -856,10 +697,10 @@ while ($i < $imaxinloop) {
 						. '?socid=' . (int)$obj->fk_soc
 						. '&search_date_startday=1'
 						. '&search_date_startmonth=1'
-						. '&search_date_startyear=' . $search_year
+						. '&search_date_startyear=' . $searchYear
 						. '&search_date_endday=31'
 						. '&search_date_endmonth=12'
-						. '&search_date_endyear=' . $search_year
+						. '&search_date_endyear=' . $searchYear
 						. '&search_status=' . FactureFournisseur::STATUS_CLOSED;
 
 					print '<a href="' . dol_escape_htmltag($url) . '">' . price($obj->ca_achats) . '</a>';
@@ -934,7 +775,7 @@ if ($num == 0) {
 
 $db->free($resql);
 
-$parameters = array('arrayfields' => $arrayfields, 'sql' => $sql);
+$parameters = array('arrayfields' => $arrayfields, 'sql' => $sqlRfaFourn);
 $reshook = $hookmanager->executeHooks('printFieldListFooter', $parameters, $object, $action); // Note that $action and $object may have been modified by hook
 print $hookmanager->resPrint;
 

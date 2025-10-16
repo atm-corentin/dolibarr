@@ -97,6 +97,14 @@ CliChaumeilErrorNotifCreationFailed=Échec de la création de la notification po
 CliChaumeilContractsList=La liste des contrats (uniquement utilisé pour le travail planifié sur les révisions tarifaires)
 CliChaumeilCronReportTitle=--- RAPPORT DE MISE À JOUR TARIFAIRE ---
 ClichaumeilDescription = Description de CliChaumeil
+ClichaumeilCaYearHT = CA achats année HT
+ClichaumeilHelpAmountCaYearHT = Montant HT achats sur l’année en cours
+ClichaumeilRate = Taux
+ClichaumeilRfaStatus = État de la RFA
+ClichaumeilDiscount = Remise
+ClichaumeilLevelReachedRate = Taux du palier atteint
+ClichaumeilEstimatedAmountDiscount = Montant estimé de la remise à percevoir
+
 
 #
 # Extrafields

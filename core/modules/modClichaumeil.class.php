@@ -76,7 +76,7 @@ class modClichaumeil extends DolibarrModules
 		$this->editor_squarred_logo = '';					// Must be image filename into the module/img directory followed with @modulename. Example: 'myimage.png@clichaumeil'
 
 		// Possible values for version are: 'development', 'experimental', 'dolibarr', 'dolibarr_deprecated', 'experimental_deprecated' or a version string like 'x.y.z'
-		$this->version = '1.2.0';
+		$this->version = '1.3.0';
 		// Url to the file with your last numberversion of this module
 		//$this->url_last_version = 'http://www.example.com/versionmodule.txt';
 
@@ -87,7 +87,7 @@ class modClichaumeil extends DolibarrModules
 		// If file is in theme/yourtheme/img directory under name object_pictovalue.png, use this->picto='pictovalue'
 		// If file is in module/img directory under name object_pictovalue.png, use this->picto='pictovalue@module'
 		// To use a supported fa-xxx css style of font awesome, use this->picto='xxx'
-		$this->picto = 'technic';
+		$this->picto = 'fa-money-bill';
 
 		// Define some features supported by module (triggers, login, substitutions, menus, css, etc...)
 		$this->module_parts = array(
@@ -344,7 +344,7 @@ class modClichaumeil extends DolibarrModules
 			'langs' => 'clichaumeil@clichaumeil',
 			'position' => 1000 + $r,
 			'enabled' => 'isModEnabled("clichaumeil")',
-			'perms' => '$user->hasRight("clichaumeil", "chaumeilrfa", "read")',
+			'perms' => '$user->hasRight("clichaumeil", "chaumeilrfa", "read") && $user->hasRight("fournisseur", "facture", "lire")',
 			'target' => '',
 			'user' => 2,
 			'object' => 'ChaumeilRfa'
