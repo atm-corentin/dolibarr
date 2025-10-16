@@ -326,7 +326,7 @@ $sqlRfaFourn .= "  )";
 
 $parameters = array();
 $reshook = $hookmanager->executeHooks('printFieldListFrom', $parameters, $object, $action); // Note that $action and $object may have been modified by hook
-print $hookmanager->resPrint;
+$sqlRfaFourn .= $hookmanager->resPrint;
 // -- Main Filters --
 // Filters the final result set.
 $sqlRfaFourn .= " WHERE s.fournisseur = 1"; // Ensures we only select companies that are suppliers.
