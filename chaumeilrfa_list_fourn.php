@@ -297,7 +297,7 @@ $sqlRfaFourn .= "       rfr.datestart";
 // Add fields from hooks
 $parameters = array();
 $reshook = $hookmanager->executeHooks('printFieldListSelect', $parameters, $object, $action); // Note that $action and $object may have been modified by hook
-
+print $hookmanager->resPrint;
 $sqlRfaFourn .= "  FROM ".$db->prefix()."societe AS s"; // The base table is the list of companies.
 
 // -- Subquery to Calculate Purchase Turnover (ffsum) --
@@ -326,6 +326,7 @@ $sqlRfaFourn .= "  )";
 
 $parameters = array();
 $reshook = $hookmanager->executeHooks('printFieldListFrom', $parameters, $object, $action); // Note that $action and $object may have been modified by hook
+print $hookmanager->resPrint;
 // -- Main Filters --
 // Filters the final result set.
 $sqlRfaFourn .= " WHERE s.fournisseur = 1"; // Ensures we only select companies that are suppliers.
