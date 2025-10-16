@@ -284,7 +284,7 @@ $morecss = array();
 
 // Build and execute select
 // --------------------------------------------------------------------
-$year = date('Y');
+//$year = date('Y');
 
 // -- Main SELECT --
 // Selects the necessary fields: supplier ID, their calculated turnover, the applicable discount rate,
@@ -294,6 +294,11 @@ $sqlRfaFourn .= "       COALESCE(ffsum.ca_achats, 0) AS ca_achats,";
 $sqlRfaFourn .= "       COALESCE(rfr.raterfa, 0) AS taux_rfa,";
 $sqlRfaFourn .= "       rfr.status,";
 $sqlRfaFourn .= "       rfr.datestart";
+
+// Add fields from hooks
+$parameters = array();
+$reshook = $hookmanager->executeHooks('printFieldListSelect', $parameters, $object, $action); // Note that $action and $object may have been modified by hook
+
 $sqlRfaFourn .= "  FROM ".$db->prefix()."societe AS s"; // The base table is the list of companies.
 
 // -- Subquery to Calculate Purchase Turnover (ffsum) --
@@ -320,6 +325,8 @@ $sqlRfaFourn .= "      ORDER BY r.palier DESC"; // Orders the reached tiers from
 $sqlRfaFourn .= "      LIMIT 1"; // ...and picks only the top one (the highest achieved tier).
 $sqlRfaFourn .= "  )";
 
+$parameters = array();
+$reshook = $hookmanager->executeHooks('printFieldListFrom', $parameters, $object, $action); // Note that $action and $object may have been modified by hook
 // -- Main Filters --
 // Filters the final result set.
 $sqlRfaFourn .= " WHERE s.fournisseur = 1"; // Ensures we only select companies that are suppliers.
@@ -338,13 +345,6 @@ $sqlRfaFourn .= "   AND COALESCE(ffsum.ca_achats, 0) > 0";
 // ORDER BY séparé
 $sqlorder = " ORDER BY s.nom ASC";
 
-
-// Add fields from hooks
-$parameters = array();
-$reshook = $hookmanager->executeHooks('printFieldListSelect', $parameters, $object, $action); // Note that $action and $object may have been modified by hook
-
-$parameters = array();
-$reshook = $hookmanager->executeHooks('printFieldListFrom', $parameters, $object, $action); // Note that $action and $object may have been modified by hook
 
 //SEARCH
 foreach ($search as $key => $val) {
@@ -691,7 +691,7 @@ while ($i < $imaxinloop) {
 				} elseif ($key == 'rowid') {
 					print $object->showOutputField($val, $key, $object->id, '');
 				} elseif ($key == 'ca_achats') {
-					$year = (int)(GETPOST('search_year', 'int') ? GETPOST('search_year', 'int') : (isset($obj->datestart) ? substr($obj->datestart, 0, 4) : date('Y')));
+					//$year = (int)(GETPOST('search_year', 'int') ? GETPOST('search_year', 'int') : (isset($obj->datestart) ? substr($obj->datestart, 0, 4) : date('Y')));
 
 					$url = DOL_URL_ROOT . '/fourn/facture/list.php'
 						. '?socid=' . (int)$obj->fk_soc
