@@ -123,7 +123,9 @@ class modClichaumeil extends DolibarrModules
 				'thirdpartycard',
 				'globalcard',
 				'projectthirdparty',
-				'bomcard'
+				'bomcard',
+				'externalaccesssetup',
+				'externalaccess'
 			),
 			/* END MODULEBUILDER HOOKSCONTEXTS */
 			// Set this to 1 if features of module are opened to external users

@@ -97,6 +97,18 @@ CliChaumeilErrorNotifCreationFailed=Échec de la création de la notification po
 CliChaumeilContractsList=La liste des contrats (uniquement utilisé pour le travail planifié sur les révisions tarifaires)
 CliChaumeilCronReportTitle=--- RAPPORT DE MISE À JOUR TARIFAIRE ---
 ClichaumeilDescription = Description de CliChaumeil
+CLICHAUMEIL_SPE_CUSTOMER = Configurations Spéciales CliChaumeil
+CLICHAUMEIL_ACTIVATE_SUPPLIER_PROPOSAL = Activer la gestion des propositions fournisseurs
+CLIACHAUMEIL_SAVEANDVALIDATE = Valider
+CLICHAUMEIL_ADDMESSAGE = Ajouter un message / répondre
+CLICHAUMEIL_SENDMESSAGEHELP = Écrire votre message ou réponse
+CLICHAUMEIL_YOURCOMMENTHERE = Ajouter un commentaire.
+CLICHAUMEIL_ADDMESSAGE = Envoyer
+CLICHAUMEIL_REFSUPPLIER = Ref fournisseur :
+CLICHAUMEIL_STATUS = Statut
+CLICHAUMEIL_DATECREATION = Date de création
+CLICHAUMEIL_TOTALHT = Total HT
+CLICHAUMEIL_LABEL_OWNER = Message de %s
 
 #
 # Extrafields

@@ -30,10 +30,6 @@ function clichaumeilAdminPrepareHead()
 {
 	global $langs, $conf;
 
-	// global $db;
-	// $extrafields = new ExtraFields($db);
-	// $extrafields->fetch_name_optionals_label('myobject');
-
 	$langs->load("clichaumeil@clichaumeil");
 
 	$h = 0;
@@ -44,33 +40,38 @@ function clichaumeilAdminPrepareHead()
 	$head[$h][2] = 'settings';
 	$h++;
 
-	/*
-	$head[$h][0] = dol_buildpath("/clichaumeil/admin/myobject_extrafields.php", 1);
-	$head[$h][1] = $langs->trans("ExtraFields");
-	$nbExtrafields = is_countable($extrafields->attributes['myobject']['label']) ? count($extrafields->attributes['myobject']['label']) : 0;
-	if ($nbExtrafields > 0) {
-		$head[$h][1] .= ' <span class="badge">' . $nbExtrafields . '</span>';
-	}
-	$head[$h][2] = 'myobject_extrafields';
-	$h++;
-	*/
-
 	$head[$h][0] = dol_buildpath("/clichaumeil/admin/about.php", 1);
 	$head[$h][1] = $langs->trans("About");
 	$head[$h][2] = 'about';
 	$h++;
 
-	// Show more tabs from modules
-	// Entries must be declared in modules descriptor with line
-	//$this->tabs = array(
-	//	'entity:+tabname:Title:@clichaumeil:/clichaumeil/mypage.php?id=__ID__'
-	//); // to add new tab
-	//$this->tabs = array(
-	//	'entity:-tabname:Title:@clichaumeil:/clichaumeil/mypage.php?id=__ID__'
-	//); // to remove a tab
 	complete_head_from_modules($conf, $langs, null, $head, $h, 'clichaumeil@clichaumeil');
-
 	complete_head_from_modules($conf, $langs, null, $head, $h, 'clichaumeil@clichaumeil', 'remove');
 
 	return $head;
+}
+
+/**
+ * Trigger executed by externalaccess module to let other modules add controllers.
+ *
+ * @param EAccessController $controllerContext The controller context object from externalaccess (it's the "$this" from the calling file)
+ * @param User $user The Dolibarr user object
+ * @param Translate $langs The Dolibarr lang object
+ * @param Conf $conf The Dolibarr conf object
+ * @return int                                <0 if KO, 0 if OK
+ */
+function externalAccessInitController($controllerContext, $user, $langs, $conf) : int {
+
+	$newControllerKey = 'supplier_proposal';
+	$newControllerPath = dol_buildpath('/clichaumeil/www/controllers/supplier_proposal.controller.php');
+	$newControllerClass = 'SupplierProposalController';
+
+	// We use the method from the $controllerContext object that was passed to us
+	$controllerContext->addControllerDefinition(
+		$newControllerKey,
+		$newControllerPath,
+		$newControllerClass
+	);
+
+	return 0; // 0 = OK (tells Dolibarr the trigger ran successfully)
 }
