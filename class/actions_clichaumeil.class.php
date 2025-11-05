@@ -420,6 +420,9 @@ class ActionsClichaumeil extends CommonHookActions
 			$item = $formSetup->newItem('CLICHAUMEIL_ACTIVATE_SUPPLIER_PROPOSAL');
 			$item->setAsYesNo();
 
+			$item = $formSetup->newItem('CLICHAUMEIL_MENDATORY_ATTACHED_FILES_SUPPLIER_PROPOSAL');;
+			$item->setAsYesNo();
+
 			print $formSetup->generateOutput();
 			// We successfully added items to the form
 			return 1;

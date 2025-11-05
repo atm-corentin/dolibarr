@@ -105,10 +105,19 @@ CLICHAUMEIL_SENDMESSAGEHELP = Écrire votre message ou réponse
 CLICHAUMEIL_YOURCOMMENTHERE = Ajouter un commentaire.
 CLICHAUMEIL_ADDMESSAGE = Envoyer
 CLICHAUMEIL_REFSUPPLIER = Ref fournisseur :
-CLICHAUMEIL_STATUS = Statut
-CLICHAUMEIL_DATECREATION = Date de création
-CLICHAUMEIL_TOTALHT = Total HT
+CLICHAUMEIL_STATUS = Statut :
+CLICHAUMEIL_DATECREATION = Date de création :
+CLICHAUMEIL_TOTALHT = Total HT :
 CLICHAUMEIL_LABEL_OWNER = Message de %s
+CLICHAUMEIL_MENDATORY_ATTACHED_FILES_SUPPLIER_PROPOSAL = L'utilisateur doit fournir une pièce jointe pour valider
+CLICHAUMEIL_REFNAME = Nom du tiers :
+CliChaumeilSupplierStatut = Statut fournisseur
+CLICHAUMEIL_FILE_RECEIVED = Dossier reçu
+CLICHAUMEIL_PENDING_FILE = Dossier en attente
+CLICHAUMEIL_VIEWSUPPLIERPROPOSAL = Proposition commercial fournisseur
+CLICHAUMEIL_VIEWSUPPLIERPROPOSALDESC = Retrouvez facilement toutes vos propositions commercial fournisseur
+CLICHAUMEIL_SUPPLIERPROPOSALNOTFOUND = Proposition commercial fournisseur introuvable.
+
 
 #
 # Extrafields

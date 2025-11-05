@@ -59,7 +59,6 @@ if (!$res) {
 require_once DOL_DOCUMENT_ROOT."/core/lib/admin.lib.php";
 require_once DOL_DOCUMENT_ROOT."/core/class/html.formmail.class.php";
 require_once '../lib/clichaumeil.lib.php';
-//require_once "../class/myclass.class.php";
 
 /**
  * @var Conf $conf
@@ -109,15 +108,11 @@ if (!$user->admin) {
 }
 
 
-
-
 // --- 1. Define constants for robustness ---
 const REVIEW_YEAR_DELAY_KEY = 'CLICHAUMEIL_REVIEW_YEAR_DELAY';
 const PRICING_MANAGERS_KEY = 'CLICHAUMEIL_PRICING_UPDATE_MANAGERS';
 const EMAIL_TEMPLATE_KEY = 'CLICHAUMEIL_CRON_EMAIL_TEMPLATE';
 const NOTIF_USERS_KEY = 'CLICHAUMEIL_CRON_NOTIF_USERS';
-
-
 
 
 // --- 3. Build the form in a clean and readable way ---
@@ -149,9 +144,7 @@ $item = $formSetup->newItem(EMAIL_TEMPLATE_KEY)->setAsSelect($templates);
 // --- Field 4: Users to Notify (User Select) ---
 buildUserMultiSelectField($formSetup, $form, NOTIF_USERS_KEY);
 
-
 $setupnotempty += count($formSetup->items);
-
 
 $dirmodels = array_merge(array('/'), (array) $conf->modules_parts['models']);
 
@@ -164,7 +157,6 @@ $tmpobjectkey = GETPOST('object', 'aZ09');
 if ($tmpobjectkey && !array_key_exists($tmpobjectkey, $myTmpObjects)) {
 	accessforbidden('Bad value for object. Hack attempt ?');
 }
-
 
 /*
  * Actions
@@ -208,7 +200,6 @@ if (!empty($formSetup->items)) {
 	print $formSetup->generateOutput(true);
 	print '<br>';
 }
-
 
 if (empty($setupnotempty)) {
 	print '<br>'.$langs->trans("NothingToSetup");

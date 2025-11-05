@@ -13,7 +13,6 @@ class SupplierProposalController extends Controller
 	{
 		global $conf, $user;
 		$this->accessRight = isModEnabled('clichaumeil') && getDolGlobalInt('CLICHAUMEIL_ACTIVATE_SUPPLIER_PROPOSAL') && $user->hasRight('externalaccess', 'view_supplier_proposals');;
-//		return parent::checkAccess();
 		return true;
 	}
 
@@ -28,13 +27,16 @@ class SupplierProposalController extends Controller
 	public function action()
 	{
 		global $langs;
+
+		$langs->load("clichaumeil@clichaumeil");
+
 		$context = Context::getInstance();
 		if (!$context->controllerInstance->checkAccess()) {
 			return;
 		}
 
-		$context->title = $langs->trans('ViewSupplierProposal');
-		$context->desc = $langs->trans('ViewSupplierProposalDesc');
+		$context->title = $langs->trans('CLICHAUMEIL_VIEWSUPPLIERPROPOSAL');
+		$context->desc = $langs->trans('CLICHAUMEIL_VIEWSUPPLIERPROPOSALDESC');
 		$context->menu_active[] = 'supplierProposal';
 
 		$hookRes = $this->hookDoAction();
@@ -64,15 +66,14 @@ class SupplierProposalController extends Controller
 
 		$hookRes = $this->hookPrintPageView();
 		if (empty($hookRes)) {
-			print '<section id="section-ticket"><div class="container">';
-			self::print_ticketTable($user->socid);
+			print '<section id="section-supplierProposal"><div class="container">';
+			self::printSupplierProposalTable($user->socid);
 			print '</div></section>';
 		}
 		$this->loadTemplate('footer');
 	}
 
-
-	static public function print_ticketTable($socId = 0)
+	static public function printSupplierProposalTable($socId = 0)
 	{
 		global $langs, $db, $user, $conf, $hookmanager;
 		$context = Context::getInstance();
@@ -84,10 +85,13 @@ class SupplierProposalController extends Controller
 		$langs->load('fourn'); // Load supplier lang file for good measure
 
 		// SQL query to fetch supplier proposals for the current third party
-		$sql = 'SELECT t.rowid ';
-		$sql .= ' FROM `' . $db->prefix() . 'supplier_proposal` t'; // Use llx_propal_fourn table
-		$sql .= ' WHERE t.fk_soc = ' . intval($socId);
-		$sql .= ' ORDER BY t.datec DESC';
+		// Select all needed fields to avoid using fetch() which calls getEntity()
+		// Note: No entity filter to show all proposals across entities for this supplier
+		$sql = 'SELECT sp.rowid, sp.ref, sp.ref_ext, sp.datec, sp.total_ht, sp.fk_statut, sp.entity ';
+		$sql .= ' FROM `' . $db->prefix() . 'supplier_proposal` sp';
+		$sql .= ' WHERE sp.fk_soc = ' . intval($socId);
+		$sql .= ' AND sp.fk_statut = 1';
+		$sql .= ' ORDER BY sp.datec DESC';
 
 		$tableItems = $context->dbTool->executeS($sql);
 
@@ -98,27 +102,18 @@ class SupplierProposalController extends Controller
 			'supplierPropalMorePanelHeader' => &$supplierPropalMorePanelHeader // Renamed
 		);
 
-// Use a new hook name for supplier proposals
+		// Use a new hook name for supplier proposals
 		$reshook = $hookmanager->executeHooks('externalAccessBeforeSupplierPropalList', $parameters, $object, $context->action);    // Note that $action and $object may have been modified by hook
 
 		if (!empty($supplierPropalMorePanelHeader)) {
 			print $supplierPropalMorePanelHeader;
 		}
 
-// "New" button has been removed
-
 		if (!empty($tableItems)) {
 			// --- Extrafields configuration ---
 			// We only use generic extrafields, as no specific conf key was provided for supplier proposals
 			$TOther_fields = explode(',', getDolGlobalString('EACCESS_LIST_ADDED_COLUMNS'));
 			if (empty($TOther_fields)) $TOther_fields = array();
-
-			// You might want to add a new conf key 'EACCESS_LIST_ADDED_COLUMNS_SUPPLIER_PROPAL'
-			// in your setup and uncomment the lines below if you do
-			// $TOther_fields_supp_propal = explode(',', getDolGlobalString('EACCESS_LIST_ADDED_COLUMNS_SUPPLIER_PROPAL'));
-			// if(empty($TOther_fields_supp_propal)) $TOther_fields_supp_propal = array();
-			// $TOther_fields = array_merge($TOther_fields, $TOther_fields_supp_propal);
-
 
 			// Changed table ID to "supplier-propal-list"
 			print '<table id="supplier-propal-list" class="table table-striped" >';
@@ -131,13 +126,13 @@ class SupplierProposalController extends Controller
 			if (!empty($TOther_fields)) {
 				$e = new ExtraFields($db);
 				foreach ($TOther_fields as $field) {
-					// Check properties on PropalFourn class
-					if (property_exists('PropalFourn', $field)) print ' <th class="text-center" >' . $langs->trans($field) . '</th>';
+					// Check properties on SupplierProposal class
+					if (property_exists('SupplierProposal', $field)) print ' <th class="text-center" >' . $langs->trans($field) . '</th>';
 					elseif (strpos($field, 'EXTRAFIELD') !== false) {
 
-						// Fetch extrafields for 'propal_fourn' element
-						if (empty($e->attributes)) $e->fetch_name_optionals_label('propal_fourn');
-						print ' <th class="text-center" >' . $e->attributes['propal_fourn']['label'][strtr($field, array('EXTRAFIELD_' => ''))] . '</th>';
+						// Fetch extrafields for 'supplier_proposal' element
+						if (empty($e->attributes)) $e->fetch_name_optionals_label('supplier_proposal');
+						print ' <th class="text-center" >' . $e->attributes['supplier_proposal']['label'][strtr($field, array('EXTRAFIELD_' => ''))] . '</th>';
 					}
 				}
 			}
@@ -149,33 +144,60 @@ class SupplierProposalController extends Controller
 			print '<tbody>';
 
 			foreach ($tableItems as $item) {
-				// Use the PropalFourn object
+				// Create object instance for methods only (avoid fetch() with getEntity() issue)
 				$object = new SupplierProposal($db);
-				$object->fetch($item->rowid);
+				$object->id = $item->rowid;
+				$object->ref = $item->ref;
+				$object->ref_ext = $item->ref_ext;
+				$object->datec = $item->datec;
+				$object->total_ht = $item->total_ht;
+				$object->statut = $item->fk_statut;
+				$object->entity = $item->entity;
+
+				// Only fetch extrafields if needed
+				if (!empty($TOther_fields)) {
+					// Fetch extrafields separately without full fetch
+					$sql_extra = 'SELECT * FROM ' . $db->prefix() . 'supplier_proposal_extrafields';
+					$sql_extra .= ' WHERE fk_object = ' . intval($item->rowid);
+					$resql_extra = $db->query($sql_extra);
+					if ($resql_extra) {
+						$obj_extra = $db->fetch_object($resql_extra);
+						if ($obj_extra) {
+							foreach ($obj_extra as $key => $value) {
+								if ($key != 'rowid' && $key != 'tms' && $key != 'fk_object' && $key != 'import_key') {
+									$object->array_options['options_' . $key] = $value;
+								}
+							}
+						}
+						$db->free($resql_extra);
+					}
+				}
 
 				print '<tr>';
 				// Link to 'supplier_proposal_card' controller with the propal ID
 				print ' <td data-search="' . $object->ref . '" data-order="' . $object->ref . '"  ><a href="' . $context->getControllerUrl('supplier_proposal_card', '&id=' . $item->rowid) . '">' . $object->ref . '</a></td>';
-				print ' <td data-search="' . $object->ref_supplier . '" data-order="' . $object->ref_supplier . '" >' . $object->ref_supplier . '</td>';
+				print ' <td data-search="' . $object->ref_ext . '" data-order="' . $object->ref_ext . '" >' . $object->ref_ext . '</td>';
 				print ' <td data-search="' . dol_print_date($object->datec) . '" data-order="' . $object->datec . '" >' . dol_print_date($object->datec) . '</td>';
 
 
 				if (!empty($TOther_fields)) {
 					foreach ($TOther_fields as $field) {
-						if (property_exists('PropalFourn', $field)) {
+						if (property_exists('SupplierProposal', $field)) {
 							print ' <td data-search="' . strip_tags($object->{$field}) . '" data-order="' . strip_tags($object->{$field}) . '" >' . $object->{$field} . '</td>';
 						} elseif (strpos($field, 'EXTRAFIELD') !== false) {
-							// Print extrafield value for 'propal_fourn'
+							$extrafield_name = strtr($field, array('EXTRAFIELD_' => ''));
+							$extrafield_value = !empty($object->array_options['options_' . $extrafield_name]) ? $object->array_options['options_' . $extrafield_name] : '';
+							// Print extrafield value for 'supplier_proposal'
 							print ' <td data-search="'
-								. strip_tags($e->showOutputField(strtr($field, array('EXTRAFIELD_' => '')), $object->array_options['options_' . strtr($field, array('EXTRAFIELD_' => ''))], '', 'propal_fourn')) . '" data-order="'
-								. strip_tags($e->showOutputField(strtr($field, array('EXTRAFIELD_' => '')), $object->array_options['options_' . strtr($field, array('EXTRAFIELD_' => ''))], '', 'propal_fourn')) . '" >'
-								. strip_tags($e->showOutputField(strtr($field, array('EXTRAFIELD_' => '')), $object->array_options['options_' . strtr($field, array('EXTRAFIELD_' => ''))], '', 'propal_fourn')) . '</td>';
+								. strip_tags($e->showOutputField($extrafield_name, $extrafield_value, '', 'supplier_proposal')) . '" data-order="'
+								. strip_tags($e->showOutputField($extrafield_name, $extrafield_value, '', 'supplier_proposal')) . '" >'
+								. $e->showOutputField($extrafield_name, $extrafield_value, '', 'supplier_proposal') . '</td>';
 						}
 					}
 				}
 
 				print ' <td data-search="' . $object->total_ht . '" data-order="' . $object->total_ht . '" >' . price($object->total_ht) . '</td>';
-				// Use the status function from the PropalFourn class
+				// Use the status function from the SupplierProposal class
 				print ' <td class="text-center" >' . $object->getLibStatut(0) . '</td>';
 				print '</tr>';
 			}

@@ -96,6 +96,9 @@ switch ($action) {
 				exit;
 			}
 
+
+			$object->setDraft($user);
+
 			// Call the update line method
 			$res = $object->updateline(
 				$lineToUpdate->id,
@@ -108,6 +111,8 @@ switch ($action) {
 				$lineToUpdate->desc,
 				$price_base_type = 'HT',
 			);
+
+			$object->valid($user);
 
 			if ($res < 0) {
 				$response['message'] = 'Update failed: ' . $object->error;

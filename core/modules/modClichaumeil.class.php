@@ -164,89 +164,15 @@ class modClichaumeil extends DolibarrModules
 		// Messages at activation
 		$this->warnings_activation = array(); // Warning to show when we activate module. array('always'='text') or array('FR'='textfr','MX'='textmx'...)
 		$this->warnings_activation_ext = array(); // Warning to show when we activate an external module. array('always'='text') or array('FR'='textfr','MX'='textmx'...)
-		//$this->automatic_activation = array('FR'=>'ClichaumeilWasAutomaticallyActivatedBecauseOfYourCountryChoice');
-		//$this->always_enabled = true;								// If true, can't be disabled
-
-		// Constants
-		// List of particular constants to add when module is enabled (key, 'chaine', value, desc, visible, 'current' or 'allentities', deleteonunactive)
-		// Example: $this->const=array(1 => array('CLICHAUMEIL_MYNEWCONST1', 'chaine', 'myvalue', 'This is a constant to add', 1),
-		//                             2 => array('CLICHAUMEIL_MYNEWCONST2', 'chaine', 'myvalue', 'This is another constant to add', 0, 'current', 1)
-		// );
 		$this->const = array();
 		$this->rfa_tab_added = false;
-
-		// Some keys to add into the overwriting translation tables
-		/*$this->overwrite_translation = array(
-			'en_US:ParentCompany'=>'Parent company or reseller',
-			'fr_FR:ParentCompany'=>'Maison mère ou revendeur'
-		)*/
-
 		if (!isModEnabled("clichaumeil")) {
 			$conf->clichaumeil = new stdClass();
 			$conf->clichaumeil->enabled = 0;
 		}
-
 		// Array to add new pages in new tabs
 		/* BEGIN MODULEBUILDER TABS */
 		$this->tabs = array();
-		/* END MODULEBUILDER TABS */
-		// Example:
-		// To add a new tab identified by code tabname1
-		// $this->tabs[] = array('data' => 'objecttype:+tabname1:Title1:mylangfile@clichaumeil:$user->hasRight(\'clichaumeil\', \'read\'):/clichaumeil/mynewtab1.php?id=__ID__');
-		// To add another new tab identified by code tabname2. Label will be result of calling all substitution functions on 'Title2' key.
-		// $this->tabs[] = array('data' => 'objecttype:+tabname2:SUBSTITUTION_Title2:mylangfile@clichaumeil:$user->hasRight(\'othermodule\', \'read\'):/clichaumeil/mynewtab2.php?id=__ID__',
-		// To remove an existing tab identified by code tabname
-		// $this->tabs[] = array('data' => 'objecttype:-tabname:NU:conditiontoremove');
-		//
-		// Where objecttype can be
-		// 'categories_x'	  to add a tab in category view (replace 'x' by type of category (0=product, 1=supplier, 2=customer, 3=member)
-		// 'contact'          to add a tab in contact view
-		// 'contract'         to add a tab in contract view
-		// 'delivery'         to add a tab in delivery view
-		// 'group'            to add a tab in group view
-		// 'intervention'     to add a tab in intervention view
-		// 'invoice'          to add a tab in customer invoice view
-		// 'invoice_supplier' to add a tab in supplier invoice view
-		// 'member'           to add a tab in foundation member view
-		// 'opensurveypoll'	  to add a tab in opensurvey poll view
-		// 'order'            to add a tab in sale order view
-		// 'order_supplier'   to add a tab in supplier order view
-		// 'payment'		  to add a tab in payment view
-		// 'payment_supplier' to add a tab in supplier payment view
-		// 'product'          to add a tab in product view
-		// 'propal'           to add a tab in propal view
-		// 'project'          to add a tab in project view
-		// 'stock'            to add a tab in stock view
-		// 'thirdparty'       to add a tab in third party view
-		// 'user'             to add a tab in user view
-
-
-		// Dictionaries
-		/* Example:
-		 $this->dictionaries=array(
-		 'langs' => 'clichaumeil@clichaumeil',
-		 // List of tables we want to see into dictionary editor
-		 'tabname' => array("table1", "table2", "table3"),
-		 // Label of tables
-		 'tablib' => array("Table1", "Table2", "Table3"),
-		 // Request to select fields
-		 'tabsql' => array('SELECT f.rowid as rowid, f.code, f.label, f.active FROM '.MAIN_DB_PREFIX.'table1 as f', 'SELECT f.rowid as rowid, f.code, f.label, f.active FROM '.MAIN_DB_PREFIX.'table2 as f', 'SELECT f.rowid as rowid, f.code, f.label, f.active FROM '.MAIN_DB_PREFIX.'table3 as f'),
-		 // Sort order
-		 'tabsqlsort' => array("label ASC", "label ASC", "label ASC"),
-		 // List of fields (result of select to show dictionary)
-		 'tabfield' => array("code,label", "code,label", "code,label"),
-		 // List of fields (list of fields to edit a record)
-		 'tabfieldvalue' => array("code,label", "code,label", "code,label"),
-		 // List of fields (list of fields for insert)
-		 'tabfieldinsert' => array("code,label", "code,label", "code,label"),
-		 // Name of columns with primary key (try to always name it 'rowid')
-		 'tabrowid' => array("rowid", "rowid", "rowid"),
-		 // Condition to show each dictionary
-		 'tabcond' => array(isModEnabled('clichaumeil'), isModEnabled('clichaumeil'), isModEnabled('clichaumeil')),
-		 // Tooltip for every fields of dictionaries: DO NOT PUT AN EMPTY ARRAY
-		 'tabhelp' => array(array('code' => $langs->trans('CodeTooltipHelp'), 'field2' => 'field2tooltip'), array('code' => $langs->trans('CodeTooltipHelp'), 'field2' => 'field2tooltip'), ...),
-		 );
-		 */
 		/* BEGIN MODULEBUILDER DICTIONARIES */
 		$this->dictionaries = array();
 		/* END MODULEBUILDER DICTIONARIES */
@@ -254,14 +180,7 @@ class modClichaumeil extends DolibarrModules
 		// Boxes/Widgets
 		// Add here list of php file(s) stored in clichaumeil/core/boxes that contains a class to show a widget.
 		/* BEGIN MODULEBUILDER WIDGETS */
-		$this->boxes = array(
-			//  0 => array(
-			//      'file' => 'clichaumeilwidget1.php@clichaumeil',
-			//      'note' => 'Widget provided by Clichaumeil',
-			//      'enabledbydefaulton' => 'Home',
-			//  ),
-			//  ...
-		);
+		$this->boxes = array();
 		/* END MODULEBUILDER WIDGETS */
 
 		// Cronjobs (List of cron jobs entries to add when module is enabled)
@@ -282,11 +201,6 @@ class modClichaumeil extends DolibarrModules
 				'priority' => 50,
 			)
 		);
-		/* END MODULEBUILDER CRON */
-		// Example: $this->cronjobs=array(
-		//    0=>array('label'=>'My label', 'jobtype'=>'method', 'class'=>'/dir/class/file.class.php', 'objectname'=>'MyClass', 'method'=>'myMethod', 'parameters'=>'param1, param2', 'comment'=>'Comment', 'frequency'=>2, 'unitfrequency'=>3600, 'status'=>0, 'test'=>'isModEnabled("clichaumeil")', 'priority'=>50),
-		//    1=>array('label'=>'My label', 'jobtype'=>'command', 'command'=>'', 'parameters'=>'param1, param2', 'comment'=>'Comment', 'frequency'=>1, 'unitfrequency'=>3600*24, 'status'=>0, 'test'=>'isModEnabled("clichaumeil")', 'priority'=>50)
-		// );
 
 		// Permissions provided by this module
 		$this->rights = array();
@@ -308,31 +222,11 @@ class modClichaumeil extends DolibarrModules
 		$this->rights[$r][4] = 'chaumeilrfa';
 		$this->rights[$r][5] = 'delete';
 		$r++;
-
 		/* END MODULEBUILDER PERMISSIONS */
-
 
 		// Main menu entries to add
 		$this->menu = array();
 		$r = 0;
-		// Add here entries to declare new menus
-		/* BEGIN MODULEBUILDER TOPMENU */
-//		$this->menu[$r++] = array(
-//			'fk_menu' => '', // Will be stored into mainmenu + leftmenu. Use '' if this is a top menu. For left menu, use 'fk_mainmenu=xxx' or 'fk_mainmenu=xxx,fk_leftmenu=yyy' where xxx is mainmenucode and yyy is a leftmenucode
-//			'type' => 'top', // This is a Top menu entry
-//			'titre' => 'ModuleClichaumeilName',
-//			'prefix' => img_picto('', $this->picto, 'class="pictofixedwidth valignmiddle"'),
-//			'mainmenu' => 'clichaumeil',
-//			'leftmenu' => '',
-//			'url' => '/clichaumeil/clichaumeilindex.php',
-//			'langs' => 'clichaumeil@clichaumeil', // Lang file to use (without .lang) by module. File must be in langs/code_CODE/ directory.
-//			'position' => 1000 + $r,
-//			'enabled' => 'isModEnabled("clichaumeil")', // Define condition to show or hide menu entry. Use 'isModEnabled("clichaumeil")' if entry must be visible if module is enabled.
-//			'perms' => '1', // Use 'perms'=>'$user->hasRight("clichaumeil", "chaumeilrfa", "read")' if you want your menu with a permission rules
-//			'target' => '',
-//			'user' => 2, // 0=Menu for internal users, 1=external users, 2=both
-//		);
-		/* END MODULEBUILDER TOPMENU */
 
 		/* BEGIN MODULEBUILDER LEFTMENU CHAUMEILRFA */
 		$this->menu[$r++] = array(
@@ -381,58 +275,6 @@ class modClichaumeil extends DolibarrModules
 			'user' => 2,
 			'object' => 'ChaumeilRfa'
 		);
-		/* END MODULEBUILDER LEFTMENU CHAUMEILRFA */
-		/* BEGIN MODULEBUILDER LEFTMENU MYOBJECT */
-		/*
-		$this->menu[$r++]=array(
-			'fk_menu' => 'fk_mainmenu=clichaumeil',      // '' if this is a top menu. For left menu, use 'fk_mainmenu=xxx' or 'fk_mainmenu=xxx,fk_leftmenu=yyy' where xxx is mainmenucode and yyy is a leftmenucode
-			'type' => 'left',                          // This is a Left menu entry
-			'titre' => 'ChaumeilRfa',
-			'prefix' => img_picto('', $this->picto, 'class="pictofixedwidth valignmiddle paddingright"'),
-			'mainmenu' => 'clichaumeil',
-			'leftmenu' => 'chaumeilrfa',
-			'url' => '/clichaumeil/clichaumeilindex.php',
-			'langs' => 'clichaumeil@clichaumeil',	        // Lang file to use (without .lang) by module. File must be in langs/code_CODE/ directory.
-			'position' => 1000 + $r,
-			'enabled' => 'isModEnabled("clichaumeil")', // Define condition to show or hide menu entry. Use 'isModEnabled("clichaumeil")' if entry must be visible if module is enabled.
-			'perms' => '$user->hasRight("clichaumeil", "chaumeilrfa", "read")',
-			'target' => '',
-			'user' => 2,				                // 0=Menu for internal users, 1=external users, 2=both
-			'object' => 'ChaumeilRfa'
-		);
-		$this->menu[$r++]=array(
-			'fk_menu' => 'fk_mainmenu=clichaumeil,fk_leftmenu=chaumeilrfa',	    // '' if this is a top menu. For left menu, use 'fk_mainmenu=xxx' or 'fk_mainmenu=xxx,fk_leftmenu=yyy' where xxx is mainmenucode and yyy is a leftmenucode
-			'type' => 'left',			                // This is a Left menu entry
-			'titre' => 'New_ChaumeilRfa',
-			'mainmenu' => 'clichaumeil',
-			'leftmenu' => 'clichaumeil_chaumeilrfa_new',
-			'url' => '/clichaumeil/chaumeilrfa_card.php?action=create',
-			'langs' => 'clichaumeil@clichaumeil',	        // Lang file to use (without .lang) by module. File must be in langs/code_CODE/ directory.
-			'position' => 1000 + $r,
-			'enabled' => 'isModEnabled("clichaumeil")', // Define condition to show or hide menu entry. Use 'isModEnabled("clichaumeil")' if entry must be visible if module is enabled. Use '$leftmenu==\'system\'' to show if leftmenu system is selected.
-			'perms' => '$user->hasRight("clichaumeil", "chaumeilrfa", "write")'
-			'target' => '',
-			'user' => 2,				                // 0=Menu for internal users, 1=external users, 2=both
-			'object' => 'ChaumeilRfa'
-		);
-		$this->menu[$r++]=array(
-			'fk_menu' => 'fk_mainmenu=clichaumeil,fk_leftmenu=chaumeilrfa',	    // '' if this is a top menu. For left menu, use 'fk_mainmenu=xxx' or 'fk_mainmenu=xxx,fk_leftmenu=yyy' where xxx is mainmenucode and yyy is a leftmenucode
-			'type' => 'left',			                // This is a Left menu entry
-			'titre' => 'List_ChaumeilRfa',
-			'mainmenu' => 'clichaumeil',
-			'leftmenu' => 'clichaumeil_chaumeilrfa_list',
-			'url' => '/clichaumeil/chaumeilrfa_list.php',
-			'langs' => 'clichaumeil@clichaumeil',	        // Lang file to use (without .lang) by module. File must be in langs/code_CODE/ directory.
-			'position' => 1000 + $r,
-			'enabled' => 'isModEnabled("clichaumeil")', // Define condition to show or hide menu entry. Use 'isModEnabled("clichaumeil")' if entry must be visible if module is enabled.
-			'perms' => '$user->hasRight("clichaumeil", "chaumeilrfa", "read")'
-			'target' => '',
-			'user' => 2,				                // 0=Menu for internal users, 1=external users, 2=both
-			'object' => 'ChaumeilRfa'
-		);
-		*/
-		/* END MODULEBUILDER LEFTMENU MYOBJECT */
-
 
 		// Exports profiles provided by this module
 		$r = 0;
@@ -442,64 +284,14 @@ class modClichaumeil extends DolibarrModules
 		$this->export_code[$r] = $this->rights_class.'_'.$r;
 		$this->export_label[$r] = 'ChaumeilRfaLines';	// Translation key (used only if key ExportDataset_xxx_z not found)
 		$this->export_icon[$r] = $this->picto;
-		// Define $this->export_fields_array, $this->export_TypeFields_array and $this->export_entities_array
 		$keyforclass = 'ChaumeilRfa'; $keyforclassfile='/clichaumeil/class/chaumeilrfa.class.php'; $keyforelement='chaumeilrfa@clichaumeil';
 		include DOL_DOCUMENT_ROOT.'/core/commonfieldsinexport.inc.php';
-		//$this->export_fields_array[$r]['t.fieldtoadd']='FieldToAdd'; $this->export_TypeFields_array[$r]['t.fieldtoadd']='Text';
-		//unset($this->export_fields_array[$r]['t.fieldtoremove']);
-		//$keyforclass = 'ChaumeilRfaLine'; $keyforclassfile='/clichaumeil/class/chaumeilrfa.class.php'; $keyforelement='chaumeilrfaline@clichaumeil'; $keyforalias='tl';
-		//include DOL_DOCUMENT_ROOT.'/core/commonfieldsinexport.inc.php';
 		$keyforselect='chaumeilrfa'; $keyforaliasextra='extra'; $keyforelement='chaumeilrfa@clichaumeil';
 		include DOL_DOCUMENT_ROOT.'/core/extrafieldsinexport.inc.php';
-		//$keyforselect='chaumeilrfaline'; $keyforaliasextra='extraline'; $keyforelement='chaumeilrfaline@clichaumeil';
-		//include DOL_DOCUMENT_ROOT.'/core/extrafieldsinexport.inc.php';
-		//$this->export_dependencies_array[$r] = array('chaumeilrfaline' => array('tl.rowid','tl.ref')); // To force to activate one or several fields if we select some fields that need same (like to select a unique key if we ask a field of a child to avoid the DISTINCT to discard them, or for computed field than need several other fields)
-		//$this->export_special_array[$r] = array('t.field' => '...');
-		//$this->export_examplevalues_array[$r] = array('t.field' => 'Example');
-		//$this->export_help_array[$r] = array('t.field' => 'FieldDescHelp');
 		$this->export_sql_start[$r]='SELECT DISTINCT ';
 		$this->export_sql_end[$r]  =' FROM '.$db->prefix().'clichaumeil_chaumeilrfa as t';
-		//$this->export_sql_end[$r]  .=' LEFT JOIN '.MAIN_DB_PREFIX.'clichaumeil_chaumeilrfa_line as tl ON tl.fk_chaumeilrfa = t.rowid';
 		$this->export_sql_end[$r] .=' WHERE 1 = 1';
-		//$this->export_sql_end[$r] .=' AND t.entity IN ('.getEntity('chaumeilrfa').')';
-		$r++;
-		/* END MODULEBUILDER EXPORT MYOBJECT */
 
-		// Imports profiles provided by this module
-		$r = 0;
-		/* BEGIN MODULEBUILDER IMPORT MYOBJECT */
-		/*
-		$langs->load("clichaumeil@clichaumeil");
-		$this->import_code[$r] = $this->rights_class.'_'.$r;
-		$this->import_label[$r] = 'ChaumeilRfaLines';	// Translation key (used only if key ExportDataset_xxx_z not found)
-		$this->import_icon[$r] = $this->picto;
-		$this->import_tables_array[$r] = array('t' => MAIN_DB_PREFIX.'clichaumeil_chaumeilrfa', 'extra' => MAIN_DB_PREFIX.'clichaumeil_chaumeilrfa_extrafields');
-		$this->import_tables_creator_array[$r] = array('t' => 'fk_user_author'); // Fields to store import user id
-		$import_sample = array();
-		$keyforclass = 'ChaumeilRfa'; $keyforclassfile='/clichaumeil/class/chaumeilrfa.class.php'; $keyforelement='chaumeilrfa@clichaumeil';
-		include DOL_DOCUMENT_ROOT.'/core/commonfieldsinimport.inc.php';
-		$import_extrafield_sample = array();
-		$keyforselect='chaumeilrfa'; $keyforaliasextra='extra'; $keyforelement='chaumeilrfa@clichaumeil';
-		include DOL_DOCUMENT_ROOT.'/core/extrafieldsinimport.inc.php';
-		$this->import_fieldshidden_array[$r] = array('extra.fk_object' => 'lastrowid-'.MAIN_DB_PREFIX.'clichaumeil_chaumeilrfa');
-		$this->import_regex_array[$r] = array();
-		$this->import_examplevalues_array[$r] = array_merge($import_sample, $import_extrafield_sample);
-		$this->import_updatekeys_array[$r] = array('t.ref' => 'Ref');
-		$this->import_convertvalue_array[$r] = array(
-			't.ref' => array(
-				'rule'=>'getrefifauto',
-				'class'=>(!getDolGlobalString('CLICHAUMEIL_MYOBJECT_ADDON') ? 'mod_chaumeilrfa_standard' : getDolGlobalString('CLICHAUMEIL_MYOBJECT_ADDON')),
-				'path'=>"/core/modules/clichaumeil/".(!getDolGlobalString('CLICHAUMEIL_MYOBJECT_ADDON') ? 'mod_chaumeilrfa_standard' : getDolGlobalString('CLICHAUMEIL_MYOBJECT_ADDON')).'.php',
-				'classobject'=>'ChaumeilRfa',
-				'pathobject'=>'/clichaumeil/class/chaumeilrfa.class.php',
-			),
-			't.fk_soc' => array('rule' => 'fetchidfromref', 'file' => '/societe/class/societe.class.php', 'class' => 'Societe', 'method' => 'fetch', 'element' => 'ThirdParty'),
-			't.fk_user_valid' => array('rule' => 'fetchidfromref', 'file' => '/user/class/user.class.php', 'class' => 'User', 'method' => 'fetch', 'element' => 'user'),
-			't.fk_mode_reglement' => array('rule' => 'fetchidfromcodeorlabel', 'file' => '/compta/paiement/class/cpaiement.class.php', 'class' => 'Cpaiement', 'method' => 'fetch', 'element' => 'cpayment'),
-		);
-		$this->import_run_sql_after_array[$r] = array();
-		$r++; */
-		/* END MODULEBUILDER IMPORT MYOBJECT */
 	}
 
 	/**
@@ -532,6 +324,7 @@ class modClichaumeil extends DolibarrModules
 		$extrafields->addExtraField('clichaumeil_length', 'CliChaumeilLength', 'double', 100, '24,2', 'commandedet', 0, 0, '', array ( 'options' => array ( '' => NULL, ), ), 1, '', '1', '', '', 0, 'clichaumeil@clichaumeil', 'isModEnabled("clichaumeil")', 0, '0', array ( 'css' => '', 'cssview' => '', 'csslist' => ''));
 		$extrafields->addExtraField('clichaumeil_ref_required', 'CliChaumeilRefRequired', 'boolean', 100, '', 'thirdparty', 0, 0, '', array ( 'options' => array ( '' => NULL, ), ), 1, '', '1', '', '', 0, 'clichaumeil@clichaumeil', 'isModEnabled("clichaumeil")', 0, '0', array ( 'css' => '', 'cssview' => '', 'csslist' => ''));
 		$extrafields->addExtraField('clichaumeil_generalexpenses', 'CliChaumeilGeneralExpenses', 'double', 100, '24,2', 'bom_bom', 0, 0, '', array ( 'options' => array ( '' => NULL, ), ), 1, '', '1', '', '', 0, 'clichaumeil@clichaumeil', 1, 0, '0', array ( 'css' => '', 'cssview' => '', 'csslist' => '', ));
+		$extrafields->addExtraField('clichaumeil_supplierstatut', 'CliChaumeilSupplierStatut', 'select', 100, '24', 'supplier_proposal', 0, 0, '', array ( 'options' => array ($langs->trans("CLICHAUMEIL_PENDING_FILE") => $langs->trans("CLICHAUMEIL_PENDING_FILE"), $langs->trans("CLICHAUMEIL_FILE_RECEIVED") => $langs->trans("CLICHAUMEIL_FILE_RECEIVED")), ), 1, '', '1', '', '', 0, 'clichaumeil@clichaumeil', 'isModEnabled("clichaumeil")', 0, '0', array ( 'css' => '', 'cssview' => '', 'csslist' => '', ));
 
 		// Permissions
 		$this->remove($options);
