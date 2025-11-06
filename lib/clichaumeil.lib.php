@@ -64,7 +64,7 @@ function externalAccessInitController($controllerContext, $user, $langs, $conf) 
 
 	// Register supplier_proposal list controller
 	$newControllerKey = 'supplier_proposal';
-	$newControllerPath = dol_buildpath('/clichaumeil/www/controllers/supplier_proposal.controller.php');
+	$newControllerPath = dol_buildpath('/clichaumeil/www/controllers/supplierProposal.controller.php');
 	$newControllerClass = 'SupplierProposalController';
 
 	$controllerContext->addControllerDefinition(
@@ -75,7 +75,7 @@ function externalAccessInitController($controllerContext, $user, $langs, $conf) 
 
 	// Register supplier_proposal_card detail controller
 	$cardControllerKey = 'supplier_proposal_card';
-	$cardControllerPath = dol_buildpath('/clichaumeil/www/controllers/supplier_proposal_card.controller.php');
+	$cardControllerPath = dol_buildpath('/clichaumeil/www/controllers/supplierProposalCard.controller.php');
 	$cardControllerClass = 'SupplierProposalCardController';
 
 	$controllerContext->addControllerDefinition(

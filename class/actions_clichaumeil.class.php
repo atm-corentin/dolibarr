@@ -25,7 +25,7 @@
  */
 
 require_once DOL_DOCUMENT_ROOT.'/core/class/commonhookactions.class.php';
-require_once __DIR__ . '/../lib/supplier_proposal.lib.php';
+require_once __DIR__ . '/../lib/supplierProposal.lib.php';
 
 /**
  * Class ActionsClichaumeil
@@ -444,6 +444,8 @@ class ActionsClichaumeil extends CommonHookActions
 	{
 		global $conf, $user, $langs;
 
+		$langs->load("clichaumeil@clichaumeil");
+
 		// $object is the $context passed from the calling file
 		$context = $object;
 
@@ -456,7 +458,7 @@ class ActionsClichaumeil extends CommonHookActions
 			ob_start();
 
 			// Call the function to print our new service
-			printService($langs->trans('SupplierProposals'), 'fa-handshake-o', $link);
+			printService($langs->trans('CLICHAUMEIL_SUPPLIERPROPOSALS'), 'fa-handshake-o', $link);
 
 			// Add the captured HTML to the hook manager's output buffer
 			$this->resprints .= ob_get_clean();
@@ -486,7 +488,7 @@ class ActionsClichaumeil extends CommonHookActions
 			$context = Context::getInstance();
 
 			// Note: supplier_proposal_card is now handled by a dedicated controller
-			// See www/controllers/supplier_proposal_card.controller.php
+			// See www/controllers/supplierProposalCard.controller.php
 		}
 
 		return 0;

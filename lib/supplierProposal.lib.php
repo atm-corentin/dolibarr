@@ -82,7 +82,12 @@ function fetchSupplierProposalLines($id)
 	$object = new SupplierProposal($db);
 
 	// Fetch main data with project information
-	$sql = 'SELECT sp.*, p.ref as project_ref, p.title as project_title';
+	$sql = 'SELECT sp.rowid, sp.ref, sp.ref_ext, sp.fk_soc, sp.fk_projet, sp.datec, sp.date_valid,';
+	$sql .= ' sp.date_livraison, sp.total_ht, sp.total_tva, sp.total_ttc, sp.fk_statut,';
+	$sql .= ' sp.note_private, sp.note_public, sp.entity,';
+	$sql .= ' sp.multicurrency_code, sp.multicurrency_tx, sp.multicurrency_total_ht,';
+	$sql .= ' sp.multicurrency_total_tva, sp.multicurrency_total_ttc,';
+	$sql .= ' p.ref as project_ref, p.title as project_title';
 	$sql .= ' FROM ' . $db->prefix() . 'supplier_proposal sp';
 	$sql .= ' LEFT JOIN ' . $db->prefix() . 'projet p ON sp.fk_projet = p.rowid';
 	$sql .= ' WHERE sp.rowid = ' . intval($id);
@@ -96,7 +101,7 @@ function fetchSupplierProposalLines($id)
 			$object->ref = $obj->ref;
 			$object->ref_ext = $obj->ref_ext;
 			$object->socid = $obj->fk_soc;
-			$object->fk_projet = $obj->fk_projet;
+			$object->fk_project = $obj->fk_projet;
 			$object->date_creation = $db->jdate($obj->datec);
 			$object->date_validation = $db->jdate($obj->date_valid);
 			$object->delivery_date = $db->jdate($obj->date_livraison);
@@ -119,7 +124,12 @@ function fetchSupplierProposalLines($id)
 
 			// Fetch lines manually (fetch_lines() doesn't exist for SupplierProposal)
 			// Join with product and product_fournisseur_price tables to get product ref and supplier ref
-			$sql_lines = 'SELECT spd.*, p.ref as product_ref, pfp.ref_fourn as ref_supplier';
+			$sql_lines = 'SELECT spd.rowid, spd.fk_supplier_proposal, spd.fk_parent_line, spd.description, spd.qty,';
+			$sql_lines .= ' spd.subprice, spd.tva_tx, spd.localtax1_tx, spd.localtax2_tx,';
+			$sql_lines .= ' spd.total_ht, spd.total_tva, spd.total_localtax1, spd.total_localtax2, spd.total_ttc,';
+			$sql_lines .= ' spd.fk_product, spd.product_type, spd.label, spd.fk_unit, spd.rang, spd.special_code,';
+			$sql_lines .= ' spd.multicurrency_subprice, spd.multicurrency_total_ht, spd.multicurrency_total_tva, spd.multicurrency_total_ttc,';
+			$sql_lines .= ' p.ref as product_ref, pfp.ref_fourn as ref_supplier';
 			$sql_lines .= ' FROM ' . $db->prefix() . 'supplier_proposaldet spd';
 			$sql_lines .= ' LEFT JOIN ' . $db->prefix() . 'product p ON spd.fk_product = p.rowid';
 			$sql_lines .= ' LEFT JOIN ' . $db->prefix() . 'product_fournisseur_price pfp ON pfp.fk_product = spd.fk_product';
@@ -205,9 +215,6 @@ function printSupplierProposalCard($supplierPropalId = 0, $socId = 0, $action = 
 	$trackid = $object->id;
 
 	dol_syslog("Supplier Proposal Card: postAction = " . $postAction, LOG_DEBUG);
-
-	// Note: download-action-file is now handled in the hook BEFORE this function is called
-	// to avoid "headers already sent" error
 
 	if ($postAction == 'add-comment-file') {
 		// --- ACTION: Upload file to session ---
@@ -653,7 +660,8 @@ function printSupplierPropalCardView($supplierPropalId = 0, $socId = 0, $action 
                 <thead>
                     <tr>
                         <th style="width: 10%;">' . $langs->trans('Ref') . '</th>
-                        <th style="width: 50%;">' . $langs->trans('Description') . '</th>
+                        <th style="width: 10%;">' . $langs->trans('RefSuppllier') . '</th>
+                        <th style="width: 45%;">' . $langs->trans('Description') . '</th>
                         <th class="text-right" style="width: 15%;">' . $langs->trans('Qty') . '</th>
                         <th class="text-right" style="width: 15%;">' . $langs->trans('UnitPriceHT') . '</th>
                         <th class="text-right" style="width: 210%;">' . $langs->trans('TotalHT') . '</th>
@@ -666,6 +674,7 @@ function printSupplierPropalCardView($supplierPropalId = 0, $socId = 0, $action 
 			if (!isModEnabled('subtotal') || !TSubtotal::isModSubtotalLine($line)) {
 				$out .= '<tr>
                       <td>' . nl2br($line->product_ref) . '</td>
+                      <td>' . nl2br($line->ref_supplier) . '</td>
                       <td>' . nl2br($line->label) . '<span style="display: block;">'. nl2br($line->desc) . '</span></td>
                       <td class="text-right">' . $line->qty . '</td>
                       <td class="text-right">';
