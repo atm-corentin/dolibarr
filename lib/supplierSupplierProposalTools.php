@@ -132,10 +132,10 @@ function printSupplierProposalTableHeader($langs, $TOther_fields, $db)
 			if (property_exists('SupplierProposal', $field)) {
 				print ' <th class="text-center" >' . $langs->trans($field) . '</th>';
 			} elseif (strpos($field, 'EXTRAFIELD') !== false) {
-				$extrafield_name = strtr($field, array('EXTRAFIELD_' => ''));
-				$label = isset($e->attributes['supplier_proposal']['label'][$extrafield_name])
-					? $e->attributes['supplier_proposal']['label'][$extrafield_name]
-					: $extrafield_name;
+				$extrafieldName = strtr($field, array('EXTRAFIELD_' => ''));
+				$label = isset($e->attributes['supplier_proposal']['label'][$extrafieldName])
+					? $e->attributes['supplier_proposal']['label'][$extrafieldName]
+					: $extrafieldName;
 				print ' <th class="text-center" >' . $label . '</th>';
 			}
 		}
@@ -172,14 +172,14 @@ function printSupplierProposalTableRow($object, $context, $TOther_fields, $e = n
 			if (property_exists('SupplierProposal', $field)) {
 				print ' <td data-search="' . strip_tags($object->{$field}) . '" data-order="' . strip_tags($object->{$field}) . '" >' . $object->{$field} . '</td>';
 			} elseif (strpos($field, 'EXTRAFIELD') !== false) {
-				$extrafield_name = strtr($field, array('EXTRAFIELD_' => ''));
-				$extrafield_value = !empty($object->array_options['options_' . $extrafield_name]) ? $object->array_options['options_' . $extrafield_name] : '';
+				$extrafieldName = strtr($field, array('EXTRAFIELD_' => ''));
+				$extrafieldValue = !empty($object->array_options['options_' . $extrafieldName]) ? $object->array_options['options_' . $extrafieldName] : '';
 
 				if ($e) {
-					$output = $e->showOutputField($extrafield_name, $extrafield_value, '', 'supplier_proposal');
+					$output = $e->showOutputField($extrafieldName, $extrafieldValue, '', 'supplier_proposal');
 					print ' <td data-search="' . strip_tags($output) . '" data-order="' . strip_tags($output) . '" >' . $output . '</td>';
 				} else {
-					print ' <td data-search="' . strip_tags($extrafield_value) . '" data-order="' . strip_tags($extrafield_value) . '" >' . $extrafield_value . '</td>';
+					print ' <td data-search="' . strip_tags($extrafieldValue) . '" data-order="' . strip_tags($extrafieldValue) . '" >' . $extrafieldValue . '</td>';
 				}
 			}
 		}

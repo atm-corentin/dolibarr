@@ -124,59 +124,59 @@ function fetchSupplierProposalLines($id)
 
 			// Fetch lines manually (fetch_lines() doesn't exist for SupplierProposal)
 			// Join with product and product_fournisseur_price tables to get product ref and supplier ref
-			$sql_lines = 'SELECT spd.rowid, spd.fk_supplier_proposal, spd.fk_parent_line, spd.description, spd.qty,';
-			$sql_lines .= ' spd.subprice, spd.tva_tx, spd.localtax1_tx, spd.localtax2_tx,';
-			$sql_lines .= ' spd.total_ht, spd.total_tva, spd.total_localtax1, spd.total_localtax2, spd.total_ttc,';
-			$sql_lines .= ' spd.fk_product, spd.product_type, spd.label, spd.fk_unit, spd.rang, spd.special_code,';
-			$sql_lines .= ' spd.multicurrency_subprice, spd.multicurrency_total_ht, spd.multicurrency_total_tva, spd.multicurrency_total_ttc,';
-			$sql_lines .= ' p.ref as product_ref, pfp.ref_fourn as ref_supplier';
-			$sql_lines .= ' FROM ' . $db->prefix() . 'supplier_proposaldet spd';
-			$sql_lines .= ' LEFT JOIN ' . $db->prefix() . 'product p ON spd.fk_product = p.rowid';
-			$sql_lines .= ' LEFT JOIN ' . $db->prefix() . 'product_fournisseur_price pfp ON pfp.fk_product = spd.fk_product';
-			$sql_lines .= ' AND pfp.fk_soc = ' . intval($object->socid);
-			$sql_lines .= ' WHERE spd.fk_supplier_proposal = ' . intval($object->id);
-			$sql_lines .= ' ORDER BY spd.rang ASC';
+			$sqlLines = 'SELECT spd.rowid, spd.fk_supplier_proposal, spd.fk_parent_line, spd.description, spd.qty,';
+			$sqlLines .= ' spd.subprice, spd.tva_tx, spd.localtax1_tx, spd.localtax2_tx,';
+			$sqlLines .= ' spd.total_ht, spd.total_tva, spd.total_localtax1, spd.total_localtax2, spd.total_ttc,';
+			$sqlLines .= ' spd.fk_product, spd.product_type, spd.label, spd.fk_unit, spd.rang, spd.special_code,';
+			$sqlLines .= ' spd.multicurrency_subprice, spd.multicurrency_total_ht, spd.multicurrency_total_tva, spd.multicurrency_total_ttc,';
+			$sqlLines .= ' p.ref as product_ref, pfp.ref_fourn as ref_supplier';
+			$sqlLines .= ' FROM ' . $db->prefix() . 'supplier_proposaldet spd';
+			$sqlLines .= ' LEFT JOIN ' . $db->prefix() . 'product p ON spd.fk_product = p.rowid';
+			$sqlLines .= ' LEFT JOIN ' . $db->prefix() . 'product_fournisseur_price pfp ON pfp.fk_product = spd.fk_product';
+			$sqlLines .= ' AND pfp.fk_soc = ' . intval($object->socid);
+			$sqlLines .= ' WHERE spd.fk_supplier_proposal = ' . intval($object->id);
+			$sqlLines .= ' ORDER BY spd.rang ASC';
 
-			$resql_lines = $db->query($sql_lines);
-			if ($resql_lines) {
+			$resqlLines = $db->query($sqlLines);
+			if ($resqlLines) {
 				$object->lines = array();
-				$num_lines = $db->num_rows($resql_lines);
+				$numLines = $db->num_rows($resqlLines);
 				$i = 0;
-				while ($i < $num_lines) {
-					$obj_line = $db->fetch_object($resql_lines);
+				while ($i < $numLines) {
+					$objLine = $db->fetch_object($resqlLines);
 
 					$line = new SupplierProposalLine($db);
-					$line->id = $obj_line->rowid;
-					$line->fk_supplier_proposal = $obj_line->fk_supplier_proposal;
-					$line->fk_parent_line = $obj_line->fk_parent_line;
-					$line->desc = $obj_line->description;
-					$line->qty = $obj_line->qty;
-					$line->subprice = $obj_line->subprice;
-					$line->tva_tx = $obj_line->tva_tx;
-					$line->localtax1_tx = $obj_line->localtax1_tx;
-					$line->localtax2_tx = $obj_line->localtax2_tx;
-					$line->total_ht = $obj_line->total_ht;
-					$line->total_tva = $obj_line->total_tva;
-					$line->total_localtax1 = $obj_line->total_localtax1;
-					$line->total_localtax2 = $obj_line->total_localtax2;
-					$line->total_ttc = $obj_line->total_ttc;
-					$line->fk_product = $obj_line->fk_product;
-					$line->product_type = $obj_line->product_type;
-					$line->ref_supplier = $obj_line->ref_supplier; // From product_fournisseur_price table
-					$line->product_ref = $obj_line->product_ref; // Original ref from supplier_proposaldet
-					$line->label = $obj_line->label;
-					$line->fk_unit = $obj_line->fk_unit;
-					$line->rang = $obj_line->rang;
-					$line->special_code = $obj_line->special_code;
-					$line->multicurrency_subprice = $obj_line->multicurrency_subprice;
-					$line->multicurrency_total_ht = $obj_line->multicurrency_total_ht;
-					$line->multicurrency_total_tva = $obj_line->multicurrency_total_tva;
-					$line->multicurrency_total_ttc = $obj_line->multicurrency_total_ttc;
+					$line->id = $objLine->rowid;
+					$line->fk_supplier_proposal = $objLine->fk_supplier_proposal;
+					$line->fk_parent_line = $objLine->fk_parent_line;
+					$line->desc = $objLine->description;
+					$line->qty = $objLine->qty;
+					$line->subprice = $objLine->subprice;
+					$line->tva_tx = $objLine->tva_tx;
+					$line->localtax1_tx = $objLine->localtax1_tx;
+					$line->localtax2_tx = $objLine->localtax2_tx;
+					$line->total_ht = $objLine->total_ht;
+					$line->total_tva = $objLine->total_tva;
+					$line->total_localtax1 = $objLine->total_localtax1;
+					$line->total_localtax2 = $objLine->total_localtax2;
+					$line->total_ttc = $objLine->total_ttc;
+					$line->fk_product = $objLine->fk_product;
+					$line->product_type = $objLine->product_type;
+					$line->ref_supplier = $objLine->ref_supplier; // From product_fournisseur_price table
+					$line->product_ref = $objLine->product_ref; // Original ref from supplier_proposaldet
+					$line->label = $objLine->label;
+					$line->fk_unit = $objLine->fk_unit;
+					$line->rang = $objLine->rang;
+					$line->special_code = $objLine->special_code;
+					$line->multicurrency_subprice = $objLine->multicurrency_subprice;
+					$line->multicurrency_total_ht = $objLine->multicurrency_total_ht;
+					$line->multicurrency_total_tva = $objLine->multicurrency_total_tva;
+					$line->multicurrency_total_ttc = $objLine->multicurrency_total_ttc;
 
 					$object->lines[] = $line;
 					$i++;
 				}
-				$db->free($resql_lines);
+				$db->free($resqlLines);
 			}
 			// Fetch extrafields
 			$object->fetch_optionals();
@@ -221,11 +221,11 @@ function printSupplierProposalCard($supplierPropalId = 0, $socId = 0, $action = 
 
 		// Upload file into session
 		if (!empty($_FILES['addedfile']['name'])) {
-			$upload_dir = $conf->admin->dir_temp ? $conf->admin->dir_temp : DOL_DATA_ROOT . '/admin/temp';
-			dol_syslog("Supplier Proposal: Uploading file to session with trackid=" . $trackid . ", upload_dir=" . $upload_dir, LOG_DEBUG);
+			$uploadDir = $conf->admin->dir_temp ? $conf->admin->dir_temp : DOL_DATA_ROOT . '/admin/temp';
+			dol_syslog("Supplier Proposal: Uploading file to session with trackid=" . $trackid . ", upload_dir=" . $uploadDir, LOG_DEBUG);
 
 			$result = dol_add_file_process(
-				$upload_dir,                     // Temporary upload directory
+				$uploadDir,                     // Temporary upload directory
 				0,                               // Don't allow overwrite
 				0,                               // Store in session (not in DB)
 				'addedfile',                     // Name of file input field
@@ -254,8 +254,8 @@ function printSupplierProposalCard($supplierPropalId = 0, $socId = 0, $action = 
 			$listofpaths = explode(';', $_SESSION["listofpaths".$keytoavoidconflict]);
 			$listofnames = explode(';', $_SESSION["listofnames".$keytoavoidconflict]);
 
-			$upload_dir_proposal = $conf->supplier_proposal->dir_output . '/' . dol_sanitizeFileName($object->ref);
-			dol_mkdir($upload_dir_proposal);
+			$uploadDirProposal = $conf->supplier_proposal->dir_output . '/' . dol_sanitizeFileName($object->ref);
+			dol_mkdir($uploadDirProposal);
 
 			foreach ($listofpaths as $key => $val) {
 				$src = $val;
@@ -264,19 +264,19 @@ function printSupplierProposalCard($supplierPropalId = 0, $socId = 0, $action = 
 				dol_syslog("Validation: Moving session file to proposal dir: " . $filename, LOG_DEBUG);
 
 				// Generate unique filename if file already exists in proposal directory
-				$unique_filename = getUniqueFilename($upload_dir_proposal, $filename);
-				if ($unique_filename != $filename) {
-					dol_syslog("Validation: File already exists, renamed to: " . $unique_filename, LOG_DEBUG);
+				$uniqueFilename = getUniqueFilename($uploadDirProposal, $filename);
+				if ($uniqueFilename != $filename) {
+					dol_syslog("Validation: File already exists, renamed to: " . $uniqueFilename, LOG_DEBUG);
 				}
 
 				// Move to supplier proposal directory
-				$dest_proposal = $upload_dir_proposal . '/' . $unique_filename;
-				if (dol_move($src, $dest_proposal)) {
+				$destProposal = $uploadDirProposal . '/' . $uniqueFilename;
+				if (dol_move($src, $destProposal)) {
 					// Index in ECM for proposal
-					addFileIntoDatabaseIndex($upload_dir_proposal, $unique_filename, '', 'uploaded', 0, $object);
-					dol_syslog("Validation: File moved and indexed: " . $unique_filename, LOG_DEBUG);
+					addFileIntoDatabaseIndex($uploadDirProposal, $uniqueFilename, '', 'uploaded', 0, $object);
+					dol_syslog("Validation: File moved and indexed: " . $uniqueFilename, LOG_DEBUG);
 				} else {
-					dol_syslog("Validation: Failed to move file: " . $unique_filename, LOG_WARNING);
+					dol_syslog("Validation: Failed to move file: " . $uniqueFilename, LOG_WARNING);
 				}
 			}
 
@@ -291,18 +291,18 @@ function printSupplierProposalCard($supplierPropalId = 0, $socId = 0, $action = 
 			$hasFile = false;
 
 			// Check 1: Files already saved in proposal directory
-			$upload_dir = $conf->supplier_proposal->dir_output . '/' . dol_sanitizeFileName($object->ref);
-			dol_syslog("Checking files in directory: " . $upload_dir, LOG_DEBUG);
-			if (is_dir($upload_dir)) {
+			$uploadDir = $conf->supplier_proposal->dir_output . '/' . dol_sanitizeFileName($object->ref);
+			dol_syslog("Checking files in directory: " . $uploadDir, LOG_DEBUG);
+			if (is_dir($uploadDir)) {
 				// Check all files in directory (not just PDF)
-				$all_files = dol_dir_list($upload_dir, 'files', 0, '', null, 'date', SORT_DESC);
-				dol_syslog("All files in directory: " . count($all_files) . " - " . print_r(array_column($all_files, 'name'), true), LOG_DEBUG);
+				$allFiles = dol_dir_list($uploadDir, 'files', 0, '', null, 'date', SORT_DESC);
+				dol_syslog("All files in directory: " . count($allFiles) . " - " . print_r(array_column($allFiles, 'name'), true), LOG_DEBUG);
 
-				if (!empty($all_files)) {
+				if (!empty($allFiles)) {
 					$hasFile = true;
 				}
 			} else {
-				dol_syslog("Directory does not exist: " . $upload_dir, LOG_DEBUG);
+				dol_syslog("Directory does not exist: " . $uploadDir, LOG_DEBUG);
 			}
 
 			// Check 2: Files in session (uploaded but not yet saved with a comment)
@@ -400,12 +400,12 @@ function printSupplierProposalCard($supplierPropalId = 0, $socId = 0, $action = 
 			// Handle file attachments from session
 			if (!empty($listofpaths)) {
 				// 1. Supplier Proposal directory
-				$upload_dir_proposal = $conf->supplier_proposal->dir_output . '/' . dol_sanitizeFileName($object->ref);
-				dol_mkdir($upload_dir_proposal);
+				$uploadDirProposal = $conf->supplier_proposal->dir_output . '/' . dol_sanitizeFileName($object->ref);
+				dol_mkdir($uploadDirProposal);
 
 				// 2. Action/Agenda directory (we always have an action now)
-				$upload_dir_action = $conf->agenda->dir_output . '/' . $res;
-				dol_mkdir($upload_dir_action);
+				$uploadDirAction = $conf->agenda->dir_output . '/' . $res;
+				dol_mkdir($uploadDirAction);
 
 				foreach ($listofpaths as $key => $val) {
 					$src = $val;
@@ -414,32 +414,32 @@ function printSupplierProposalCard($supplierPropalId = 0, $socId = 0, $action = 
 					dol_syslog("Processing file: " . $filename . " from " . $src, LOG_DEBUG);
 
 					// Generate unique filename for proposal directory
-					$unique_filename_proposal = getUniqueFilename($upload_dir_proposal, $filename);
-					if ($unique_filename_proposal != $filename) {
-						dol_syslog("File already exists in proposal dir, renamed to: " . $unique_filename_proposal, LOG_DEBUG);
+					$uniqueFilename_proposal = getUniqueFilename($uploadDirProposal, $filename);
+					if ($uniqueFilename_proposal != $filename) {
+						dol_syslog("File already exists in proposal dir, renamed to: " . $uniqueFilename_proposal, LOG_DEBUG);
 					}
 
 					// Copy to supplier proposal directory
-					$dest_proposal = $upload_dir_proposal . '/' . $unique_filename_proposal;
-					$copy_result = dol_copy($src, $dest_proposal);
-					dol_syslog("Copy to proposal dir result: " . ($copy_result ? 'SUCCESS' : 'FAILED') . " - Destination: " . $dest_proposal, LOG_DEBUG);
+					$destProposal = $uploadDirProposal . '/' . $uniqueFilename_proposal;
+					$copyResult = dol_copy($src, $destProposal);
+					dol_syslog("Copy to proposal dir result: " . ($copyResult ? 'SUCCESS' : 'FAILED') . " - Destination: " . $destProposal, LOG_DEBUG);
 
-					if ($copy_result) {
+					if ($copyResult) {
 						// Index in ECM for proposal
-						$ecm_result = addFileIntoDatabaseIndex($upload_dir_proposal, $unique_filename_proposal, '', 'uploaded', 0, $object);
-						dol_syslog("ECM indexing result: " . $ecm_result, LOG_DEBUG);
+						$ecmResult = addFileIntoDatabaseIndex($uploadDirProposal, $uniqueFilename_proposal, '', 'uploaded', 0, $object);
+						dol_syslog("ECM indexing result: " . $ecmResult, LOG_DEBUG);
 					}
 
 					// Generate unique filename for action directory
-					$unique_filename_action = getUniqueFilename($upload_dir_action, $filename);
-					if ($unique_filename_action != $filename) {
-						dol_syslog("File already exists in action dir, renamed to: " . $unique_filename_action, LOG_DEBUG);
+					$uniqueFilename_action = getUniqueFilename($uploadDirAction, $filename);
+					if ($uniqueFilename_action != $filename) {
+						dol_syslog("File already exists in action dir, renamed to: " . $uniqueFilename_action, LOG_DEBUG);
 					}
 
 					// Move to action directory
-					$dest_action = $upload_dir_action . '/' . $unique_filename_action;
-					$move_result = dol_move($src, $dest_action);
-					dol_syslog("Move to action dir result: " . ($move_result ? 'SUCCESS' : 'FAILED') . " - Destination: " . $dest_action, LOG_DEBUG);
+					$destAction = $uploadDirAction . '/' . $uniqueFilename_action;
+					$moveResult = dol_move($src, $destAction);
+					dol_syslog("Move to action dir result: " . ($moveResult ? 'SUCCESS' : 'FAILED') . " - Destination: " . $destAction, LOG_DEBUG);
 				}
 
 				// Clear session
@@ -1039,32 +1039,32 @@ function print_supplierPropalCard_extrafields($object)
 	dol_include_once('core/class/extrafields.class.php');
 	$out = '';
 
-	$element_type = 'supplier_proposal'; // Use the correct element type
+	$elementType = 'supplier_proposal'; // Use the correct element type
 
 	$e = new ExtraFields($db);
-	$e->fetch_name_optionals_label($element_type);
+	$e->fetch_name_optionals_label($elementType);
 
 	// Check for a new global conf for supplier propal extrafields
 	$TAddedField = getDolGlobalString('EACCESS_CARD_ADDED_FIELD_SUPPLIER_PROPAL') ? explode(',', getDolGlobalString('EACCESS_CARD_ADDED_FIELD_SUPPLIER_PROPAL')) : [];
 
 	if (!empty($TAddedField)) {
-		foreach ($TAddedField as $field_key) {
-			$field_key = strtr($field_key, array('EXTRAFIELD_' => ''));
+		foreach ($TAddedField as $fieldKey) {
+			$fieldKey = strtr($fieldKey, array('EXTRAFIELD_' => ''));
 
-			if (empty($e->attributes[$element_type]['label'][$field_key])) continue;
+			if (empty($e->attributes[$elementType]['label'][$fieldKey])) continue;
 
-			$label = $langs->transnoentities($e->attributes[$element_type]['label'][$field_key]);
-			$type = $e->attributes[$element_type]['type'][$field_key];
-			$value = $object->array_options['options_' . $field_key];
+			$label = $langs->transnoentities($e->attributes[$elementType]['label'][$fieldKey]);
+			$type = $e->attributes[$elementType]['type'][$fieldKey];
+			$value = $object->array_options['options_' . $fieldKey];
 
-			$value_formatted = $e->showOutputField($field_key, $value, '', $element_type);
+			$valueFormatted = $e->showOutputField($fieldKey, $value, '', $elementType);
 
 			if ($type == 'separate') {
 				$out .= '<hr style="max-width : 100%;">';
 			} else {
-				$out .= '<div class="row clearfix form-group" id="extrafield-' . $field_key . '">';
+				$out .= '<div class="row clearfix form-group" id="extrafield-' . $fieldKey . '">';
 				$out .= '<div class="col-md-2">' . $label . '</div>';
-				$out .= '<div class="col-md-8"> ' . $value_formatted . '</div> ';
+				$out .= '<div class="col-md-8"> ' . $valueFormatted . '</div> ';
 				$out .= '</div > ';
 			}
 		}
@@ -1148,14 +1148,14 @@ function externalAccessGetSupplierPropalEcmList($object, $pulicOnly = true)
 	global $conf, $db;
 	$documents = array();
 
-	$element_type = 'supplier_proposal';
-	$ref_dir = dol_sanitizeFileName($object->ref);
+	$elementType = 'supplier_proposal';
+	$refDir = dol_sanitizeFileName($object->ref);
 
 	$sql = 'SELECT ecm.rowid as id, ecm.src_object_type, ecm.src_object_id, ecm.filepath, ecm.filename, ecm.share';
 	$sql .= ' FROM ' . $db->prefix() . 'ecm_files ecm';
-	$sql .= ' WHERE ((ecm.src_object_type = \'' . $db->escape($element_type) . '\' ';
+	$sql .= ' WHERE ((ecm.src_object_type = \'' . $db->escape($elementType) . '\' ';
 	$sql .= ' AND  ecm.src_object_id = ' . intval($object->id) . ') ';
-	$sql .= ' OR  ecm.filepath = \'' . $db->escape($element_type . '/' . $ref_dir) . '\' )';
+	$sql .= ' OR  ecm.filepath = \'' . $db->escape($elementType . '/' . $refDir) . '\' )';
 
 	if ($pulicOnly) {
 		$sql .= ' AND ecm.share IS NOT NULL ';
