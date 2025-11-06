@@ -110,6 +110,8 @@ CLICHAUMEIL_PROJECT = Project :
 CLICHAUMEIL_FILE_ATTACHED_WITHOUT_MESSAGE = File attached
 CLICHAUMEIL_FILEADDED = File added, please remember to add the message.
 CLICHAUMEIL_SUPPLIERPROPOSALVALIDATED = Supplier proposal sent.
+CLICHAUMEILL_REFSUPPLLIER = Supplier ref.
+
 
 
 RfaStatusWon=Won

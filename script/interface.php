@@ -41,11 +41,12 @@ global $conf, $langs, $db, $user;
 
 // Include necessary files
 require_once DOL_DOCUMENT_ROOT . '/supplier_proposal/class/supplier_proposal.class.php';
+dol_include_once('/clichaumeil/class/SupplierProposalService.class.php');
 
 $action = GETPOST('action', "alpha");
 $propalId = GETPOST('propalId', 'int');
 $lineId = GETPOST('lineId', 'int');
-$newPrice = GETPOST('newPrice', 'int');
+$newPrice = GETPOST('newPrice', 'alpha');  // Use 'alpha' for decimal numbers, then convert with price2num()
 $newPuHt = price2num($newPrice);
 
 switch ($action) {
@@ -62,11 +63,12 @@ switch ($action) {
 				exit;
 			}
 
-			$object = new SupplierProposal($db);
-			$fetch_result = $object->fetch($propalId);
+			// Use service to fetch proposal (avoids getEntity() issues)
+			$service = new SupplierProposalService($db, $conf);
+			$object = $service->fetchProposalWithLines($propalId, 0); // 0 = no socid check for AJAX
 
-			if ($fetch_result <= 0) {
-				$response['message'] = 'Supplier proposal not found: ' . $object->error;
+			if (!$object) {
+				$response['message'] = 'Supplier proposal not found';
 				dol_syslog("AJAX update_line_price: fetch failed for propalId=$propalId", LOG_ERR);
 				echo json_encode($response);
 				exit;
@@ -96,23 +98,61 @@ switch ($action) {
 				exit;
 			}
 
+			dol_syslog("AJAX update_line_price: BEFORE setDraft - object->status=" . $object->status . " (0=draft, 1=validated)");
 
-			$object->setDraft($user);
+			$draftResult = $object->setDraft($user);
+			dol_syslog("AJAX update_line_price: setDraft result=$draftResult, object->status=" . $object->status);
 
-			// Call the update line method
+			// Re-fetch to ensure status is updated in object
+			$object = $service->fetchProposalWithLines($propalId, 0);
+			dol_syslog("AJAX update_line_price: After re-fetch for draft, object->status=" . $object->status);
+
+			// Find the line again after re-fetch
+			$lineToUpdate = null;
+			foreach ($object->lines as $line) {
+				if ($line->id == $lineId) {
+					$lineToUpdate = $line;
+					break;
+				}
+			}
+
+			if (!$lineToUpdate) {
+				$response['message'] = 'Line not found after draft re-fetch';
+				dol_syslog("AJAX update_line_price: lineId=$lineId not found after draft re-fetch", LOG_ERR);
+				echo json_encode($response);
+				exit;
+			}
+
+			// Call the update line method with all necessary parameters
+			dol_syslog("AJAX update_line_price: Calling updateline with lineId=" . $lineToUpdate->id . ", pu=$newPuHt, qty=" . $lineToUpdate->qty . ", type=" . $lineToUpdate->product_type);
+
 			$res = $object->updateline(
-				$lineToUpdate->id,
-				$newPuHt,
-				$lineToUpdate->qty,
-				$lineToUpdate->remise_percent,
-				$lineToUpdate->tva_tx,
-				0,
-				0,
-				$lineToUpdate->desc,
-				$price_base_type = 'HT',
+				$lineToUpdate->id,                    // rowid
+				$newPuHt,                              // pu (unit price)
+				$lineToUpdate->qty,                    // qty
+				$lineToUpdate->remise_percent,         // remise_percent
+				$lineToUpdate->tva_tx,                 // txtva
+				0,                                     // txlocaltax1
+				0,                                     // txlocaltax2
+				$lineToUpdate->desc,                   // desc
+				'HT',                                  // price_base_type
+				$lineToUpdate->info_bits,              // info_bits
+				$lineToUpdate->special_code,           // special_code
+				$lineToUpdate->fk_parent_line,         // fk_parent_line
+				0,                                     // skip_update_total
+				0,                                     // fk_fournprice
+				0,                                     // pa_ht
+				$lineToUpdate->label,                  // label
+				$lineToUpdate->product_type,           // type (0=product, 1=service)
+				$lineToUpdate->array_options,          // array_options (extrafields)
+				$lineToUpdate->ref_fourn,              // ref_supplier
+				$lineToUpdate->fk_unit                 // fk_unit
 			);
 
-			$object->valid($user);
+			dol_syslog("AJAX update_line_price: updateline result=$res");
+
+			$validResult = $object->valid($user);
+			dol_syslog("AJAX update_line_price: valid result=$validResult");
 
 			if ($res < 0) {
 				$response['message'] = 'Update failed: ' . $object->error;
@@ -121,24 +161,38 @@ switch ($action) {
 				exit;
 			}
 
-			// Re-fetch object to get updated totals
-			$object->fetch($propalId);
+			// Re-fetch object to get updated totals using service
+			$object = $service->fetchProposalWithLines($propalId, 0);
+
+			dol_syslog("AJAX update_line_price: After re-fetch, object has " . count($object->lines) . " lines");
 
 			// Find the updated line
 			$updatedLine = null;
 			foreach ($object->lines as $line) {
+				dol_syslog("AJAX update_line_price: Checking line id=" . $line->id . " (looking for " . $lineId . ") - total_ht=" . $line->total_ht);
 				if ($line->id == $lineId) {
 					$updatedLine = $line;
+					dol_syslog("AJAX update_line_price: FOUND matching line! total_ht=" . $line->total_ht);
 					break;
 				}
+			}
+
+			if (!$updatedLine) {
+				dol_syslog("AJAX update_line_price: WARNING - Line $lineId NOT FOUND after update!", LOG_WARNING);
 			}
 
 			$response['status'] = 'success';
 			$response['message'] = 'Price updated successfully';
 			$response['lineTotalHtFormatted'] = price($updatedLine ? $updatedLine->total_ht : 0);
 			$response['objectTotalHtFormatted'] = price($object->total_ht);
+			$response['debug'] = array(
+				'lineFound' => ($updatedLine !== null),
+				'lineTotalHt' => $updatedLine ? $updatedLine->total_ht : null,
+				'objectTotalHt' => $object->total_ht,
+				'numberOfLines' => count($object->lines)
+			);
 
-			dol_syslog("AJAX update_line_price: success");
+			dol_syslog("AJAX update_line_price: success - Line total HT: " . ($updatedLine ? $updatedLine->total_ht : 'LINE NOT FOUND'));
 
 		} catch (Exception $e) {
 			$response['message'] = 'Exception: ' . $e->getMessage();
