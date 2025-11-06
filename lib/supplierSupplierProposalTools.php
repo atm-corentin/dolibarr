@@ -58,11 +58,25 @@ function fetchSupplierProposalExtrafields($db, $rowid)
 {
 	$extrafields = array();
 
-	$sqlExtra = 'SELECT rowid, tms, fk_object, import_key';
-	// Note: We need to know which extrafields exist, but they are dynamic columns
-	// For now, we'll select all and filter in PHP
-	$sqlExtra = 'SELECT * FROM ' . $db->prefix() . 'supplier_proposal_extrafields';
+	// Get configured extra fields to determine which columns to select
+	$TOther_fields = getSupplierProposalExtraFields();
+	$extrafieldColumns = array();
+
+	foreach ($TOther_fields as $field) {
+		if (strpos($field, 'EXTRAFIELD_') !== false) {
+			$extrafieldName = strtr($field, array('EXTRAFIELD_' => ''));
+			$extrafieldColumns[] = $db->escape($extrafieldName);
+		}
+	}
+
+	// Build SQL with only necessary columns
+	$sqlExtra = 'SELECT rowid, tms, fk_object';
+	if (!empty($extrafieldColumns)) {
+		$sqlExtra .= ', ' . implode(', ', $extrafieldColumns);
+	}
+	$sqlExtra .= ' FROM ' . $db->prefix() . 'supplier_proposal_extrafields';
 	$sqlExtra .= ' WHERE fk_object = ' . intval($rowid);
+
 	$resqlExtra = $db->query($sqlExtra);
 
 	if ($resqlExtra) {
