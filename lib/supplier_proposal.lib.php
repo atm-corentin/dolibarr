@@ -21,6 +21,39 @@ dol_include_once('/subtotal/class/actions_subtotal.class.php');
 
 
 /**
+ * Generate a unique filename in a directory by adding a counter suffix if file already exists
+ *
+ * @param string $directory Directory where the file will be placed
+ * @param string $filename Original filename
+ * @return string Unique filename (may have _1, _2, etc. suffix if original exists)
+ */
+function getUniqueFilename($directory, $filename)
+{
+	// Clean the filename
+	$filename = dol_sanitizeFileName(dol_string_nohtmltag(basename($filename)));
+
+	$dest = $directory . '/' . $filename;
+
+	// If file doesn't exist, return original filename
+	if (!file_exists($dest)) {
+		return $filename;
+	}
+
+	// File exists, generate unique name with counter
+	$pathinfo = pathinfo($filename);
+	$basename = $pathinfo['filename'];
+	$extension = !empty($pathinfo['extension']) ? '.' . $pathinfo['extension'] : '';
+
+	$counter = 1;
+	while (file_exists($directory . '/' . $basename . '_' . $counter . $extension)) {
+		$counter++;
+	}
+
+	return $basename . '_' . $counter . $extension;
+}
+
+
+/**
  * Fetch supplier proposal without using getEntity() for multicompany compatibility
  * This is needed for external access where getEntity() may not work properly
  *
@@ -173,30 +206,10 @@ function printSupplierProposalCard($supplierPropalId = 0, $socId = 0, $action = 
 
 	dol_syslog("Supplier Proposal Card: postAction = " . $postAction, LOG_DEBUG);
 
-	if ($postAction == 'download-action-file') {
-		// --- ACTION: Download file from action directory ---
-		$actionid = GETPOST('actionid', 'int');
-		$filename = GETPOST('filename', 'alpha');
+	// Note: download-action-file is now handled in the hook BEFORE this function is called
+	// to avoid "headers already sent" error
 
-		if ($actionid > 0 && !empty($filename)) {
-			$filename = basename($filename); // Security: prevent path traversal
-			$filepath = $conf->agenda->dir_output . '/' . $actionid . '/' . $filename;
-
-			if (file_exists($filepath) && is_file($filepath)) {
-				// Set headers for file download
-				$mime = dol_mimetype($filepath);
-				header('Content-Type: ' . $mime);
-				header('Content-Disposition: inline; filename="' . $filename . '"');
-				header('Content-Length: ' . filesize($filepath));
-				readfile($filepath);
-				exit;
-			} else {
-				http_response_code(404);
-				echo 'File not found';
-				exit;
-			}
-		}
-	} elseif ($postAction == 'add-comment-file') {
+	if ($postAction == 'add-comment-file') {
 		// --- ACTION: Upload file to session ---
 
 		// Upload file into session
@@ -243,14 +256,20 @@ function printSupplierProposalCard($supplierPropalId = 0, $socId = 0, $action = 
 
 				dol_syslog("Validation: Moving session file to proposal dir: " . $filename, LOG_DEBUG);
 
+				// Generate unique filename if file already exists in proposal directory
+				$unique_filename = getUniqueFilename($upload_dir_proposal, $filename);
+				if ($unique_filename != $filename) {
+					dol_syslog("Validation: File already exists, renamed to: " . $unique_filename, LOG_DEBUG);
+				}
+
 				// Move to supplier proposal directory
-				$dest_proposal = $upload_dir_proposal . '/' . $filename;
+				$dest_proposal = $upload_dir_proposal . '/' . $unique_filename;
 				if (dol_move($src, $dest_proposal)) {
 					// Index in ECM for proposal
-					addFileIntoDatabaseIndex($upload_dir_proposal, $filename, '', 'uploaded', 0, $object);
-					dol_syslog("Validation: File moved and indexed: " . $filename, LOG_DEBUG);
+					addFileIntoDatabaseIndex($upload_dir_proposal, $unique_filename, '', 'uploaded', 0, $object);
+					dol_syslog("Validation: File moved and indexed: " . $unique_filename, LOG_DEBUG);
 				} else {
-					dol_syslog("Validation: Failed to move file: " . $filename, LOG_WARNING);
+					dol_syslog("Validation: Failed to move file: " . $unique_filename, LOG_WARNING);
 				}
 			}
 
@@ -306,7 +325,7 @@ function printSupplierProposalCard($supplierPropalId = 0, $socId = 0, $action = 
 				$res = $object->updateExtraField('clichaumeil_supplierstatut');
 
 				if ($res >= 0) {
-					$context->setEventMessages($langs->trans('SupplierProposalValidated'), 'mesgs');
+					$context->setEventMessages($langs->trans('CLICHAUMEIL_SUPPLIERPROPOSALVALIDATED'), 'mesgs');
 				} else {
 					$context->setEventMessages($object->error, 'errors');
 				}
@@ -317,7 +336,7 @@ function printSupplierProposalCard($supplierPropalId = 0, $socId = 0, $action = 
 			$res = $object->updateExtraField('clichaumeil_supplierstatut');
 
 			if ($res >= 0) {
-				$context->setEventMessages($langs->trans('SupplierProposalValidated'), 'mesgs');
+				$context->setEventMessages($langs->trans('CLICHAUMEIL_SUPPLIERPROPOSALVALIDATED'), 'mesgs');
 			} else {
 				$context->setEventMessages($object->error, 'errors');
 			}
@@ -387,19 +406,31 @@ function printSupplierProposalCard($supplierPropalId = 0, $socId = 0, $action = 
 
 					dol_syslog("Processing file: " . $filename . " from " . $src, LOG_DEBUG);
 
+					// Generate unique filename for proposal directory
+					$unique_filename_proposal = getUniqueFilename($upload_dir_proposal, $filename);
+					if ($unique_filename_proposal != $filename) {
+						dol_syslog("File already exists in proposal dir, renamed to: " . $unique_filename_proposal, LOG_DEBUG);
+					}
+
 					// Copy to supplier proposal directory
-					$dest_proposal = $upload_dir_proposal . '/' . $filename;
+					$dest_proposal = $upload_dir_proposal . '/' . $unique_filename_proposal;
 					$copy_result = dol_copy($src, $dest_proposal);
 					dol_syslog("Copy to proposal dir result: " . ($copy_result ? 'SUCCESS' : 'FAILED') . " - Destination: " . $dest_proposal, LOG_DEBUG);
 
 					if ($copy_result) {
 						// Index in ECM for proposal
-						$ecm_result = addFileIntoDatabaseIndex($upload_dir_proposal, $filename, '', 'uploaded', 0, $object);
+						$ecm_result = addFileIntoDatabaseIndex($upload_dir_proposal, $unique_filename_proposal, '', 'uploaded', 0, $object);
 						dol_syslog("ECM indexing result: " . $ecm_result, LOG_DEBUG);
 					}
 
+					// Generate unique filename for action directory
+					$unique_filename_action = getUniqueFilename($upload_dir_action, $filename);
+					if ($unique_filename_action != $filename) {
+						dol_syslog("File already exists in action dir, renamed to: " . $unique_filename_action, LOG_DEBUG);
+					}
+
 					// Move to action directory
-					$dest_action = $upload_dir_action . '/' . $filename;
+					$dest_action = $upload_dir_action . '/' . $unique_filename_action;
 					$move_result = dol_move($src, $dest_action);
 					dol_syslog("Move to action dir result: " . ($move_result ? 'SUCCESS' : 'FAILED') . " - Destination: " . $dest_action, LOG_DEBUG);
 				}
@@ -458,7 +489,7 @@ function printSupplierProposalCard($supplierPropalId = 0, $socId = 0, $action = 
  * @param string $action
  * @return string
  */
-function print_supplierPropalCard_view($supplierPropalId = 0, $socId = 0, $action = '')
+function printSupplierPropalCardView($supplierPropalId = 0, $socId = 0, $action = '')
 {
 	global $langs, $db, $conf, $user, $hookmanager;
 
@@ -639,16 +670,11 @@ function print_supplierPropalCard_view($supplierPropalId = 0, $socId = 0, $actio
                       <td class="text-right">' . $line->qty . '</td>
                       <td class="text-right">';
 
-				// If proposal is validated (statut 1), show an input box
-				if ($object->status == SupplierProposal::STATUS_VALIDATED) {
-					// Add class "line-price-input" and data-line-id for jQuery
-					$out .= '<input type="text" class="form-control text-right line-price-input"
-                            name="line_prices[' . $line->id . ']"
-                            value="' . price($line->subprice, 0, $langs, 0, 2, -1, '', 1) . '"
-                            data-line-id="' . $line->id . '" />';
-				} else {
-					$out .= price($line->subprice, 0, $langs, 1, 2, -1, $currency_code);
-				}
+				// Add class "line-price-input" and data-line-id for jQuery
+				$out .= '<input type="text" class="form-control text-right line-price-input"
+						name="line_prices[' . $line->id . ']"
+						value="' . price($line->subprice, 0, $langs, 0, 2, -1, '', 1) . '"
+						data-line-id="' . $line->id . '" />';
 
 				$out .= '   </td>
                       <!-- Add ID for jQuery update -->

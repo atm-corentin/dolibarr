@@ -123,6 +123,7 @@ CLICHAUMEIL_DATEDELIVERYPLANNED = Date de livraison prévu
 CLICHAUMEIL_PROJECT = Projet :
 CLICHAUMEIL_FILE_ATTACHED_WITHOUT_MESSAGE = Pièce jointe ajoutée
 CLICHAUMEIL_FILEADDED = Fichier envoyé, pensez à ajouter le message.
+CLICHAUMEIL_SUPPLIERPROPOSALVALIDATED = Proposition commercial fournisseur transmise.
 #
 # Extrafields
 #

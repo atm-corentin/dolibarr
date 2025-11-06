@@ -62,15 +62,26 @@ function clichaumeilAdminPrepareHead()
  */
 function externalAccessInitController($controllerContext, $user, $langs, $conf) : int {
 
+	// Register supplier_proposal list controller
 	$newControllerKey = 'supplier_proposal';
 	$newControllerPath = dol_buildpath('/clichaumeil/www/controllers/supplier_proposal.controller.php');
 	$newControllerClass = 'SupplierProposalController';
 
-	// We use the method from the $controllerContext object that was passed to us
 	$controllerContext->addControllerDefinition(
 		$newControllerKey,
 		$newControllerPath,
 		$newControllerClass
+	);
+
+	// Register supplier_proposal_card detail controller
+	$cardControllerKey = 'supplier_proposal_card';
+	$cardControllerPath = dol_buildpath('/clichaumeil/www/controllers/supplier_proposal_card.controller.php');
+	$cardControllerClass = 'SupplierProposalCardController';
+
+	$controllerContext->addControllerDefinition(
+		$cardControllerKey,
+		$cardControllerPath,
+		$cardControllerClass
 	);
 
 	return 0; // 0 = OK (tells Dolibarr the trigger ran successfully)

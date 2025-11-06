@@ -485,15 +485,8 @@ class ActionsClichaumeil extends CommonHookActions
 		if (in_array('externalaccesspage', explode(':', $parameters['context']))) {
 			$context = Context::getInstance();
 
-			if($context->controller == 'supplier_proposal_card' && isModEnabled('clichaumeil')) {
-				$context->setControllerFound();
-				$supplierProposald = GETPOST('id', 'int');
-
-				if(getDolGlobalInt('CLICHAUMEIL_ACTIVATE_SUPPLIER_PROPOSAL')) {
-					printSupplierProposalCard($supplierProposald, $user->socid);
-				}
-				return 1;
-			}
+			// Note: supplier_proposal_card is now handled by a dedicated controller
+			// See www/controllers/supplier_proposal_card.controller.php
 		}
 
 		return 0;
