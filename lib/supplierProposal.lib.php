@@ -350,8 +350,8 @@ function printSupplierProposalCard($supplierPropalId = 0, $socId = 0, $action = 
 		}
 
 	} elseif ($postAction == 'new-comment') {
-		$comment = GETPOST('propal-comment', 'alpha');
-		$title = GETPOST('propal-title', 'alpha');
+		$comment = GETPOST('propal-comment', 'aZ09');
+		$title = GETPOST('propal-title', 'aZ09');
 
 		// Check if there are files in session
 		$keytoavoidconflict = '-' . $object->id;
@@ -669,7 +669,7 @@ function printSupplierPropalCardView($supplierPropalId = 0, $socId = 0, $action 
                 </thead>
                 <tbody>';
 
-	if (!empty($object->lines)) {
+	if (!empty($object->lines) && is_array($object->lines)) {
 		foreach ($object->lines as $key => $line) {
 			if (!isModEnabled('subtotal') || !TSubtotal::isModSubtotalLine($line)) {
 				$out .= '<tr>
@@ -722,7 +722,7 @@ function printSupplierPropalCardView($supplierPropalId = 0, $socId = 0, $action 
 
 	$out .= '<div class="text-right" style="margin-top: 20px;">
 				<button type="submit" class="btn btn-success" id="btn-validate-proposal" name="action" value="validate_proposal">
-					<i class="fa fa-check"></i> ' . $langs->trans('CLIACHAUMEIL_SAVEANDVALIDATE') . '
+					<i class="fa fa-check"></i> ' . $langs->trans('CLICHAUMEIL_SAVEANDVALIDATE') . '
 				</button>
 			</div>';
 

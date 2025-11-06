@@ -85,7 +85,7 @@ CliChaumeilCronReportTitle=--- CliChaumeil Cron Report ---
 ClichaumeilDescription = Description of CliChaumeil
 CLICHAUMEIL_SPE_CUSTOMER = Special Configurations CliChaumeil
 CLICHAUMEIL_ACTIVATE_SUPPLIER_PROPOSAL = Enable supplier proposal management
-CLIACHAUMEIL_SAVEANDVALIDATE = Validate
+CLICHAUMEIL_SAVEANDVALIDATE = Validate
 CLICHAUMEIL_ADDMESSAGE = Add a message / reply
 CLICHAUMEIL_SENDMESSAGEHELP = Write your message or reply
 CLICHAUMEIL_YOURCOMMENTHERE = Add a comment.
@@ -109,7 +109,7 @@ CLICHAUMEIL_DATEDELIVERYPLANNED = Date delivery planned
 CLICHAUMEIL_PROJECT = Project :
 CLICHAUMEIL_FILE_ATTACHED_WITHOUT_MESSAGE = File attached
 CLICHAUMEIL_FILEADDED = File added, please remember to add the message.
-CLICHAUMEIL_SUPPLIERPROPOSALVALIDATED = Supplier proposal send.
+CLICHAUMEIL_SUPPLIERPROPOSALVALIDATED = Supplier proposal sent.
 
 
 RfaStatusWon=Won

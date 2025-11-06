@@ -45,7 +45,7 @@ require_once DOL_DOCUMENT_ROOT . '/supplier_proposal/class/supplier_proposal.cla
 $action = GETPOST('action', "alpha");
 $propalId = GETPOST('propalId', 'int');
 $lineId = GETPOST('lineId', 'int');
-$newPrice = GETPOST('newPrice');
+$newPrice = GETPOST('newPrice', 'int');
 $newPuHt = price2num($newPrice);
 
 switch ($action) {

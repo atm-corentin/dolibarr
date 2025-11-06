@@ -119,11 +119,11 @@ CLICHAUMEIL_VIEWSUPPLIERPROPOSAL = Proposition commercial fournisseur
 CLICHAUMEIL_VIEWSUPPLIERPROPOSALDESC = Retrouvez facilement toutes vos propositions commercial fournisseur
 CLICHAUMEIL_SUPPLIERPROPOSALNOTFOUND = Proposition commercial fournisseur introuvable.
 CLICHAUMEIL_SUPPLIERPROPOSAL = Proposition commercial fournisseur n° %s
-CLICHAUMEIL_DATEDELIVERYPLANNED = Date de livraison prévu
+CLICHAUMEIL_DATEDELIVERYPLANNED = Date de livraison prévue
 CLICHAUMEIL_PROJECT = Projet :
 CLICHAUMEIL_FILE_ATTACHED_WITHOUT_MESSAGE = Pièce jointe ajoutée
 CLICHAUMEIL_FILEADDED = Fichier envoyé, pensez à ajouter le message.
-CLICHAUMEIL_SUPPLIERPROPOSALVALIDATED = Proposition commercial fournisseur transmise.
+CLICHAUMEIL_SUPPLIERPROPOSALVALIDATED = Proposition commerciale fournisseur transmise.
 CLICHAUMEIL_SUPPLIERPROPOSALS = Propositions commerciales fournisseurs
 #
 # Extrafields
