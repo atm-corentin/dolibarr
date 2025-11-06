@@ -90,13 +90,25 @@ CLICHAUMEIL_ADDMESSAGE = Add a message / reply
 CLICHAUMEIL_SENDMESSAGEHELP = Write your message or reply
 CLICHAUMEIL_YOURCOMMENTHERE = Add a comment.
 CLICHAUMEIL_ADDMESSAGE = Send
-CLICHAUMEIL_REFSUPPLIER = Supplier ref:
+CLICHAUMEIL_REFSUPPLIER = Supplier ref :
 CLICHAUMEIL_STATUS = Status
 CLICHAUMEIL_DATECREATION = Creation date
 CLICHAUMEIL_TOTALHT = Total excl. tax
 CLICHAUMEIL_LABEL_OWNER = Message from %s
 CLICHAUMEIL_MENDATORY_ATTACHED_FILES_SUPPLIER_PROPOSAL = The user must provide an attachment to validate
-
+CLICHAUMEIL_ERROR_NO_PDF_ATTACHED = You must attach a file before you can validate the proposal.
+CLICHAUMEIL_REFNAME = Thirdparty name :
+CliChaumeilSupplierStatut = Supplier status
+CLICHAUMEIL_FILE_RECEIVED = File received
+CLICHAUMEIL_PENDING_FILE = File pending
+CLICHAUMEIL_VIEWSUPPLIERPROPOSAL = Supplier business proposal
+CLICHAUMEIL_VIEWSUPPLIERPROPOSALDESC = Easily find all your supplier business proposals
+CLICHAUMEIL_SUPPLIERPROPOSALNOTFOUND = Supplier business proposal not found.
+CLICHAUMEIL_SUPPLIERPROPOSAL = Supplier business proposal No. %s
+CLICHAUMEIL_DATEDELIVERYPLANNED = Date delivery planned
+CLICHAUMEIL_PROJECT = Project :
+CLICHAUMEIL_FILE_ATTACHED_WITHOUT_MESSAGE = File attached
+CLICHAUMEIL_FILEADDED = File added, please remember to add the message.
 
 
 RfaStatusWon=Won

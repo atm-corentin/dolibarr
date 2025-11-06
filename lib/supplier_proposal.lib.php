@@ -6,7 +6,8 @@
 
 // Include the correct class from the external module
 include_once DOL_DOCUMENT_ROOT . '/supplier_proposal/class/supplier_proposal.class.php';
-
+require_once DOL_DOCUMENT_ROOT.'/supplier_proposal/class/supplier_proposal.class.php';
+require_once DOL_DOCUMENT_ROOT.'/core/class/commonobjectline.class.php';
 
 dol_include_once('user/class/user.class.php');
 dol_include_once('core/lib/functions2.lib.php');
@@ -18,6 +19,7 @@ dol_include_once('externalaccess/class/ExternalFormTicket.class.php');
 dol_include_once('/subtotal/class/subtotal.class.php');
 dol_include_once('/subtotal/class/actions_subtotal.class.php');
 
+
 /**
  * Fetch supplier proposal without using getEntity() for multicompany compatibility
  * This is needed for external access where getEntity() may not work properly
@@ -25,7 +27,7 @@ dol_include_once('/subtotal/class/actions_subtotal.class.php');
  * @param int $id Supplier proposal ID
  * @return SupplierProposal|false Object if found, false otherwise
  */
-function fetchSupplierProposalForExternalAccess($id)
+function fetchSupplierProposalLines($id)
 {
 	global $db, $conf, $user;
 
@@ -33,9 +35,6 @@ function fetchSupplierProposalForExternalAccess($id)
 		return false;
 	}
 
-	// First, check if the proposal exists and belongs to the user's company
-	// Note: No entity filter to allow access to proposals from all entities
-	// Security: Only allow access if the proposal belongs to the user's company
 	$sql = 'SELECT sp.rowid FROM ' . $db->prefix() . 'supplier_proposal sp';
 	$sql .= ' WHERE sp.rowid = ' . intval($id);
 	if (!empty($user->socid)) {
@@ -47,13 +46,15 @@ function fetchSupplierProposalForExternalAccess($id)
 		return false;
 	}
 
-	// Now fetch the object normally, knowing it exists in the right entity
-	// We temporarily override the fetch method by fetching data manually
 	$object = new SupplierProposal($db);
 
-	// Fetch main data
-	$sql = 'SELECT * FROM ' . $db->prefix() . 'supplier_proposal WHERE rowid = ' . intval($id);
+	// Fetch main data with project information
+	$sql = 'SELECT sp.*, p.ref as project_ref, p.title as project_title';
+	$sql .= ' FROM ' . $db->prefix() . 'supplier_proposal sp';
+	$sql .= ' LEFT JOIN ' . $db->prefix() . 'projet p ON sp.fk_projet = p.rowid';
+	$sql .= ' WHERE sp.rowid = ' . intval($id);
 	$resql = $db->query($sql);
+
 	if ($resql) {
 		$obj = $db->fetch_object($resql);
 		if ($obj) {
@@ -62,15 +63,13 @@ function fetchSupplierProposalForExternalAccess($id)
 			$object->ref = $obj->ref;
 			$object->ref_ext = $obj->ref_ext;
 			$object->socid = $obj->fk_soc;
-			$object->datec = $db->jdate($obj->datec);
+			$object->fk_projet = $obj->fk_projet;
 			$object->date_creation = $db->jdate($obj->datec);
 			$object->date_validation = $db->jdate($obj->date_valid);
-			$object->date_livraison = $db->jdate($obj->date_livraison);
 			$object->delivery_date = $db->jdate($obj->date_livraison);
 			$object->total_ht = $obj->total_ht;
 			$object->total_tva = $obj->total_tva;
 			$object->total_ttc = $obj->total_ttc;
-			$object->statut = $obj->fk_statut;
 			$object->status = $obj->fk_statut;
 			$object->note_private = $obj->note_private;
 			$object->note_public = $obj->note_public;
@@ -80,14 +79,20 @@ function fetchSupplierProposalForExternalAccess($id)
 			$object->multicurrency_total_ht = $obj->multicurrency_total_ht;
 			$object->multicurrency_total_tva = $obj->multicurrency_total_tva;
 			$object->multicurrency_total_ttc = $obj->multicurrency_total_ttc;
+			// Project information
+			$object->project_ref = $obj->project_ref;
+			$object->project_title = $obj->project_title;
+			$object->project = !empty($obj->project_ref) ? $obj->project_ref . (!empty($obj->project_title) ? ' - ' . $obj->project_title : '') : '';
 
 			// Fetch lines manually (fetch_lines() doesn't exist for SupplierProposal)
-			require_once DOL_DOCUMENT_ROOT.'/supplier_proposal/class/supplier_proposal.class.php';
-			require_once DOL_DOCUMENT_ROOT.'/core/class/commonobjectline.class.php';
-
-			$sql_lines = 'SELECT * FROM ' . $db->prefix() . 'supplier_proposaldet';
-			$sql_lines .= ' WHERE fk_supplier_proposal = ' . intval($object->id);
-			$sql_lines .= ' ORDER BY rang ASC';
+			// Join with product and product_fournisseur_price tables to get product ref and supplier ref
+			$sql_lines = 'SELECT spd.*, p.ref as product_ref, pfp.ref_fourn as ref_supplier';
+			$sql_lines .= ' FROM ' . $db->prefix() . 'supplier_proposaldet spd';
+			$sql_lines .= ' LEFT JOIN ' . $db->prefix() . 'product p ON spd.fk_product = p.rowid';
+			$sql_lines .= ' LEFT JOIN ' . $db->prefix() . 'product_fournisseur_price pfp ON pfp.fk_product = spd.fk_product';
+			$sql_lines .= ' AND pfp.fk_soc = ' . intval($object->socid);
+			$sql_lines .= ' WHERE spd.fk_supplier_proposal = ' . intval($object->id);
+			$sql_lines .= ' ORDER BY spd.rang ASC';
 
 			$resql_lines = $db->query($sql_lines);
 			if ($resql_lines) {
@@ -99,11 +104,9 @@ function fetchSupplierProposalForExternalAccess($id)
 
 					$line = new SupplierProposalLine($db);
 					$line->id = $obj_line->rowid;
-					$line->rowid = $obj_line->rowid;
 					$line->fk_supplier_proposal = $obj_line->fk_supplier_proposal;
 					$line->fk_parent_line = $obj_line->fk_parent_line;
 					$line->desc = $obj_line->description;
-					$line->description = $obj_line->description;
 					$line->qty = $obj_line->qty;
 					$line->subprice = $obj_line->subprice;
 					$line->tva_tx = $obj_line->tva_tx;
@@ -116,7 +119,8 @@ function fetchSupplierProposalForExternalAccess($id)
 					$line->total_ttc = $obj_line->total_ttc;
 					$line->fk_product = $obj_line->fk_product;
 					$line->product_type = $obj_line->product_type;
-					$line->ref = $obj_line->ref;
+					$line->ref_supplier = $obj_line->ref_supplier; // From product_fournisseur_price table
+					$line->product_ref = $obj_line->product_ref; // Original ref from supplier_proposaldet
 					$line->label = $obj_line->label;
 					$line->fk_unit = $obj_line->fk_unit;
 					$line->rang = $obj_line->rang;
@@ -131,14 +135,11 @@ function fetchSupplierProposalForExternalAccess($id)
 				}
 				$db->free($resql_lines);
 			}
-
 			// Fetch extrafields
 			$object->fetch_optionals();
-
 			return $object;
 		}
 	}
-
 	return false;
 }
 
@@ -154,14 +155,13 @@ function printSupplierProposalCard($supplierPropalId = 0, $socId = 0, $action = 
 {
 	global $user, $langs, $db, $conf;
 
-	$langs->load('clichaumeil@clichaumeil');
+	$langs->loadLangs(array("clichaumeil@clichaumeil", "externalaccess@externalaccess"));
 
 	$context = Context::getInstance();
 
-
 	// --- Standard Page Load & POST Actions ---
 	// Use custom fetch to avoid getEntity() issue in multicompany with external access
-	$object = fetchSupplierProposalForExternalAccess($supplierPropalId);
+	$object = fetchSupplierProposalLines($supplierPropalId);
 	if (!$object) {
 		$context->setEventMessages($langs->trans('CLICHAUMEIL_SUPPLIERPROPOSALNOTFOUND'), 'errors');
 		return;
@@ -170,6 +170,8 @@ function printSupplierProposalCard($supplierPropalId = 0, $socId = 0, $action = 
 	// --- Handle POST Actions ---
 	$postAction = GETPOST('action', 'alpha');
 	$trackid = $object->id;
+
+	dol_syslog("Supplier Proposal Card: postAction = " . $postAction, LOG_DEBUG);
 
 	if ($postAction == 'download-action-file') {
 		// --- ACTION: Download file from action directory ---
@@ -217,41 +219,144 @@ function printSupplierProposalCard($supplierPropalId = 0, $socId = 0, $action = 
 			dol_syslog("Supplier Proposal: Upload result = " . $result, LOG_DEBUG);
 
 			if ($result > 0) {
-				$context->setEventMessages($langs->trans('FileUploaded'), 'mesgs');
+				$context->setEventMessages($langs->trans('CLICHAUMEIL_FILEADDED'), 'mesgs');
 			} elseif ($result < 0) {
 				$context->setEventMessages($langs->trans('ErrorFileUpload'), 'errors');
 			}
 		}
 
-		// No redirect, stay on same page to continue adding files or write comment
-
 	} elseif ($postAction == 'validate_proposal') {
 		// 2. Validate the proposal
-		$object->array_options["options_clichaumeil_supplierstatut"] = $langs->transnoentities('CLICHAUMEIL_FILE_RECEIVED');
 
-		$res = $object->updateExtraField('clichaumeil_supplierstatut');
+		// First, move any files from session to proposal directory (files uploaded but not yet attached to a comment)
+		$keytoavoidconflict = '-' . $object->id;
+		if (!empty($_SESSION["listofpaths".$keytoavoidconflict]) && !empty($_SESSION["listofnames".$keytoavoidconflict])) {
+			$listofpaths = explode(';', $_SESSION["listofpaths".$keytoavoidconflict]);
+			$listofnames = explode(';', $_SESSION["listofnames".$keytoavoidconflict]);
 
-		if ($res >= 0) {
-			$context->setEventMessages($langs->trans('SupplierProposalValidated'), 'mesgs');
-		} else {
-			$context->setEventMessages($object->error, 'errors');
+			$upload_dir_proposal = $conf->supplier_proposal->dir_output . '/' . dol_sanitizeFileName($object->ref);
+			dol_mkdir($upload_dir_proposal);
+
+			foreach ($listofpaths as $key => $val) {
+				$src = $val;
+				$filename = $listofnames[$key];
+
+				dol_syslog("Validation: Moving session file to proposal dir: " . $filename, LOG_DEBUG);
+
+				// Move to supplier proposal directory
+				$dest_proposal = $upload_dir_proposal . '/' . $filename;
+				if (dol_move($src, $dest_proposal)) {
+					// Index in ECM for proposal
+					addFileIntoDatabaseIndex($upload_dir_proposal, $filename, '', 'uploaded', 0, $object);
+					dol_syslog("Validation: File moved and indexed: " . $filename, LOG_DEBUG);
+				} else {
+					dol_syslog("Validation: Failed to move file: " . $filename, LOG_WARNING);
+				}
+			}
+
+			// Clear session
+			unset($_SESSION["listofpaths".$keytoavoidconflict]);
+			unset($_SESSION["listofnames".$keytoavoidconflict]);
+			unset($_SESSION["listofmimes".$keytoavoidconflict]);
 		}
 
-		// Redirect to avoid form re-submission
-//		header('Location: ' . $context->getControllerUrl('supplier_proposal_card', '&id=' . $supplierPropalId));
-//		exit;
+		// Check if file attachment is mandatory
+		if (getDolGlobalInt('CLICHAUMEIL_MENDATORY_ATTACHED_FILES_SUPPLIER_PROPOSAL')) {
+			$hasFile = false;
+
+			// Check 1: Files already saved in proposal directory
+			$upload_dir = $conf->supplier_proposal->dir_output . '/' . dol_sanitizeFileName($object->ref);
+			dol_syslog("Checking files in directory: " . $upload_dir, LOG_DEBUG);
+			if (is_dir($upload_dir)) {
+				// Check all files in directory (not just PDF)
+				$all_files = dol_dir_list($upload_dir, 'files', 0, '', null, 'date', SORT_DESC);
+				dol_syslog("All files in directory: " . count($all_files) . " - " . print_r(array_column($all_files, 'name'), true), LOG_DEBUG);
+
+				if (!empty($all_files)) {
+					$hasFile = true;
+				}
+			} else {
+				dol_syslog("Directory does not exist: " . $upload_dir, LOG_DEBUG);
+			}
+
+			// Check 2: Files in session (uploaded but not yet saved with a comment)
+			// Note: This should normally be empty since we moved files from session above
+			if (!$hasFile) {
+				$keytoavoidconflict = '-' . $object->id;
+				dol_syslog("Checking session key: listofnames" . $keytoavoidconflict, LOG_DEBUG);
+				if (!empty($_SESSION["listofnames".$keytoavoidconflict])) {
+					$listofnames = explode(';', $_SESSION["listofnames".$keytoavoidconflict]);
+					dol_syslog("Session files: " . print_r($listofnames, true), LOG_DEBUG);
+					if (!empty($listofnames) && !empty($listofnames[0])) {
+						dol_syslog("Found file in session: " . $listofnames[0], LOG_DEBUG);
+						$hasFile = true;
+					}
+				} else {
+					dol_syslog("No files in session for key: listofnames" . $keytoavoidconflict, LOG_DEBUG);
+				}
+			}
+
+			dol_syslog("Final hasFile result: " . ($hasFile ? 'true' : 'false'), LOG_DEBUG);
+
+			if (!$hasFile) {
+				$context->setEventMessages($langs->trans('CLICHAUMEIL_ERROR_NO_PDF_ATTACHED'), 'errors');
+			} else {
+				// File is attached, proceed with validation
+				$object->array_options["options_clichaumeil_supplierstatut"] = $langs->transnoentities('CLICHAUMEIL_FILE_RECEIVED');
+				$res = $object->updateExtraField('clichaumeil_supplierstatut');
+
+				if ($res >= 0) {
+					$context->setEventMessages($langs->trans('SupplierProposalValidated'), 'mesgs');
+				} else {
+					$context->setEventMessages($object->error, 'errors');
+				}
+			}
+		} else {
+			// No mandatory PDF check, proceed with validation
+			$object->array_options["options_clichaumeil_supplierstatut"] = $langs->transnoentities('CLICHAUMEIL_FILE_RECEIVED');
+			$res = $object->updateExtraField('clichaumeil_supplierstatut');
+
+			if ($res >= 0) {
+				$context->setEventMessages($langs->trans('SupplierProposalValidated'), 'mesgs');
+			} else {
+				$context->setEventMessages($object->error, 'errors');
+			}
+		}
 
 	} elseif ($postAction == 'new-comment') {
-		// --- ACTION: Add new Comment ---
-
 		$comment = GETPOST('propal-comment', 'alpha');
 		$title = GETPOST('propal-title', 'alpha');
 
-		if (!empty($comment)) {
+		// Check if there are files in session
+		$keytoavoidconflict = '-' . $object->id;
+		$listofpaths = array();
+		$listofnames = array();
+
+		if (!empty($_SESSION["listofpaths".$keytoavoidconflict])) {
+			$listofpaths = explode(';', $_SESSION["listofpaths".$keytoavoidconflict]);
+		}
+		if (!empty($_SESSION["listofnames".$keytoavoidconflict])) {
+			$listofnames = explode(';', $_SESSION["listofnames".$keytoavoidconflict]);
+		}
+
+		// Process if there's a comment OR files to attach
+		if (!empty($comment) || !empty($listofpaths)) {
+			$res = 0; // Will hold action ID
+
+			// Create action/comment if there's a comment OR files to attach
+			// If only files without comment, use a default message
 			$actioncomm = new ActionComm($db);
 			$actioncomm->datep = dol_now();
-			$actioncomm->note_private = $comment; // Note: using note_private?
-			$actioncomm->elementtype = 'supplier_proposal'; // Set element type
+
+			// Set note: use comment if provided, otherwise use default message for file attachment
+			if (!empty($comment)) {
+				$actioncomm->note_private = $comment;
+			} else {
+				// Only files without comment - use a default message
+				$actioncomm->note_private = $langs->trans('CLICHAUMEIL_FILE_ATTACHED_WITHOUT_MESSAGE');
+			}
+
+			$actioncomm->elementtype = 'supplier_proposal';
 			$actioncomm->elementid = $object->id;
 			$actioncomm->user_creation_id = $user->id;
 			$actioncomm->userownerid = $user->id;
@@ -267,24 +372,12 @@ function printSupplierProposalCard($supplierPropalId = 0, $socId = 0, $action = 
 			}
 
 			// Handle file attachments from session
-			$keytoavoidconflict = '-' . $object->id;
-			$listofpaths = array();
-			$listofnames = array();
-
-			if (!empty($_SESSION["listofpaths".$keytoavoidconflict])) {
-				$listofpaths = explode(';', $_SESSION["listofpaths".$keytoavoidconflict]);
-			}
-			if (!empty($_SESSION["listofnames".$keytoavoidconflict])) {
-				$listofnames = explode(';', $_SESSION["listofnames".$keytoavoidconflict]);
-			}
-
-			// Copy uploaded files to both supplier proposal and action directories
 			if (!empty($listofpaths)) {
 				// 1. Supplier Proposal directory
 				$upload_dir_proposal = $conf->supplier_proposal->dir_output . '/' . dol_sanitizeFileName($object->ref);
 				dol_mkdir($upload_dir_proposal);
 
-				// 2. Action/Agenda directory (for external access only, not indexed in ECM)
+				// 2. Action/Agenda directory (we always have an action now)
 				$upload_dir_action = $conf->agenda->dir_output . '/' . $res;
 				dol_mkdir($upload_dir_action);
 
@@ -292,17 +385,23 @@ function printSupplierProposalCard($supplierPropalId = 0, $socId = 0, $action = 
 					$src = $val;
 					$filename = $listofnames[$key];
 
+					dol_syslog("Processing file: " . $filename . " from " . $src, LOG_DEBUG);
+
 					// Copy to supplier proposal directory
 					$dest_proposal = $upload_dir_proposal . '/' . $filename;
-					if (dol_copy($src, $dest_proposal)) {
+					$copy_result = dol_copy($src, $dest_proposal);
+					dol_syslog("Copy to proposal dir result: " . ($copy_result ? 'SUCCESS' : 'FAILED') . " - Destination: " . $dest_proposal, LOG_DEBUG);
+
+					if ($copy_result) {
 						// Index in ECM for proposal
-						addFileIntoDatabaseIndex($upload_dir_proposal, $filename, '', 'uploaded', 0, $object);
+						$ecm_result = addFileIntoDatabaseIndex($upload_dir_proposal, $filename, '', 'uploaded', 0, $object);
+						dol_syslog("ECM indexing result: " . $ecm_result, LOG_DEBUG);
 					}
 
-					// Move to action directory (NOT indexed in ECM to avoid showing in standard agenda)
+					// Move to action directory
 					$dest_action = $upload_dir_action . '/' . $filename;
-					dol_move($src, $dest_action);
-					// Note: NOT calling addFileIntoDatabaseIndex for action, files won't show in standard agenda
+					$move_result = dol_move($src, $dest_action);
+					dol_syslog("Move to action dir result: " . ($move_result ? 'SUCCESS' : 'FAILED') . " - Destination: " . $dest_action, LOG_DEBUG);
 				}
 
 				// Clear session
@@ -311,12 +410,15 @@ function printSupplierProposalCard($supplierPropalId = 0, $socId = 0, $action = 
 				unset($_SESSION["listofmimes".$keytoavoidconflict]);
 			}
 
-			$context->setEventMessages($langs->trans('CommentAdded'), 'mesgs');
+			// Set appropriate success message
+			if (!empty($comment) && !empty($listofpaths)) {
+				$context->setEventMessages($langs->trans('CommentAdded'), 'mesgs');
+			} elseif (!empty($comment)) {
+				$context->setEventMessages($langs->trans('CommentAdded'), 'mesgs');
+			} else {
+				$context->setEventMessages($langs->trans('FileUploaded'), 'mesgs');
+			}
 		}
-
-		// Redirect to the comment
-		//    header('Location: ' . $context->getControllerUrl('supplier_proposal_card', '&id=' . $supplierPropalId . '#lastcomment'));
-		//    exit;
 	} else {
 		// --- Handle file removal (when no specific action is set) ---
 		$removedfile_nb = GETPOST('removedfile', 'int');
@@ -345,9 +447,8 @@ function printSupplierProposalCard($supplierPropalId = 0, $socId = 0, $action = 
 	}
 
 	// --- Display View ---
-	return print_supplierPropalCard_view($supplierPropalId, $socId, $action);
+	return printSupplierPropalCardView($supplierPropalId, $socId, $action);
 }
-
 
 /**
  * Display the supplier proposal (view mode)
@@ -378,14 +479,12 @@ function print_supplierPropalCard_view($supplierPropalId = 0, $socId = 0, $actio
 	if (!getDolGlobalInt('CLICHAUMEIL_ACTIVATE_SUPPLIER_PROPOSAL')) {
 		return '';
 	}
-
-	/** @var SupplierProposal $object */
 	if (!empty($context->fetchedSupplierPropal)) {
 		$object = $context->fetchedSupplierPropal;
 	} else {
 		if (!empty($supplierPropalId)) {
 			// Use custom fetch to avoid getEntity() issue in multicompany with external access
-			$object = fetchSupplierProposalForExternalAccess($supplierPropalId);
+			$object = fetchSupplierProposalLines($supplierPropalId);
 			if ($object) {
 				$context->fetchedSupplierPropal = $object;
 			}
@@ -473,7 +572,7 @@ function print_supplierPropalCard_view($supplierPropalId = 0, $socId = 0, $actio
 		$out .= '<div class="container px-0">';
 		$out .= $outEaNavbar;
 		$out .= '
-          <h5>' . $langs->trans('SupplierProposal') . ' ' . $object->ref . '</h5>
+          <h5>' . $langs->trans('CLICHAUMEIL_SUPPLIERPROPOSAL', $object->ref ) . '</h5>
           <div class="panel panel-default" id="propal-summary">
              <div class="panel-body">
                 ' . $panelBodyTop . '
@@ -485,13 +584,17 @@ function print_supplierPropalCard_view($supplierPropalId = 0, $socId = 0, $actio
                    <div class="col-md-2">' . $langs->transnoentities('CLICHAUMEIL_REFSUPPLIER') . '</div>
                    <div class="col-md-10">' . $object->ref_ext . '</div>
                 </div>
+                 <div class="row clearfix form-group" id="ref_ext">
+                   <div class="col-md-2">' . $langs->transnoentities('CLICHAUMEIL_PROJECT') . '</div>
+                   <div class="col-md-10">' . $object->project_ref . '</div>
+                </div>
                 <div class="row clearfix form-group" id="status">
                    <div class="col-md-2">' . $langs->transnoentities('CLICHAUMEIL_STATUS') . '</div>
                    <div class="col-md-10">' . $object->array_options["options_clichaumeil_supplierstatut"] . '</div>
                 </div>
                 <div class="row clearfix form-group" id="DateCreation">
                    <div class="col-md-2">' . $langs->transnoentities('CLICHAUMEIL_DATECREATION') . '</div>
-                   <div class="col-md-10">' . dol_print_date($object->datec, 'dayhour') . '</div>
+                   <div class="col-md-10">' . dol_print_date($object->date_creation, 'dayhour') . '</div>
                 </div>
                 <div class="row clearfix form-group" id="TotalHT">
                    <div class="col-md-2">' . $langs->transnoentities('CLICHAUMEIL_TOTALHT') . '</div>
@@ -531,8 +634,8 @@ function print_supplierPropalCard_view($supplierPropalId = 0, $socId = 0, $actio
 		foreach ($object->lines as $key => $line) {
 			if (!isModEnabled('subtotal') || !TSubtotal::isModSubtotalLine($line)) {
 				$out .= '<tr>
-                      <td>' . nl2br($line->ref) . '</td>
-                      <td>' . $line->desc . '</td>
+                      <td>' . nl2br($line->product_ref) . '</td>
+                      <td>' . nl2br($line->label) . '<span style="display: block;">'. nl2br($line->desc) . '</span></td>
                       <td class="text-right">' . $line->qty . '</td>
                       <td class="text-right">';
 
@@ -582,15 +685,11 @@ function print_supplierPropalCard_view($supplierPropalId = 0, $socId = 0, $actio
             </table>
         </div>';
 
-	// Show Validate button if status is empty or pending file
-	$supplier_status = !empty($object->array_options['options_clichaumeil_supplierstatut']) ? $object->array_options['options_clichaumeil_supplierstatut'] : '';
-	if (empty($supplier_status) || $supplier_status == $langs->trans('CLICHAUMEIL_PENDING_FILE')) {
-		$out .= '<div class="text-right" style="margin-top: 20px;">
-                    <button type="submit" class="btn btn-success" name="action" value="validate_proposal">
-                        <i class="fa fa-check"></i> ' . $langs->trans('CLIACHAUMEIL_SAVEANDVALIDATE') . '
-                    </button>
-                </div>';
-	}
+	$out .= '<div class="text-right" style="margin-top: 20px;">
+				<button type="submit" class="btn btn-success" id="btn-validate-proposal" name="action" value="validate_proposal">
+					<i class="fa fa-check"></i> ' . $langs->trans('CLIACHAUMEIL_SAVEANDVALIDATE') . '
+				</button>
+			</div>';
 
 	$out .= '</div>';
 	// --- END of Lines Section ---
@@ -745,7 +844,7 @@ function print_supplierPropalCard_view($supplierPropalId = 0, $socId = 0, $actio
 	// We allow commenting on any status
 	$out .= '<button type="submit" class="btn btn-success" name="action" value="new-comment" data-toggle="tooltip" title="' . dol_htmlentities($langs->transnoentities('CLICHAUMEIL_SENDMESSAGEHELP'), ENT_QUOTES) . '"  >' . $langs->transnoentities('CLICHAUMEIL_ADDMESSAGE') . '</button>';
 
-	$out .= '</div"><!-- end btn-group -->';
+	$out .= '</div><!-- end btn-group -->';
 	$out .= '</div><!-- end timeline-footer -->';
 	$out .= '</div><!-- end timeline-item -->';
 	$out .= '</li>';
@@ -817,6 +916,60 @@ function print_supplierPropalCard_view($supplierPropalId = 0, $socId = 0, $actio
                 console.log("AJAX always callback - Request completed");
             });
         });
+
+        ' . (getDolGlobalInt('CLICHAUMEIL_MENDATORY_ATTACHED_FILES_SUPPLIER_PROPOSAL') ? '
+        // Validation for PDF attachment before form submission
+        $("#btn-validate-proposal").on("click", function(e) {
+            e.preventDefault();
+            console.log("=== Validate button clicked ===");
+
+            var form = $(this).closest("form");
+            var fileInput = $("#addedfile");
+
+            // Check if there are files to upload in the file input
+            if (fileInput.length > 0 && fileInput[0].files.length > 0) {
+                console.log("Files found in input, uploading first...");
+
+                // Create FormData to upload file via AJAX
+                var formData = new FormData();
+                formData.append("action", "add-comment-file");
+                formData.append("id", ' . $object->id . ');
+                formData.append("token", "' . newToken() . '");
+
+                // Add the file
+                if (fileInput[0].files[0]) {
+                    formData.append("addedfile", fileInput[0].files[0]);
+                }
+
+                // Upload file via AJAX
+                $.ajax({
+                    type: "POST",
+                    url: window.location.href,
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function(response) {
+                        console.log("File uploaded, now submitting validation");
+                        // After upload, submit the validation
+                        form.find("input[name=action]").remove();
+                        form.append(\'<input type="hidden" name="action" value="validate_proposal" />\');
+                        form.submit();
+                    },
+                    error: function() {
+                        console.error("Error uploading file");
+                        alert("' . dol_escape_js($langs->trans('ErrorFileUpload')) . '");
+                    }
+                });
+            } else {
+                console.log("No file in input, submitting validation directly");
+                // No file to upload, submit validation directly
+                // Server-side will handle file check and show proper error message if needed
+                form.find("input[name=action]").remove();
+                form.append(\'<input type="hidden" name="action" value="validate_proposal" />\');
+                form.submit();
+            }
+        });
+        ' : '') . '
     });
     </script>
     ';

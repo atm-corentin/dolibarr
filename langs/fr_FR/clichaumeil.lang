@@ -110,6 +110,7 @@ CLICHAUMEIL_DATECREATION = Date de création :
 CLICHAUMEIL_TOTALHT = Total HT :
 CLICHAUMEIL_LABEL_OWNER = Message de %s
 CLICHAUMEIL_MENDATORY_ATTACHED_FILES_SUPPLIER_PROPOSAL = L'utilisateur doit fournir une pièce jointe pour valider
+CLICHAUMEIL_ERROR_NO_PDF_ATTACHED = Vous devez joindre un fichier avant de pouvoir valider la proposition.
 CLICHAUMEIL_REFNAME = Nom du tiers :
 CliChaumeilSupplierStatut = Statut fournisseur
 CLICHAUMEIL_FILE_RECEIVED = Dossier reçu
@@ -117,8 +118,11 @@ CLICHAUMEIL_PENDING_FILE = Dossier en attente
 CLICHAUMEIL_VIEWSUPPLIERPROPOSAL = Proposition commercial fournisseur
 CLICHAUMEIL_VIEWSUPPLIERPROPOSALDESC = Retrouvez facilement toutes vos propositions commercial fournisseur
 CLICHAUMEIL_SUPPLIERPROPOSALNOTFOUND = Proposition commercial fournisseur introuvable.
-
-
+CLICHAUMEIL_SUPPLIERPROPOSAL = Proposition commercial fournisseur n° %s
+CLICHAUMEIL_DATEDELIVERYPLANNED = Date de livraison prévu
+CLICHAUMEIL_PROJECT = Projet :
+CLICHAUMEIL_FILE_ATTACHED_WITHOUT_MESSAGE = Pièce jointe ajoutée
+CLICHAUMEIL_FILEADDED = Fichier envoyé, pensez à ajouter le message.
 #
 # Extrafields
 #

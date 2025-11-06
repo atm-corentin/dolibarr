@@ -39,13 +39,7 @@ class SupplierProposalController extends Controller
 		$context->desc = $langs->trans('CLICHAUMEIL_VIEWSUPPLIERPROPOSALDESC');
 		$context->menu_active[] = 'supplierProposal';
 
-		$hookRes = $this->hookDoAction();
-
-		if (empty($hookRes)) {
-
-		}
 	}
-
 
 	/**
 	 *
@@ -64,46 +58,32 @@ class SupplierProposalController extends Controller
 
 		$this->loadTemplate('header');
 
-		$hookRes = $this->hookPrintPageView();
-		if (empty($hookRes)) {
-			print '<section id="section-supplierProposal"><div class="container">';
-			self::printSupplierProposalTable($user->socid);
-			print '</div></section>';
-		}
+		print '<section id="section-supplierProposal"><div class="container">';
+		self::printSupplierProposalTable($user->socid);
+		print '</div></section>';
+
 		$this->loadTemplate('footer');
 	}
 
 	static public function printSupplierProposalTable($socId = 0)
 	{
-		global $langs, $db, $user, $conf, $hookmanager;
-		$context = Context::getInstance();
+		global $langs, $db, $user, $conf;
 
-		$propalFournStatic = new SupplierProposal($context->dbTool->db); // For static calls
+		$context = Context::getInstance();
 
 		// Load the language file for supplier proposals
 		$langs->load('supplier_proposal');
 		$langs->load('fourn'); // Load supplier lang file for good measure
 
-		// SQL query to fetch supplier proposals for the current third party
-		// Select all needed fields to avoid using fetch() which calls getEntity()
-		// Note: No entity filter to show all proposals across entities for this supplier
-		$sql = 'SELECT sp.rowid, sp.ref, sp.ref_ext, sp.datec, sp.total_ht, sp.fk_statut, sp.entity ';
+		$sql = 'SELECT sp.rowid, sp.ref, sp.ref_ext, sp.datec, sp.total_ht, sp.fk_statut, sp.entity, sp.date_livraison ';
 		$sql .= ' FROM `' . $db->prefix() . 'supplier_proposal` sp';
 		$sql .= ' WHERE sp.fk_soc = ' . intval($socId);
-		$sql .= ' AND sp.fk_statut = 1';
+		$sql .= ' AND sp.fk_statut IN (' . SupplierProposal::STATUS_VALIDATED . ', ' . SupplierProposal::STATUS_SIGNED . ', ' . SupplierProposal::STATUS_CLOSE . ')';
 		$sql .= ' ORDER BY sp.datec DESC';
 
 		$tableItems = $context->dbTool->executeS($sql);
 
 		$supplierPropalMorePanelHeader = ''; // Renamed variable
-
-		$parameters = array(
-			'tableItems' => $tableItems,
-			'supplierPropalMorePanelHeader' => &$supplierPropalMorePanelHeader // Renamed
-		);
-
-		// Use a new hook name for supplier proposals
-		$reshook = $hookmanager->executeHooks('externalAccessBeforeSupplierPropalList', $parameters, $object, $context->action);    // Note that $action and $object may have been modified by hook
 
 		if (!empty($supplierPropalMorePanelHeader)) {
 			print $supplierPropalMorePanelHeader;
@@ -120,8 +100,7 @@ class SupplierProposalController extends Controller
 			print '<thead>';
 			print '<tr>';
 			print ' <th class="text-center" >' . $langs->trans('Ref') . '</th>';
-			print ' <th class="text-center" >' . $langs->trans('RefSupplier') . '</th>';
-			print ' <th class="text-center" >' . $langs->trans('DateCreation') . '</th>';
+			print ' <th class="text-center" >' . $langs->trans('CLICHAUMEIL_DATEDELIVERYPLANNED') . '</th>';
 
 			if (!empty($TOther_fields)) {
 				$e = new ExtraFields($db);
@@ -149,9 +128,10 @@ class SupplierProposalController extends Controller
 				$object->id = $item->rowid;
 				$object->ref = $item->ref;
 				$object->ref_ext = $item->ref_ext;
-				$object->datec = $item->datec;
+				$object->date_creation = $item->datec;
+				$object->delivery_date = $item->date_livraison;
 				$object->total_ht = $item->total_ht;
-				$object->statut = $item->fk_statut;
+				$object->status = $item->fk_statut;
 				$object->entity = $item->entity;
 
 				// Only fetch extrafields if needed
@@ -176,8 +156,7 @@ class SupplierProposalController extends Controller
 				print '<tr>';
 				// Link to 'supplier_proposal_card' controller with the propal ID
 				print ' <td data-search="' . $object->ref . '" data-order="' . $object->ref . '"  ><a href="' . $context->getControllerUrl('supplier_proposal_card', '&id=' . $item->rowid) . '">' . $object->ref . '</a></td>';
-				print ' <td data-search="' . $object->ref_ext . '" data-order="' . $object->ref_ext . '" >' . $object->ref_ext . '</td>';
-				print ' <td data-search="' . dol_print_date($object->datec) . '" data-order="' . $object->datec . '" >' . dol_print_date($object->datec) . '</td>';
+				print ' <td data-search="' . dol_print_date($object->delivery_date) . '" data-order="' . $object->delivery_date . '" >' . dol_print_date($object->delivery_date) . '</td>';
 
 
 				if (!empty($TOther_fields)) {
