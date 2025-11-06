@@ -482,12 +482,14 @@ if ($num == 1 && getDolGlobalInt('MAIN_SEARCH_DIRECT_OPEN_IF_ONLY_ONE') && $sear
 
 llxHeader('', $title, $help_url, '', 0, 0, $morejs, $morecss, '', 'mod-clichaumeil page-list bodyforlist');	// Can use also classforhorizontalscrolloftabs instead of bodyforlist for a horizontal scroll in the table instead of page
 
-$objSoc = new Societe($db);
-$objSoc->fetch($socid);
-$head = societe_prepare_head($objSoc);
-print dol_get_fiche_head($head, 'clichaumeilrfa', $langs->trans("ChaumeilRfa"), 0, 'company');
-$linkback = '<a href="'.DOL_URL_ROOT.'/societe/list.php?restore_lastsearch_values=1">'.$langs->trans("BackToList").'</a>';
-dol_banner_tab($objSoc, 'socid', $linkback, ($user->socid ? 0 : 1), 'rowid', 'nom', '', '', 0, '', '', 1);
+if (!empty($socid)){
+	$objSoc = new Societe($db);
+	$objSoc->fetch($socid);
+	$head = societe_prepare_head($objSoc);
+	print dol_get_fiche_head($head, 'clichaumeilrfa', $langs->trans("ChaumeilRfa"), 0, 'company');
+	$linkback = '<a href="'.DOL_URL_ROOT.'/societe/list.php?restore_lastsearch_values=1">'.$langs->trans("BackToList").'</a>';
+	dol_banner_tab($objSoc, 'socid', $linkback, ($user->socid ? 0 : 1), 'rowid', 'nom', '', '', 0, '', '', 1);
+}
 print dol_get_fiche_end();
 print '<br>';
 

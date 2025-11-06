@@ -87,7 +87,7 @@ class modClichaumeil extends DolibarrModules
 		// If file is in theme/yourtheme/img directory under name object_pictovalue.png, use this->picto='pictovalue'
 		// If file is in module/img directory under name object_pictovalue.png, use this->picto='pictovalue@module'
 		// To use a supported fa-xxx css style of font awesome, use this->picto='xxx'
-		$this->picto = 'technic';
+		$this->picto = 'fa-money-bill';
 
 		// Define some features supported by module (triggers, login, substitutions, menus, css, etc...)
 		$this->module_parts = array(
@@ -230,17 +230,17 @@ class modClichaumeil extends DolibarrModules
 
 		/* BEGIN MODULEBUILDER LEFTMENU CHAUMEILRFA */
 		$this->menu[$r++] = array(
-			'fk_menu' => 'fk_mainmenu=clichaumeil',
+			'fk_menu' => 'fk_mainmenu=companies',
 			'type' => 'left',
 			'titre' => 'ChaumeilRfa',
 			'prefix' => img_picto('', $this->picto, 'class="paddingright pictofixedwidth valignmiddle"'),
-			'mainmenu' => 'clichaumeil',
+			'mainmenu' => 'companies',
 			'leftmenu' => 'chaumeilrfa',
-			'url' => '/clichaumeil/chaumeilrfa_list.php',
+			'url' => '/clichaumeil/chaumeilrfa_list_fourn.php',
 			'langs' => 'clichaumeil@clichaumeil',
 			'position' => 1000 + $r,
 			'enabled' => 'isModEnabled("clichaumeil")',
-			'perms' => '$user->hasRight("clichaumeil", "chaumeilrfa", "read")',
+			'perms' => '$user->hasRight("clichaumeil", "chaumeilrfa", "read") && $user->hasRight("fournisseur", "facture", "lire")',
 			'target' => '',
 			'user' => 2,
 			'object' => 'ChaumeilRfa'

@@ -2,8 +2,11 @@
 
 ### Unreleased
 
-## 1.3
+## 1.4
 - NEW : Add supplier proposal in externalacces. *06/11/2025* - 1.3.0
+
+## 1.3
+- NEW : Add RFA list by fourn (Thirdparties Menu Left) *15/10/2025* - 1.3.0 
 
 ## 1.2
 - NEW : Warning icon displayed for negative margin on propal lines. *30/09/2025* - 1.2.0
