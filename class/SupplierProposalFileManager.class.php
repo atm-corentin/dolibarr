@@ -33,7 +33,7 @@ class SupplierProposalFileManager
 	 * @param Conf $conf Configuration object
 	 * @param DoliDB $db Database handler
 	 */
-	public function __construct($conf, $db)
+	public function __construct(Conf $conf, DoliDB $db)
 	{
 		$this->conf = $conf;
 		$this->db = $db;
@@ -45,7 +45,7 @@ class SupplierProposalFileManager
 	 * @param int $trackId Track ID for session key
 	 * @return int >0 if OK, <0 if error
 	 */
-	public function uploadFileToSession($trackId)
+	public function uploadFileToSession(int $trackId) : int
 	{
 		dol_syslog("SupplierProposalFileManager::uploadFileToSession trackId=" . $trackId, LOG_DEBUG);
 
@@ -86,9 +86,9 @@ class SupplierProposalFileManager
 	 *
 	 * @param int $fileIndex File index to remove
 	 * @param int $trackId Track ID for session key
-	 * @return int >0 if OK, <0 if error
+	 * @return void  dol_remove_file_process returns void  on success, or on failure
 	 */
-	public function removeFileFromSession($fileIndex, $trackId)
+	public function removeFileFromSession(int $fileIndex, int $trackId)
 	{
 		return dol_remove_file_process($fileIndex, 0, 0, $trackId);
 	}
@@ -99,7 +99,7 @@ class SupplierProposalFileManager
 	 * @param SupplierProposal $object
 	 * @return array Array with success/error info
 	 */
-	public function moveSessionFilesToProposal($object)
+	public function moveSessionFilesToProposal(SupplierProposal $object) : array
 	{
 		$result = array('success' => 0, 'errors' => array());
 		$keytoavoidconflict = '-' . $object->id;
@@ -142,7 +142,7 @@ class SupplierProposalFileManager
 	 * @param int $actionId Action ID
 	 * @return array Array with success/error info
 	 */
-	public function copySessionFilesToProposalAndAction($object, $actionId)
+	public function copySessionFilesToProposalAndAction(SupplierProposal $object, int $actionId) : array
 	{
 		$result = array('success' => 0, 'errors' => array());
 		$keytoavoidconflict = '-' . $object->id;
@@ -194,7 +194,7 @@ class SupplierProposalFileManager
 	 * @param string $filename Original filename
 	 * @return string Unique filename
 	 */
-	private function getUniqueFilename($directory, $filename)
+	private function getUniqueFilename(string $directory, string $filename) : string
 	{
 		$filename = dol_sanitizeFileName(dol_string_nohtmltag(basename($filename)));
 		$dest = $directory . '/' . $filename;
@@ -221,7 +221,7 @@ class SupplierProposalFileManager
 	 * @param int $objectId
 	 * @return void
 	 */
-	private function clearSessionFiles($objectId)
+	private function clearSessionFiles(int $objectId) : void
 	{
 		$keytoavoidconflict = '-' . $objectId;
 		unset($_SESSION["listofpaths" . $keytoavoidconflict]);
@@ -235,7 +235,7 @@ class SupplierProposalFileManager
 	 * @param SupplierProposal $object
 	 * @return string
 	 */
-	public function getProposalUploadDir($object)
+	public function getProposalUploadDir(SupplierProposal $object) : string
 	{
 		return $this->conf->supplier_proposal->dir_output . '/' . dol_sanitizeFileName($object->ref);
 	}
@@ -246,7 +246,7 @@ class SupplierProposalFileManager
 	 * @param string $directory
 	 * @return bool
 	 */
-	public function hasFilesInDirectory($directory)
+	public function hasFilesInDirectory(string $directory) : bool
 	{
 		if (is_dir($directory)) {
 			$files = dol_dir_list($directory, 'files', 0, '', null, 'date', SORT_DESC);

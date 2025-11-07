@@ -16,73 +16,64 @@
  */
 
 include_once DOL_DOCUMENT_ROOT.'/supplier_proposal/class/supplier_proposal.class.php';
-dol_include_once('/clichaumeil/lib/supplierSupplierProposalTools.php');
+require_once __DIR__ . '/../../lib/supplierSupplierProposalTools.php';
 
 class SupplierProposalController extends Controller
 {
-	/**
-	 * check current access to controller
-	 *
-	 * @param void
-	 * @return  bool
-	 */
-	public function checkAccess()
-	{
-		global $conf, $user;
-		$this->accessRight = isModEnabled('clichaumeil') && getDolGlobalInt('CLICHAUMEIL_ACTIVATE_SUPPLIER_PROPOSAL') && $user->hasRight('externalaccess', 'view_supplier_proposals');;
-		return true;
-	}
-
-
 	/**
 	 * action method is called before html output
 	 * can be used to manage security and change context
 	 *
 	 * @param void
-	 * @return void
+	 * @return bool true on success, false on failure
 	 */
-	public function action()
+	public function action() : bool
 	{
 		global $langs;
 
 		$langs->load("clichaumeil@clichaumeil");
 
 		$context = Context::getInstance();
-		if (!$context->controllerInstance->checkAccess()) {
-			return;
+		if (!checkAccess()) {
+			return false;
 		}
 
 		$context->title = $langs->trans('CLICHAUMEIL_VIEWSUPPLIERPROPOSAL');
 		$context->desc = $langs->trans('CLICHAUMEIL_VIEWSUPPLIERPROPOSALDESC');
 		$context->menu_active[] = 'supplierProposal';
-
+		return true;
 	}
 
 	/**
 	 * Display method - renders the page
 	 *
-	 * @return void
+	 * @return bool true on success, false on failure
 	 */
-	public function display()
+	public function display() : bool
 	{
 		global $user;
 
 		$context = Context::getInstance();
 
-		if (!$context->controllerInstance->checkAccess()) {
+		if (!checkAccess()) {
 			return $this->display404();
 		}
+		if (!$this->loadTemplate('header')) {
+			dol_syslog('Failed to load template header for supplierProposalExternal.', LOG_ERR);
+			return false;
+		}
 
-		$this->loadTemplate('header');
-
-		// Include JavaScript file
 		print '<script type="text/javascript" src="' . dol_buildpath('/clichaumeil/js/supplierProposalExternal.js', 1) . '"></script>';
-
 		print '<section id="section-supplierProposal"><div class="container">';
 		$this->printSupplierProposalTable($user->socid);
 		print '</div></section>';
 
-		$this->loadTemplate('footer');
+		if (!$this->loadTemplate('footer')) {
+			dol_syslog('Failed to load template footer for supplierProposalExternal.', LOG_ERR);
+			return false;
+		}
+
+		return true;
 	}
 
 	/**
@@ -91,7 +82,7 @@ class SupplierProposalController extends Controller
 	 * @param int $socId Third-party ID
 	 * @return void
 	 */
-	private function printSupplierProposalTable($socId = 0)
+	private function printSupplierProposalTable(int $socId = 0) : void
 	{
 		global $langs, $db;
 

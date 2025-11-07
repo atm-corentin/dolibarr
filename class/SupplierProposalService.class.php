@@ -36,7 +36,7 @@ class SupplierProposalService
 	 * @param DoliDB $db Database handler
 	 * @param Conf $conf Configuration object
 	 */
-	public function __construct($db, $conf)
+	public function __construct(DoliDB $db, Conf $conf)
 	{
 		$this->db = $db;
 		$this->conf = $conf;
@@ -49,7 +49,7 @@ class SupplierProposalService
 	 * @param int $socId Third-party ID (for security check)
 	 * @return SupplierProposal|false Object if found, false otherwise
 	 */
-	public function fetchProposalWithLines($id, $socId = 0)
+	public function fetchProposalWithLines(int $id, int $socId = 0)
 	{
 		if (empty($id)) {
 			return false;
@@ -84,7 +84,7 @@ class SupplierProposalService
 	 * @param int $id Supplier proposal ID
 	 * @return SupplierProposal|false
 	 */
-	private function fetchMainProposalData($id)
+	private function fetchMainProposalData(int $id)
 	{
 		$sql = 'SELECT sp.rowid, sp.ref, sp.ref_ext, sp.fk_soc, sp.fk_projet, sp.datec, sp.date_valid,';
 		$sql .= ' sp.date_livraison, sp.total_ht, sp.total_tva, sp.total_ttc, sp.fk_statut,';
@@ -119,7 +119,7 @@ class SupplierProposalService
 	 * @param object $obj Database row
 	 * @return void
 	 */
-	private function populateProposalFromDbResult($object, $obj)
+	private function populateProposalFromDbResult(SupplierProposal $object, object $obj) : void
 	{
 		$object->id = $obj->rowid;
 		$object->ref = $obj->ref;
@@ -152,7 +152,7 @@ class SupplierProposalService
 	 * @param SupplierProposal $object
 	 * @return void
 	 */
-	private function fetchProposalLines($object)
+	private function fetchProposalLines(SupplierProposal $object) : void
 	{
 		$sqlLines = 'SELECT spd.rowid, spd.fk_supplier_proposal, spd.fk_parent_line, spd.description, spd.qty,';
 		$sqlLines .= ' spd.subprice, spd.tva_tx, spd.localtax1_tx, spd.localtax2_tx,';
@@ -191,7 +191,7 @@ class SupplierProposalService
 	 * @param object $objLine Database row
 	 * @return SupplierProposalLine
 	 */
-	private function createLineFromDbResult($objLine)
+	private function createLineFromDbResult(object $objLine) : SupplierProposalLine
 	{
 		$line = new SupplierProposalLine($this->db);
 		$line->id = $objLine->rowid;
@@ -231,7 +231,7 @@ class SupplierProposalService
 	 * @param SupplierProposal $object
 	 * @return array Array of ActionComm objects
 	 */
-	public function fetchProposalActions($object)
+	public function fetchProposalActions(SupplierProposal $object) : array
 	{
 		dol_include_once('/comm/action/class/actioncomm.class.php');
 
@@ -262,7 +262,7 @@ class SupplierProposalService
 	 * @param bool $publicOnly Only public files
 	 * @return array
 	 */
-	public function getProposalDocuments($object, $publicOnly = true)
+	public function getProposalDocuments(SupplierProposal $object, bool $publicOnly = true) : array
 	{
 		$documents = array();
 		$elementType = 'supplier_proposal';
@@ -291,52 +291,5 @@ class SupplierProposalService
 		}
 
 		return $documents;
-	}
-
-	/**
-	 * Get action files from filesystem
-	 *
-	 * @param int $actionId
-	 * @return array
-	 */
-	public function getActionFiles($actionId)
-	{
-		$actionDir = $this->conf->agenda->dir_output . '/' . $actionId;
-		$files = array();
-
-		if (is_dir($actionDir)) {
-			$files = dol_dir_list($actionDir, 'files');
-		}
-
-		return $files;
-	}
-
-	/**
-	 * Check if proposal has mandatory files attached
-	 *
-	 * @param SupplierProposal $object
-	 * @return bool
-	 */
-	public function hasAttachedFiles($object)
-	{
-		// Check files in proposal directory
-		$uploadDir = $this->conf->supplier_proposal->dir_output . '/' . dol_sanitizeFileName($object->ref);
-		if (is_dir($uploadDir)) {
-			$allFiles = dol_dir_list($uploadDir, 'files', 0, '', null, 'date', SORT_DESC);
-			if (!empty($allFiles)) {
-				return true;
-			}
-		}
-
-		// Check files in session
-		$keytoavoidconflict = '-' . $object->id;
-		if (!empty($_SESSION["listofnames" . $keytoavoidconflict])) {
-			$listofnames = explode(';', $_SESSION["listofnames" . $keytoavoidconflict]);
-			if (!empty($listofnames) && !empty($listofnames[0])) {
-				return true;
-			}
-		}
-
-		return false;
 	}
 }

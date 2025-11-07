@@ -47,7 +47,7 @@ class SupplierProposalActionHandler
 	 * @param Conf $conf
 	 * @param DoliDB $db
 	 */
-	public function __construct($fileManager, $langs, $user, $conf, $db)
+	public function __construct(SupplierProposalFileManager $fileManager, Translate $langs, User $user, Conf $conf, DoliDB $db)
 	{
 		$this->fileManager = $fileManager;
 		$this->langs = $langs;
@@ -62,7 +62,7 @@ class SupplierProposalActionHandler
 	 * @param SupplierProposal $object
 	 * @return array ['success' => bool, 'message' => string, 'type' => 'mesgs'|'errors']
 	 */
-	public function validateProposal($object)
+	public function validateProposal(SupplierProposal $object) : array
 	{
 		dol_syslog("SupplierProposalActionHandler::validateProposal START for proposal ID=" . $object->id, LOG_DEBUG);
 
@@ -124,7 +124,7 @@ class SupplierProposalActionHandler
 	 * @param string $title Comment title
 	 * @return array ['success' => bool, 'message' => string, 'type' => 'mesgs'|'errors']
 	 */
-	public function addComment($object, $comment, $title = '')
+	public function addComment(SupplierProposal $object, string $comment, string $title = '') : array
 	{
 		$keytoavoidconflict = '-' . $object->id;
 		$hasFiles = !empty($_SESSION["listofpaths" . $keytoavoidconflict]);
@@ -178,7 +178,7 @@ class SupplierProposalActionHandler
 	 * @param string $title
 	 * @return int Action ID if OK, <0 if error
 	 */
-	private function createAction($object, $comment, $title)
+	private function createAction(SupplierProposal $object, string $comment, string $title) : int
 	{
 		$actioncomm = new ActionComm($this->db);
 		$actioncomm->datep = dol_now();

@@ -14,13 +14,14 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
-dol_include_once('/clichaumeil/class/SupplierProposalService.class.php');
-dol_include_once('/clichaumeil/class/SupplierProposalFileManager.class.php');
-dol_include_once('/clichaumeil/class/SupplierProposalActionHandler.class.php');
-dol_include_once('/clichaumeil/class/SupplierProposalView.class.php');
 dol_include_once('/core/class/html.formother.class.php');
 dol_include_once('/societe/class/societe.class.php');
+
+require_once __DIR__ . '/../../class/SupplierProposalService.class.php';
+require_once __DIR__ . '/../../class/SupplierProposalFileManager.class.php';
+require_once __DIR__ . '/../../class/SupplierProposalActionHandler.class.php';
+require_once __DIR__ . '/../../class/SupplierProposalView.class.php';
+require_once __DIR__ . '/../../lib/supplierSupplierProposalTools.php';
 
 /**
  * Controller for Supplier Proposal Card (external access)
@@ -64,9 +65,9 @@ class SupplierProposalCardController extends Controller
 	 * Action method - called before display
 	 * Initialize services and handle POST actions
 	 *
-	 * @return void
+	 * @return bool true on success, false on failure
 	 */
-	public function action()
+	public function action() : bool
 	{
 		global $langs, $conf, $db, $user;
 
@@ -81,15 +82,15 @@ class SupplierProposalCardController extends Controller
 
 		$context = Context::getInstance();
 
-		if (!$context->controllerInstance->checkAccess()) {
-			return;
+		if (!checkAccess()) {
+			return false;
 		}
 
 		// Handle file download action BEFORE any output
 		$postAction = GETPOST('action', 'alpha');
 		if ($postAction == 'download-action-file') {
 			$this->handleFileDownload();
-			return; // Stop execution after download
+			return true; // Stop execution after download
 		}
 
 		// Initialize services
@@ -104,24 +105,23 @@ class SupplierProposalCardController extends Controller
 		$context->menu_active[] = 'supplierProposal';
 
 		// Handle POST actions
-		$this->handlePostActions();
+		return $this->handlePostActions();
 	}
 
 	/**
 	 * Display method - renders the page
 	 *
-	 * @return void
+	 * @return bool true on success, false on failure
 	 */
-	public function display()
+	public function display() : bool
 	{
 		global $user, $db, $conf, $langs;
 
 		$context = Context::getInstance();
 
-		if (!$context->controllerInstance->checkAccess()) {
-			return $this->display404();
+		if (!checkAccess()) {
+			return false;
 		}
-
 		// Get supplier proposal ID
 		$supplierPropalId = GETPOST('id', 'int');
 		if (empty($supplierPropalId)) {
@@ -171,38 +171,49 @@ class SupplierProposalCardController extends Controller
 		print '</form>';
 
 		// JavaScript initialization
-		$this->renderJavaScriptInit($object);
+		if (!$this->renderJavaScriptInit($object)) {
+			dol_syslog('Failed to render JavaScript init for supplier proposal ' . $object->id, LOG_ERR);
+			return false;
+		}
 
-		$this->loadTemplate('footer');
+		// Load template footer
+		// We also check if the footer loading fails
+		if (!$this->loadTemplate('footer')) {
+			dol_syslog('Failed to load footer for supplier proposal ' . $object->id, LOG_ERR);
+			return false;
+		}
+
+		return true;
 	}
 
 	/**
 	 * Handle POST actions
 	 *
-	 * @return void
+	 * @return bool true to continue to display(), false to stop
 	 */
-	private function handlePostActions()
+	private function handlePostActions() : bool
 	{
 		global $user, $db, $langs;
 
 		$postAction = GETPOST('action', 'alpha');
 		if (empty($postAction)) {
 			$this->handleFileRemoval();
-			return;
+			return true; // Continue to display even if file removal fails
 		}
 
 		$context = Context::getInstance();
 		$supplierPropalId = GETPOST('id', 'int');
 
 		if (empty($supplierPropalId)) {
-			return;
+			$context->setEventMessages($langs->trans('CLICHAUMEIL_SUPPLIERPROPOSALNOTFOUND'), 'errors');
+			return true; // Continue to display to show error message
 		}
 
 		// Fetch proposal for actions
 		$object = $this->service->fetchProposalWithLines($supplierPropalId, $user->socid);
 		if (!$object || $object->socid != $user->socid) {
 			$context->setEventMessages($langs->trans('CLICHAUMEIL_SUPPLIERPROPOSALNOTFOUND'), 'errors');
-			return;
+			return true; // Continue to display to show error message
 		}
 
 		switch ($postAction) {
@@ -217,7 +228,14 @@ class SupplierProposalCardController extends Controller
 			case 'new-comment':
 				$this->handleNewComment($object);
 				break;
+
+			default:
+				dol_syslog('Unknown POST action received: ' . $postAction, LOG_WARNING);
+				break;
 		}
+
+		// Always return true to continue to display() which will show the messages
+		return true;
 	}
 
 	/**
@@ -225,7 +243,7 @@ class SupplierProposalCardController extends Controller
 	 *
 	 * @return void
 	 */
-	private function handleFileDownload()
+	private function handleFileDownload() :	void
 	{
 		global $conf;
 
@@ -254,7 +272,7 @@ class SupplierProposalCardController extends Controller
 	 * @param SupplierProposal $object
 	 * @return void
 	 */
-	private function handleFileUpload($object)
+	private function handleFileUpload(SupplierProposal $object) : void
 	{
 		global $langs;
 
@@ -274,17 +292,12 @@ class SupplierProposalCardController extends Controller
 	 * @param SupplierProposal $object
 	 * @return void
 	 */
-	private function handleValidateProposal($object)
+	private function handleValidateProposal(SupplierProposal $object) : void
 	{
 		$context = Context::getInstance();
 		$result = $this->actionHandler->validateProposal($object);
 
 		$context->setEventMessages($result['message'], $result['type']);
-
-		// Block further processing if validation failed (e.g., missing mandatory files)
-		if (!$result['success']) {
-			return;
-		}
 	}
 
 	/**
@@ -293,10 +306,10 @@ class SupplierProposalCardController extends Controller
 	 * @param SupplierProposal $object
 	 * @return void
 	 */
-	private function handleNewComment($object)
+	private function handleNewComment(SupplierProposal $object) : void
 	{
-		$comment = GETPOST('propal-comment', 'alpha');
-		$title = GETPOST('propal-title', 'alpha');
+		$comment = GETPOST('propal-comment', 'restricthtml');
+		$title = GETPOST('propal-title', 'aZ09');
 
 		$context = Context::getInstance();
 		$result = $this->actionHandler->addComment($object, $comment, $title);
@@ -309,7 +322,7 @@ class SupplierProposalCardController extends Controller
 	 *
 	 * @return void
 	 */
-	private function handleFileRemoval()
+	private function handleFileRemoval() : void
 	{
 		global $langs;
 
@@ -326,14 +339,12 @@ class SupplierProposalCardController extends Controller
 			}
 		}
 
+		$context = Context::getInstance();
 		if ($removedfileNb > 0 && !empty($supplierPropalId)) {
-			$context = Context::getInstance();
-
 			// dol_remove_file_process() doesn't return a value, it sets session messages
 			// So we just call it and don't check the return value
 			// The success message is already set by dol_remove_file_process() via setEventMessages()
 			$this->fileManager->removeFileFromSession($removedfileNb, $supplierPropalId);
-
 		}
 	}
 
@@ -341,9 +352,9 @@ class SupplierProposalCardController extends Controller
 	 * Render JavaScript initialization
 	 *
 	 * @param SupplierProposal $object
-	 * @return void
+	 * @return bool
 	 */
-	private function renderJavaScriptInit($object)
+	private function renderJavaScriptInit(SupplierProposal $object) : bool
 	{
 		global $langs, $conf;
 
@@ -360,5 +371,7 @@ class SupplierProposalCardController extends Controller
 		print '<script type="text/javascript">';
 		print 'initSupplierProposalCard(' . json_encode($config) . ');';
 		print '</script>';
+
+		return true;
 	}
 }

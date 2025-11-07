@@ -50,7 +50,7 @@ class SupplierProposalView
 	 * @param User $user
 	 * @param Context $context
 	 */
-	public function __construct($langs, $conf, $db, $user, $context)
+	public function __construct(Translate $langs, Conf $conf, DoliDB $db, User $user, Context $context)
 	{
 		$this->langs = $langs;
 		$this->conf = $conf;
@@ -67,7 +67,7 @@ class SupplierProposalView
 	 * @param array $documents
 	 * @return string HTML
 	 */
-	public function renderProposalSummary($object, $thirdparty, $documents)
+	public function renderProposalSummary(SupplierProposal $object, Societe $thirdparty, array $documents) : string
 	{
 		$currencyCode = !empty($object->multicurrency_code) ? $object->multicurrency_code : $this->conf->currency;
 
@@ -78,10 +78,10 @@ class SupplierProposalView
 		$out .= '<div class="panel-body">';
 
 		// Main fields
-		$out .= $this->renderField('CLICHAUMEIL_REFNAME', $thirdparty->name);
-		$out .= $this->renderField('CLICHAUMEIL_REFSUPPLIER', $object->ref_ext);
-		$out .= $this->renderField('CLICHAUMEIL_PROJECT', $object->project_ref);
-		$out .= $this->renderField('CLICHAUMEIL_STATUS', $object->array_options["options_clichaumeil_supplierstatut"]);
+		$out .= $this->renderField('CLICHAUMEIL_REFNAME', $thirdparty->name ?? '');
+		$out .= $this->renderField('CLICHAUMEIL_REFSUPPLIER', $object->ref_ext ?? '');
+		$out .= $this->renderField('CLICHAUMEIL_PROJECT', $object->project_ref ?? '' );
+		$out .= $this->renderField('CLICHAUMEIL_STATUS', $object->array_options["options_clichaumeil_supplierstatut"] ?? '');
 		$out .= $this->renderField('CLICHAUMEIL_DATECREATION', dol_print_date($object->date_creation, 'dayhour'));
 		$out .= $this->renderField('CLICHAUMEIL_TOTALHT', price($object->total_ht, 0, $this->langs, 1, 2, -1, $currencyCode), 'object-total-ht');
 
@@ -91,7 +91,7 @@ class SupplierProposalView
 		$out .= '</div>'; // panel-body
 
 		// Documents
-		$out .= $this->renderDocumentsFooter($documents, $object);
+		$out .= $this->renderDocumentsFooter($documents);
 
 		$out .= '</div>'; // panel
 		$out .= '</div>'; // container
@@ -106,7 +106,7 @@ class SupplierProposalView
 	 * @param string $currencyCode
 	 * @return string HTML
 	 */
-	public function renderProposalLines($object, $currencyCode)
+	public function renderProposalLines(SupplierProposal $object, string $currencyCode) : string
 	{
 		$out = '<div class="container px-0" style="margin-top: 20px;">';
 		$out .= '<div class="table-responsive">';
@@ -114,7 +114,7 @@ class SupplierProposalView
 		$out .= '<thead>';
 		$out .= '<tr>';
 		$out .= '<th style="width: 10%;">' . $this->langs->trans('Ref') . '</th>';
-		$out .= '<th style="width: 10%;">' . $this->langs->trans('CLICHAUMEILL_REFSUPPLLIER') . '</th>';
+		$out .= '<th style="width: 10%;">' . $this->langs->trans('CLICHAUMEIL_REFSUPPLLIER') . '</th>';
 		$out .= '<th style="width: 45%;">' . $this->langs->trans('Description') . '</th>';
 		$out .= '<th class="text-right" style="width: 10%;">' . $this->langs->trans('Qty') . '</th>';
 		$out .= '<th class="text-right" style="width: 15%;">' . $this->langs->trans('UnitPriceHT') . '</th>';
@@ -123,7 +123,7 @@ class SupplierProposalView
 		$out .= '</thead>';
 		$out .= '<tbody>';
 
-		if (!empty($object->lines)) {
+		if (!empty($object->lines) && is_array($object->lines)) {
 			foreach ($object->lines as $line) {
 				$out .= $this->renderLine($line, $currencyCode, $object);
 			}
@@ -136,7 +136,7 @@ class SupplierProposalView
 		// Validation button
 		$out .= '<div class="text-right" style="margin-top: 20px;">';
 		$out .= '<button type="submit" class="btn btn-success" id="btn-validate-proposal" name="action" value="validate_proposal">';
-		$out .= '<i class="fa fa-check"></i> ' . $this->langs->trans('CLIACHAUMEIL_SAVEANDVALIDATE');
+		$out .= '<i class="fa fa-check"></i> ' . $this->langs->trans('CLICHAUMEIL_SAVEANDVALIDATE');
 		$out .= '</button>';
 		$out .= '</div>';
 
@@ -153,7 +153,7 @@ class SupplierProposalView
 	 * @param SupplierProposal $object
 	 * @return string HTML
 	 */
-	private function renderLine($line, $currencyCode, $object)
+	private function renderLine(SupplierProposalLine $line, string $currencyCode, SupplierProposal $object) : string
 	{
 		if (isModEnabled('subtotal') && TSubtotal::isModSubtotalLine($line)) {
 			return $this->renderSubtotalLine($line, $currencyCode, $object);
@@ -194,7 +194,7 @@ class SupplierProposalView
 	 * @param SupplierProposal $object
 	 * @return string HTML
 	 */
-	private function renderSubtotalLine($line, $currencyCode, $object)
+	private function renderSubtotalLine(SupplierProposalLine $line, string $currencyCode, SupplierProposal $object) : string
 	{
 		$out = '<tr>';
 
@@ -235,7 +235,7 @@ class SupplierProposalView
 	 * @param SupplierProposal $object
 	 * @return string HTML
 	 */
-	public function renderTimeline($TMessage, $object)
+	public function renderTimeline(array $TMessage, SupplierProposal $object) : string
 	{
 		if (empty($TMessage)) {
 			return '';
@@ -262,8 +262,7 @@ class SupplierProposalView
 					$datelabel = dol_print_date($actionstatic->datep);
 					$out .= '<li class="time-label"><span class="timeline-badge-date">' . $datelabel . '</span></li>';
 				}
-
-				$out .= $this->renderTimelineItem($actionstatic, $object, ++$iComment, $numComments, $userGetNomUrlCache);
+				$out .= $this->renderTimelineItem($actionstatic, ++$iComment, $numComments, $userGetNomUrlCache);
 			}
 		}
 
@@ -277,13 +276,12 @@ class SupplierProposalView
 	 * Render single timeline item
 	 *
 	 * @param ActionComm $action
-	 * @param SupplierProposal $object
 	 * @param int $iComment
 	 * @param int $numComments
 	 * @param array $userGetNomUrlCache
 	 * @return string HTML
 	 */
-	private function renderTimelineItem($action, $object, $iComment, $numComments, &$userGetNomUrlCache)
+	private function renderTimelineItem(ActionComm $action, int $iComment, int $numComments, array &$userGetNomUrlCache) : string
 	{
 		$out = '<li id="comment-message-' . $action->id . '" class="timeline-code-' . strtolower($action->code) . '">';
 		$out .= '<i class="fa fa-comments"></i>';
@@ -310,7 +308,7 @@ class SupplierProposalView
 		$out .= '</h3>';
 
 		// Body
-		$out .= '<div class="timeline-body">' . nl2br($action->note) . '</div>';
+		$out .= '<div class="timeline-body">' . nl2br($action->note_private) . '</div>';
 
 		// Files
 		$out .= $this->renderTimelineFiles($action);
@@ -327,7 +325,7 @@ class SupplierProposalView
 	 * @param ActionComm $action
 	 * @return string HTML
 	 */
-	private function renderTimelineFiles($action)
+	private function renderTimelineFiles(ActionComm $action) : string
 	{
 		$actionDir = $this->conf->agenda->dir_output . '/' . $action->id;
 		$files = array();
@@ -373,7 +371,7 @@ class SupplierProposalView
 	 * @param SupplierProposal $object
 	 * @return string HTML
 	 */
-	public function renderCommentForm($object)
+	public function renderCommentForm(SupplierProposal $object) : string
 	{
 		$out = '<div class="container px-0">';
 		$out .= '<ul class="timeline">';
@@ -425,7 +423,7 @@ class SupplierProposalView
 	 * @param string $id Optional ID for the value div
 	 * @return string HTML
 	 */
-	private function renderField($label, $value, $id = '')
+	private function renderField(string $label = '', string $value = '', string $id = '') : string
 	{
 		$idAttr = $id ? ' id="' . $id . '"' : '';
 		$out = '<div class="row clearfix form-group">';
@@ -441,7 +439,7 @@ class SupplierProposalView
 	 * @param SupplierProposal $object
 	 * @return string HTML
 	 */
-	private function renderExtrafields($object)
+	private function renderExtrafields(SupplierProposal $object) : string
 	{
 		$out = '';
 		$elementType = 'supplier_proposal';
@@ -480,10 +478,9 @@ class SupplierProposalView
 	 * Render documents footer
 	 *
 	 * @param array $documents
-	 * @param SupplierProposal $object
 	 * @return string HTML
 	 */
-	private function renderDocumentsFooter($documents, $object)
+	private function renderDocumentsFooter(array $documents) : string
 	{
 		if (empty($documents)) {
 			return '';
@@ -520,7 +517,7 @@ class SupplierProposalView
 	 *
 	 * @return string HTML
 	 */
-	private function getEaNavbar()
+	private function getEaNavbar() : string
 	{
 		return getEaNavbar($this->context->getControllerUrl('supplier_proposal'));
 	}
@@ -531,7 +528,7 @@ class SupplierProposalView
 	 * @param string $jsFile JavaScript filename
 	 * @return string HTML
 	 */
-	public function includeJavaScript($jsFile)
+	public function includeJavaScript($jsFile) : string
 	{
 		return '<script type="text/javascript" src="' . dol_buildpath('/clichaumeil/js/' . $jsFile, 1) . '"></script>';
 	}

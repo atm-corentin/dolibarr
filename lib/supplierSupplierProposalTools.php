@@ -224,3 +224,16 @@ function includeSupplierProposalDataTableScript($context, $tableId = 'supplier-p
 	print 'initSupplierProposalDataTable("' . $tableId . '", "' . $languageUrl . '", ' . $defaultSortColumn . ');';
 	print '</script>';
 }
+
+/**
+ * check current access to controller
+ *
+ * @param void
+ * @return  bool true if access granted, false otherwise
+ */
+function checkAccess() : bool
+{
+	global $conf, $user;
+
+	return isModEnabled('clichaumeil') && getDolGlobalInt('CLICHAUMEIL_ACTIVATE_SUPPLIER_PROPOSAL') && $user->hasRight('supplier_proposal', 'lire');
+}

@@ -106,7 +106,7 @@ ClichaumeilLevelReachedRate = Taux du palier atteint
 ClichaumeilEstimatedAmountDiscount = Montant estimé de la remise à percevoir
 CLICHAUMEIL_SPE_CUSTOMER = Configurations Spéciales CliChaumeil
 CLICHAUMEIL_ACTIVATE_SUPPLIER_PROPOSAL = Activer la gestion des propositions fournisseurs
-CLIACHAUMEIL_SAVEANDVALIDATE = Valider
+CLICHAUMEIL_SAVEANDVALIDATE = Valider
 CLICHAUMEIL_ADDMESSAGE = Ajouter un message / répondre
 CLICHAUMEIL_SENDMESSAGEHELP = Écrire votre message ou réponse
 CLICHAUMEIL_YOURCOMMENTHERE = Ajouter un commentaire.
@@ -132,7 +132,8 @@ CLICHAUMEIL_FILE_ATTACHED_WITHOUT_MESSAGE = Pièce jointe ajoutée
 CLICHAUMEIL_FILEADDED = Fichier envoyé, pensez à ajouter le message.
 CLICHAUMEIL_SUPPLIERPROPOSALVALIDATED = Proposition commerciale fournisseur transmise.
 CLICHAUMEIL_SUPPLIERPROPOSALS = Propositions commerciales fournisseurs
-CLICHAUMEILL_REFSUPPLLIER = Ref. Fournisseur
+CLICHAUMEIL_REFSUPPLLIER = Ref. Fournisseur
+CLICHAUMEIL_FILENOTFOUND = Fichier introuvable.
 
 #
 # Extrafields
