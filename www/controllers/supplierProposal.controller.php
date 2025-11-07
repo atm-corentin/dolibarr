@@ -79,10 +79,10 @@ class SupplierProposalController extends Controller
 	/**
 	 * Print supplier proposal table for external access
 	 *
-	 * @param int $socId Third-party ID
+	 * @param ?int $socId Third-party ID
 	 * @return void
 	 */
-	private function printSupplierProposalTable(int $socId = 0) : void
+	private function printSupplierProposalTable(?int $socId = 0) : void
 	{
 		global $langs, $db;
 

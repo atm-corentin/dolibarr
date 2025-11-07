@@ -106,7 +106,7 @@ ClichaumeilLevelReachedRate = Taux du palier atteint
 ClichaumeilEstimatedAmountDiscount = Montant estimé de la remise à percevoir
 CLICHAUMEIL_SPE_CUSTOMER = Configurations Spéciales CliChaumeil
 CLICHAUMEIL_ACTIVATE_SUPPLIER_PROPOSAL = Activer la gestion des propositions fournisseurs
-CLICHAUMEIL_SAVEANDVALIDATE = Valider
+CLICHAUMEIL_SAVEANDVALIDATE = Envoyer
 CLICHAUMEIL_ADDMESSAGE = Ajouter un message / répondre
 CLICHAUMEIL_SENDMESSAGEHELP = Écrire votre message ou réponse
 CLICHAUMEIL_YOURCOMMENTHERE = Ajouter un commentaire.
@@ -126,7 +126,7 @@ CLICHAUMEIL_VIEWSUPPLIERPROPOSAL = Proposition commercial fournisseur
 CLICHAUMEIL_VIEWSUPPLIERPROPOSALDESC = Retrouvez facilement toutes vos propositions commercial fournisseur
 CLICHAUMEIL_SUPPLIERPROPOSALNOTFOUND = Proposition commercial fournisseur introuvable.
 CLICHAUMEIL_SUPPLIERPROPOSAL = Proposition commercial fournisseur n° %s
-CLICHAUMEIL_DATEDELIVERYPLANNED = Date de livraison prévue
+CLICHAUMEIL_DATEDELIVERYPLANNED = Date prévue de livraison
 CLICHAUMEIL_PROJECT = Projet :
 CLICHAUMEIL_FILE_ATTACHED_WITHOUT_MESSAGE = Pièce jointe ajoutée
 CLICHAUMEIL_FILEADDED = Fichier envoyé, pensez à ajouter le message.
@@ -134,6 +134,14 @@ CLICHAUMEIL_SUPPLIERPROPOSALVALIDATED = Proposition commerciale fournisseur tran
 CLICHAUMEIL_SUPPLIERPROPOSALS = Propositions commerciales fournisseurs
 CLICHAUMEIL_REFSUPPLLIER = Ref. Fournisseur
 CLICHAUMEIL_FILENOTFOUND = Fichier introuvable.
+CLICHAUMEIL_FILE_DEPOSITED_BY = Fichier déposé par %s, %s
+CLICHAUMEIL_FILE_TOO_LARGE = Le fichier est trop volumineux. Taille maximale autorisée : %s
+CLICHAUMEIL_FILE_UPLOAD_ERROR = Erreur lors de l'envoi du fichier
+CLICHAUMEIL_FILE_PARTIAL_UPLOAD = Le fichier n'a été que partiellement téléchargé
+CLICHAUMEIL_FILE_NO_TMP_DIR = Dossier temporaire manquant sur le serveur
+CLICHAUMEIL_FILE_CANT_WRITE = Impossible d'écrire le fichier sur le disque
+CLICHAUMEIL_FILE_EXTENSION_BLOCKED = Une extension PHP a bloqué l'envoi du fichier
+CLICHAUMEIL_FILE_UNKNOWN_ERROR = Erreur inconnue lors de l'envoi du fichier
 
 #
 # Extrafields

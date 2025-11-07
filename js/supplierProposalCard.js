@@ -22,6 +22,9 @@
  * @param {string} config.token - Security token
  * @param {boolean} config.mandatoryFiles - Whether files are mandatory for validation
  * @param {string} config.errorFileUploadMsg - Error message for file upload
+ * @param {number} config.maxFileSize - Maximum file size in bytes
+ * @param {string} config.maxFileSizeFormatted - Maximum file size formatted (e.g., "8M")
+ * @param {string} config.fileTooLargeMsg - Error message for file too large
  */
 function initSupplierProposalCard(config) {
 	console.log("=== initSupplierProposalCard called ===");
@@ -34,6 +37,12 @@ function initSupplierProposalCard(config) {
 		console.log("Supplier Proposal price updater initialized");
 		console.log("AJAX URL: " + config.ajaxUrl);
 		console.log("Propal ID: " + config.propalId);
+
+		// Block form submission on Enter key in input fields
+		initEnterKeyBlocker();
+
+		// Initialize file size validator
+		initFileSizeValidator(config);
 
 		// Initialize price updater
 		initPriceUpdater(config);
@@ -129,16 +138,18 @@ function initValidationHandler(config) {
 		if (fileInput.length > 0 && fileInput[0].files.length > 0) {
 			console.log("Files found in input, uploading first...");
 
+			// Validate file size BEFORE upload
+			var file = fileInput[0].files[0];
+			if (!validateFileSize(file, config)) {
+				return; // Stop if file is too large
+			}
+
 			// Create FormData to upload file via AJAX
 			var formData = new FormData();
 			formData.append("action", "add-comment-file");
 			formData.append("id", config.propalId);
 			formData.append("token", config.token);
-
-			// Add the file
-			if (fileInput[0].files[0]) {
-				formData.append("addedfile", fileInput[0].files[0]);
-			}
+			formData.append("addedfile", file);
 
 			// Upload file via AJAX
 			$.ajax({
@@ -154,9 +165,17 @@ function initValidationHandler(config) {
 					form.append('<input type="hidden" name="action" value="validate_proposal" />');
 					form.submit();
 				},
-				error: function() {
-					console.error("Error uploading file");
-					alert(config.errorFileUploadMsg);
+				error: function(jqXHR, textStatus, errorThrown) {
+					console.error("Error uploading file:", textStatus, errorThrown);
+
+					// Handle specific HTTP errors
+					if (jqXHR.status === 413) {
+						// Request Entity Too Large - reload page with error message
+						sendErrorToServer(config, 'FILE_TOO_LARGE');
+					} else {
+						// Other upload error - reload page with error message
+						sendErrorToServer(config, 'UPLOAD_ERROR');
+					}
 				}
 			});
 		} else {
@@ -168,4 +187,97 @@ function initValidationHandler(config) {
 			form.submit();
 		}
 	});
+}
+
+/**
+ * Block form submission when Enter key is pressed in input fields
+ * This prevents accidental form submission when users are entering data
+ */
+function initEnterKeyBlocker() {
+	console.log("Initializing Enter key blocker for input fields");
+
+	// Block Enter key on all input fields (text, number, etc.) but NOT textareas
+	$("form").on("keydown", "input:not([type=submit]):not([type=button])", function(e) {
+		if (e.which === 13 || e.keyCode === 13) {
+			console.log("Enter key pressed in input field, blocking form submission");
+			e.preventDefault();
+
+			// Optionally, trigger blur to save the value (useful for price inputs)
+			if ($(this).hasClass("line-price-input")) {
+				console.log("Triggering blur on price input to save changes");
+				$(this).blur();
+			}
+
+			return false;
+		}
+	});
+}
+
+/**
+ * Initialize file size validator for file inputs
+ * Checks file size before form submission to prevent "Request Entity Too Large" errors
+ * @param {object} config Configuration object with maxFileSize and fileTooLargeMsg
+ */
+function initFileSizeValidator(config) {
+	console.log("Initializing file size validator");
+	console.log("Max file size:", config.maxFileSize, "bytes");
+
+	// Validate on file input change
+	$("input[type=file]").on("change", function() {
+		var input = this;
+		if (input.files && input.files.length > 0) {
+			var file = input.files[0];
+			console.log("File selected:", file.name, "Size:", file.size, "bytes");
+
+			if (!validateFileSize(file, config)) {
+				// Clear the file input
+				$(input).val("");
+				// Send error to server to display via setEventMessages
+				sendErrorToServer(config, 'FILE_TOO_LARGE');
+			}
+		}
+	});
+}
+
+/**
+ * Validate file size against maximum allowed size
+ * @param {File} file File object to validate
+ * @param {object} config Configuration object with maxFileSize and fileTooLargeMsg
+ * @return {boolean} True if valid, false if too large
+ */
+function validateFileSize(file, config) {
+	if (!file || !config.maxFileSize) {
+		return true; // No validation if file or config missing
+	}
+
+	if (file.size > config.maxFileSize) {
+		console.error("File too large:", file.size, "bytes > max:", config.maxFileSize, "bytes");
+		return false;
+	}
+
+	return true;
+}
+
+/**
+ * Send error to server to display via setEventMessages (page reload)
+ * This ensures messages are displayed uniformly using Dolibarr's native system
+ * @param {object} config Configuration object with propalId
+ * @param {string} errorCode Error code (FILE_TOO_LARGE, UPLOAD_ERROR, etc.)
+ */
+function sendErrorToServer(config, errorCode) {
+	console.log("Sending error to server:", errorCode);
+
+	// Build redirect URL with error parameter
+	var url = window.location.pathname + window.location.search;
+
+	// Add or update error parameter
+	if (url.indexOf('?') === -1) {
+		url += '?';
+	} else {
+		url += '&';
+	}
+	url += 'file_error=' + encodeURIComponent(errorCode);
+
+	// Reload page with error parameter (server will display message via setEventMessages)
+	window.location.href = url;
 }

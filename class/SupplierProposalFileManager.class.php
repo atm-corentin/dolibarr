@@ -43,15 +43,32 @@ class SupplierProposalFileManager
 	 * Upload file to session
 	 *
 	 * @param int $trackId Track ID for session key
-	 * @return int >0 if OK, <0 if error
+	 * @return array ['success' => bool, 'error_code' => string|null, 'error_message' => string|null]
 	 */
-	public function uploadFileToSession(int $trackId) : int
+	public function uploadFileToSession(int $trackId) : array
 	{
 		dol_syslog("SupplierProposalFileManager::uploadFileToSession trackId=" . $trackId, LOG_DEBUG);
 
+		// Check if file was uploaded
 		if (empty($_FILES['addedfile']['name'])) {
 			dol_syslog("SupplierProposalFileManager::uploadFileToSession No file uploaded (addedfile empty)", LOG_DEBUG);
-			return 0;
+			return array(
+				'success' => false,
+				'error_code' => 'NO_FILE',
+				'error_message' => 'No file provided'
+			);
+		}
+
+		// Check for PHP upload errors
+		if (isset($_FILES['addedfile']['error']) && $_FILES['addedfile']['error'] !== UPLOAD_ERR_OK) {
+			$errorCode = $this->getUploadErrorCode($_FILES['addedfile']['error']);
+			$errorMessage = $this->getUploadErrorMessage($_FILES['addedfile']['error']);
+			dol_syslog("SupplierProposalFileManager::uploadFileToSession Upload error: " . $errorMessage, LOG_WARNING);
+			return array(
+				'success' => false,
+				'error_code' => $errorCode,
+				'error_message' => $errorMessage
+			);
 		}
 
 		dol_syslog("SupplierProposalFileManager::uploadFileToSession File name: " . $_FILES['addedfile']['name'], LOG_DEBUG);
@@ -76,9 +93,75 @@ class SupplierProposalFileManager
 		if ($result > 0) {
 			$keytoavoidconflict = '-' . $trackId;
 			dol_syslog("SupplierProposalFileManager::uploadFileToSession Session check - listofnames" . $keytoavoidconflict . "=" . (isset($_SESSION["listofnames" . $keytoavoidconflict]) ? $_SESSION["listofnames" . $keytoavoidconflict] : 'NOT SET'), LOG_DEBUG);
+			return array('success' => true, 'error_code' => null, 'error_message' => null);
+		} elseif ($result < 0) {
+			return array(
+				'success' => false,
+				'error_code' => 'UPLOAD_FAILED',
+				'error_message' => 'File upload failed'
+			);
+		} else {
+			return array(
+				'success' => false,
+				'error_code' => 'NO_FILE',
+				'error_message' => 'No file uploaded'
+			);
 		}
+	}
 
-		return $result;
+	/**
+	 * Get error code from PHP upload error
+	 *
+	 * @param int $errorNumber PHP upload error constant
+	 * @return string Error code
+	 */
+	private function getUploadErrorCode(int $errorNumber) : string
+	{
+		switch ($errorNumber) {
+			case UPLOAD_ERR_INI_SIZE:
+			case UPLOAD_ERR_FORM_SIZE:
+				return 'FILE_TOO_LARGE';
+			case UPLOAD_ERR_PARTIAL:
+				return 'PARTIAL_UPLOAD';
+			case UPLOAD_ERR_NO_FILE:
+				return 'NO_FILE';
+			case UPLOAD_ERR_NO_TMP_DIR:
+				return 'NO_TMP_DIR';
+			case UPLOAD_ERR_CANT_WRITE:
+				return 'CANT_WRITE';
+			case UPLOAD_ERR_EXTENSION:
+				return 'EXTENSION_BLOCKED';
+			default:
+				return 'UNKNOWN_ERROR';
+		}
+	}
+
+	/**
+	 * Get error message from PHP upload error
+	 *
+	 * @param int $errorNumber PHP upload error constant
+	 * @return string Error message
+	 */
+	private function getUploadErrorMessage(int $errorNumber) : string
+	{
+		switch ($errorNumber) {
+			case UPLOAD_ERR_INI_SIZE:
+				return 'The uploaded file exceeds the upload_max_filesize directive in php.ini';
+			case UPLOAD_ERR_FORM_SIZE:
+				return 'The uploaded file exceeds the MAX_FILE_SIZE directive that was specified in the HTML form';
+			case UPLOAD_ERR_PARTIAL:
+				return 'The uploaded file was only partially uploaded';
+			case UPLOAD_ERR_NO_FILE:
+				return 'No file was uploaded';
+			case UPLOAD_ERR_NO_TMP_DIR:
+				return 'Missing a temporary folder';
+			case UPLOAD_ERR_CANT_WRITE:
+				return 'Failed to write file to disk';
+			case UPLOAD_ERR_EXTENSION:
+				return 'A PHP extension stopped the file upload';
+			default:
+				return 'Unknown upload error';
+		}
 	}
 
 	/**
@@ -156,7 +239,8 @@ class SupplierProposalFileManager
 
 		// Prepare directories
 		$uploadDirProposal = $this->conf->supplier_proposal->dir_output . '/' . dol_sanitizeFileName($object->ref);
-		$uploadDirAction = $this->conf->agenda->dir_output . '/' . $actionId;
+		// Use multidir_output for agenda to support multi-entity
+		$uploadDirAction = $this->conf->agenda->multidir_output[$this->conf->entity] . '/' . $actionId;
 		dol_mkdir($uploadDirProposal);
 		dol_mkdir($uploadDirAction);
 

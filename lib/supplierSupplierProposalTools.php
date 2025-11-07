@@ -24,7 +24,7 @@
  */
 function getSupplierProposalExternalSql($db, $socId)
 {
-	$sql = 'SELECT sp.rowid, sp.ref, sp.ref_ext, sp.datec, sp.total_ht, sp.fk_statut, sp.entity, sp.date_livraison ';
+	$sql = 'SELECT sp.rowid, sp.ref, sp.ref_ext, sp.datec, sp.total_ht, sp.total_tva, sp.fk_statut, sp.entity, sp.date_livraison ';
 	$sql .= ' FROM `' . $db->prefix() . 'supplier_proposal` sp';
 	$sql .= ' WHERE sp.fk_soc = ' . intval($socId);
 	$sql .= ' AND sp.fk_statut IN (' . SupplierProposal::STATUS_VALIDATED . ', ' . SupplierProposal::STATUS_SIGNED . ', ' . SupplierProposal::STATUS_CLOSE . ')';
@@ -111,6 +111,7 @@ function createSupplierProposalFromItem($db, $item, $TOther_fields = array())
 	$object->date_creation = $item->datec;
 	$object->delivery_date = $item->date_livraison;
 	$object->total_ht = $item->total_ht;
+	$object->total_tva = $item->total_tva;
 	$object->status = $item->fk_statut;
 	$object->entity = $item->entity;
 
@@ -156,6 +157,7 @@ function printSupplierProposalTableHeader($langs, $TOther_fields, $db)
 	}
 
 	print ' <th class="text-center" >' . $langs->trans('TotalHT') . '</th>';
+	print ' <th class="text-center" >' . $langs->trans('TotalVAT') . '</th>';
 	print ' <th class="text-center" >' . $langs->trans('Status') . '</th>';
 	print '</tr>';
 	print '</thead>';
@@ -180,6 +182,15 @@ function printSupplierProposalTableRow($object, $context, $TOther_fields, $e = n
 	// Delivery date column
 	print ' <td data-search="' . dol_print_date($object->delivery_date) . '" data-order="' . $object->delivery_date . '" >' . dol_print_date($object->delivery_date) . '</td>';
 
+	// Total HT column
+	print ' <td data-search="' . $object->total_ht . '" data-order="' . $object->total_ht . '" >' . price($object->total_ht) . '</td>';
+
+	// Total TVA column
+	print ' <td data-search="' . $object->total_tva . '" data-order="' . $object->total_tva . '" >' . price($object->total_tva) . '</td>';
+
+	// Status column
+	print ' <td class="text-center" >' . $object->getLibStatut(0) . '</td>';
+
 	// Extra fields columns
 	if (!empty($TOther_fields)) {
 		foreach ($TOther_fields as $field) {
@@ -198,12 +209,6 @@ function printSupplierProposalTableRow($object, $context, $TOther_fields, $e = n
 			}
 		}
 	}
-
-	// Total HT column
-	print ' <td data-search="' . $object->total_ht . '" data-order="' . $object->total_ht . '" >' . price($object->total_ht) . '</td>';
-
-	// Status column
-	print ' <td class="text-center" >' . $object->getLibStatut(0) . '</td>';
 
 	print '</tr>';
 }

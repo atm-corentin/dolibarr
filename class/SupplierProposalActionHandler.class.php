@@ -195,9 +195,35 @@ class SupplierProposalActionHandler
 		$actioncomm->user_creation_id = $this->user->id;
 		$actioncomm->userownerid = $this->user->id;
 		$actioncomm->type_code = 'AC_OTH';
-		$actioncomm->label = ($title == "")
-			? $this->langs->trans("CLICHAUMEIL_LABEL_OWNER", $this->user->firstname . ' ' . $this->user->lastname)
-			: $title;
+
+		// Set label/title
+		if (!empty($title)) {
+			$actioncomm->label = $title;
+		} else {
+			// If no message (only file), use specific title format
+			if (empty($comment)) {
+				$actioncomm->label = $this->langs->trans(
+					"CLICHAUMEIL_FILE_DEPOSITED_BY",
+					$this->user->lastname,
+					$this->user->firstname
+				);
+			} else {
+				// Default title for messages
+				$actioncomm->label = $this->langs->trans(
+					"CLICHAUMEIL_LABEL_OWNER",
+					$this->user->firstname . ' ' . $this->user->lastname
+				);
+			}
+		}
+
+		// Link to project if proposal has one
+		if (!empty($object->fk_project)) {
+			$actioncomm->fk_project = $object->fk_project;
+		}
+
+		// Set status as "Done" (100%)
+		$actioncomm->percentage = 100;
+
 		$actioncomm->entity = $this->conf->entity;
 
 		return $actioncomm->create($this->user);

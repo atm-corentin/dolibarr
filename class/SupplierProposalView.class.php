@@ -82,7 +82,7 @@ class SupplierProposalView
 		$out .= $this->renderField('CLICHAUMEIL_REFSUPPLIER', $object->ref_ext ?? '');
 		$out .= $this->renderField('CLICHAUMEIL_PROJECT', $object->project_ref ?? '' );
 		$out .= $this->renderField('CLICHAUMEIL_STATUS', $object->array_options["options_clichaumeil_supplierstatut"] ?? '');
-		$out .= $this->renderField('CLICHAUMEIL_DATECREATION', dol_print_date($object->date_creation, 'dayhour'));
+		$out .= $this->renderField('CLICHAUMEIL_DATEDELIVERYPLANNED', dol_print_date($object->delivery_date), '' ,' :');
 		$out .= $this->renderField('CLICHAUMEIL_TOTALHT', price($object->total_ht, 0, $this->langs, 1, 2, -1, $currencyCode), 'object-total-ht');
 
 		// Extrafields
@@ -114,8 +114,8 @@ class SupplierProposalView
 		$out .= '<thead>';
 		$out .= '<tr>';
 		$out .= '<th style="width: 10%;">' . $this->langs->trans('Ref') . '</th>';
-		$out .= '<th style="width: 10%;">' . $this->langs->trans('CLICHAUMEIL_REFSUPPLLIER') . '</th>';
-		$out .= '<th style="width: 45%;">' . $this->langs->trans('Description') . '</th>';
+		$out .= '<th style="width: 15%;">' . $this->langs->trans('CLICHAUMEIL_REFSUPPLLIER') . '</th>';
+		$out .= '<th style="width: 40%;">' . $this->langs->trans('Description') . '</th>';
 		$out .= '<th class="text-right" style="width: 10%;">' . $this->langs->trans('Qty') . '</th>';
 		$out .= '<th class="text-right" style="width: 15%;">' . $this->langs->trans('UnitPriceHT') . '</th>';
 		$out .= '<th class="text-right" style="width: 15%;">' . $this->langs->trans('TotalHT') . '</th>';
@@ -206,10 +206,9 @@ class SupplierProposalView
 			$out .= '<td class="text-right"></td>';
 			$out .= '<td class="text-right">' . price($subtotalAmount, 0, $this->langs, 1, 2, -1, $currencyCode) . '</td>';
 		} elseif (TSubtotal::isFreeText($line)) {
-			$out .= '<td></td>';
 			$out .= '<td colspan="5">' . nl2br($line->desc) . '</td>';
-		} else {
 			$out .= '<td></td>';
+		} else {
 			$out .= '<td colspan="5">';
 			if (!empty($line->label)) {
 				$out .= '<strong>' . nl2br($line->label) . '</strong>';
@@ -221,6 +220,7 @@ class SupplierProposalView
 				$out .= nl2br($line->desc);
 			}
 			$out .= '</td>';
+			$out .= '<td></td>';
 		}
 
 		$out .= '</tr>';
@@ -327,7 +327,8 @@ class SupplierProposalView
 	 */
 	private function renderTimelineFiles(ActionComm $action) : string
 	{
-		$actionDir = $this->conf->agenda->dir_output . '/' . $action->id;
+		// Use multidir_output for agenda to support multi-entity
+		$actionDir = $this->conf->agenda->multidir_output[$this->conf->entity] . '/' . $action->id;
 		$files = array();
 
 		if (is_dir($actionDir)) {
@@ -421,14 +422,15 @@ class SupplierProposalView
 	 * @param string $label Translation key
 	 * @param string $value Value to display
 	 * @param string $id Optional ID for the value div
+	 * @param string $param Optional ID for the value div
 	 * @return string HTML
 	 */
-	private function renderField(string $label = '', string $value = '', string $id = '') : string
+	private function renderField(string $label = '', string $value = '', string $id = '' , string $param = "") : string
 	{
 		$idAttr = $id ? ' id="' . $id . '"' : '';
 		$out = '<div class="row clearfix form-group">';
-		$out .= '<div class="col-md-2">' . $this->langs->transnoentities($label) . '</div>';
-		$out .= '<div class="col-md-10"' . $idAttr . '>' . $value . '</div>';
+		$out .= '<div class="col-md-3">' . $this->langs->transnoentities($label) . $param . '</div>';
+		$out .= '<div class="col-md-9"' . $idAttr . '>' . $value . '</div>';
 		$out .= '</div>';
 		return $out;
 	}

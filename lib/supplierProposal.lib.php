@@ -404,7 +404,8 @@ function printSupplierProposalCard($supplierPropalId = 0, $socId = 0, $action = 
 				dol_mkdir($uploadDirProposal);
 
 				// 2. Action/Agenda directory (we always have an action now)
-				$uploadDirAction = $conf->agenda->dir_output . '/' . $res;
+				// Use multidir_output for agenda to support multi-entity
+				$uploadDirAction = $conf->agenda->multidir_output[$conf->entity] . '/' . $res;
 				dol_mkdir($uploadDirAction);
 
 				foreach ($listofpaths as $key => $val) {
@@ -797,7 +798,8 @@ function printSupplierPropalCardView($supplierPropalId = 0, $socId = 0, $action 
 				$out .= '<div class="timeline-body">' . nl2br($actionstatic->note) . '</div>';
 
 				// Files - List files directly from action directory (not from ECM to avoid showing in standard agenda)
-				$action_dir = $conf->agenda->dir_output . '/' . $actionstatic->id;
+				// Use multidir_output for agenda to support multi-entity
+				$action_dir = $conf->agenda->multidir_output[$conf->entity] . '/' . $actionstatic->id;
 				$files = array();
 				if (is_dir($action_dir)) {
 					$files = dol_dir_list($action_dir, 'files');

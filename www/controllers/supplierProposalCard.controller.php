@@ -141,6 +141,9 @@ class SupplierProposalCardController extends Controller
 			return $this->display404();
 		}
 
+		// Handle file error messages from JavaScript
+		$this->handleFileErrorMessages();
+
 		// Fetch related data
 		$thirdparty = new Societe($db);
 		$thirdparty->fetch($object->socid);
@@ -206,35 +209,39 @@ class SupplierProposalCardController extends Controller
 
 		if (empty($supplierPropalId)) {
 			$context->setEventMessages($langs->trans('CLICHAUMEIL_SUPPLIERPROPOSALNOTFOUND'), 'errors');
-			return true; // Continue to display to show error message
+			$this->redirectToProposal($supplierPropalId);
+			return false; // Stop execution after redirect
 		}
 
 		// Fetch proposal for actions
 		$object = $this->service->fetchProposalWithLines($supplierPropalId, $user->socid);
 		if (!$object || $object->socid != $user->socid) {
 			$context->setEventMessages($langs->trans('CLICHAUMEIL_SUPPLIERPROPOSALNOTFOUND'), 'errors');
-			return true; // Continue to display to show error message
+			$this->redirectToProposal($supplierPropalId);
+			return false; // Stop execution after redirect
 		}
 
 		switch ($postAction) {
 			case 'add-comment-file':
 				$this->handleFileUpload($object);
-				break;
+				$this->redirectToProposal($supplierPropalId);
+				return false; // Stop execution after redirect
 
 			case 'validate_proposal':
 				$this->handleValidateProposal($object);
-				break;
+				$this->redirectToProposal($supplierPropalId);
+				return false; // Stop execution after redirect
 
 			case 'new-comment':
 				$this->handleNewComment($object);
-				break;
+				$this->redirectToProposal($supplierPropalId);
+				return false; // Stop execution after redirect
 
 			default:
 				dol_syslog('Unknown POST action received: ' . $postAction, LOG_WARNING);
 				break;
 		}
 
-		// Always return true to continue to display() which will show the messages
 		return true;
 	}
 
@@ -252,7 +259,8 @@ class SupplierProposalCardController extends Controller
 
 		if ($actionid > 0 && !empty($filename)) {
 			$filename = basename($filename); // Security: prevent path traversal
-			$filepath = $conf->agenda->dir_output . '/' . $actionid . '/' . $filename;
+			// Use multidir_output for agenda to support multi-entity
+			$filepath = $conf->agenda->multidir_output[$conf->entity] . '/' . $actionid . '/' . $filename;
 
 			if (file_exists($filepath) && is_file($filepath)) {
 				// Set headers for file download
@@ -274,15 +282,58 @@ class SupplierProposalCardController extends Controller
 	 */
 	private function handleFileUpload(SupplierProposal $object) : void
 	{
-		global $langs;
+		global $langs, $conf;
 
 		$context = Context::getInstance();
 		$result = $this->fileManager->uploadFileToSession($object->id);
 
-		if ($result > 0) {
+		if ($result['success']) {
 			$context->setEventMessages($langs->trans('CLICHAUMEIL_FILEADDED'), 'mesgs');
-		} elseif ($result < 0) {
-			$context->setEventMessages($langs->trans('ErrorFileUpload'), 'errors');
+		} else {
+			// Get translated error message based on error code
+			$errorMessage = $this->getUploadErrorTranslation($result['error_code'], $conf);
+			$context->setEventMessages($errorMessage, 'errors');
+		}
+	}
+
+	/**
+	 * Get translated error message for file upload errors
+	 *
+	 * @param string $errorCode Error code from FileManager
+	 * @param Conf $conf Configuration object
+	 * @return string Translated error message
+	 */
+	private function getUploadErrorTranslation(string $errorCode, Conf $conf) : string
+	{
+		global $langs;
+
+		switch ($errorCode) {
+			case 'FILE_TOO_LARGE':
+				$maxSize = ini_get('upload_max_filesize');
+				if (empty($maxSize)) {
+					$maxSize = ini_get('post_max_size');
+				}
+				return $langs->trans('CLICHAUMEIL_FILE_TOO_LARGE', $maxSize);
+
+			case 'PARTIAL_UPLOAD':
+				return $langs->trans('CLICHAUMEIL_FILE_PARTIAL_UPLOAD');
+
+			case 'NO_FILE':
+				return $langs->trans('CLICHAUMEIL_FILENOTFOUND');
+
+			case 'NO_TMP_DIR':
+				return $langs->trans('CLICHAUMEIL_FILE_NO_TMP_DIR');
+
+			case 'CANT_WRITE':
+				return $langs->trans('CLICHAUMEIL_FILE_CANT_WRITE');
+
+			case 'EXTENSION_BLOCKED':
+				return $langs->trans('CLICHAUMEIL_FILE_EXTENSION_BLOCKED');
+
+			case 'UPLOAD_FAILED':
+			case 'UNKNOWN_ERROR':
+			default:
+				return $langs->trans('CLICHAUMEIL_FILE_UPLOAD_ERROR');
 		}
 	}
 
@@ -360,12 +411,19 @@ class SupplierProposalCardController extends Controller
 
 		$url = dol_buildpath('/clichaumeil/script/interface.php', 1);
 
+		// Get max file size from PHP configuration
+		$maxFileSize = $this->getMaxUploadSize();
+		$maxFileSizeFormatted = $this->formatBytes($maxFileSize);
+
 		$config = array(
 			'ajaxUrl' => $url,
 			'propalId' => $object->id,
 			'token' => newToken(),
 			'mandatoryFiles' => getDolGlobalInt('CLICHAUMEIL_MENDATORY_ATTACHED_FILES_SUPPLIER_PROPOSAL'),
-			'errorFileUploadMsg' => dol_escape_js($langs->trans('ErrorFileUpload'))
+			'errorFileUploadMsg' => dol_escape_js($langs->trans('CLICHAUMEIL_FILE_UPLOAD_ERROR')),
+			'maxFileSize' => $maxFileSize,
+			'maxFileSizeFormatted' => $maxFileSizeFormatted,
+			'fileTooLargeMsg' => dol_escape_js($langs->trans('CLICHAUMEIL_FILE_TOO_LARGE', $maxFileSizeFormatted))
 		);
 
 		print '<script type="text/javascript">';
@@ -373,5 +431,134 @@ class SupplierProposalCardController extends Controller
 		print '</script>';
 
 		return true;
+	}
+
+	/**
+	 * Get maximum upload size from PHP configuration
+	 *
+	 * @return int Maximum upload size in bytes
+	 */
+	private function getMaxUploadSize() : int
+	{
+		// Get upload_max_filesize
+		$uploadMax = ini_get('upload_max_filesize');
+		$uploadMaxBytes = $this->parseSize($uploadMax);
+
+		// Get post_max_size
+		$postMax = ini_get('post_max_size');
+		$postMaxBytes = $this->parseSize($postMax);
+
+		// Return the smaller of the two
+		return min($uploadMaxBytes, $postMaxBytes);
+	}
+
+	/**
+	 * Parse size string (e.g., "8M", "2G") to bytes
+	 *
+	 * @param string $size Size string
+	 * @return int Size in bytes
+	 */
+	private function parseSize(string $size) : int
+	{
+		$size = trim($size);
+		$last = strtolower($size[strlen($size) - 1]);
+		$size = (int)$size;
+
+		switch ($last) {
+			case 'g':
+				$size *= 1024;
+				// fall through
+			case 'm':
+				$size *= 1024;
+				// fall through
+			case 'k':
+				$size *= 1024;
+		}
+
+		return $size;
+	}
+
+	/**
+	 * Format bytes to human-readable size
+	 *
+	 * @param int $bytes Size in bytes
+	 * @return string Formatted size (e.g., "8M", "2G")
+	 */
+	private function formatBytes(int $bytes) : string
+	{
+		if ($bytes >= 1073741824) {
+			return round($bytes / 1073741824, 2) . 'G';
+		} elseif ($bytes >= 1048576) {
+			return round($bytes / 1048576, 2) . 'M';
+		} elseif ($bytes >= 1024) {
+			return round($bytes / 1024, 2) . 'K';
+		} else {
+			return $bytes . 'B';
+		}
+	}
+
+	/**
+	 * Redirect to proposal card page (POST/Redirect/GET pattern)
+	 *
+	 * @param int $proposalId Supplier proposal ID
+	 * @return void
+	 */
+	private function redirectToProposal(int $proposalId) : void
+	{
+		$context = Context::getInstance();
+
+		// Build redirect URL without action parameter (clean URL for GET request)
+		$redirectUrl = $context->getControllerUrl('supplier_proposal_card') . '&id=' . $proposalId;
+
+		// Perform header redirect
+		header('Location: ' . $redirectUrl);
+		exit;
+	}
+
+	/**
+	 * Handle file error messages sent from JavaScript
+	 * Displays error messages via setEventMessages when JavaScript detects file issues
+	 *
+	 * @return void
+	 */
+	private function handleFileErrorMessages() : void
+	{
+		global $langs, $conf;
+
+		$fileError = GETPOST('file_error', 'alpha');
+
+		if (empty($fileError)) {
+			return;
+		}
+
+		$context = Context::getInstance();
+
+		// Get max file size for the error message
+		$maxFileSize = $this->getMaxUploadSize();
+		$maxFileSizeFormatted = $this->formatBytes($maxFileSize);
+
+		switch ($fileError) {
+			case 'FILE_TOO_LARGE':
+				$context->setEventMessages(
+					$langs->trans('CLICHAUMEIL_FILE_TOO_LARGE', $maxFileSizeFormatted),
+					'errors'
+				);
+				break;
+
+			case 'UPLOAD_ERROR':
+				$context->setEventMessages(
+					$langs->trans('CLICHAUMEIL_FILE_UPLOAD_ERROR'),
+					'errors'
+				);
+				break;
+
+			default:
+				// Unknown error code
+				$context->setEventMessages(
+					$langs->trans('CLICHAUMEIL_FILE_UNKNOWN_ERROR'),
+					'errors'
+				);
+				break;
+		}
 	}
 }

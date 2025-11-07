@@ -324,7 +324,15 @@ class modClichaumeil extends DolibarrModules
 		$extrafields->addExtraField('clichaumeil_length', 'CliChaumeilLength', 'double', 100, '24,2', 'commandedet', 0, 0, '', array ( 'options' => array ( '' => NULL, ), ), 1, '', '1', '', '', 0, 'clichaumeil@clichaumeil', 'isModEnabled("clichaumeil")', 0, '0', array ( 'css' => '', 'cssview' => '', 'csslist' => ''));
 		$extrafields->addExtraField('clichaumeil_ref_required', 'CliChaumeilRefRequired', 'boolean', 100, '', 'thirdparty', 0, 0, '', array ( 'options' => array ( '' => NULL, ), ), 1, '', '1', '', '', 0, 'clichaumeil@clichaumeil', 'isModEnabled("clichaumeil")', 0, '0', array ( 'css' => '', 'cssview' => '', 'csslist' => ''));
 		$extrafields->addExtraField('clichaumeil_generalexpenses', 'CliChaumeilGeneralExpenses', 'double', 100, '24,2', 'bom_bom', 0, 0, '', array ( 'options' => array ( '' => NULL, ), ), 1, '', '1', '', '', 0, 'clichaumeil@clichaumeil', 1, 0, '0', array ( 'css' => '', 'cssview' => '', 'csslist' => '', ));
-		$extrafields->addExtraField('clichaumeil_supplierstatut', 'CliChaumeilSupplierStatut', 'select', 100, '24', 'supplier_proposal', 0, 0, '', array ( 'options' => array ($langs->trans("CLICHAUMEIL_PENDING_FILE") => $langs->trans("CLICHAUMEIL_PENDING_FILE"), $langs->trans("CLICHAUMEIL_FILE_RECEIVED") => $langs->trans("CLICHAUMEIL_FILE_RECEIVED")), ), 1, '', '1', '', '', 0, 'clichaumeil@clichaumeil', 'isModEnabled("clichaumeil")', 0, '0', array ( 'css' => '', 'cssview' => '', 'csslist' => '', ));
+
+		$param = array(
+			'options' => array(
+				$langs->trans("CLICHAUMEIL_PENDING_FILE") => $langs->trans("CLICHAUMEIL_PENDING_FILE"),
+				$langs->trans("CLICHAUMEIL_FILE_RECEIVED") => $langs->trans("CLICHAUMEIL_FILE_RECEIVED"),
+			),
+		);
+
+		$extrafields->addExtraField('clichaumeil_supplierstatut', 'CliChaumeilSupplierStatut', 'select', 100, '24', 'supplier_proposal', 0, 0, $langs->trans("CLICHAUMEIL_PENDING_FILE"), $param, 1, '', '1', '', '', 0, 'clichaumeil@clichaumeil', 'isModEnabled("clichaumeil")', 0, '0', array ( 'css' => '', 'cssview' => '', 'csslist' => '', ));
 
 		// Permissions
 		$this->remove($options);
