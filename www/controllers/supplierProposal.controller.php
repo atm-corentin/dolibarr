@@ -17,6 +17,7 @@
 
 include_once DOL_DOCUMENT_ROOT.'/supplier_proposal/class/supplier_proposal.class.php';
 require_once __DIR__ . '/../../lib/supplierSupplierProposalTools.php';
+require_once __DIR__ . '/../../class/SupplierProposalListView.class.php';
 
 class SupplierProposalController extends Controller
 {
@@ -84,7 +85,7 @@ class SupplierProposalController extends Controller
 	 */
 	private function printSupplierProposalTable(?int $socId = 0) : void
 	{
-		global $langs, $db;
+		global $langs, $db, $conf;
 
 		$context = Context::getInstance();
 
@@ -96,38 +97,8 @@ class SupplierProposalController extends Controller
 		$sql = getSupplierProposalExternalSql($db, $socId);
 		$tableItems = $context->dbTool->executeS($sql);
 
-		if (!empty($tableItems)) {
-			// Get configured extra fields
-			$TOther_fields = getSupplierProposalExtraFields();
-
-			// Prepare ExtraFields object if needed
-			$e = null;
-			if (!empty($TOther_fields)) {
-				$e = new ExtraFields($db);
-			}
-
-			// Start table
-			print '<table id="supplier-propal-list" class="table table-striped" >';
-
-			// Print header
-			printSupplierProposalTableHeader($langs, $TOther_fields, $db);
-
-			// Print body
-			print '<tbody>';
-			foreach ($tableItems as $item) {
-				$object = createSupplierProposalFromItem($db, $item, $TOther_fields);
-				printSupplierProposalTableRow($object, $context, $TOther_fields, $e);
-			}
-			print '</tbody>';
-			print '</table>';
-
-			// Include DataTable initialization
-			includeSupplierProposalDataTableScript($context);
-
-		} else {
-			print '<div class="info clearboth text-center" >';
-			print $langs->trans('EACCESS_Nothing');
-			print '</div>';
-		}
+		$extraFields = getSupplierProposalExtraFields();
+		$listView = new SupplierProposalListView($langs, $conf, $db, $context);
+		print $listView->renderTable($tableItems, $extraFields);
 	}
 }

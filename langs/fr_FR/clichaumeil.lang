@@ -150,7 +150,7 @@ CliChaumeilHeight=Hauteur(cm)
 CliChaumeilLength=Longeur(cm)
 CliChaumeilRefRequired=Référence client obligatoire
 CliChaumeilCustomerRefRequired=Référence client obligatoire pour %s
-ReadSupplierPorposal = Voir les propositions fournisseurs sur le portail
+ReadSupplierProposal = Voir les propositions fournisseurs sur le portail
 #
 # ERRORS
 #

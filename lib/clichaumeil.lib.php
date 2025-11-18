@@ -229,8 +229,6 @@ function clichaumeilUpdateSupplierStatusStoredValues()
  */
 function externalAccessInitController($controllerContext, $user, $langs, $conf) : int {
 
-	clichaumeilNormalizeSupplierProposalStatusExtrafield();
-
 	// Register supplier_proposal list controller
 	$newControllerKey = 'supplier_proposal';
 	$newControllerPath = dol_buildpath('/clichaumeil/www/controllers/supplierProposal.controller.php');

@@ -93,6 +93,8 @@ if (!$user->admin) {
 	accessforbidden();
 }
 
+clichaumeilNormalizeSupplierProposalStatusExtrafield();
+
 
 // Set this to 1 to use the factory to manage constants. Warning, the generated module will be compatible with version v15+ only
 $useFormSetup = 1;

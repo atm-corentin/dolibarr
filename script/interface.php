@@ -74,6 +74,11 @@ switch ($action) {
 				exit;
 			}
 
+			if ($object->socid != $user->socid) {
+				dol_syslog("AJAX update_line_price: Unauthorized access attempt by user " . $user->id . " on propalId=$propalId", LOG_ERR);
+				accessforbidden();
+			}
+
 			$lineToUpdate = null;
 
 			// Find the line to get its properties

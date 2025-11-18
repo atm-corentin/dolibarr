@@ -72,7 +72,6 @@ class ActionsClichaumeil extends CommonHookActions
 	public function __construct($db)
 	{
 		$this->db = $db;
-		clichaumeilNormalizeSupplierProposalStatusExtrafield();
 	}
 
 	public $rfa_tab_added = false;

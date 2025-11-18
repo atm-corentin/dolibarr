@@ -124,113 +124,6 @@ function createSupplierProposalFromItem($db, $item, $TOther_fields = array())
 }
 
 /**
- * Print table header for supplier proposal list
- *
- * @param Translate $langs Language object
- * @param array $TOther_fields Extra fields to display
- * @param DoliDB $db Database handler
- * @return void
- */
-function printSupplierProposalTableHeader($langs, $TOther_fields, $db)
-{
-	print '<thead>';
-	print '<tr>';
-	print ' <th class="text-center" >' . $langs->trans('Ref') . '</th>';
-	print ' <th class="text-center" >' . $langs->trans('CLICHAUMEIL_DATEDELIVERYPLANNED') . '</th>';
-
-	if (!empty($TOther_fields)) {
-		$e = new ExtraFields($db);
-		$e->fetch_name_optionals_label('supplier_proposal');
-
-		foreach ($TOther_fields as $field) {
-			// Check properties on SupplierProposal class
-			if (property_exists('SupplierProposal', $field)) {
-				print ' <th class="text-center" >' . $langs->trans($field) . '</th>';
-			} elseif (strpos($field, 'EXTRAFIELD') !== false) {
-				$extrafieldName = strtr($field, array('EXTRAFIELD_' => ''));
-				$label = isset($e->attributes['supplier_proposal']['label'][$extrafieldName])
-					? $e->attributes['supplier_proposal']['label'][$extrafieldName]
-					: $extrafieldName;
-				print ' <th class="text-center" >' . $label . '</th>';
-			}
-		}
-	}
-
-	print ' <th class="text-center" >' . $langs->trans('TotalHT') . '</th>';
-	print ' <th class="text-center" >' . $langs->trans('TotalVAT') . '</th>';
-	print ' <th class="text-center" >' . $langs->trans('Status') . '</th>';
-	print '</tr>';
-	print '</thead>';
-}
-
-/**
- * Print table row for a supplier proposal
- *
- * @param SupplierProposal $object Supplier proposal object
- * @param Context $context External access context
- * @param array $TOther_fields Extra fields to display
- * @param ExtraFields $e ExtraFields object (if needed)
- * @return void
- */
-function printSupplierProposalTableRow($object, $context, $TOther_fields, $e = null)
-{
-	print '<tr>';
-
-	// Reference column with link
-	print ' <td data-search="' . $object->ref . '" data-order="' . $object->ref . '"  ><a href="' . $context->getControllerUrl('supplier_proposal_card', '&id=' . $object->id) . '">' . $object->ref . '</a></td>';
-
-	// Delivery date column
-	print ' <td data-search="' . dol_print_date($object->delivery_date) . '" data-order="' . $object->delivery_date . '" >' . dol_print_date($object->delivery_date) . '</td>';
-
-	// Total HT column
-	print ' <td data-search="' . $object->total_ht . '" data-order="' . $object->total_ht . '" >' . price($object->total_ht) . '</td>';
-
-	// Total TVA column
-	print ' <td data-search="' . $object->total_tva . '" data-order="' . $object->total_tva . '" >' . price($object->total_tva) . '</td>';
-
-	// Status column
-	print ' <td class="text-center" >' . $object->getLibStatut(0) . '</td>';
-
-	// Extra fields columns
-	if (!empty($TOther_fields)) {
-		foreach ($TOther_fields as $field) {
-			if (property_exists('SupplierProposal', $field)) {
-				print ' <td data-search="' . strip_tags($object->{$field}) . '" data-order="' . strip_tags($object->{$field}) . '" >' . $object->{$field} . '</td>';
-			} elseif (strpos($field, 'EXTRAFIELD') !== false) {
-				$extrafieldName = strtr($field, array('EXTRAFIELD_' => ''));
-				$extrafieldValue = !empty($object->array_options['options_' . $extrafieldName]) ? $object->array_options['options_' . $extrafieldName] : '';
-
-				if ($e) {
-					$output = $e->showOutputField($extrafieldName, $extrafieldValue, '', 'supplier_proposal');
-					print ' <td data-search="' . strip_tags($output) . '" data-order="' . strip_tags($output) . '" >' . $output . '</td>';
-				} else {
-					print ' <td data-search="' . strip_tags($extrafieldValue) . '" data-order="' . strip_tags($extrafieldValue) . '" >' . $extrafieldValue . '</td>';
-				}
-			}
-		}
-	}
-
-	print '</tr>';
-}
-
-/**
- * Include DataTable initialization script
- *
- * @param Context $context External access context
- * @param string $tableId Table ID to initialize
- * @param int $defaultSortColumn Default column index to sort
- * @return void
- */
-function includeSupplierProposalDataTableScript($context, $tableId = 'supplier-propal-list', $defaultSortColumn = 2)
-{
-	$languageUrl = $context->getControllerUrl() . 'vendor/data-tables/french.json';
-
-	print '<script type="text/javascript">';
-	print 'initSupplierProposalDataTable("' . $tableId . '", "' . $languageUrl . '", ' . $defaultSortColumn . ');';
-	print '</script>';
-}
-
-/**
  * check current access to controller
  *
  * @param void
@@ -242,6 +135,5 @@ function hasSupplierProposalAccess() : bool
 
 	return isModEnabled('clichaumeil')
 		&& getDolGlobalInt('CLICHAUMEIL_ACTIVATE_SUPPLIER_PROPOSAL')
-		&& $user->hasRight('clichaumeil', 'SupplierPorposal' ,'read');
+		&& $user->hasRight('clichaumeil', 'SupplierProposal' ,'read');
 }
-

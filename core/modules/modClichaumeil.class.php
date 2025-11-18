@@ -27,6 +27,7 @@
  *  \brief      Description and activation file for module Clichaumeil
  */
 include_once DOL_DOCUMENT_ROOT.'/core/modules/DolibarrModules.class.php';
+require_once __DIR__ . '/../lib/clichaumeil.lib.php';
 
 
 /**
@@ -223,8 +224,8 @@ class modClichaumeil extends DolibarrModules
 		$this->rights[$r][5] = 'delete';
 		$r++;
 		$this->rights[$r][0] = $this->numero . $r;
-		$this->rights[$r][1] = 'ReadSupplierPorposal';
-		$this->rights[$r][4] = 'SupplierPorposal';
+		$this->rights[$r][1] = 'ReadSupplierProposal';
+		$this->rights[$r][4] = 'SupplierProposal';
 		$this->rights[$r][5] = 'read';
 		$r++;
 		/* END MODULEBUILDER PERMISSIONS */
@@ -338,6 +339,7 @@ class modClichaumeil extends DolibarrModules
 		);
 
 		$extrafields->addExtraField('clichaumeil_supplierstatut', 'CliChaumeilSupplierStatut', 'select', 100, '24', 'supplier_proposal', 0, 0, $langs->trans("CLICHAUMEIL_PENDING_FILE"), $param, 1, '', '1', '', '', 0, 'clichaumeil@clichaumeil', 'isModEnabled("clichaumeil")', 0, '0', array ( 'css' => '', 'cssview' => '', 'csslist' => '', ));
+		clichaumeilNormalizeSupplierProposalStatusExtrafield();
 
 		// Permissions
 		$this->remove($options);
