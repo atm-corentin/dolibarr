@@ -236,9 +236,12 @@ function includeSupplierProposalDataTableScript($context, $tableId = 'supplier-p
  * @param void
  * @return  bool true if access granted, false otherwise
  */
-function checkAccess() : bool
+function hasSupplierProposalAccess() : bool
 {
 	global $conf, $user;
 
-	return isModEnabled('clichaumeil') && getDolGlobalInt('CLICHAUMEIL_ACTIVATE_SUPPLIER_PROPOSAL') && $user->hasRight('supplier_proposal', 'lire');
+	return isModEnabled('clichaumeil')
+		&& getDolGlobalInt('CLICHAUMEIL_ACTIVATE_SUPPLIER_PROPOSAL')
+		&& $user->hasRight('clichaumeil', 'SupplierPorposal' ,'read');
 }
+

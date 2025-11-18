@@ -25,7 +25,7 @@
  */
 
 require_once DOL_DOCUMENT_ROOT.'/core/class/commonhookactions.class.php';
-require_once __DIR__ . '/../lib/supplierProposal.lib.php';
+require_once __DIR__ . '/../lib/clichaumeil.lib.php';
 
 /**
  * Class ActionsClichaumeil
@@ -72,6 +72,7 @@ class ActionsClichaumeil extends CommonHookActions
 	public function __construct($db)
 	{
 		$this->db = $db;
+		clichaumeilNormalizeSupplierProposalStatusExtrafield();
 	}
 
 	public $rfa_tab_added = false;

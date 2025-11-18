@@ -79,9 +79,8 @@ class SupplierProposalView
 
 		// Main fields
 		$out .= $this->renderField('CLICHAUMEIL_REFNAME', $thirdparty->name ?? '');
-		$out .= $this->renderField('CLICHAUMEIL_REFSUPPLIER', $object->ref_ext ?? '');
 		$out .= $this->renderField('CLICHAUMEIL_PROJECT', $object->project_ref ?? '' );
-		$out .= $this->renderField('CLICHAUMEIL_STATUS', $object->array_options["options_clichaumeil_supplierstatut"] ?? '');
+		$out .= $this->renderField('CLICHAUMEIL_STATUS', $this->getSupplierStatusLabel($object));
 		$out .= $this->renderField('CLICHAUMEIL_DATEDELIVERYPLANNED', dol_print_date($object->delivery_date), '' ,' :');
 		$out .= $this->renderField('CLICHAUMEIL_TOTALHT', price($object->total_ht, 0, $this->langs, 1, 2, -1, $currencyCode), 'object-total-ht');
 
@@ -97,6 +96,35 @@ class SupplierProposalView
 		$out .= '</div>'; // container
 
 		return $out;
+	}
+
+	/**
+	 * Get localized label for supplier status extrafield
+	 *
+	 * @param SupplierProposal $object
+	 * @return string
+	 */
+	private function getSupplierStatusLabel(SupplierProposal $object) : string
+	{
+		if (empty($object->array_options['options_clichaumeil_supplierstatut'])) {
+			return '';
+		}
+
+		$value = $object->array_options['options_clichaumeil_supplierstatut'];
+
+		if ($this->langs->trans($value) != $value) {
+			return $this->langs->trans($value);
+		}
+
+		dol_include_once('/clichaumeil/lib/clichaumeil.lib.php');
+		if (function_exists('clichaumeilGetSupplierStatusOptions')) {
+			$options = clichaumeilGetSupplierStatusOptions();
+			if (!empty($options[$value])) {
+				return $options[$value];
+			}
+		}
+
+		return $value;
 	}
 
 	/**
@@ -327,8 +355,14 @@ class SupplierProposalView
 	 */
 	private function renderTimelineFiles(ActionComm $action) : string
 	{
+		$actionEntity = !empty($action->entity) ? $action->entity : $this->conf->entity;
+		$agendaRoot = $this->conf->agenda->multidir_output[$actionEntity] ?? '';
+		if (empty($agendaRoot)) {
+			return '';
+		}
+
 		// Use multidir_output for agenda to support multi-entity
-		$actionDir = $this->conf->agenda->multidir_output[$this->conf->entity] . '/' . $action->id;
+		$actionDir = $agendaRoot . '/' . $action->id;
 		$files = array();
 
 		if (is_dir($actionDir)) {

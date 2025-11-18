@@ -34,7 +34,7 @@ class SupplierProposalController extends Controller
 		$langs->load("clichaumeil@clichaumeil");
 
 		$context = Context::getInstance();
-		if (!checkAccess()) {
+		if (!hasSupplierProposalAccess()) {
 			return false;
 		}
 
@@ -55,7 +55,7 @@ class SupplierProposalController extends Controller
 
 		$context = Context::getInstance();
 
-		if (!checkAccess()) {
+		if (!hasSupplierProposalAccess()) {
 			return $this->display404();
 		}
 		if (!$this->loadTemplate('header')) {

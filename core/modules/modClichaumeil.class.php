@@ -222,6 +222,11 @@ class modClichaumeil extends DolibarrModules
 		$this->rights[$r][4] = 'chaumeilrfa';
 		$this->rights[$r][5] = 'delete';
 		$r++;
+		$this->rights[$r][0] = $this->numero . $r;
+		$this->rights[$r][1] = 'ReadSupplierPorposal';
+		$this->rights[$r][4] = 'SupplierPorposal';
+		$this->rights[$r][5] = 'read';
+		$r++;
 		/* END MODULEBUILDER PERMISSIONS */
 
 		// Main menu entries to add
@@ -327,8 +332,8 @@ class modClichaumeil extends DolibarrModules
 
 		$param = array(
 			'options' => array(
-				$langs->trans("CLICHAUMEIL_PENDING_FILE") => $langs->trans("CLICHAUMEIL_PENDING_FILE"),
-				$langs->trans("CLICHAUMEIL_FILE_RECEIVED") => $langs->trans("CLICHAUMEIL_FILE_RECEIVED"),
+				'CLICHAUMEIL_PENDING_FILE' => $langs->trans("CLICHAUMEIL_PENDING_FILE"),
+				'CLICHAUMEIL_FILE_RECEIVED' => $langs->trans("CLICHAUMEIL_FILE_RECEIVED"),
 			),
 		);
 

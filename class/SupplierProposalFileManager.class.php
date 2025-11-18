@@ -240,7 +240,13 @@ class SupplierProposalFileManager
 		// Prepare directories
 		$uploadDirProposal = $this->conf->supplier_proposal->dir_output . '/' . dol_sanitizeFileName($object->ref);
 		// Use multidir_output for agenda to support multi-entity
-		$uploadDirAction = $this->conf->agenda->multidir_output[$this->conf->entity] . '/' . $actionId;
+		$actionEntity = !empty($object->entity) ? $object->entity : $this->conf->entity;
+		$agendaRoot = $this->conf->agenda->multidir_output[$actionEntity] ?? '';
+		if (empty($agendaRoot)) {
+			$result['errors'][] = 'Agenda directory not configured for entity ' . $actionEntity;
+			return $result;
+		}
+		$uploadDirAction = $agendaRoot . '/' . $actionId;
 		dol_mkdir($uploadDirProposal);
 		dol_mkdir($uploadDirAction);
 

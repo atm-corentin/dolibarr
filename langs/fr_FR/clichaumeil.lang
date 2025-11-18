@@ -111,7 +111,6 @@ CLICHAUMEIL_ADDMESSAGE = Ajouter un message / répondre
 CLICHAUMEIL_SENDMESSAGEHELP = Écrire votre message ou réponse
 CLICHAUMEIL_YOURCOMMENTHERE = Ajouter un commentaire.
 CLICHAUMEIL_ADDMESSAGE = Envoyer
-CLICHAUMEIL_REFSUPPLIER = Ref fournisseur :
 CLICHAUMEIL_STATUS = Statut :
 CLICHAUMEIL_DATECREATION = Date de création :
 CLICHAUMEIL_TOTALHT = Total HT :
@@ -151,7 +150,7 @@ CliChaumeilHeight=Hauteur(cm)
 CliChaumeilLength=Longeur(cm)
 CliChaumeilRefRequired=Référence client obligatoire
 CliChaumeilCustomerRefRequired=Référence client obligatoire pour %s
-
+ReadSupplierPorposal = Voir les propositions fournisseurs sur le portail
 #
 # ERRORS
 #

@@ -22,6 +22,7 @@ require_once __DIR__ . '/../../class/SupplierProposalFileManager.class.php';
 require_once __DIR__ . '/../../class/SupplierProposalActionHandler.class.php';
 require_once __DIR__ . '/../../class/SupplierProposalView.class.php';
 require_once __DIR__ . '/../../lib/supplierSupplierProposalTools.php';
+dol_include_once('/comm/action/class/actioncomm.class.php');
 
 /**
  * Controller for Supplier Proposal Card (external access)
@@ -47,19 +48,6 @@ class SupplierProposalCardController extends Controller
 	/** @var SupplierProposalView */
 	private $view;
 
-	/**
-	 * Check access rights
-	 *
-	 * @return bool
-	 */
-	public function checkAccess()
-	{
-		global $conf, $user;
-		$this->accessRight = isModEnabled('clichaumeil')
-			&& getDolGlobalInt('CLICHAUMEIL_ACTIVATE_SUPPLIER_PROPOSAL')
-			&& $user->hasRight('externalaccess', 'view_supplier_proposals');
-		return true;
-	}
 
 	/**
 	 * Action method - called before display
@@ -82,7 +70,7 @@ class SupplierProposalCardController extends Controller
 
 		$context = Context::getInstance();
 
-		if (!checkAccess()) {
+		if (!hasSupplierProposalAccess()) {
 			return false;
 		}
 
@@ -119,7 +107,7 @@ class SupplierProposalCardController extends Controller
 
 		$context = Context::getInstance();
 
-		if (!checkAccess()) {
+		if (!hasSupplierProposalAccess()) {
 			return false;
 		}
 		// Get supplier proposal ID
@@ -252,23 +240,33 @@ class SupplierProposalCardController extends Controller
 	 */
 	private function handleFileDownload() :	void
 	{
-		global $conf;
+		global $conf, $db;
 
 		$actionid = GETPOST('actionid', 'int');
 		$filename = GETPOST('filename', 'alpha');
 
 		if ($actionid > 0 && !empty($filename)) {
 			$filename = basename($filename); // Security: prevent path traversal
-			// Use multidir_output for agenda to support multi-entity
-			$filepath = $conf->agenda->multidir_output[$conf->entity] . '/' . $actionid . '/' . $filename;
+			$path = '';
+			$action = new ActionComm($db);
+			if ($action->fetch($actionid) > 0) {
+				$entity = !empty($action->entity) ? $action->entity : $conf->entity;
+				$agendaRoot = $conf->agenda->multidir_output[$entity] ?? '';
+				if (!empty($agendaRoot)) {
+					$path = $agendaRoot . '/' . $actionid . '/' . $filename;
+				}
+			}
+			if (empty($path)) {
+				return;
+			}
 
-			if (file_exists($filepath) && is_file($filepath)) {
+			if (file_exists($path) && is_file($path)) {
 				// Set headers for file download
-				$mime = dol_mimetype($filepath);
+				$mime = dol_mimetype($path);
 				header('Content-Type: ' . $mime);
 				header('Content-Disposition: attachment; filename="' . $filename . '"');
-				header('Content-Length: ' . filesize($filepath));
-				readfile($filepath);
+				header('Content-Length: ' . filesize($path));
+				readfile($path);
 				exit;
 			}
 		}

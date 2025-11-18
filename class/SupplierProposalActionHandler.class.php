@@ -17,6 +17,8 @@
 
 dol_include_once('/comm/action/class/actioncomm.class.php');
 dol_include_once('/core/lib/files.lib.php');
+dol_include_once('/core/class/extrafields.class.php');
+dol_include_once('/clichaumeil/lib/clichaumeil.lib.php');
 
 /**
  * Action Handler class for Supplier Proposal
@@ -108,7 +110,8 @@ class SupplierProposalActionHandler
 		dol_syslog("SupplierProposalActionHandler::validateProposal moveSessionFiles result: success=" . $moveResult['success'], LOG_DEBUG);
 
 		// Update extrafield status
-		$object->array_options["options_clichaumeil_supplierstatut"] = $this->langs->transnoentities('CLICHAUMEIL_FILE_RECEIVED');
+		$statusValue = $this->resolveSupplierStatusValue($object, 'CLICHAUMEIL_FILE_RECEIVED');
+		$object->array_options["options_clichaumeil_supplierstatut"] = $statusValue;
 		$res = $object->updateExtraField('clichaumeil_supplierstatut');
 
 		if ($res >= 0) {
@@ -234,7 +237,8 @@ class SupplierProposalActionHandler
 		// Set status as "Done" (100%)
 		$actioncomm->percentage = 100;
 
-		$actioncomm->entity = $this->conf->entity;
+		$actionEntity = !empty($object->entity) ? $object->entity : $this->conf->entity;
+		$actioncomm->entity = $actionEntity;
 
 		return $actioncomm->create($this->user);
 	}
@@ -247,7 +251,7 @@ class SupplierProposalActionHandler
 	 */
 	private function hasFilesInTimeline(SupplierProposal $object) : bool
 	{
-		$sql = "SELECT id FROM " . $this->db->prefix() . "actioncomm";
+		$sql = "SELECT id, entity FROM " . $this->db->prefix() . "actioncomm";
 		$sql .= " WHERE fk_element = " . intval($object->id);
 		$sql .= " AND elementtype = '" . $this->db->escape($object->element) . "'";
 
@@ -257,7 +261,9 @@ class SupplierProposalActionHandler
 		}
 
 		while ($action = $this->db->fetch_object($resql)) {
-			$actionDir = $this->conf->agenda->multidir_output[$this->conf->entity] . '/' . $action->id;
+			$actionEntity = !empty($action->entity) ? $action->entity : $this->conf->entity;
+			if (empty($this->conf->agenda->multidir_output[$actionEntity])) continue;
+			$actionDir = $this->conf->agenda->multidir_output[$actionEntity] . '/' . $action->id;
 			if (is_dir($actionDir)) {
 				$files = dol_dir_list($actionDir, 'files');
 				if (!empty($files)) {
@@ -269,5 +275,37 @@ class SupplierProposalActionHandler
 
 		$this->db->free($resql);
 		return false;
+	}
+
+	/**
+	 * Resolve the extrafield option value according to the real options definitions
+	 *
+	 * @param SupplierProposal $object
+	 * @param string $translationKey
+	 * @return string
+	 */
+	private function resolveSupplierStatusValue(SupplierProposal $object, string $translationKey) : string
+	{
+		$label = $this->langs->transnoentities($translationKey);
+
+		$extrafields = new ExtraFields($this->db);
+		$extrafields->fetch_name_optionals_label($object->table_element);
+
+		if (!empty($extrafields->attributes[$object->element]['param']['clichaumeil_supplierstatut']['options'])) {
+			foreach ($extrafields->attributes[$object->element]['param']['clichaumeil_supplierstatut']['options'] as $key => $value) {
+				if ($value == $label || $key == $label) {
+					return $key;
+				}
+			}
+		}
+
+		if (function_exists('clichaumeilGetSupplierStatusLabelMap')) {
+			$map = clichaumeilGetSupplierStatusLabelMap();
+			if (isset($map[$label])) {
+				return $map[$label];
+			}
+		}
+
+		return $label;
 	}
 }

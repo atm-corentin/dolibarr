@@ -90,7 +90,6 @@ CLICHAUMEIL_ADDMESSAGE = Add a message / reply
 CLICHAUMEIL_SENDMESSAGEHELP = Write your message or reply
 CLICHAUMEIL_YOURCOMMENTHERE = Add a comment.
 CLICHAUMEIL_ADDMESSAGE = Send
-CLICHAUMEIL_REFSUPPLIER = Supplier ref :
 CLICHAUMEIL_STATUS = Status
 CLICHAUMEIL_DATECREATION = Creation date
 CLICHAUMEIL_TOTALHT = Total excl. tax
@@ -129,6 +128,7 @@ ClichaumeilTabRfa=RFA
 ChaumeilRfa=Year-end rebate
 ChaumeilRfas=Year-end rebates
 RateRfa=RFA rate
+ReadSupplierPorposal = View supplier proposal on external access
 
 ReadRightsChaumeilRfa=View year-end rebates (RFA)
 CreateUpadteRightsChaumeilRfa=Create/Update year-end rebates (RFA)
