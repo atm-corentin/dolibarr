@@ -16,6 +16,7 @@
  */
 
 dol_include_once('/comm/action/class/actioncomm.class.php');
+dol_include_once('/core/lib/files.lib.php');
 
 /**
  * Action Handler class for Supplier Proposal
@@ -73,12 +74,21 @@ class SupplierProposalActionHandler
 		if ($mandatoryConfig) {
 			// Check if user uploaded a file in this validation (file in session)
 			$keytoavoidconflict = '-' . $object->id;
-			$hasFileInSession = !empty($_SESSION["listofnames" . $keytoavoidconflict])
+			$hasFilesInSession = !empty($_SESSION["listofnames" . $keytoavoidconflict])
 				&& !empty($_SESSION["listofpaths" . $keytoavoidconflict]);
 
-			dol_syslog("SupplierProposalActionHandler::validateProposal hasFileInSession=" . ($hasFileInSession ? 'YES' : 'NO'), LOG_DEBUG);
+			// Check if there is already a file attached through a previous timeline action
+			$hasFilesInTimeline = $this->hasFilesInTimeline($object);
 
-			if ($hasFileInSession) {
+			$hasFileInSession = $hasFilesInSession || $hasFilesInTimeline;
+
+			dol_syslog(
+				"SupplierProposalActionHandler::validateProposal hasFilesInSession=" . ($hasFilesInSession ? 'YES' : 'NO') .
+				" hasFilesInTimeline=" . ($hasFilesInTimeline ? 'YES' : 'NO'),
+				LOG_DEBUG
+			);
+
+			if ($hasFilesInSession) {
 				$listofnames = explode(';', $_SESSION["listofnames" . $keytoavoidconflict]);
 				dol_syslog("SupplierProposalActionHandler::validateProposal Files in session: " . print_r($listofnames, true), LOG_DEBUG);
 			}
@@ -227,5 +237,37 @@ class SupplierProposalActionHandler
 		$actioncomm->entity = $this->conf->entity;
 
 		return $actioncomm->create($this->user);
+	}
+
+	/**
+	 * Check if any timeline action already stores files
+	 *
+	 * @param SupplierProposal $object
+	 * @return bool
+	 */
+	private function hasFilesInTimeline(SupplierProposal $object) : bool
+	{
+		$sql = "SELECT id FROM " . $this->db->prefix() . "actioncomm";
+		$sql .= " WHERE fk_element = " . intval($object->id);
+		$sql .= " AND elementtype = '" . $this->db->escape($object->element) . "'";
+
+		$resql = $this->db->query($sql);
+		if (!$resql) {
+			return false;
+		}
+
+		while ($action = $this->db->fetch_object($resql)) {
+			$actionDir = $this->conf->agenda->multidir_output[$this->conf->entity] . '/' . $action->id;
+			if (is_dir($actionDir)) {
+				$files = dol_dir_list($actionDir, 'files');
+				if (!empty($files)) {
+					$this->db->free($resql);
+					return true;
+				}
+			}
+		}
+
+		$this->db->free($resql);
+		return false;
 	}
 }
