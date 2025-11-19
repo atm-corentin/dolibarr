@@ -417,7 +417,7 @@ class SupplierProposalCardController extends Controller
 			'ajaxUrl' => $url,
 			'propalId' => $object->id,
 			'token' => newToken(),
-			'mandatoryFiles' => getDolGlobalInt('CLICHAUMEIL_MENDATORY_ATTACHED_FILES_SUPPLIER_PROPOSAL'),
+			'mandatoryFiles' => getDolGlobalInt('CLICHAUMEIL_MANDATORY_ATTACHED_FILES_SUPPLIER_PROPOSAL'),
 			'errorFileUploadMsg' => dol_escape_js($langs->trans('CLICHAUMEIL_FILE_UPLOAD_ERROR')),
 			'maxFileSize' => $maxFileSize,
 			'maxFileSizeFormatted' => $maxFileSizeFormatted,

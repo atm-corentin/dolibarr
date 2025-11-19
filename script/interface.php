@@ -1,8 +1,5 @@
 <?php
 
-if (!defined('NOCSRFCHECK')) define('NOCSRFCHECK', 1);
-if (!defined('NOTOKENRENEWAL')) define('NOTOKENRENEWAL', 1);
-
 // Load Dolibarr environment
 $res = 0;
 // Try main.inc.php into web root known defined into CONTEXT_DOCUMENT_ROOT (not always defined)
@@ -156,12 +153,19 @@ switch ($action) {
 
 			dol_syslog("AJAX update_line_price: updateline result=$res");
 
-			$validResult = $object->valid($user);
-			dol_syslog("AJAX update_line_price: valid result=$validResult");
-
 			if ($res < 0) {
 				$response['message'] = 'Update failed: ' . $object->error;
 				dol_syslog("AJAX update_line_price: updateline failed: " . $object->error, LOG_ERR);
+				echo json_encode($response);
+				exit;
+			}
+
+			$validResult = $object->valid($user);
+			dol_syslog("AJAX update_line_price: valid result=$validResult");
+
+			if ($validResult < 0) {
+				$response['message'] = 'Validation failed: ' . $object->error;
+				dol_syslog("AJAX update_line_price: validation failed: " . $object->error, LOG_ERR);
 				echo json_encode($response);
 				exit;
 			}

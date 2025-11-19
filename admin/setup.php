@@ -56,9 +56,9 @@ if (!$res) {
 }
 
 // Libraries
-require_once DOL_DOCUMENT_ROOT."/core/lib/admin.lib.php";
-require_once DOL_DOCUMENT_ROOT."/core/class/html.formmail.class.php";
-require_once '../lib/clichaumeil.lib.php';
+require_once DOL_DOCUMENT_ROOT.'/core/lib/admin.lib.php';
+require_once DOL_DOCUMENT_ROOT.'/core/class/html.formmail.class.php';
+require_once __DIR__.'/../lib/clichaumeil.lib.php';
 
 /**
  * @var Conf $conf

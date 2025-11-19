@@ -15,10 +15,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-dol_include_once('/comm/action/class/actioncomm.class.php');
-dol_include_once('/core/lib/files.lib.php');
-dol_include_once('/core/class/extrafields.class.php');
-dol_include_once('/clichaumeil/lib/clichaumeil.lib.php');
+require_once DOL_DOCUMENT_ROOT.'/comm/action/class/actioncomm.class.php';
+require_once DOL_DOCUMENT_ROOT.'/core/lib/files.lib.php';
+require_once DOL_DOCUMENT_ROOT.'/core/class/extrafields.class.php';
+require_once __DIR__ . '/../lib/clichaumeil.lib.php';
 
 /**
  * Action Handler class for Supplier Proposal
@@ -70,8 +70,8 @@ class SupplierProposalActionHandler
 		dol_syslog("SupplierProposalActionHandler::validateProposal START for proposal ID=" . $object->id, LOG_DEBUG);
 
 		// Check if file attachment is mandatory BEFORE moving files
-		$mandatoryConfig = getDolGlobalInt('CLICHAUMEIL_MENDATORY_ATTACHED_FILES_SUPPLIER_PROPOSAL');
-		dol_syslog("SupplierProposalActionHandler::validateProposal CLICHAUMEIL_MENDATORY_ATTACHED_FILES_SUPPLIER_PROPOSAL=" . $mandatoryConfig, LOG_DEBUG);
+		$mandatoryConfig = getDolGlobalInt('CLICHAUMEIL_MANDATORY_ATTACHED_FILES_SUPPLIER_PROPOSAL');
+		dol_syslog("SupplierProposalActionHandler::validateProposal CLICHAUMEIL_MANDATORY_ATTACHED_FILES_SUPPLIER_PROPOSAL=" . $mandatoryConfig, LOG_DEBUG);
 
 		if ($mandatoryConfig) {
 			// Check if user uploaded a file in this validation (file in session)

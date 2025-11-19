@@ -233,11 +233,11 @@ class SupplierProposalService
 	 */
 	public function fetchProposalActions(SupplierProposal $object) : array
 	{
-		dol_include_once('/comm/action/class/actioncomm.class.php');
+		require_once DOL_DOCUMENT_ROOT.'/comm/action/class/actioncomm.class.php';
 
 		$TAction = array();
 
-		$sql = "SELECT id as rowid, fk_user_author, email_from, datec, datep, label, note, code";
+		$sql = "SELECT id, fk_user_author, fk_user_action, datec, datep, label, note, code, percent, fk_element, entity";
 		$sql .= ' FROM ' . $this->db->prefix() . 'actioncomm';
 		$sql .= ' WHERE fk_element = ' . intval($object->id);
 		$sql .= ' AND elementtype = "' . $this->db->escape($object->element) . '"';
@@ -247,9 +247,23 @@ class SupplierProposalService
 		if ($resql) {
 			while ($obj = $this->db->fetch_object($resql)) {
 				$action = new ActionComm($this->db);
-				$action->fetch($obj->rowid);
+				// Populate object properties directly from SQL result instead of doing another fetch
+				$action->id = $obj->id;
+				$action->authorid = $obj->fk_user_author;
+				$action->userownerid = $obj->fk_user_action;
+				$action->usermodid = $obj->fk_user_action;
+				$action->datec = $this->db->jdate($obj->datec);
+				$action->datep = $this->db->jdate($obj->datep);
+				$action->label = $obj->label;
+				$action->note_private = $obj->note;
+				$action->code = $obj->code;
+				$action->percentage = $obj->percent;
+				$action->elementid = $obj->fk_element;
+				$action->entity = $obj->entity;
+
 				$TAction[] = $action;
 			}
+			$this->db->free($resql);
 		}
 
 		return $TAction;

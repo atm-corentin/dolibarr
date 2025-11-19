@@ -27,7 +27,7 @@
  *  \brief      Description and activation file for module Clichaumeil
  */
 include_once DOL_DOCUMENT_ROOT.'/core/modules/DolibarrModules.class.php';
-require_once __DIR__ . '/../lib/clichaumeil.lib.php';
+require_once __DIR__ . '/../../lib/clichaumeil.lib.php';
 
 
 /**

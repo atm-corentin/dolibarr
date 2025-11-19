@@ -15,9 +15,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-include_once DOL_DOCUMENT_ROOT.'/supplier_proposal/class/supplier_proposal.class.php';
-require_once __DIR__ . '/../../lib/supplierSupplierProposalTools.php';
-require_once __DIR__ . '/../../class/SupplierProposalListView.class.php';
+require_once DOL_DOCUMENT_ROOT.'/supplier_proposal/class/supplier_proposal.class.php';
+require_once __DIR__.'/../../lib/supplierSupplierProposalTools.php';
+require_once __DIR__.'/../../class/SupplierProposalListView.class.php';
 
 class SupplierProposalController extends Controller
 {

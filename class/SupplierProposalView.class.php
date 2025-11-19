@@ -15,7 +15,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-dol_include_once('/core/class/extrafields.class.php');
+require_once DOL_DOCUMENT_ROOT.'/core/class/extrafields.class.php';
+require_once __DIR__.'/../lib/clichaumeil.lib.php';
 dol_include_once('/externalaccess/class/ExternalFormTicket.class.php');
 dol_include_once('/subtotal/class/subtotal.class.php');
 dol_include_once('/subtotal/class/actions_subtotal.class.php');
@@ -116,7 +117,6 @@ class SupplierProposalView
 			return $this->langs->trans($value);
 		}
 
-		dol_include_once('/clichaumeil/lib/clichaumeil.lib.php');
 		if (function_exists('clichaumeilGetSupplierStatusOptions')) {
 			$options = clichaumeilGetSupplierStatusOptions();
 			if (!empty($options[$value])) {
