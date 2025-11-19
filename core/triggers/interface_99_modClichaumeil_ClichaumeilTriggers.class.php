@@ -33,6 +33,7 @@
 require_once DOL_DOCUMENT_ROOT.'/core/triggers/dolibarrtriggers.class.php';
 require_once DOL_DOCUMENT_ROOT.'/core/class/cunits.class.php';
 require_once __DIR__.'/../../class/chaumeilrfa.class.php';
+require_once __DIR__.'/../../lib/CliChaumeilProductCost.lib.php';
 
 
 /**
@@ -70,6 +71,11 @@ class InterfaceClichaumeilTriggers extends DolibarrTriggers
 	{
 		if (!isModEnabled('clichaumeil')) {
 			return 0; // If module is not enabled, we do nothing
+		}
+
+		$result = $this->handleProductCostSynchronization($action, $object, $user, $langs);
+		if ($result !== null) {
+			return $result;
 		}
 
 		// Put here code you want to execute when a Dolibarr business events occurs.
@@ -135,6 +141,35 @@ class InterfaceClichaumeilTriggers extends DolibarrTriggers
 					setEventMessages($langs->trans('CliChaumeilCustomerRefRequired',$object->getNomUrl()), null, 'errors');
 					return -1;
 				}
+		}
+
+		return 0;
+	}
+
+	/**
+	 * Synchronize CliChaumeil cost breakdown when a product is saved.
+	 *
+	 * @param string       $action
+	 * @param CommonObject $object
+	 * @param User         $user
+	 * @param Translate    $langs
+	 * @return int|null    Null when action is not handled, otherwise trigger result
+	 */
+	private function handleProductCostSynchronization($action, $object, User $user, Translate $langs): ?int
+	{
+		$handledActions = array('PRODUCT_CREATE', 'PRODUCT_MODIFY', 'PRODUCT_PRICE_MODIFY');
+		if (!in_array($action, $handledActions, true)) {
+			return null;
+		}
+
+		if (!($object instanceof Product) || !CliChaumeilProductCostCalculator::isSupportedProduct($object)) {
+			return 0;
+		}
+
+		$result = CliChaumeilProductCostCalculator::synchronize($object, $user);
+		if ($result < 0) {
+			$this->error = $langs->trans('Error');
+			return -1;
 		}
 
 		return 0;

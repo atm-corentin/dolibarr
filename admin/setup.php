@@ -150,6 +150,7 @@ $item = $formSetup->newItem(EMAIL_TEMPLATE_KEY)->setAsSelect($templates);
 buildUserMultiSelectField($formSetup, $form, NOTIF_USERS_KEY);
 
 
+
 $setupnotempty += count($formSetup->items);
 
 

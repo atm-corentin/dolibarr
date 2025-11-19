@@ -52,6 +52,8 @@ RateRfa=Taux de RFA
 ReadRightsChaumeilRfa=Consulter les remises de fin d'année (RFA)
 CreateUpadteRightsChaumeilRfa=Créer/Modifier les remises de fin d'année (RFA)
 DeleteRightsChaumeilRfa=Supprimer les remises de fin d'année (RFA)
+ReadProductCostComposition=Voir la composition du prix de revient sur les produits
+
 
 ClichaumeilSetup = Paramètrages CliChaumeil
 Settings = Paramètrages
@@ -114,6 +116,14 @@ CliChaumeilHeight=Hauteur(cm)
 CliChaumeilLength=Longeur(cm)
 CliChaumeilRefRequired=Référence client obligatoire
 CliChaumeilCustomerRefRequired=Référence client obligatoire pour %s
+CliChaumeilCostBreakdown=Composition du prix de revient
+CliChaumeilPaSupport=PA Support
+CliChaumeilPaSav=PA SAV
+CliChaumeilPaMachine=PA Machine
+CliChaumeilPaInk=PA Encre
+CliChaumeilPaLabor=PA Main d'oeuvre
+CliChaumeilFgPercent=Frais généraux (%)
+CliChaumeilPaFg=PA Frais généraux
 
 #
 # ERRORS
@@ -126,3 +136,4 @@ RollbackUnitsQtyforProduct=Réinitialisation de l’unité et de la quantité du
 SurfaceRecalculatedInCm2=Surface recalculée (en cm²)
 CliChaumeilGeneralExpenses=Frais généraux (en %)
 WarningNegativeMargin=Attention : le prix de revient est supérieur au prix de vente. Marge négative
+CliChaumeilErrorMissingFgPercent=Import impossible : le champ Frais généraux (%) est obligatoire pour le produit %s.

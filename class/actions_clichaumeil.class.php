@@ -25,6 +25,8 @@
  */
 
 require_once DOL_DOCUMENT_ROOT.'/core/class/commonhookactions.class.php';
+require_once DOL_DOCUMENT_ROOT.'/product/class/product.class.php';
+require_once __DIR__.'/../lib/CliChaumeilProductCost.lib.php';
 
 /**
  * Class ActionsClichaumeil
@@ -123,6 +125,44 @@ class ActionsClichaumeil extends CommonHookActions
 		}
 	}
 
+	/**
+	 * Pre-fill product extrafields and lock computed fields when applicable.
+	 *
+	 * @param array<string,mixed> $parameters
+	 * @param CommonObject        $object
+	 * @param string              $action
+	 * @param HookManager         $hookmanager
+	 * @return int
+	 */
+	public function formObjectOptions($parameters, &$object, &$action, $hookmanager)
+	{
+		$context = $parameters['context'] ?? ($parameters['currentcontext'] ?? '');
+		if (strpos((string) $context, 'productcard') === false) {
+			return 0;
+		}
+
+		if (!$object instanceof Product || !CliChaumeilProductCostCalculator::isSupportedProduct($object)) {
+			return 0;
+		}
+
+		static $scriptInjected = false;
+		if (!$scriptInjected) {
+			$this->resprints .= '<script>
+				document.addEventListener("DOMContentLoaded", function () {
+					const field = document.querySelector(\'input[name="options_pa_fg"]\');
+					if (field) {
+						field.setAttribute("readonly", "readonly");
+						field.classList.add("readonly");
+						field.closest("tr")?.classList.add("clichaumeil-pa-fg");
+					}
+				});
+				</script>';
+			$scriptInjected = true;
+		}
+
+		return 0;
+	}
+
 
 
 	/**
@@ -188,13 +228,120 @@ class ActionsClichaumeil extends CommonHookActions
 			if ($user->hasRight('clichaumeil', 'myobject', 'read')) {
 				$this->results['result'] = 1;
 				return 1;
-			} else {
-				$this->results['result'] = 0;
-				return 1;
 			}
+
+			$this->results['result'] = 0;
+			return 1;
 		}
 
 		return 0;
+	}
+
+	/**
+	 * Apply CliChaumeil price calculation after an import finishes.
+	 *
+	 * @param array<string,mixed> $parameters
+	 * @param CommonObject        $object
+	 * @param string              $action
+	 * @param HookManager         $hookmanager
+	 * @return int
+	 */
+	public function afterImportInsert($parameters, &$object, &$action, $hookmanager)
+	{
+		global $user, $langs;
+
+		if ((int) ($parameters['step'] ?? 0) !== 6) {
+			return 0;
+		}
+
+		$code = (string) ($parameters['datatoimport'] ?? '');
+		if (strpos($code, 'produit_') !== 0) {
+			return 0;
+		}
+
+		$values = $this->extractImportValues($parameters);
+		if (!$this->hasFgPercentValueInRecord($values)) {
+			$langs->load('clichaumeil@clichaumeil');
+			setEventMessages($langs->trans('CliChaumeilErrorMissingFgPercent', $values['p.ref'] ?? ''), null, 'errors');
+			return -1;
+		}
+
+		$product = $this->loadProductFromImport($values);
+		if (!$product || !CliChaumeilProductCostCalculator::isSupportedProduct($product)) {
+			return 0;
+		}
+
+		$this->applyFgPercentFromImport($product, $values['extra.fg_percent'], $user);
+
+		$result = CliChaumeilProductCostCalculator::synchronize($product, $user);
+		return ($result < 0) ? -1 : 0;
+	}
+
+	/**
+	 * @param array<string,mixed> $parameters
+	 * @return Product|null
+	 */
+	private function loadProductFromImport(array $values): ?Product
+	{
+		$id = !empty($values['p.rowid']) ? (int) $values['p.rowid'] : 0;
+		$ref = $values['p.ref'] ?? '';
+
+		$product = new Product($this->db);
+		$result = $product->fetch($id, $ref);
+		if ($result <= 0) {
+			return null;
+		}
+
+		return $product;
+	}
+
+	/**
+	 * @param array<string,mixed> $parameters
+	 * @return array<string,mixed>
+	 */
+	private function extractImportValues(array $parameters): array
+	{
+		$values = array();
+		$match = $parameters['array_match_file_to_database'] ?? array();
+		$records = $parameters['arrayrecord'] ?? array();
+
+		if (!is_array($match) || !is_array($records)) {
+			return $values;
+		}
+
+		foreach ($match as $position => $target) {
+			$index = ((int) $position) - 1;
+			if ($index < 0 || !isset($records[$index]['val'])) {
+				continue;
+			}
+
+			$values[$target] = $records[$index]['val'];
+		}
+
+		return $values;
+	}
+
+	/**
+	 * Check if fg_percent extrafield has value on product.
+	 *
+	 * @param Product $product
+	 * @return bool
+	 */
+	private function applyFgPercentFromImport(Product $product, string $rawValue, User $user): void
+	{
+		$formatted = CliChaumeilProductCostCalculator::normalizeDecimal($rawValue);
+		$product->array_options['options_fg_percent'] = $formatted;
+		$product->updateExtraField('fg_percent', 'CLICHAUMEIL_PRODUCT_COST', $user);
+	}
+
+	private function hasFgPercentValueInRecord(array $values): bool
+	{
+		if (!array_key_exists('extra.fg_percent', $values)) {
+			return false;
+		}
+
+		$value = $values['extra.fg_percent'];
+		return !($value === null || $value === '');
 	}
 
 	/**
