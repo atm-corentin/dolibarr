@@ -105,7 +105,7 @@ require_once __DIR__ . '/../class/TechATM.class.php';
 //$techATM = new \webObserver\TechATM($db);
 $techATM = new \cliChaumeil\TechATM($db);
 
-dol_include_once('/clichaumeil/core/modules/modClichaumeil.class.php');
+require_once __DIR__.'/../core/modules/modClichaumeil.class.php';
 $moduleDescriptor = new modClichaumeil($db);
 
 print $techATM->getAboutPage($moduleDescriptor);

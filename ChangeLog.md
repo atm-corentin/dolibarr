@@ -3,7 +3,7 @@
 ### Unreleased
 
 ## 1.4
-- NEW : Add supplier proposal in externalacces. *06/11/2025* - 1.3.0
+- NEW : Add supplier proposal in externalaccess. *06/11/2025* - 1.3.0
 
 ## 1.3
 - NEW : Add RFA list by fourn (Thirdparties Menu Left) *15/10/2025* - 1.3.0 

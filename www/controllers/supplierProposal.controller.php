@@ -18,6 +18,7 @@
 require_once DOL_DOCUMENT_ROOT.'/supplier_proposal/class/supplier_proposal.class.php';
 require_once __DIR__.'/../../lib/supplierSupplierProposalTools.php';
 require_once __DIR__.'/../../class/SupplierProposalListView.class.php';
+require_once __DIR__.'/../../class/SupplierProposalService.class.php';
 
 class SupplierProposalController extends Controller
 {
@@ -93,8 +94,11 @@ class SupplierProposalController extends Controller
 		$langs->load('supplier_proposal');
 		$langs->load('fourn');
 
+		// Initialize service
+		$service = new SupplierProposalService($db, $conf, $langs);
+
 		// Get data
-		$sql = getSupplierProposalExternalSql($db, $socId);
+		$sql = $service->getSqlForExternalList($socId);
 		$tableItems = $context->dbTool->executeS($sql);
 
 		$extraFields = getSupplierProposalExtraFields();

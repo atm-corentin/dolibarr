@@ -15,7 +15,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-dol_include_once('/core/class/extrafields.class.php');
+require_once DOL_DOCUMENT_ROOT.'/core/class/extrafields.class.php';
+require_once __DIR__.'/SupplierProposalFactory.class.php';
+require_once __DIR__.'/SupplierProposalService.class.php';
 
 /**
  * View dedicated to the supplier proposal list (external access)
@@ -34,6 +36,12 @@ class SupplierProposalListView
 	/** @var Context */
 	private $context;
 
+	/** @var SupplierProposalFactory */
+	private $factory;
+
+	/** @var SupplierProposalService */
+	private $service;
+
 	/**
 	 * @param Translate $langs
 	 * @param Conf      $conf
@@ -46,6 +54,8 @@ class SupplierProposalListView
 		$this->conf = $conf;
 		$this->db = $db;
 		$this->context = $context;
+		$this->factory = new SupplierProposalFactory($db);
+		$this->service = new SupplierProposalService($db, $conf, $langs);
 	}
 
 	/**
@@ -72,7 +82,13 @@ class SupplierProposalListView
 		$out .= $this->renderTableHeader($extraFields, $extraFieldManager);
 		$out .= '<tbody>';
 		foreach ($tableItems as $item) {
-			$object = createSupplierProposalFromItem($this->db, $item, $extraFields);
+			// Fetch extrafields data from service if needed
+			$arrayOptions = array();
+			if (!empty($extraFields)) {
+				$arrayOptions = $this->service->fetchExtrafields($item->rowid, $extraFields);
+			}
+			// Create object using factory with pre-fetched data
+			$object = $this->factory->createFromDatabaseRow($item, $arrayOptions);
 			$out .= $this->renderTableRow($object, $extraFields, $extraFieldManager);
 		}
 		$out .= '</tbody>';

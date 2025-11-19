@@ -113,18 +113,12 @@ class SupplierProposalView
 
 		$value = $object->array_options['options_clichaumeil_supplierstatut'];
 
-		if ($this->langs->trans($value) != $value) {
-			return $this->langs->trans($value);
-		}
+		// The value is stored as a translation key (e.g., 'CLICHAUMEIL_PENDING_FILE')
+		// Translate it to get the localized label
+		$translated = $this->langs->trans($value);
 
-		if (function_exists('clichaumeilGetSupplierStatusOptions')) {
-			$options = clichaumeilGetSupplierStatusOptions();
-			if (!empty($options[$value])) {
-				return $options[$value];
-			}
-		}
-
-		return $value;
+		// If translation exists, return it; otherwise return the raw value
+		return ($translated !== $value) ? $translated : $value;
 	}
 
 	/**

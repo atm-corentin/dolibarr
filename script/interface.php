@@ -37,8 +37,8 @@ if (!$res) {
 global $conf, $langs, $db, $user;
 
 // Include necessary files
-require_once DOL_DOCUMENT_ROOT . '/supplier_proposal/class/supplier_proposal.class.php';
-dol_include_once('/clichaumeil/class/SupplierProposalService.class.php');
+require_once DOL_DOCUMENT_ROOT.'/supplier_proposal/class/supplier_proposal.class.php';
+require_once __DIR__.'/../class/SupplierProposalService.class.php';
 
 $action = GETPOST('action', "alpha");
 $propalId = GETPOST('propalId', 'int');

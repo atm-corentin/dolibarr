@@ -14,15 +14,15 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-dol_include_once('/core/class/html.formother.class.php');
-dol_include_once('/societe/class/societe.class.php');
+require_once DOL_DOCUMENT_ROOT.'/core/class/html.formother.class.php';
+require_once DOL_DOCUMENT_ROOT.'/societe/class/societe.class.php';
+require_once DOL_DOCUMENT_ROOT.'/comm/action/class/actioncomm.class.php';
 
-require_once __DIR__ . '/../../class/SupplierProposalService.class.php';
-require_once __DIR__ . '/../../class/SupplierProposalFileManager.class.php';
-require_once __DIR__ . '/../../class/SupplierProposalActionHandler.class.php';
-require_once __DIR__ . '/../../class/SupplierProposalView.class.php';
-require_once __DIR__ . '/../../lib/supplierSupplierProposalTools.php';
-dol_include_once('/comm/action/class/actioncomm.class.php');
+require_once __DIR__.'/../../class/SupplierProposalService.class.php';
+require_once __DIR__.'/../../class/SupplierProposalFileManager.class.php';
+require_once __DIR__.'/../../class/SupplierProposalActionHandler.class.php';
+require_once __DIR__.'/../../class/SupplierProposalView.class.php';
+require_once __DIR__.'/../../lib/supplierSupplierProposalTools.php';
 
 /**
  * Controller for Supplier Proposal Card (external access)

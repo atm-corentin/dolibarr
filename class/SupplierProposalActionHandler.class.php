@@ -109,9 +109,8 @@ class SupplierProposalActionHandler
 		$moveResult = $this->fileManager->moveSessionFilesToProposal($object);
 		dol_syslog("SupplierProposalActionHandler::validateProposal moveSessionFiles result: success=" . $moveResult['success'], LOG_DEBUG);
 
-		// Update extrafield status
-		$statusValue = $this->resolveSupplierStatusValue($object, 'CLICHAUMEIL_FILE_RECEIVED');
-		$object->array_options["options_clichaumeil_supplierstatut"] = $statusValue;
+		// Update extrafield status to indicate file has been received
+		$object->array_options["options_clichaumeil_supplierstatut"] = 'CLICHAUMEIL_FILE_RECEIVED';
 		$res = $object->updateExtraField('clichaumeil_supplierstatut');
 
 		if ($res >= 0) {
@@ -277,35 +276,4 @@ class SupplierProposalActionHandler
 		return false;
 	}
 
-	/**
-	 * Resolve the extrafield option value according to the real options definitions
-	 *
-	 * @param SupplierProposal $object
-	 * @param string $translationKey
-	 * @return string
-	 */
-	private function resolveSupplierStatusValue(SupplierProposal $object, string $translationKey) : string
-	{
-		$label = $this->langs->transnoentities($translationKey);
-
-		$extrafields = new ExtraFields($this->db);
-		$extrafields->fetch_name_optionals_label($object->table_element);
-
-		if (!empty($extrafields->attributes[$object->element]['param']['clichaumeil_supplierstatut']['options'])) {
-			foreach ($extrafields->attributes[$object->element]['param']['clichaumeil_supplierstatut']['options'] as $key => $value) {
-				if ($value == $label || $key == $label) {
-					return $key;
-				}
-			}
-		}
-
-		if (function_exists('clichaumeilGetSupplierStatusLabelMap')) {
-			$map = clichaumeilGetSupplierStatusLabelMap();
-			if (isset($map[$label])) {
-				return $map[$label];
-			}
-		}
-
-		return $label;
-	}
 }

@@ -24,8 +24,7 @@
  *  \ingroup    clichaumeil
  *  \brief      File of class to manage ChaumeilRfa numbering rules standard
  */
-dol_include_once('/clichaumeil/core/modules/clichaumeil/modules_chaumeilrfa.php');
-
+require_once __DIR__.'/modules_chaumeilrfa.php';
 
 /**
  *	Class to manage the Standard numbering rule for ChaumeilRfa

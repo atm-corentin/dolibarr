@@ -306,4 +306,70 @@ class SupplierProposalService
 
 		return $documents;
 	}
+
+	/**
+	 * Get SQL query to fetch supplier proposals for external access
+	 *
+	 * @param int $socId Third-party ID
+	 * @return string SQL query string
+	 */
+	public function getSqlForExternalList(int $socId) : string
+	{
+		$sql = 'SELECT sp.rowid, sp.ref, sp.ref_ext, sp.datec, sp.total_ht, sp.total_tva, sp.fk_statut, sp.entity, sp.date_livraison ';
+		$sql .= ' FROM `'.$this->db->prefix().'supplier_proposal` sp';
+		$sql .= ' WHERE sp.fk_soc = '.intval($socId);
+		$sql .= ' AND sp.fk_statut IN ('.SupplierProposal::STATUS_VALIDATED.', '.SupplierProposal::STATUS_SIGNED.', '.SupplierProposal::STATUS_CLOSE.')';
+		$sql .= ' ORDER BY sp.datec DESC';
+
+		return $sql;
+	}
+
+	/**
+	 * Fetch extrafields for a supplier proposal
+	 *
+	 * @param int $proposalId Supplier proposal ID
+	 * @param array $extraFieldNames Array of extra field names to fetch (e.g., ['EXTRAFIELD_fieldname'])
+	 * @return array Array of extrafields in array_options format ['options_fieldname' => value]
+	 */
+	public function fetchExtrafields(int $proposalId, array $extraFieldNames = array()) : array
+	{
+		$extrafieldsData = array();
+
+		// Determine which columns to select
+		$extrafieldColumns = array();
+		foreach ($extraFieldNames as $field) {
+			if (strpos($field, 'EXTRAFIELD_') !== false) {
+				$extrafieldName = strtr($field, array('EXTRAFIELD_' => ''));
+				$extrafieldColumns[] = $this->db->escape($extrafieldName);
+			}
+		}
+
+		// If no extrafields to fetch, return empty array
+		if (empty($extrafieldColumns)) {
+			return $extrafieldsData;
+		}
+
+		// Build SQL with only necessary columns
+		$sql = 'SELECT rowid, tms, fk_object';
+		$sql .= ', '.implode(', ', $extrafieldColumns);
+		$sql .= ' FROM '.$this->db->prefix().'supplier_proposal_extrafields';
+		$sql .= ' WHERE fk_object = '.intval($proposalId);
+
+		$resql = $this->db->query($sql);
+
+		if ($resql) {
+			$obj = $this->db->fetch_object($resql);
+			if ($obj) {
+				// Map extrafield columns to array_options format
+				foreach ($obj as $key => $value) {
+					if ($key !== 'rowid' && $key !== 'tms' && $key !== 'fk_object' && $key !== 'import_key') {
+						$extrafieldsData['options_'.$key] = $value;
+					}
+				}
+			}
+			$this->db->free($resql);
+		}
+
+		return $extrafieldsData;
+	}
 }

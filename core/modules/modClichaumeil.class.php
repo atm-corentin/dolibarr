@@ -338,8 +338,8 @@ class modClichaumeil extends DolibarrModules
 			),
 		);
 
-		$extrafields->addExtraField('clichaumeil_supplierstatut', 'CliChaumeilSupplierStatut', 'select', 100, '24', 'supplier_proposal', 0, 0, $langs->trans("CLICHAUMEIL_PENDING_FILE"), $param, 1, '', '1', '', '', 0, 'clichaumeil@clichaumeil', 'isModEnabled("clichaumeil")', 0, '0', array ( 'css' => '', 'cssview' => '', 'csslist' => '', ));
-		clichaumeilNormalizeSupplierProposalStatusExtrafield();
+		// Use the KEY as default value, NOT the translated label
+		$extrafields->addExtraField('clichaumeil_supplierstatut', 'CliChaumeilSupplierStatut', 'select', 100, '24', 'supplier_proposal', 0, 0, 'CLICHAUMEIL_PENDING_FILE', $param, 1, '', '1', '', '', 0, 'clichaumeil@clichaumeil', 'isModEnabled("clichaumeil")', 0, '0', array ( 'css' => '', 'cssview' => '', 'csslist' => '', ));
 
 		// Permissions
 		$this->remove($options);
