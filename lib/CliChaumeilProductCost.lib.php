@@ -32,6 +32,11 @@ class CliChaumeilProductCostCalculator
 	private const EXTRA_PREFIX = 'options_';
 
 	/**
+	 * @var string Default overhead rate used when configuration is empty.
+	 */
+	public const DEFAULT_RATE_VALUE = '0.25';
+
+	/**
 	 * @var string[] Extrafields that compose the manual cost inputs.
 	 */
 	private const COST_FIELDS = array(
@@ -97,6 +102,7 @@ class CliChaumeilProductCostCalculator
 				$product->array_options[self::EXTRA_PREFIX.self::FG_PERCENT_FIELD] = $data['fg_percent'];
 				$result = $product->updateExtraField(self::FG_PERCENT_FIELD, 'CLICHAUMEIL_PRODUCT_COST', $user);
 				if ($result < 0) {
+					dol_syslog('Erreur updateExtraField fg_percent pour produit '.$productId, LOG_ERR);
 					return -1;
 				}
 				$changes++;
@@ -107,6 +113,7 @@ class CliChaumeilProductCostCalculator
 				$product->array_options[self::EXTRA_PREFIX.self::FG_AMOUNT_FIELD] = $data['pa_fg'];
 				$result = $product->updateExtraField(self::FG_AMOUNT_FIELD, 'CLICHAUMEIL_PRODUCT_COST', $user);
 				if ($result < 0) {
+					dol_syslog('Erreur updateExtraField pa_fg pour produit '.$productId, LOG_ERR);
 					return -1;
 				}
 				$changes++;
@@ -114,6 +121,7 @@ class CliChaumeilProductCostCalculator
 
 			$result = self::updateProductPriceField($product, 'cost_price', $data['cost_price'], $user);
 			if ($result < 0) {
+				dol_syslog('Erreur updateProductPriceField cost_price pour produit '.$productId, LOG_ERR);
 				return -1;
 			}
 			$changes += $result;
@@ -237,7 +245,7 @@ class CliChaumeilProductCostCalculator
 	 */
 	public static function getDefaultOverheadRate(): string
 	{
-		$value = getDolGlobalString('CLICHAUMEIL_DEFAULT_OVERHEAD_RATE', '0.25');
+		$value = getDolGlobalString('CLICHAUMEIL_DEFAULT_OVERHEAD_RATE', self::DEFAULT_RATE_VALUE);
 
 		return self::normalizeDecimal($value);
 	}
@@ -260,6 +268,7 @@ class CliChaumeilProductCostCalculator
 
 		$result = $product->setValueFrom($field, $value, 'product', $product->id, 'text', 'rowid', $user, '');
 		if ($result < 0) {
+			dol_syslog('Erreur setValueFrom '.$field.' pour produit '.$product->id, LOG_ERR);
 			return -1;
 		}
 

@@ -147,21 +147,6 @@ class ActionsClichaumeil extends CommonHookActions
 
 		$this->populateDefaultOverheadRateOnCreate($object);
 
-		static $scriptInjected = false;
-		if (!$scriptInjected) {
-			$this->resprints .= '<script>
-				document.addEventListener("DOMContentLoaded", function () {
-					const field = document.querySelector(\'input[name="options_pa_fg"]\');
-					if (field) {
-						field.setAttribute("readonly", "readonly");
-						field.classList.add("readonly");
-						field.closest("tr")?.classList.add("clichaumeil-pa-fg");
-					}
-				});
-				</script>';
-			$scriptInjected = true;
-		}
-
 		return 0;
 	}
 

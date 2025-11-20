@@ -179,16 +179,9 @@ if ($tmpobjectkey && !array_key_exists($tmpobjectkey, $myTmpObjects)) {
 
 if ($action === 'update') {
 	$normalizedOverheadRate = CliChaumeilProductCostCalculator::normalizeDecimal(GETPOST(DEFAULT_OVERHEAD_RATE_KEY, 'alphanohtml'));
-	$_POST[DEFAULT_OVERHEAD_RATE_KEY] = $normalizedOverheadRate;
-	$_REQUEST[DEFAULT_OVERHEAD_RATE_KEY] = $normalizedOverheadRate;
-}
-
-// For retrocompatibility Dolibarr < 15.0
-if (versioncompare(explode('.', DOL_VERSION), array(15)) < 0 && $action == 'update' && !empty($user->admin)) {
+	dolibarr_set_const($db, DEFAULT_OVERHEAD_RATE_KEY, $normalizedOverheadRate, 'chaine', 0, '', $conf->entity);
 	$formSetup->saveConfFromPost();
 }
-
-include DOL_DOCUMENT_ROOT.'/core/actions_setmoduleoptions.inc.php';
 
 if($action == 'update') {
 	header('Location: '.$_SERVER["PHP_SELF"]);

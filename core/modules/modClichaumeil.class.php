@@ -118,7 +118,7 @@ class modClichaumeil extends DolibarrModules
 			),
 			// Set this to relative path of js file if module must load a js on all pages
 			'js' => array(
-				//   '/clichaumeil/js/clichaumeil.js.php',
+				'/clichaumeil/js/product_pa_fg_lock.js',
 			),
 		// Set here all hooks context managed by module. To find available hook context, make a "grep -r '>initHooks(' *" on source code. You can also set hook context to 'all'
 		/* BEGIN MODULEBUILDER HOOKSCONTEXTS */
@@ -354,7 +354,7 @@ class modClichaumeil extends DolibarrModules
 
 		$currentDefaultOverheadRate = getDolGlobalString('CLICHAUMEIL_DEFAULT_OVERHEAD_RATE', '');
 		if ($currentDefaultOverheadRate === '') {
-			$normalizedDefaultOverheadRate = CliChaumeilProductCostCalculator::normalizeDecimal('0.25');
+			$normalizedDefaultOverheadRate = CliChaumeilProductCostCalculator::normalizeDecimal(CliChaumeilProductCostCalculator::DEFAULT_RATE_VALUE);
 			dolibarr_set_const($this->db, 'CLICHAUMEIL_DEFAULT_OVERHEAD_RATE', $normalizedDefaultOverheadRate, 'chaine', 0, '', $conf->entity);
 		}
 
