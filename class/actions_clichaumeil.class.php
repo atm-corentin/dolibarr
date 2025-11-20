@@ -145,6 +145,8 @@ class ActionsClichaumeil extends CommonHookActions
 			return 0;
 		}
 
+		$this->populateDefaultOverheadRateOnCreate($object);
+
 		static $scriptInjected = false;
 		if (!$scriptInjected) {
 			$this->resprints .= '<script>
@@ -206,6 +208,32 @@ class ActionsClichaumeil extends CommonHookActions
 		$this->results['arrayoftype'] = $arrayoftypes;
 
 		return 0;
+	}
+
+	/**
+	 * Pre-fill FG percent extrafield on new simple product when empty.
+	 *
+	 * @param Product $product
+	 * @return void
+	 */
+	private function populateDefaultOverheadRateOnCreate(Product $product): void
+	{
+		if (!empty($product->id) || (int) $product->type !== Product::TYPE_PRODUCT) {
+			return;
+		}
+
+		$key = 'options_fg_percent';
+		$postedValue = GETPOST($key, 'alphanohtml');
+		if ($postedValue !== '') {
+			return;
+		}
+
+		$currentValue = $product->array_options[$key] ?? null;
+		if ($currentValue !== null && $currentValue !== '') {
+			return;
+		}
+
+		$product->array_options[$key] = CliChaumeilProductCostCalculator::getDefaultOverheadRate();
 	}
 
 

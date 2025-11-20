@@ -45,6 +45,8 @@ ClichaumeilSetup = CliChaumeil Settings
 Settings = Settings
 ClichaumeilSetupPage = CliChaumeil Settings
 
+CLICHAUMEIL_DEFAULT_OVERHEAD_RATE=Default overhead rate (%)
+CLICHAUMEIL_DEFAULT_OVERHEAD_RATETooltip=Default overhead percent applied to new simple products when none is entered (4 decimals).
 CliChaumeilReviewRate=Review rate (in %%)
 CliChaumeilReviewDate=Review date
 

@@ -59,6 +59,7 @@ if (!$res) {
 require_once DOL_DOCUMENT_ROOT."/core/lib/admin.lib.php";
 require_once DOL_DOCUMENT_ROOT."/core/class/html.formmail.class.php";
 require_once '../lib/clichaumeil.lib.php';
+dol_include_once('/clichaumeil/lib/CliChaumeilProductCost.lib.php');
 //require_once "../class/myclass.class.php";
 
 /**
@@ -112,6 +113,7 @@ if (!$user->admin) {
 
 
 // --- 1. Define constants for robustness ---
+const DEFAULT_OVERHEAD_RATE_KEY = 'CLICHAUMEIL_DEFAULT_OVERHEAD_RATE';
 const REVIEW_YEAR_DELAY_KEY = 'CLICHAUMEIL_REVIEW_YEAR_DELAY';
 const PRICING_MANAGERS_KEY = 'CLICHAUMEIL_PRICING_UPDATE_MANAGERS';
 const EMAIL_TEMPLATE_KEY = 'CLICHAUMEIL_CRON_EMAIL_TEMPLATE';
@@ -121,6 +123,15 @@ const NOTIF_USERS_KEY = 'CLICHAUMEIL_CRON_NOTIF_USERS';
 
 
 // --- 3. Build the form in a clean and readable way ---
+
+// --- Field 0: Default overhead rate (%) ---
+$item = $formSetup->newItem(DEFAULT_OVERHEAD_RATE_KEY);
+$item->fieldAttr = [
+    'type' => 'number',
+    'min'  => 0,
+    'step' => '0.0001',
+];
+$item->defaultFieldValue = CliChaumeilProductCostCalculator::getDefaultOverheadRate();
 
 // --- Field 1: Delay in years (Numeric) ---
 $item = $formSetup->newItem(REVIEW_YEAR_DELAY_KEY);
@@ -165,6 +176,12 @@ if ($tmpobjectkey && !array_key_exists($tmpobjectkey, $myTmpObjects)) {
 /*
  * Actions
  */
+
+if ($action === 'update') {
+	$normalizedOverheadRate = CliChaumeilProductCostCalculator::normalizeDecimal(GETPOST(DEFAULT_OVERHEAD_RATE_KEY, 'alphanohtml'));
+	$_POST[DEFAULT_OVERHEAD_RATE_KEY] = $normalizedOverheadRate;
+	$_REQUEST[DEFAULT_OVERHEAD_RATE_KEY] = $normalizedOverheadRate;
+}
 
 // For retrocompatibility Dolibarr < 15.0
 if (versioncompare(explode('.', DOL_VERSION), array(15)) < 0 && $action == 'update' && !empty($user->admin)) {

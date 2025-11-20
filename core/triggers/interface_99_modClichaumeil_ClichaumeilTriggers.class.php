@@ -174,6 +174,13 @@ class InterfaceClichaumeilTriggers extends DolibarrTriggers
 			return 0;
 		}
 
+		if ($action === 'PRODUCT_CREATE') {
+			$defaultApplied = $this->applyDefaultOverheadRateIfMissing($object, $user);
+			if ($defaultApplied < 0) {
+				return -1;
+			}
+		}
+
 		$result = CliChaumeilProductCostCalculator::calculateAndUpdateProductCostPriceFromExtrafields($object, $user);
 		if ($result < 0) {
 			$this->errors[] = $langs->trans('Error');
@@ -181,5 +188,31 @@ class InterfaceClichaumeilTriggers extends DolibarrTriggers
 		}
 
 		return 0;
+	}
+
+	/**
+	 * Apply module default overhead rate on product creation when missing.
+	 *
+	 * @param Product $product
+	 * @param User    $user
+	 * @return int
+	 */
+	private function applyDefaultOverheadRateIfMissing(Product $product, User $user): int
+	{
+		if ((int) $product->type !== Product::TYPE_PRODUCT || empty($product->id)) {
+			return 0;
+		}
+
+		$product->fetch_optionals($product->id);
+		$key = 'options_fg_percent';
+		$currentValue = $product->array_options[$key] ?? null;
+		if ($currentValue !== null && $currentValue !== '') {
+			return 0;
+		}
+
+		$product->array_options[$key] = CliChaumeilProductCostCalculator::getDefaultOverheadRate();
+		$result = $product->updateExtraField('fg_percent', 'CLICHAUMEIL_PRODUCT_COST', $user);
+
+		return ($result < 0) ? -1 : 1;
 	}
 }

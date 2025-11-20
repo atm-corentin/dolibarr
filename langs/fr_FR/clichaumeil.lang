@@ -59,6 +59,8 @@ ClichaumeilSetup = Paramètrages CliChaumeil
 Settings = Paramètrages
 ClichaumeilSetupPage = Paramètrages CliChaumeil
 
+CLICHAUMEIL_DEFAULT_OVERHEAD_RATE=Taux de frais généraux par défaut (%)
+CLICHAUMEIL_DEFAULT_OVERHEAD_RATETooltip=Taux appliqué par défaut aux nouveaux produits simples si aucun pourcentage n'est saisi (4 décimales).
 CliChaumeilReviewRate=Taux de révision (en %%)
 CliChaumeilReviewDate=Date de révision
 

@@ -231,6 +231,18 @@ class CliChaumeilProductCostCalculator
 	}
 
 	/**
+	 * Return normalized default FG percent from global conf with fallback.
+	 *
+	 * @return string
+	 */
+	public static function getDefaultOverheadRate(): string
+	{
+		$value = getDolGlobalString('CLICHAUMEIL_DEFAULT_OVERHEAD_RATE', '0.25');
+
+		return self::normalizeDecimal($value);
+	}
+
+	/**
 	 * Update a product numeric field if needed.
 	 *
 	 * @param Product $product

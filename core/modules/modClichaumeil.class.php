@@ -27,6 +27,7 @@
  *  \brief      Description and activation file for module Clichaumeil
  */
 include_once DOL_DOCUMENT_ROOT.'/core/modules/DolibarrModules.class.php';
+dol_include_once('/clichaumeil/lib/CliChaumeilProductCost.lib.php');
 
 
 /**
@@ -348,8 +349,14 @@ class modClichaumeil extends DolibarrModules
 		$extrafields->addExtraField('pa_machine', 'CliChaumeilPaMachine', 'double', 103, '24,4', 'product', 0, 0, '', '', 1, $permsCostComposition, $permsCostComposition, '', '', 0, 'clichaumeil@clichaumeil', $enabledSimpleProduct, 0, '0', array());
 		$extrafields->addExtraField('pa_encre', 'CliChaumeilPaInk', 'double', 104, '24,4', 'product', 0, 0, '', '', 1, $permsCostComposition, $permsCostComposition, '', '', 0, 'clichaumeil@clichaumeil', $enabledSimpleProduct, 0, '0', array());
 		$extrafields->addExtraField('pa_mo', 'CliChaumeilPaLabor', 'double', 105, '24,4', 'product', 0, 0, '', '', 1, $permsCostComposition, $permsCostComposition, '', '', 0, 'clichaumeil@clichaumeil', $enabledSimpleProduct, 0, '0', array());
-		$extrafields->addExtraField('fg_percent', 'CliChaumeilFgPercent', 'double', 106, '24,4', 'product', 0, 1, '', '', 1, $permsCostComposition, $permsCostComposition, '', '', 0, 'clichaumeil@clichaumeil', $enabledSimpleProduct, 0, '0', array());
+		$extrafields->addExtraField('fg_percent', 'CliChaumeilFgPercent', 'double', 106, '24,4', 'product', 1, 0, '', '', 1, $permsCostComposition, $permsCostComposition, '', '', 0, 'clichaumeil@clichaumeil', $enabledSimpleProduct, 0, '0', array());
 		$extrafields->addExtraField('pa_fg', 'CliChaumeilPaFg', 'double', 107, '24,4', 'product', 0, 0, '', '', 0, $permsCostComposition, $permsCostComposition, '', '', 0, 'clichaumeil@clichaumeil', $enabledSimpleProduct, 0, '0', array());
+
+		$currentDefaultOverheadRate = getDolGlobalString('CLICHAUMEIL_DEFAULT_OVERHEAD_RATE', '');
+		if ($currentDefaultOverheadRate === '') {
+			$normalizedDefaultOverheadRate = CliChaumeilProductCostCalculator::normalizeDecimal('0.25');
+			dolibarr_set_const($this->db, 'CLICHAUMEIL_DEFAULT_OVERHEAD_RATE', $normalizedDefaultOverheadRate, 'chaine', 0, '', $conf->entity);
+		}
 
 		// Permissions
 		$this->remove($options);
