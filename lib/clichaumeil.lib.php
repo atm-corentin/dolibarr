@@ -21,6 +21,9 @@
  * \brief   Library files with common functions for Clichaumeil
  */
 
+require_once DOL_DOCUMENT_ROOT.'/core/class/extrafields.class.php';
+require_once DOL_DOCUMENT_ROOT.'/core/class/translate.class.php';
+
 /**
  * Prepare admin pages header
  *
@@ -29,10 +32,6 @@
 function clichaumeilAdminPrepareHead()
 {
 	global $langs, $conf;
-
-	// global $db;
-	// $extrafields = new ExtraFields($db);
-	// $extrafields->fetch_name_optionals_label('myobject');
 
 	$langs->load("clichaumeil@clichaumeil");
 
@@ -44,33 +43,49 @@ function clichaumeilAdminPrepareHead()
 	$head[$h][2] = 'settings';
 	$h++;
 
-	/*
-	$head[$h][0] = dol_buildpath("/clichaumeil/admin/myobject_extrafields.php", 1);
-	$head[$h][1] = $langs->trans("ExtraFields");
-	$nbExtrafields = is_countable($extrafields->attributes['myobject']['label']) ? count($extrafields->attributes['myobject']['label']) : 0;
-	if ($nbExtrafields > 0) {
-		$head[$h][1] .= ' <span class="badge">' . $nbExtrafields . '</span>';
-	}
-	$head[$h][2] = 'myobject_extrafields';
-	$h++;
-	*/
-
 	$head[$h][0] = dol_buildpath("/clichaumeil/admin/about.php", 1);
 	$head[$h][1] = $langs->trans("About");
 	$head[$h][2] = 'about';
 	$h++;
 
-	// Show more tabs from modules
-	// Entries must be declared in modules descriptor with line
-	//$this->tabs = array(
-	//	'entity:+tabname:Title:@clichaumeil:/clichaumeil/mypage.php?id=__ID__'
-	//); // to add new tab
-	//$this->tabs = array(
-	//	'entity:-tabname:Title:@clichaumeil:/clichaumeil/mypage.php?id=__ID__'
-	//); // to remove a tab
 	complete_head_from_modules($conf, $langs, null, $head, $h, 'clichaumeil@clichaumeil');
-
 	complete_head_from_modules($conf, $langs, null, $head, $h, 'clichaumeil@clichaumeil', 'remove');
 
 	return $head;
+}
+
+/**
+ * Trigger executed by externalaccess module to let other modules add controllers.
+ *
+ * @param EAccessController $controllerContext The controller context object from externalaccess (it's the "$this" from the calling file)
+ * @param User $user The Dolibarr user object
+ * @param Translate $langs The Dolibarr lang object
+ * @param Conf $conf The Dolibarr conf object
+ * @return int                                <0 if KO, 0 if OK
+ */
+function externalAccessInitController($controllerContext, $user, $langs, $conf) : int {
+
+	// Register supplier_proposal list controller
+	$newControllerKey = 'supplier_proposal';
+	$newControllerPath = dol_buildpath('/clichaumeil/www/controllers/supplierProposal.controller.php');
+	$newControllerClass = 'SupplierProposalController';
+
+	$controllerContext->addControllerDefinition(
+		$newControllerKey,
+		$newControllerPath,
+		$newControllerClass
+	);
+
+	// Register supplier_proposal_card detail controller
+	$cardControllerKey = 'supplier_proposal_card';
+	$cardControllerPath = dol_buildpath('/clichaumeil/www/controllers/supplierProposalCard.controller.php');
+	$cardControllerClass = 'SupplierProposalCardController';
+
+	$controllerContext->addControllerDefinition(
+		$cardControllerKey,
+		$cardControllerPath,
+		$cardControllerClass
+	);
+
+	return 0; // 0 = OK (tells Dolibarr the trigger ran successfully)
 }

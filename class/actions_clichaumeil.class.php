@@ -25,6 +25,7 @@
  */
 
 require_once DOL_DOCUMENT_ROOT.'/core/class/commonhookactions.class.php';
+require_once __DIR__ . '/../lib/clichaumeil.lib.php';
 
 /**
  * Class ActionsClichaumeil
@@ -387,6 +388,108 @@ class ActionsClichaumeil extends CommonHookActions
 			$generalExpenses = $object->array_options['options_clichaumeil_generalexpenses'];
 		}
 		$object->total_cost = $object->total_cost * (1+(float) $generalExpenses / 100);
+
+		return 0;
+	}
+
+	/**
+	 * Hook to add more options to a setup form.
+	 *
+	 * @param   array        $parameters    Hook context parameters
+	 * @param   CommonObject $object        The object hooked (often $this, but context varies)
+	 * @param   string       $action        Current action
+	 * @param   HookManager  $hookmanager   Hook manager
+	 * @return  int                           <0 if KO, 0 if no action, >0 if OK
+	 */
+	public function formMoreOptions($parameters, &$object, &$action, $hookmanager)
+	{
+		global $db, $langs, $formSetup; // $formSetup is the key object from the setup page
+
+		$TContexts = explode(':', $parameters['context']);
+
+		if (in_array($parameters['currentcontext'], $TContexts)) {
+			if (empty($formSetup) || !is_object($formSetup)) {
+				dol_syslog("actions_clichaumeil.class.php::formMoreOptions hook failed: \$formSetup not available in global scope.", LOG_ERR);
+				return 0; // Do nothing if $formSetup is not available
+			}
+
+			// Add a title for the settings injected by this module (good practice)
+			$formSetup->newItem('CLICHAUMEIL_SPE_CUSTOMER')->setAsTitle();
+
+			// Add the new Yes/No setting for Supplier Proposals
+			$item = $formSetup->newItem('CLICHAUMEIL_ACTIVATE_SUPPLIER_PROPOSAL');
+			$item->setAsYesNo();
+
+			$item = $formSetup->newItem('CLICHAUMEIL_MANDATORY_ATTACHED_FILES_SUPPLIER_PROPOSAL');;
+			$item->setAsYesNo();
+
+			print $formSetup->generateOutput();
+			// We successfully added items to the form
+			return 1;
+		}
+
+		return 0;
+	}
+
+	/**
+	 * Hook to add more services to the externalaccess home page.
+	 *
+	 * @param   array        $parameters    Hook context parameters
+	 * @param   CommonObject $object        The object hooked (in this case, the $context from the calling file)
+	 * @param   string       $action        Current action
+	 * @param   HookManager  $hookmanager   Hook manager
+	 * @return  int                           <0 if KO, 0 if no action/no block, >0 if block
+	 */
+	public function PrintServices($parameters, &$object, &$action, $hookmanager)
+	{
+		global $conf, $user, $langs;
+
+		$langs->load("clichaumeil@clichaumeil");
+
+		// $object is the $context passed from the calling file
+		$context = $object;
+
+		// Check if our specific service (Supplier Proposal) is activated
+		if (getDolGlobalInt("CLICHAUMEIL_ACTIVATE_SUPPLIER_PROPOSAL") && isModEnabled('supplier_proposal')) { // We assume this new right
+			// Get the URL for our controller
+			$link = $context->getControllerUrl('supplier_proposal');
+
+			// Start output buffering
+			ob_start();
+
+			// Call the function to print our new service
+			printService($langs->trans('CLICHAUMEIL_SUPPLIERPROPOSALS'), 'fa-handshake-o', $link);
+
+			// Add the captured HTML to the hook manager's output buffer
+			$this->resprints .= ob_get_clean();
+
+			// Return 0 to signal "OK" but DO NOT block the default services
+			return 0;
+		}
+
+		return 0; // No action
+	}
+
+	/**
+	 * Overloading the PrintPageView function : replacing the parent's function with the one below
+	 *
+	 * @param   array()         $parameters     Hook metadatas (context, etc...)
+	 * @param   CommonObject    &$object        The object to process (an invoice if you are in invoice module, a propale in propale's module, etc...)
+	 * @param   string          &$action        Current action (if set). Generally create or edit or null
+	 * @param   HookManager     $hookmanager    Hook manager propagated to allow calling another hook
+	 * @return  int                             < 0 on error, 0 on success, 1 to replace standard code
+	 */
+	public function PrintPageView($parameters, &$object, &$action, $hookmanager)
+	{
+		global $conf, $user, $langs;
+		$error = 0; // Error counter
+
+		if (in_array('externalaccesspage', explode(':', $parameters['context']))) {
+			$context = Context::getInstance();
+
+			// Note: supplier_proposal_card is now handled by a dedicated controller
+			// See www/controllers/supplierProposalCard.controller.php
+		}
 
 		return 0;
 	}

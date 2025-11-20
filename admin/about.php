@@ -56,9 +56,9 @@ if (!$res) {
 }
 
 // Libraries
-require_once DOL_DOCUMENT_ROOT . '/core/lib/admin.lib.php';
-require_once DOL_DOCUMENT_ROOT . '/core/lib/functions2.lib.php';
-require_once '../lib/clichaumeil.lib.php';
+require_once DOL_DOCUMENT_ROOT.'/core/lib/admin.lib.php';
+require_once DOL_DOCUMENT_ROOT.'/core/lib/functions2.lib.php';
+require_once __DIR__.'/../lib/clichaumeil.lib.php';
 
 // Translations
 $langs->loadLangs(array("errors", "admin", "clichaumeil@clichaumeil"));
@@ -105,7 +105,7 @@ require_once __DIR__ . '/../class/TechATM.class.php';
 //$techATM = new \webObserver\TechATM($db);
 $techATM = new \cliChaumeil\TechATM($db);
 
-dol_include_once('/clichaumeil/core/modules/modClichaumeil.class.php');
+require_once __DIR__.'/../core/modules/modClichaumeil.class.php';
 $moduleDescriptor = new modClichaumeil($db);
 
 print $techATM->getAboutPage($moduleDescriptor);

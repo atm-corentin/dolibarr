@@ -33,7 +33,7 @@
 require_once DOL_DOCUMENT_ROOT.'/core/triggers/dolibarrtriggers.class.php';
 require_once DOL_DOCUMENT_ROOT.'/core/class/cunits.class.php';
 require_once __DIR__.'/../../class/chaumeilrfa.class.php';
-
+require_once __DIR__.'/../../lib/clichaumeil.lib.php';
 
 /**
  *  Class of triggers for Clichaumeil module
@@ -116,10 +116,6 @@ class InterfaceClichaumeilTriggers extends DolibarrTriggers
 				return -1;
 			}
 
-			default:
-				dol_syslog("Trigger '".$this->name."' for action '".$action."' launched by ".__FILE__.". id=".$object->id);
-				break;
-
 			case 'ORDER_VALIDATE':
 
 				//Check for massaction
@@ -135,6 +131,14 @@ class InterfaceClichaumeilTriggers extends DolibarrTriggers
 					setEventMessages($langs->trans('CliChaumeilCustomerRefRequired',$object->getNomUrl()), null, 'errors');
 					return -1;
 				}
+
+			case 'externalAccessInitController'	:
+				externalAccessInitController($object, $user, $langs, $conf);
+				break;
+
+			default:
+				dol_syslog("Trigger '".$this->name."' for action '".$action."' launched by ".__FILE__.". id=".$object->id);
+				break;
 		}
 
 		return 0;
