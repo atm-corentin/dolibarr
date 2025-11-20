@@ -53,50 +53,76 @@ class CliChaumeilProductCostCalculator
 	private const FG_AMOUNT_FIELD = 'pa_fg';
 
 	/**
-	 * Run normalization / calculations then persist values.
+	 * @var array<int,bool> Semaphore to prevent infinite recursion when triggers fire during update.
+	 *                      Keys are product IDs currently being processed.
+	 */
+	private static $processingProducts = array();
+
+	/**
+	 * Calculate and update product cost price from extrafields.
+	 *
+	 * This method performs the following operations:
+	 * - Normalizes cost breakdown extrafields (support, SAV, machine, ink, labor)
+	 * - Calculates overhead amount based on FG percentage
+	 * - Updates the product's cost_price field with the total calculated cost
 	 *
 	 * @param Product $product Product to update
 	 * @param User    $user    Acting user
 	 * @return int             >0 when data updated, 0 when nothing changed, <0 on failure
 	 */
-	public static function synchronize(Product $product, User $user): int
+	public static function calculateAndUpdateProductCostPriceFromExtrafields(Product $product, User $user): int
 	{
 		if (!self::isSupportedProduct($product) || empty($product->id)) {
 			return 0;
 		}
 
-		self::ensureExtrafieldsLoaded($product);
+		$productId = (int) $product->id;
 
-		$data = self::buildData($product);
-		$changes = 0;
+		// Semaphore check to prevent infinite recursion from triggers
+		if (isset(self::$processingProducts[$productId])) {
+			return 0;
+		}
 
-		// Update FG percent if required (default + rounding)
-		if (self::valueDiffers(self::getExtrafieldValue($product, self::FG_PERCENT_FIELD), $data['fg_percent'])) {
-			$product->array_options[self::EXTRA_PREFIX.self::FG_PERCENT_FIELD] = $data['fg_percent'];
-			$result = $product->updateExtraField(self::FG_PERCENT_FIELD, 'CLICHAUMEIL_PRODUCT_COST', $user);
+		// Set semaphore before any update operation
+		self::$processingProducts[$productId] = true;
+
+		try {
+			self::ensureExtrafieldsLoaded($product);
+
+			$data = self::buildData($product);
+			$changes = 0;
+
+			// Update FG percent if required (default + rounding)
+			if (self::valueDiffers(self::getExtrafieldValue($product, self::FG_PERCENT_FIELD), $data['fg_percent'])) {
+				$product->array_options[self::EXTRA_PREFIX.self::FG_PERCENT_FIELD] = $data['fg_percent'];
+				$result = $product->updateExtraField(self::FG_PERCENT_FIELD, 'CLICHAUMEIL_PRODUCT_COST', $user);
+				if ($result < 0) {
+					return -1;
+				}
+				$changes++;
+			}
+
+			// Update PA FG
+			if (self::valueDiffers(self::getExtrafieldValue($product, self::FG_AMOUNT_FIELD), $data['pa_fg'])) {
+				$product->array_options[self::EXTRA_PREFIX.self::FG_AMOUNT_FIELD] = $data['pa_fg'];
+				$result = $product->updateExtraField(self::FG_AMOUNT_FIELD, 'CLICHAUMEIL_PRODUCT_COST', $user);
+				if ($result < 0) {
+					return -1;
+				}
+				$changes++;
+			}
+
+			$result = self::updateProductPriceField($product, 'cost_price', $data['cost_price'], $user);
 			if ($result < 0) {
 				return -1;
 			}
-			$changes++;
-		}
+			$changes += $result;
 
-		// Update PA FG
-		if (self::valueDiffers(self::getExtrafieldValue($product, self::FG_AMOUNT_FIELD), $data['pa_fg'])) {
-			$product->array_options[self::EXTRA_PREFIX.self::FG_AMOUNT_FIELD] = $data['pa_fg'];
-			$result = $product->updateExtraField(self::FG_AMOUNT_FIELD, 'CLICHAUMEIL_PRODUCT_COST', $user);
-			if ($result < 0) {
-				return -1;
-			}
-			$changes++;
+			return $changes;
+		} finally {
+			// Always release semaphore, even on error
+			unset(self::$processingProducts[$productId]);
 		}
-
-		$result = self::updateProductPriceField($product, 'cost_price', $data['cost_price'], $user);
-		if ($result < 0) {
-			return -1;
-		}
-		$changes += $result;
-
-		return $changes;
 	}
 
 	/**

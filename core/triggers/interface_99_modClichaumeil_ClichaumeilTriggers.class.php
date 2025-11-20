@@ -73,8 +73,9 @@ class InterfaceClichaumeilTriggers extends DolibarrTriggers
 			return 0; // If module is not enabled, we do nothing
 		}
 
-		$result = $this->handleProductCostSynchronization($action, $object, $user, $langs);
-		if ($result !== null) {
+		$handled = false;
+		$result = $this->handleProductCostSynchronization($action, $object, $user, $langs, $handled);
+		if ($handled) {
 			return $result;
 		}
 
@@ -147,28 +148,35 @@ class InterfaceClichaumeilTriggers extends DolibarrTriggers
 	}
 
 	/**
-	 * Synchronize CliChaumeil cost breakdown when a product is saved.
+	 * Handle product cost synchronization when a product is saved.
 	 *
-	 * @param string       $action
-	 * @param CommonObject $object
-	 * @param User         $user
-	 * @param Translate    $langs
-	 * @return int|null    Null when action is not handled, otherwise trigger result
+	 * This method checks if the action is a product-related event and if so,
+	 * calculates and updates the cost price from extrafields.
+	 *
+	 * @param string       $action Event action code
+	 * @param CommonObject $object Object being processed
+	 * @param User         $user   User performing the action
+	 * @param Translate    $langs  Translation object
+	 * @param bool         $handled Output parameter set to true if action was handled
+	 * @return int         Return integer <0 if KO, 0 if OK or not handled
 	 */
-	private function handleProductCostSynchronization($action, $object, User $user, Translate $langs): ?int
+	private function handleProductCostSynchronization($action, $object, User $user, Translate $langs, &$handled = false)
 	{
 		$handledActions = array('PRODUCT_CREATE', 'PRODUCT_MODIFY', 'PRODUCT_PRICE_MODIFY');
 		if (!in_array($action, $handledActions, true)) {
-			return null;
+			$handled = false;
+			return 0;
 		}
+
+		$handled = true;
 
 		if (!($object instanceof Product) || !CliChaumeilProductCostCalculator::isSupportedProduct($object)) {
 			return 0;
 		}
 
-		$result = CliChaumeilProductCostCalculator::synchronize($object, $user);
+		$result = CliChaumeilProductCostCalculator::calculateAndUpdateProductCostPriceFromExtrafields($object, $user);
 		if ($result < 0) {
-			$this->error = $langs->trans('Error');
+			$this->errors[] = $langs->trans('Error');
 			return -1;
 		}
 

@@ -145,14 +145,10 @@ $templates = !empty($formmail->lines_model) ? array_column($formmail->lines_mode
 
 $item = $formSetup->newItem(EMAIL_TEMPLATE_KEY)->setAsSelect($templates);
 
-
 // --- Field 4: Users to Notify (User Select) ---
 buildUserMultiSelectField($formSetup, $form, NOTIF_USERS_KEY);
 
-
-
 $setupnotempty += count($formSetup->items);
-
 
 $dirmodels = array_merge(array('/'), (array) $conf->modules_parts['models']);
 
@@ -165,7 +161,6 @@ $tmpobjectkey = GETPOST('object', 'aZ09');
 if ($tmpobjectkey && !array_key_exists($tmpobjectkey, $myTmpObjects)) {
 	accessforbidden('Bad value for object. Hack attempt ?');
 }
-
 
 /*
  * Actions
@@ -210,7 +205,6 @@ if (!empty($formSetup->items)) {
 	print '<br>';
 }
 
-
 if (empty($setupnotempty)) {
 	print '<br>'.$langs->trans("NothingToSetup");
 }
@@ -231,27 +225,27 @@ $db->close();
 */
 function buildUserMultiSelectField(FormSetup $formSetup, Form $form, string $key): void
 {
-// Get the current value for pre-selection
-$currentValue = getDolGlobalString($key);
-$selectedUsers = !empty($currentValue) ? explode(',', $currentValue) : [];
+	// Get the current value for pre-selection
+	$currentValue = getDolGlobalString($key);
+	$selectedUsers = !empty($currentValue) ? explode(',', $currentValue) : [];
 
-$item = $formSetup->newItem($key)->setAsMultiSelect([]);
+	$item = $formSetup->newItem($key)->setAsMultiSelect([]);
 
-// The filter to select only active employees
-$userFilter = '(employee:=:1) AND (u.statut:=:1)';
+	// The filter to select only active employees
+	$userFilter = '(employee:=:1) AND (u.statut:=:1)';
 
-// The call to select_dolusers is more readable with variables
-$item->fieldInputOverride = $form->select_dolusers(
-$selectedUsers, // Already selected users
-$key,           // HTML field name
-1,              // Enable multi-select
-null,           // Exclude users (none here)
-0,              // Field size
-'',             // Additional CSS class
-'', '', 0, 0,
-$userFilter,    // SQL filter
-0, '', '', 0, 0,
-true,           // Show empty field option
-0
-);
+	// The call to select_dolusers is more readable with variables
+	$item->fieldInputOverride = $form->select_dolusers(
+	$selectedUsers, // Already selected users
+	$key,           // HTML field name
+	1,              // Enable multi-select
+	null,           // Exclude users (none here)
+	0,              // Field size
+	'',             // Additional CSS class
+	'', '', 0, 0,
+	$userFilter,    // SQL filter
+	0, '', '', 0, 0,
+	true,           // Show empty field option
+	0
+	);
 }

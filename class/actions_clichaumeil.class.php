@@ -273,7 +273,7 @@ class ActionsClichaumeil extends CommonHookActions
 
 		$this->applyFgPercentFromImport($product, $values['extra.fg_percent'], $user);
 
-		$result = CliChaumeilProductCostCalculator::synchronize($product, $user);
+		$result = CliChaumeilProductCostCalculator::calculateAndUpdateProductCostPriceFromExtrafields($product, $user);
 		return ($result < 0) ? -1 : 0;
 	}
 
