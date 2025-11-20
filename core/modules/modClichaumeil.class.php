@@ -232,8 +232,6 @@ class modClichaumeil extends DolibarrModules
 
 		$this->rights[$r][0] = $this->numero . sprintf('%02d', (0 * 10) + 3 + 1);
 		$this->rights[$r][1] = 'ReadProductCostComposition';
-		$this->rights[$r][2] = 'r';
-		$this->rights[$r][3] = 0;
 		$this->rights[$r][4] = 'product';
 		$this->rights[$r][5] = 'read_cost_composition';
 		$r++;
@@ -342,16 +340,16 @@ class modClichaumeil extends DolibarrModules
 		$extrafields->addExtraField('clichaumeil_ref_required', 'CliChaumeilRefRequired', 'boolean', 100, '', 'thirdparty', 0, 0, '', array ( 'options' => array ( '' => NULL, ), ), 1, '', '1', '', '', 0, 'clichaumeil@clichaumeil', 'isModEnabled("clichaumeil")', 0, '0', array ( 'css' => '', 'cssview' => '', 'csslist' => ''));
 		$extrafields->addExtraField('clichaumeil_generalexpenses', 'CliChaumeilGeneralExpenses', 'double', 100, '24,2', 'bom_bom', 0, 0, '', array ( 'options' => array ( '' => NULL, ), ), 1, '', '1', '', '', 0, 'clichaumeil@clichaumeil', 1, 0, '0', array ( 'css' => '', 'cssview' => '', 'csslist' => '', ));
 
-		$permsCostComposition = '$user->rights->clichaumeil->product->read_cost_composition';
+		$permsCostComposition = '$user->hasRight(\'clichaumeil\',\'product\',\'read_cost_composition\') ? 1:0';
 		$enabledSimpleProduct = '(!isset($object) || !property_exists($object, "type") || (int) $object->type === 0)';
-		$extrafields->addExtraField('prc_separator', 'CliChaumeilCostBreakdown', 'separate', 100, '', 'product', 0, 0, '', '', 1, $permsCostComposition, '1', '', '', 0, 'clichaumeil@clichaumeil', $enabledSimpleProduct, 0, '0', array());
-		$extrafields->addExtraField('pa_support', 'CliChaumeilPaSupport', 'double', 101, '24,4', 'product', 0, 0, '', '', 1, $permsCostComposition, '1', '', '', 0, 'clichaumeil@clichaumeil', $enabledSimpleProduct, 0, '0', array());
-		$extrafields->addExtraField('pa_sav', 'CliChaumeilPaSav', 'double', 102, '24,4', 'product', 0, 0, '', '', 1, $permsCostComposition, '1', '', '', 0, 'clichaumeil@clichaumeil', $enabledSimpleProduct, 0, '0', array());
-		$extrafields->addExtraField('pa_machine', 'CliChaumeilPaMachine', 'double', 103, '24,4', 'product', 0, 0, '', '', 1, $permsCostComposition, '1', '', '', 0, 'clichaumeil@clichaumeil', $enabledSimpleProduct, 0, '0', array());
-		$extrafields->addExtraField('pa_encre', 'CliChaumeilPaInk', 'double', 104, '24,4', 'product', 0, 0, '', '', 1, $permsCostComposition, '1', '', '', 0, 'clichaumeil@clichaumeil', $enabledSimpleProduct, 0, '0', array());
-		$extrafields->addExtraField('pa_mo', 'CliChaumeilPaLabor', 'double', 105, '24,4', 'product', 0, 0, '', '', 1, $permsCostComposition, '1', '', '', 0, 'clichaumeil@clichaumeil', $enabledSimpleProduct, 0, '0', array());
-		$extrafields->addExtraField('fg_percent', 'CliChaumeilFgPercent', 'double', 106, '24,4', 'product', 0, 1, '', '', 1, $permsCostComposition, '1', '', '', 0, 'clichaumeil@clichaumeil', $enabledSimpleProduct, 0, '0', array());
-		$extrafields->addExtraField('pa_fg', 'CliChaumeilPaFg', 'double', 107, '24,4', 'product', 0, 0, '', '', 0, $permsCostComposition, '1', '', '', 0, 'clichaumeil@clichaumeil', $enabledSimpleProduct, 0, '0', array());
+		$extrafields->addExtraField('prc_separator', 'CliChaumeilCostBreakdown', 'separate', 100, '', 'product', 0, 0, '', '', 1, $permsCostComposition, $permsCostComposition, '', '', 0, 'clichaumeil@clichaumeil', $enabledSimpleProduct, 0, '0', array());
+		$extrafields->addExtraField('pa_support', 'CliChaumeilPaSupport', 'double', 101, '24,4', 'product', 0, 0, '', '', 1, $permsCostComposition, $permsCostComposition, '', '', 0, 'clichaumeil@clichaumeil', $enabledSimpleProduct, 0, '0', array());
+		$extrafields->addExtraField('pa_sav', 'CliChaumeilPaSav', 'double', 102, '24,4', 'product', 0, 0, '', '', 1, $permsCostComposition, $permsCostComposition, '', '', 0, 'clichaumeil@clichaumeil', $enabledSimpleProduct, 0, '0', array());
+		$extrafields->addExtraField('pa_machine', 'CliChaumeilPaMachine', 'double', 103, '24,4', 'product', 0, 0, '', '', 1, $permsCostComposition, $permsCostComposition, '', '', 0, 'clichaumeil@clichaumeil', $enabledSimpleProduct, 0, '0', array());
+		$extrafields->addExtraField('pa_encre', 'CliChaumeilPaInk', 'double', 104, '24,4', 'product', 0, 0, '', '', 1, $permsCostComposition, $permsCostComposition, '', '', 0, 'clichaumeil@clichaumeil', $enabledSimpleProduct, 0, '0', array());
+		$extrafields->addExtraField('pa_mo', 'CliChaumeilPaLabor', 'double', 105, '24,4', 'product', 0, 0, '', '', 1, $permsCostComposition, $permsCostComposition, '', '', 0, 'clichaumeil@clichaumeil', $enabledSimpleProduct, 0, '0', array());
+		$extrafields->addExtraField('fg_percent', 'CliChaumeilFgPercent', 'double', 106, '24,4', 'product', 0, 1, '', '', 1, $permsCostComposition, $permsCostComposition, '', '', 0, 'clichaumeil@clichaumeil', $enabledSimpleProduct, 0, '0', array());
+		$extrafields->addExtraField('pa_fg', 'CliChaumeilPaFg', 'double', 107, '24,4', 'product', 0, 0, '', '', 0, $permsCostComposition, $permsCostComposition, '', '', 0, 'clichaumeil@clichaumeil', $enabledSimpleProduct, 0, '0', array());
 
 		// Permissions
 		$this->remove($options);
