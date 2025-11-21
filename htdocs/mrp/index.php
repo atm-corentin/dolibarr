@@ -82,6 +82,7 @@ print '<div class="firstcolumn fichehalfleft boxhalfleft" id="boxhalfleft">';
 if (isModEnabled('mrp') && $conf->use_javascript_ajax) {
 	$sql = "SELECT COUNT(t.rowid) as nb, status";
 	$sql .= " FROM ".MAIN_DB_PREFIX."mrp_mo as t";
+	$sql .= " WHERE t.entity IN (".getEntity('mo').")";
 	$sql .= " GROUP BY t.status";
 	$sql .= " ORDER BY t.status ASC";
 	$resql = $db->query($sql);

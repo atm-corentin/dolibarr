@@ -304,7 +304,7 @@ class modMrp extends DolibarrModules
 		$this->export_sql_end[$r]  = ' FROM '.MAIN_DB_PREFIX.'mrp_mo as m';
 		$this->export_sql_end[$r] .= ' LEFT JOIN '.MAIN_DB_PREFIX.'mrp_mo_extrafields as extra ON m.rowid = extra.fk_object';
 		$this->export_sql_end[$r] .= ' LEFT JOIN '.MAIN_DB_PREFIX.'entrepot as e ON e.rowid = m.fk_warehouse';
-		$this->export_sql_end[$r] .= ' WHERE m.entity IN ('.getEntity('mrp_mo').')'; // For product and service profile
+		$this->export_sql_end[$r] .= ' WHERE m.entity IN ('.getEntity('mo').')'; // For product and service profile
 
 		// Export of MO + liste of consumption / production
 		$r++;
@@ -404,7 +404,7 @@ class modMrp extends DolibarrModules
 		$this->export_sql_end[$r] .= ' LEFT JOIN '.MAIN_DB_PREFIX.'mrp_production_extrafields as extramp ON mp.rowid = extramp.fk_object';
 		$this->export_sql_end[$r] .= ' LEFT JOIN '.MAIN_DB_PREFIX.'entrepot as e ON e.rowid = mp.fk_warehouse';
 		$this->export_sql_end[$r] .= ' LEFT JOIN '.MAIN_DB_PREFIX.'product as p ON p.rowid = mp.fk_product';
-		$this->export_sql_end[$r] .= ' WHERE m.entity IN ('.getEntity('mrp_mo').')'; // For product and service profile
+		$this->export_sql_end[$r] .= ' WHERE m.entity IN ('.getEntity('mo').')'; // For product and service profile
 
 
 		// Imports profiles provided by this module

@@ -883,6 +883,7 @@ class Project extends CommonObject
 
 		$ids = $this->id;
 
+
 		if ($type == 'agenda') {
 			$sql = "SELECT id as rowid FROM ".MAIN_DB_PREFIX."actioncomm WHERE fk_project IN (".$this->db->sanitize((string) $ids).") AND entity IN (".getEntity('agenda').")";
 		} elseif ($type == 'expensereport') {
@@ -895,6 +896,8 @@ class Project extends CommonObject
 			$sql = "SELECT ms.rowid, ms.fk_user_author as fk_user FROM ".MAIN_DB_PREFIX."stocktransfer_stocktransfer as ms, ".MAIN_DB_PREFIX."entrepot as e WHERE e.rowid = ms.fk_entrepot AND e.entity IN (".getEntity('stock').") AND ms.origintype = 'project' AND ms.fk_origin IN (".$this->db->sanitize((string) $ids).") AND ms.type_mouvement = 1";
 		} elseif ($type == 'loan') {
 			$sql = "SELECT l.rowid, l.fk_user_author as fk_user FROM ".MAIN_DB_PREFIX."loan as l WHERE l.entity IN (".getEntity('loan').") AND l.fk_projet IN (".$this->db->sanitize((string) $ids).")";
+		} elseif ($type == 'mrp') {
+			$sql = "SELECT mo.rowid FROM ".MAIN_DB_PREFIX."mrp_mo as mo WHERE mo.fk_project IN (".$this->db->sanitize((string) $ids).") AND entity IN (".getEntity('mo').")";
 		} else {
 			$sql = "SELECT rowid FROM ".MAIN_DB_PREFIX.$tablename." WHERE ".$projectkey." IN (".$this->db->sanitize((string) $ids).") AND entity IN (".getEntity($type).")";
 		}
@@ -1160,7 +1163,9 @@ class Project extends CommonObject
 			$sql = "SELECT COUNT(ms.rowid) as nb FROM ".MAIN_DB_PREFIX."stock_mouvement as ms, ".MAIN_DB_PREFIX."entrepot as e WHERE e.rowid = ms.fk_entrepot AND e.entity IN (".getEntity('stock').") AND ms.origintype = 'project' AND ms.fk_origin = ".((int) $this->id)." AND ms.type_mouvement = 1";
 		} elseif ($type == 'loan') {
 			$sql = "SELECT COUNT(l.rowid) as nb FROM ".MAIN_DB_PREFIX."loan as l WHERE l.entity IN (".getEntity('loan').") AND l.fk_projet = ".((int) $this->id);
-		} else {
+		}elseif ($type == 'mrp'){
+			$sql = "SELECT COUNT(mo.rowid) as nb FROM ".MAIN_DB_PREFIX."mrp_mo as mo WHERE mo.fk_project".((int) $this->id)." AND entity IN (".getEntity('mo').")";
+		}else {
 			$sql = "SELECT COUNT(rowid) as nb FROM ".MAIN_DB_PREFIX.$tablename." WHERE ".$projectkey." = ".((int) $this->id)." AND entity IN (".getEntity($type).")";
 		}
 

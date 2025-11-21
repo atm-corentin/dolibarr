@@ -2023,7 +2023,7 @@ class Mo extends CommonObject
 
 		$sql = "SELECT rowid, date_end_planned FROM ".$this->db->prefix()."mrp_mo";
 		$sql .= " WHERE status IN (" . self::STATUS_VALIDATED . ", " . self::STATUS_INPROGRESS .")"; // 1 = Ouvert, 2 = En cours
-		$sql .= " AND entity IN (".getEntity('mrp_mo').")";
+		$sql .= " AND entity IN (".getEntity('mo').")";
 
 		$resql = $this->db->query($sql);
 		if ($resql) {

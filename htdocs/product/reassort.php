@@ -226,7 +226,7 @@ if (!getDolGlobalString('PRODUCT_STOCK_LIST_SHOW_WITH_PRECALCULATED_DENORMALIZED
 			OR (
 				SELECT SUM(mp4.qty) as qty
 				FROM " . MAIN_DB_PREFIX . "mrp_production as mp4
-				LEFT JOIN " . MAIN_DB_PREFIX . "mrp_mo as m4 ON m4.rowid = mp4.fk_mo AND m4.entity IN (1) AND m4.status IN (1,2)
+				LEFT JOIN " . MAIN_DB_PREFIX . "mrp_mo as m4 ON m4.rowid = mp4.fk_mo AND m4.entity IN (" . getEntity('mo') . ") AND m4.status IN (1,2)
 				WHERE mp4.fk_product = p.rowid AND mp4.qty <> 0
 			) IS NOT NULL
 			) ";
