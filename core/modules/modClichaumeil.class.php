@@ -125,6 +125,8 @@ class modClichaumeil extends DolibarrModules
 				'globalcard',
 				'projectthirdparty',
 				'bomcard',
+				'externalaccesssetup',
+				'externalaccess',
 				'productcard',
 				'imports'
 			),
@@ -165,20 +167,15 @@ class modClichaumeil extends DolibarrModules
 		// Messages at activation
 		$this->warnings_activation = array(); // Warning to show when we activate module. array('always'='text') or array('FR'='textfr','MX'='textmx'...)
 		$this->warnings_activation_ext = array(); // Warning to show when we activate an external module. array('always'='text') or array('FR'='textfr','MX'='textmx'...)
-
 		$this->const = array();
 		$this->rfa_tab_added = false;
-
-
 		if (!isModEnabled("clichaumeil")) {
 			$conf->clichaumeil = new stdClass();
 			$conf->clichaumeil->enabled = 0;
 		}
-
 		// Array to add new pages in new tabs
 		/* BEGIN MODULEBUILDER TABS */
 		$this->tabs = array();
-
 		/* BEGIN MODULEBUILDER DICTIONARIES */
 		$this->dictionaries = array();
 		/* END MODULEBUILDER DICTIONARIES */
@@ -234,13 +231,12 @@ class modClichaumeil extends DolibarrModules
 		$this->rights[$r][4] = 'product';
 		$this->rights[$r][5] = 'read_cost_composition';
 		$r++;
-
 		/* END MODULEBUILDER PERMISSIONS */
 
 		// Main menu entries to add
 		$this->menu = array();
 		$r = 0;
-		// Add here entries to declare new menus
+
 		/* BEGIN MODULEBUILDER LEFTMENU CHAUMEILRFA */
 		$this->menu[$r++] = array(
 			'fk_menu' => 'fk_mainmenu=companies',

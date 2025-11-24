@@ -62,8 +62,6 @@ require_once '../lib/clichaumeil.lib.php';
 include_once __DIR__ . '/../class/CliChaumeilProductCost.class.php';
 include DOL_DOCUMENT_ROOT.'/core/actions_setmoduleoptions.inc.php';
 
-//require_once "../class/myclass.class.php";
-
 /**
  * @var Conf $conf
  * @var DoliDB $db
@@ -97,7 +95,6 @@ if (!$user->admin) {
 	accessforbidden();
 }
 
-
 // Set this to 1 to use the factory to manage constants. Warning, the generated module will be compatible with version v15+ only
 $useFormSetup = 1;
 
@@ -111,18 +108,12 @@ if (!$user->admin) {
 	accessforbidden();
 }
 
-
-
-
 // --- 1. Define constants for robustness ---
 const DEFAULT_OVERHEAD_RATE_KEY = 'CLICHAUMEIL_DEFAULT_OVERHEAD_RATE';
 const REVIEW_YEAR_DELAY_KEY = 'CLICHAUMEIL_REVIEW_YEAR_DELAY';
 const PRICING_MANAGERS_KEY = 'CLICHAUMEIL_PRICING_UPDATE_MANAGERS';
 const EMAIL_TEMPLATE_KEY = 'CLICHAUMEIL_CRON_EMAIL_TEMPLATE';
 const NOTIF_USERS_KEY = 'CLICHAUMEIL_CRON_NOTIF_USERS';
-
-
-
 
 // --- 3. Build the form in a clean and readable way ---
 

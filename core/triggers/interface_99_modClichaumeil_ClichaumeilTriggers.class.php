@@ -142,12 +142,19 @@ class InterfaceClichaumeilTriggers extends DolibarrTriggers
 					setEventMessages($langs->trans('CliChaumeilCustomerRefRequired',$object->getNomUrl()), null, 'errors');
 					return -1;
 				}
+
+			case 'externalAccessInitController'	:
+				externalAccessInitController($object, $user, $langs, $conf);
+				break;
+
+			default:
+				dol_syslog("Trigger '".$this->name."' for action '".$action."' launched by ".__FILE__.". id=".$object->id);
+				break;
 		}
 
 		return 0;
 	}
-
-	/**
+/**
 	 * Handle product cost synchronization when a product is saved.
 	 *
 	 * This method checks if the action is a product-related event and if so,
