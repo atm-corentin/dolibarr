@@ -27,6 +27,7 @@
 require_once DOL_DOCUMENT_ROOT . '/core/class/commonhookactions.class.php';
 require_once DOL_DOCUMENT_ROOT . '/product/class/product.class.php';
 require_once __DIR__ . '/CliChaumeilProductCost.class.php';
+require_once __DIR__ . '/../lib/clichaumeil.lib.php';
 
 /**
  * Class ActionsClichaumeil

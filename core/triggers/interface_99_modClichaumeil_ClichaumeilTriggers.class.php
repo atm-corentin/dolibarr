@@ -34,6 +34,8 @@ require_once DOL_DOCUMENT_ROOT.'/core/triggers/dolibarrtriggers.class.php';
 require_once DOL_DOCUMENT_ROOT.'/core/class/cunits.class.php';
 require_once __DIR__.'/../../class/chaumeilrfa.class.php';
 require_once __DIR__.'/../../class/CliChaumeilProductCost.class.php';
+require_once __DIR__.'/../../lib/clichaumeil.lib.php';
+
 
 
 /**
@@ -123,9 +125,6 @@ class InterfaceClichaumeilTriggers extends DolibarrTriggers
 				return -1;
 			}
 
-			default:
-				dol_syslog("Trigger '".$this->name."' for action '".$action."' launched by ".__FILE__.". id=".$object->id);
-				break;
 
 			case 'ORDER_VALIDATE':
 

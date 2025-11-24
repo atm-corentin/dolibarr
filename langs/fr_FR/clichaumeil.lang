@@ -52,6 +52,7 @@ RateRfa=Taux de RFA
 ReadRightsChaumeilRfa=Consulter les remises de fin d'année (RFA)
 CreateUpadteRightsChaumeilRfa=Créer/Modifier les remises de fin d'année (RFA)
 DeleteRightsChaumeilRfa=Supprimer les remises de fin d'année (RFA)
+ReadProductCostComposition=Voir la composition du coût sur les produits
 
 ClichaumeilSetup = Paramètrages CliChaumeil
 Settings = Paramètrages

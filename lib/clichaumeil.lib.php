@@ -21,8 +21,8 @@
  * \brief   Library files with common functions for Clichaumeil
  */
 
-require_once DOL_DOCUMENT_ROOT.'/core/class/extrafields.class.php';
-require_once DOL_DOCUMENT_ROOT.'/core/class/translate.class.php';
+require_once DOL_DOCUMENT_ROOT . '/core/class/extrafields.class.php';
+require_once DOL_DOCUMENT_ROOT . '/core/class/translate.class.php';
 
 /**
  * Prepare admin pages header
@@ -57,13 +57,14 @@ function clichaumeilAdminPrepareHead()
 /**
  * Trigger executed by externalaccess module to let other modules add controllers.
  *
- * @param EAccessController $controllerContext The controller context object from externalaccess (it's the "$this" from the calling file)
+ * @param object $controllerContext The controller context object from externalaccess (it's the "$this" from the calling file)
  * @param User $user The Dolibarr user object
  * @param Translate $langs The Dolibarr lang object
  * @param Conf $conf The Dolibarr conf object
  * @return int                                <0 if KO, 0 if OK
  */
-function externalAccessInitController($controllerContext, $user, $langs, $conf) : int {
+function externalAccessInitController($controllerContext, $user, $langs, $conf): int
+{
 
 	// Register supplier_proposal list controller
 	$newControllerKey = 'supplier_proposal';
