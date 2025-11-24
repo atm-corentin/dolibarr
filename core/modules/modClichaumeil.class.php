@@ -225,7 +225,11 @@ class modClichaumeil extends DolibarrModules
 		$this->rights[$r][4] = 'chaumeilrfa';
 		$this->rights[$r][5] = 'delete';
 		$r++;
-
+		$this->rights[$r][0] = $this->numero . $r;
+		$this->rights[$r][1] = 'ReadSupplierProposal';
+		$this->rights[$r][4] = 'SupplierProposal';
+		$this->rights[$r][5] = 'read';
+		$r++;
 		$this->rights[$r][0] = $this->numero . sprintf('%02d', (0 * 10) + 3 + 1);
 		$this->rights[$r][1] = 'ReadProductCostComposition';
 		$this->rights[$r][4] = 'product';

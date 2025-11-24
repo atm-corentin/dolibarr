@@ -49,7 +49,6 @@ class ActionsClichaumeil extends CommonHookActions
 	 */
 	public $errors = array();
 
-
 	/**
 	 * @var mixed[] Hook results. Propagated to $hookmanager->resArray for later reuse
 	 */
@@ -64,6 +63,7 @@ class ActionsClichaumeil extends CommonHookActions
 	 * @var int		Priority of hook (50 is used if value is not defined)
 	 */
 	public $priority;
+
 	private static $lineData = [];
 
 	/**
@@ -94,8 +94,6 @@ class ActionsClichaumeil extends CommonHookActions
 		$this->resprints = '';
 		return 0;
 	}
-
-
 
 	/**
 	 * Overload the addMoreMassActions function : replacing the parent's function with the one below
@@ -150,8 +148,6 @@ class ActionsClichaumeil extends CommonHookActions
 
 		return 0;
 	}
-
-
 
 	/**
 	 * Overload the loadDataForCustomReports function : returns data to complete the customreport tool
@@ -221,8 +217,6 @@ class ActionsClichaumeil extends CommonHookActions
 
 		$product->array_options[$key] = CliChaumeilProductCostCalculator::getDefaultOverheadRate();
 	}
-
-
 
 	/**
 	 * Overload the restrictedArea function : check permission on an object
