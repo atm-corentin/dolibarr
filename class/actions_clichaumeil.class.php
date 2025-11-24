@@ -24,9 +24,9 @@
  * TODO: Write detailed description here.
  */
 
-require_once DOL_DOCUMENT_ROOT.'/core/class/commonhookactions.class.php';
-require_once DOL_DOCUMENT_ROOT.'/product/class/product.class.php';
-require_once __DIR__.'/../lib/CliChaumeilProductCost.lib.php';
+require_once DOL_DOCUMENT_ROOT . '/core/class/commonhookactions.class.php';
+require_once DOL_DOCUMENT_ROOT . '/product/class/product.class.php';
+require_once __DIR__ . '/CliChaumeilProductCost.class.php';
 
 /**
  * Class ActionsClichaumeil
@@ -114,7 +114,7 @@ class ActionsClichaumeil extends CommonHookActions
 
 		/* print_r($parameters); print_r($object); echo "action: " . $action; */
 		if (in_array($parameters['currentcontext'], array('somecontext1', 'somecontext2'))) {		// do something only for the context 'somecontext1' or 'somecontext2'
-			$this->resprints = '<option value="0"'.($disabled ? ' disabled="disabled"' : '').'>'.$langs->trans("ClichaumeilMassAction").'</option>';
+			$this->resprints = '<option value="0"' . ($disabled ? ' disabled="disabled"' : '') . '>' . $langs->trans("ClichaumeilMassAction") . '</option>';
 		}
 
 		if (!$error) {
@@ -181,7 +181,7 @@ class ActionsClichaumeil extends CommonHookActions
 			$this->results['picto'] = 'clichaumeil@clichaumeil';
 		}
 
-		$head[$h][0] = 'customreports.php?objecttype='.$parameters['objecttype'].(empty($parameters['tabfamily']) ? '' : '&tabfamily='.$parameters['tabfamily']);
+		$head[$h][0] = 'customreports.php?objecttype=' . $parameters['objecttype'] . (empty($parameters['tabfamily']) ? '' : '&tabfamily=' . $parameters['tabfamily']);
 		$head[$h][1] = $langs->trans("CustomReports");
 		$head[$h][2] = 'customreports';
 
@@ -279,33 +279,73 @@ class ActionsClichaumeil extends CommonHookActions
 			return -1;
 		}
 
-		$product = $this->loadProductFromImport($values);
+		// Build a minimal Product object directly from import data (performance optimization)
+		$product = $this->buildProductFromImportData($values);
 		if (!$product || !CliChaumeilProductCostCalculator::isSupportedProduct($product)) {
 			return 0;
 		}
 
-		$this->applyFgPercentFromImport($product, $values['extra.fg_percent'], $user);
-
-		$result = CliChaumeilProductCostCalculator::calculateAndUpdateProductCostPriceFromExtrafields($product, $user);
+		// Apply fg_percent and calculate cost price using import data
+		$result = $this->calculateCostFromImportData($product, $values, $user);
 		return ($result < 0) ? -1 : 0;
 	}
 
 	/**
-	 * @param array<string,mixed> $parameters
+	 * Build a lightweight Product object from import data without database fetch.
+	 * 
+	 * This is a performance optimization for bulk imports: instead of calling
+	 * Product::fetch() for each row (which would hit the database), we populate
+	 * only the fields needed for cost calculation directly from $values.
+	 *
+	 * @param array<string,mixed> $values Import data values
 	 * @return Product|null
 	 */
-	private function loadProductFromImport(array $values): ?Product
+	private function buildProductFromImportData(array $values): ?Product
 	{
 		$id = !empty($values['p.rowid']) ? (int) $values['p.rowid'] : 0;
-		$ref = $values['p.ref'] ?? '';
-
-		$product = new Product($this->db);
-		$result = $product->fetch($id, $ref);
-		if ($result <= 0) {
+		if ($id <= 0) {
 			return null;
 		}
 
+		$product = new Product($this->db);
+		$product->id = $id;
+		$product->ref = $values['p.ref'] ?? '';
+		$product->type = isset($values['p.fk_product_type']) ? (int) $values['p.fk_product_type'] : Product::TYPE_PRODUCT;
+
+		// Populate extrafields from import data
+		$product->array_options = [
+			'options_pa_support' => $values['extra.pa_support'] ?? '0',
+			'options_pa_sav' => $values['extra.pa_sav'] ?? '0',
+			'options_pa_machine' => $values['extra.pa_machine'] ?? '0',
+			'options_pa_encre' => $values['extra.pa_encre'] ?? '0',
+			'options_pa_mo' => $values['extra.pa_mo'] ?? '0',
+			'options_fg_percent' => $values['extra.fg_percent'] ?? CliChaumeilProductCostCalculator::getDefaultOverheadRate(),
+		];
+
 		return $product;
+	}
+
+	/**
+	 * Calculate and update product cost from import data.
+	 *
+	 * @param Product $product Lightweight product object
+	 * @param array<string,mixed> $values Import data
+	 * @param User $user Current user
+	 * @return int <0 on error, >=0 on success
+	 */
+	private function calculateCostFromImportData(Product $product, array $values, User $user): int
+	{
+		// Update fg_percent extrafield
+		$fgPercent = $values['extra.fg_percent'];
+		$product->array_options['options_fg_percent'] = $fgPercent;
+		$result = $product->updateExtraField('fg_percent', 'CLICHAUMEIL_PRODUCT_COST', $user);
+		if ($result < 0) {
+			dol_syslog('Erreur updateExtraField fg_percent pour produit ' . $product->id, LOG_ERR);
+			return -1;
+		}
+
+		// Calculate and update cost price
+		return CliChaumeilProductCostCalculator::calculateAndUpdateProductCostPriceFromExtrafields($product, $user);
 	}
 
 	/**
@@ -334,18 +374,7 @@ class ActionsClichaumeil extends CommonHookActions
 		return $values;
 	}
 
-	/**
-	 * Check if fg_percent extrafield has value on product.
-	 *
-	 * @param Product $product
-	 * @return bool
-	 */
-	private function applyFgPercentFromImport(Product $product, string $rawValue, User $user): void
-	{
-		$formatted = CliChaumeilProductCostCalculator::normalizeDecimal($rawValue);
-		$product->array_options['options_fg_percent'] = $formatted;
-		$product->updateExtraField('fg_percent', 'CLICHAUMEIL_PRODUCT_COST', $user);
-	}
+
 
 	private function hasFgPercentValueInRecord(array $values): bool
 	{
@@ -390,11 +419,11 @@ class ActionsClichaumeil extends CommonHookActions
 			$id = $parameters['object']->id;
 			// verifier le type d'onglet comme member_stats où ça ne doit pas apparaitre
 			// if (in_array($element, ['societe', 'member', 'contrat', 'fichinter', 'project', 'propal', 'commande', 'facture', 'order_supplier', 'invoice_supplier'])) {
-			if ($element == 'societe' && $user->hasRight('clichaumeil', 'chaumeilrfa', 'read')){
+			if ($element == 'societe' && $user->hasRight('clichaumeil', 'chaumeilrfa', 'read')) {
 				$datacount = 0;
 
 				//SQL COUNT RFA by socid
-				$rfaCountsql = "SELECT COUNT(*) as count FROM ".$this->db->prefix()."clichaumeil_chaumeilrfa WHERE fk_soc = ".(int)$id;
+				$rfaCountsql = "SELECT COUNT(*) as count FROM " . $this->db->prefix() . "clichaumeil_chaumeilrfa WHERE fk_soc = " . (int) $id;
 
 				$resql = $this->db->query($rfaCountsql);
 				if ($resql) {
@@ -404,7 +433,7 @@ class ActionsClichaumeil extends CommonHookActions
 					dol_print_error($this->db);
 				}
 
-				if ($object->fournisseur && $this->rfa_tab_added == false ) {
+				if ($object->fournisseur && $this->rfa_tab_added == false) {
 					$parameters['head'][$counter][0] = dol_buildpath('/clichaumeil/chaumeilrfa_list.php', 1) . '?socid=' . $id;
 					$parameters['head'][$counter][1] = $langs->trans('ClichaumeilTabRfa');
 					$this->rfa_tab_added = true;
@@ -445,7 +474,7 @@ class ActionsClichaumeil extends CommonHookActions
 		return CommonObject::commonReplaceThirdparty($dbs, $origin_id, $dest_id, $tables);
 	}
 
-/**
+	/**
 	 * Inject margin data into the page footer and load the JS script.
 	 *
 	 * This hook outputs a `<script>` tag containing JSON data used by
@@ -515,7 +544,7 @@ class ActionsClichaumeil extends CommonHookActions
 			$line = $parameters['line'];
 			$costPrice = 0;
 			if (!empty($line->pa_ht)) {
-				$costPrice = (float)$line->pa_ht;
+				$costPrice = (float) $line->pa_ht;
 			}
 
 			// 💸 Get unit price (PU HT)
@@ -528,8 +557,8 @@ class ActionsClichaumeil extends CommonHookActions
 
 			// 📦 Store the data for the JS script
 			self::$lineData[$line->id] = [
-				'pu_ht'        => $pu_ht,
-				'cost_price'   => $costPrice,
+				'pu_ht' => $pu_ht,
+				'cost_price' => $costPrice,
 				'warning_icon' => $warningIcon,
 			];
 		}
@@ -537,16 +566,15 @@ class ActionsClichaumeil extends CommonHookActions
 		return 0;
 	}
 
-	public function calculateCostsBomAfter($parameters, &$object, &$action, $hookmanager):int
+	public function calculateCostsBomAfter($parameters, &$object, &$action, $hookmanager): int
 	{
 		$action = GETPOST('action', 'alphanohtml');
-		if($action == 'update_extras' || $action == 'update') {
+		if ($action == 'update_extras' || $action == 'update') {
 			$generalExpenses = GETPOSTFLOAT('options_clichaumeil_generalexpenses');
-		}
-		else {
+		} else {
 			$generalExpenses = $object->array_options['options_clichaumeil_generalexpenses'];
 		}
-		$object->total_cost = $object->total_cost * (1+(float) $generalExpenses / 100);
+		$object->total_cost = $object->total_cost * (1 + (float) $generalExpenses / 100);
 
 		return 0;
 	}
