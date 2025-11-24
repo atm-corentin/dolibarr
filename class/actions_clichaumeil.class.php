@@ -25,6 +25,8 @@
  */
 
 require_once DOL_DOCUMENT_ROOT.'/core/class/commonhookactions.class.php';
+require_once DOL_DOCUMENT_ROOT.'/categories/class/categorie.class.php';
+require_once DOL_DOCUMENT_ROOT.'/product/class/product.class.php';
 
 /**
  * Class ActionsClichaumeil
@@ -301,30 +303,139 @@ class ActionsClichaumeil extends CommonHookActions
 	 */
 	public function llxFooter($parameters, &$object, &$action, $hookmanager): int
 	{
-		// If there's no data to send, do nothing
-		if (empty(self::$lineData)) {
-			return 0;
+		global $db;
+
+		/* --------------------------------------------------------------------
+		 * 1) Récupération catégorie cible + produits M2
+		 * -------------------------------------------------------------------- */
+
+		$cat = new Categorie($db);
+		$targetCatId = getDolGlobalInt('CLICHAUMEIL_PRODUCT_TARGET_CATEGORY');
+		$cat->fetch($targetCatId);
+
+		$targetProducts = [];
+
+		if ($cat->id > 0) {
+			foreach ($cat->getObjectsInCateg('product') as $p) {
+				$targetProducts[] = (int) $p->id;
+			}
 		}
 
-		// 1️⃣ Prepare the data payload for JS
-		$dataForJs = ['lines' => self::$lineData];
+		$jstargetProductsArray = json_encode($targetProducts);
 
-		// 2️⃣ Output the JSON payload in a <script> tag
-		echo '<script type="application/json" id="margins-pagedata">'
-			. json_encode($dataForJs, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT)
-			. '</script>';
 
-		// 3️⃣ Build the URL of your JS file
+		/* --------------------------------------------------------------------
+		 * 2) Parcours des lignes existantes → masquage extrafields si nécessaire
+		 * -------------------------------------------------------------------- */
+
+		$product = new Product($db);
+		$catTool = new Categorie($db);
+		$context = $object->element;
+
+		$fieldsToHide = [];
+
+		foreach ($object->lines as $line) {
+
+			$product->fetch($line->fk_product);
+			$catIds = array_map('intval', $catTool->containing($line->fk_product, 'product', 'id'));
+
+			$isInCat = in_array($targetCatId, $catIds);
+
+			if (!$isInCat) {
+				$fieldsToHide[] = [
+					'length' => "#extrarow-{$context}det_clichaumeil_length_{$line->id}",
+					'height' => "#extrarow-{$context}det_clichaumeil_height_{$line->id}",
+				];
+			}
+		}
+
+		$jsonHide = json_encode($fieldsToHide);
+
+
+		/* --------------------------------------------------------------------
+		 * 3) Injection JS (un seul bloc propre)
+		 * -------------------------------------------------------------------- */
+
+		print <<<JS
+<script>
+$(document).ready(function () {
+
+    /* ---------------------------------------------------------
+     * A) Gestion extrafields dans le formulaire d’ajout
+     * --------------------------------------------------------- */
+
+    let targetProducts = $jstargetProductsArray;
+    let productSelect = $("#idprod");
+
+    function updateExtraFieldsAddForm(productId) {
+        productId = parseInt(productId);
+
+        let lengthInput = $("#options_clichaumeil_length");
+        let heightInput = $("#options_clichaumeil_height");
+
+        let lengthRow = lengthInput.closest(".fieldline_options_clichaumeil_length");
+        let heightRow = heightInput.closest(".fieldline_options_clichaumeil_height");
+
+        // Reset
+        lengthInput.val("");
+        heightInput.val("");
+
+        if (!productId || productId < 0) {
+            lengthRow.hide();
+            heightRow.hide();
+            return;
+        }
+
+        if (targetProducts.includes(productId)) {
+            lengthRow.show();
+            heightRow.show();
+        } else {
+            lengthRow.hide();
+            heightRow.hide();
+        }
+    }
+
+    productSelect.on("change", function () {
+        updateExtraFieldsAddForm($(this).val());
+    });
+
+    updateExtraFieldsAddForm(productSelect.val());
+
+
+    /* ---------------------------------------------------------
+     * B) Masquage extrafields sur les lignes existantes
+     * --------------------------------------------------------- */
+
+    let fieldsToHide = $jsonHide;
+
+    fieldsToHide.forEach(item => {
+        $(item.length).hide();
+        $(item.height).hide();
+    });
+
+});
+</script>
+JS;
+
+
+		/* --------------------------------------------------------------------
+		 * 4) Passage des données à margin_check_warning.js
+		 * -------------------------------------------------------------------- */
+
+		if (!empty(self::$lineData)) {
+			echo '<script type="application/json" id="margins-pagedata">'
+				. json_encode(self::$lineData, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT)
+				. '</script>';
+		}
+
 		$jsUrl = dol_buildpath('/clichaumeil/js/margin_check_warning.js', 1);
-
-		// 4️⃣ Load the JS file
 		echo '<script src="' . $jsUrl . '" defer></script>';
 
-		// 5️⃣ Reset static data to prevent leakage
 		self::$lineData = [];
 
 		return 0;
 	}
+
 
 
 	/**

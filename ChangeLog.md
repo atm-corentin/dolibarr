@@ -3,6 +3,7 @@
 ## 1.0
 
 ### Unreleased
+- NEW : Add conf (category product)for display extrafields (Length & height) on propal/command line *24/11/2025* - 1.4.0 
 - NEW : Add RFA list by fourn (Thirdparties Menu Left) *15/10/2025* - 1.3.0 
 - NEW : Warning icon displayed for negative margin on propal lines. *30/09/2025* - 1.2.0
 - NEW : Update total cost of bom with general expenses extrafield - *01/10/2025* - 1.2.0

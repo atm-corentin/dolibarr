@@ -58,6 +58,8 @@ if (!$res) {
 // Libraries
 require_once DOL_DOCUMENT_ROOT."/core/lib/admin.lib.php";
 require_once DOL_DOCUMENT_ROOT."/core/class/html.formmail.class.php";
+require_once DOL_DOCUMENT_ROOT.'/categories/class/categorie.class.php';
+require_once DOL_DOCUMENT_ROOT.'/product/class/product.class.php';
 require_once '../lib/clichaumeil.lib.php';
 //require_once "../class/myclass.class.php";
 
@@ -148,6 +150,25 @@ $item = $formSetup->newItem(EMAIL_TEMPLATE_KEY)->setAsSelect($templates);
 
 // --- Field 4: Users to Notify (User Select) ---
 buildUserMultiSelectField($formSetup, $form, NOTIF_USERS_KEY);
+
+//// --- Field 5: Category product ---
+$categories = new Categorie($db);
+$allCat = $categories->get_all_categories();
+$categorieTypeProduct = 0;
+
+$arrayCat = array();
+$counter = 0;
+if (!empty($allCat)) {
+	foreach ($allCat as $cat) {
+		if ($cat->type == $categorieTypeProduct) { // catégories produits
+			$arrayCat[$cat->rowid] = $cat->label;
+		}
+	}
+}
+
+// --- New item category product target ---
+$item = $formSetup->newItem('CLICHAUMEIL_PRODUCT_TARGET_CATEGORY')->setAsCategory('product');
+$item->label = 'Catégorie cible produit';
 
 
 $setupnotempty += count($formSetup->items);

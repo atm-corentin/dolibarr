@@ -126,3 +126,4 @@ RollbackUnitsQtyforProduct=Réinitialisation de l’unité et de la quantité du
 SurfaceRecalculatedInCm2=Surface recalculée (en cm²)
 CliChaumeilGeneralExpenses=Frais généraux (en %)
 WarningNegativeMargin=Attention : le prix de revient est supérieur au prix de vente. Marge négative
+CLICHAUMEIL_PRODUCT_TARGET_CATEGORY=Sélectionnez la catégorie de produits pour laquelle les champs Hauteur et Longueur doivent apparaître.
