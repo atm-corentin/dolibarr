@@ -170,10 +170,6 @@ if ($tmpobjectkey && !array_key_exists($tmpobjectkey, $myTmpObjects)) {
  */
 
 if ($action == 'update' && !empty($user->admin)) {
-	// For Dolibarr < 15, we need to manually save the overhead rate
-	// For Dolibarr >= 15, FormSetup handles it automatically
-	$normalizedOverheadRate = price2num(GETPOST(DEFAULT_OVERHEAD_RATE_KEY, 'alphanohtml'));
-	dolibarr_set_const($db, DEFAULT_OVERHEAD_RATE_KEY, $normalizedOverheadRate, 'chaine', 0, '', $conf->entity);
 	$formSetup->saveConfFromPost();
 
 	// Redirect to avoid form resubmission
