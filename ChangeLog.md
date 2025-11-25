@@ -1,6 +1,7 @@
 # CHANGELOG MODULE CLICHAUMEIL FOR [DOLIBARR ERP CRM](https://www.dolibarr.org)
 
-### Unreleased
+## 1.5
+- NEW : Add calcul cost_price from extrafields on product. *20/11/2025* - 1.5.0
 
 ## 1.4
 - NEW : Add supplier proposal in externalaccess. *06/11/2025* - 1.3.0

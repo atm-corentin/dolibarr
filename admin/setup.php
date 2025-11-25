@@ -27,7 +27,7 @@
 $res = 0;
 // Try main.inc.php into web root known defined into CONTEXT_DOCUMENT_ROOT (not always defined)
 if (!$res && !empty($_SERVER["CONTEXT_DOCUMENT_ROOT"])) {
-	$res = @include $_SERVER["CONTEXT_DOCUMENT_ROOT"]."/main.inc.php";
+	$res = @include $_SERVER["CONTEXT_DOCUMENT_ROOT"] . "/main.inc.php";
 }
 // Try main.inc.php into web root detected using web root calculated from SCRIPT_FILENAME
 $tmp = empty($_SERVER['SCRIPT_FILENAME']) ? '' : $_SERVER['SCRIPT_FILENAME'];
@@ -38,11 +38,11 @@ while ($i > 0 && $j > 0 && isset($tmp[$i]) && isset($tmp2[$j]) && $tmp[$i] == $t
 	$i--;
 	$j--;
 }
-if (!$res && $i > 0 && file_exists(substr($tmp, 0, ($i + 1))."/main.inc.php")) {
-	$res = @include substr($tmp, 0, ($i + 1))."/main.inc.php";
+if (!$res && $i > 0 && file_exists(substr($tmp, 0, ($i + 1)) . "/main.inc.php")) {
+	$res = @include substr($tmp, 0, ($i + 1)) . "/main.inc.php";
 }
-if (!$res && $i > 0 && file_exists(dirname(substr($tmp, 0, ($i + 1)))."/main.inc.php")) {
-	$res = @include dirname(substr($tmp, 0, ($i + 1)))."/main.inc.php";
+if (!$res && $i > 0 && file_exists(dirname(substr($tmp, 0, ($i + 1))) . "/main.inc.php")) {
+	$res = @include dirname(substr($tmp, 0, ($i + 1))) . "/main.inc.php";
 }
 // Try main.inc.php using relative path
 if (!$res && file_exists("../../main.inc.php")) {
@@ -56,9 +56,10 @@ if (!$res) {
 }
 
 // Libraries
-require_once DOL_DOCUMENT_ROOT.'/core/lib/admin.lib.php';
-require_once DOL_DOCUMENT_ROOT.'/core/class/html.formmail.class.php';
-require_once __DIR__.'/../lib/clichaumeil.lib.php';
+require_once DOL_DOCUMENT_ROOT . "/core/lib/admin.lib.php";
+require_once DOL_DOCUMENT_ROOT . "/core/class/html.formmail.class.php";
+require_once '../lib/clichaumeil.lib.php';
+require_once __DIR__ . '/../class/CliChaumeilProductCost.class.php';
 
 /**
  * @var Conf $conf
@@ -97,7 +98,7 @@ if (!$user->admin) {
 $useFormSetup = 1;
 
 if (!class_exists('FormSetup')) {
-	require_once DOL_DOCUMENT_ROOT.'/core/class/html.formsetup.class.php';
+	require_once DOL_DOCUMENT_ROOT . '/core/class/html.formsetup.class.php';
 }
 $formSetup = new FormSetup($db);
 
@@ -106,22 +107,30 @@ if (!$user->admin) {
 	accessforbidden();
 }
 
-
 // --- 1. Define constants for robustness ---
+const DEFAULT_OVERHEAD_RATE_KEY = 'CLICHAUMEIL_DEFAULT_OVERHEAD_RATE';
 const REVIEW_YEAR_DELAY_KEY = 'CLICHAUMEIL_REVIEW_YEAR_DELAY';
 const PRICING_MANAGERS_KEY = 'CLICHAUMEIL_PRICING_UPDATE_MANAGERS';
 const EMAIL_TEMPLATE_KEY = 'CLICHAUMEIL_CRON_EMAIL_TEMPLATE';
 const NOTIF_USERS_KEY = 'CLICHAUMEIL_CRON_NOTIF_USERS';
 
-
 // --- 3. Build the form in a clean and readable way ---
+
+// --- Field 0: Default overhead rate (%) ---
+$item = $formSetup->newItem(DEFAULT_OVERHEAD_RATE_KEY);
+$item->fieldAttr = [
+	'type' => 'number',
+	'min' => 0,
+	'step' => '0.0001',
+];
+$item->defaultFieldValue = CliChaumeilProductCostCalculator::getDefaultOverheadRate();
 
 // --- Field 1: Delay in years (Numeric) ---
 $item = $formSetup->newItem(REVIEW_YEAR_DELAY_KEY);
 $item->fieldAttr = [
-    'type' => 'number',
-    'min'  => 0,
-    'step' => 1,
+	'type' => 'number',
+	'min' => 0,
+	'step' => 1,
 ];
 $item->defaultFieldValue = 1;
 
@@ -138,7 +147,6 @@ $formmail->fetchAllEMailTemplate('contract', $user, $langs);
 $templates = !empty($formmail->lines_model) ? array_column($formmail->lines_model, 'label', 'id') : [];
 
 $item = $formSetup->newItem(EMAIL_TEMPLATE_KEY)->setAsSelect($templates);
-
 
 // --- Field 4: Users to Notify (User Select) ---
 buildUserMultiSelectField($formSetup, $form, NOTIF_USERS_KEY);
@@ -161,20 +169,19 @@ if ($tmpobjectkey && !array_key_exists($tmpobjectkey, $myTmpObjects)) {
  * Actions
  */
 
-// For retrocompatibility Dolibarr < 15.0
-if (versioncompare(explode('.', DOL_VERSION), array(15)) < 0 && $action == 'update' && !empty($user->admin)) {
+if ($action == 'update' && !empty($user->admin)) {
 	$formSetup->saveConfFromPost();
-}
 
-include DOL_DOCUMENT_ROOT.'/core/actions_setmoduleoptions.inc.php';
-
-if($action == 'update') {
-	header('Location: '.$_SERVER["PHP_SELF"]);
+	// Redirect to avoid form resubmission
+	header('Location: ' . $_SERVER["PHP_SELF"]);
+	exit;
 }
 
 /*
  * View
  */
+
+include DOL_DOCUMENT_ROOT.'/core/actions_setmoduleoptions.inc.php';
 
 $form = new Form($db);
 
@@ -184,7 +191,7 @@ $title = "ClichaumeilSetup";
 llxHeader('', $langs->trans($title), $help_url, '', 0, 0, '', '', '', 'mod-clichaumeil page-admin');
 
 // Subheader
-$linkback = '<a href="'.($backtopage ? $backtopage : DOL_URL_ROOT.'/admin/modules.php?restore_lastsearch_values=1').'">'.$langs->trans("BackToModuleList").'</a>';
+$linkback = '<a href="' . ($backtopage ? $backtopage : DOL_URL_ROOT . '/admin/modules.php?restore_lastsearch_values=1') . '">' . $langs->trans("BackToModuleList") . '</a>';
 
 print load_fiche_titre($langs->trans($title), $linkback, 'title_setup');
 
@@ -193,7 +200,7 @@ $head = clichaumeilAdminPrepareHead();
 print dol_get_fiche_head($head, 'settings', $langs->trans($title), -1, "clichaumeil@clichaumeil");
 
 // Setup page goes here
-echo '<span class="opacitymedium">'.$langs->trans("ClichaumeilSetupPage").'</span><br><br>';
+echo '<span class="opacitymedium">' . $langs->trans("ClichaumeilSetupPage") . '</span><br><br>';
 
 if (!empty($formSetup->items)) {
 	print $formSetup->generateOutput(true);
@@ -201,7 +208,7 @@ if (!empty($formSetup->items)) {
 }
 
 if (empty($setupnotempty)) {
-	print '<br>'.$langs->trans("NothingToSetup");
+	print '<br>' . $langs->trans("NothingToSetup");
 }
 
 // Page end
@@ -211,36 +218,43 @@ llxFooter();
 $db->close();
 
 /**
-* Builds a multi-select field for active users.
-*
-* @param FormSetup $formSetup The FormSetup object.
-* @param Form      $form      The Form object.
-* @param string    $key       The configuration key.
-* @return void
-*/
+ * Builds a multi-select field for active users.
+ *
+ * @param FormSetup $formSetup The FormSetup object.
+ * @param Form      $form      The Form object.
+ * @param string    $key       The configuration key.
+ * @return void
+ */
 function buildUserMultiSelectField(FormSetup $formSetup, Form $form, string $key): void
 {
-// Get the current value for pre-selection
-$currentValue = getDolGlobalString($key);
-$selectedUsers = !empty($currentValue) ? explode(',', $currentValue) : [];
+	// Get the current value for pre-selection
+	$currentValue = getDolGlobalString($key);
+	$selectedUsers = !empty($currentValue) ? explode(',', $currentValue) : [];
 
-$item = $formSetup->newItem($key)->setAsMultiSelect([]);
+	$item = $formSetup->newItem($key)->setAsMultiSelect([]);
 
-// The filter to select only active employees
-$userFilter = '(employee:=:1) AND (u.statut:=:1)';
+	// The filter to select only active employees
+	$userFilter = '(employee:=:1) AND (u.statut:=:1)';
 
-// The call to select_dolusers is more readable with variables
-$item->fieldInputOverride = $form->select_dolusers(
-$selectedUsers, // Already selected users
-$key,           // HTML field name
-1,              // Enable multi-select
-null,           // Exclude users (none here)
-0,              // Field size
-'',             // Additional CSS class
-'', '', 0, 0,
-$userFilter,    // SQL filter
-0, '', '', 0, 0,
-true,           // Show empty field option
-0
-);
+	// The call to select_dolusers is more readable with variables
+	$item->fieldInputOverride = $form->select_dolusers(
+		$selectedUsers, // Already selected users
+		$key,           // HTML field name
+		1,              // Enable multi-select
+		null,           // Exclude users (none here)
+		0,              // Field size
+		'',             // Additional CSS class
+		'',
+		'',
+		0,
+		0,
+		$userFilter,    // SQL filter
+		0,
+		'',
+		'',
+		0,
+		0,
+		true,           // Show empty field option
+		0
+	);
 }

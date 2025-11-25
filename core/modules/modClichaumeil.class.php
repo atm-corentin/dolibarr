@@ -26,8 +26,8 @@
  *  \ingroup    clichaumeil
  *  \brief      Description and activation file for module Clichaumeil
  */
-include_once DOL_DOCUMENT_ROOT.'/core/modules/DolibarrModules.class.php';
-require_once __DIR__ . '/../../lib/clichaumeil.lib.php';
+include_once DOL_DOCUMENT_ROOT . '/core/modules/DolibarrModules.class.php';
+include_once __DIR__ . '/../../class/CliChaumeilProductCost.class.php';
 
 
 /**
@@ -77,18 +77,20 @@ class modClichaumeil extends DolibarrModules
 		$this->editor_squarred_logo = '';					// Must be image filename into the module/img directory followed with @modulename. Example: 'myimage.png@clichaumeil'
 
 		// Possible values for version are: 'development', 'experimental', 'dolibarr', 'dolibarr_deprecated', 'experimental_deprecated' or a version string like 'x.y.z'
-		$this->version = '1.4.0';
+		$this->version = '1.5.0';
 		// Url to the file with your last numberversion of this module
 		//$this->url_last_version = 'http://www.example.com/versionmodule.txt';
 
 		// Key used in llx_const table to save module status enabled/disabled (where CLICHAUMEIL is value of property name of module in uppercase)
-		$this->const_name = 'MAIN_MODULE_'.strtoupper($this->name);
+		$this->const_name = 'MAIN_MODULE_' . strtoupper($this->name);
 
 		// Name of image file used for this module.
 		// If file is in theme/yourtheme/img directory under name object_pictovalue.png, use this->picto='pictovalue'
 		// If file is in module/img directory under name object_pictovalue.png, use this->picto='pictovalue@module'
 		// To use a supported fa-xxx css style of font awesome, use this->picto='xxx'
 		$this->picto = 'fa-money-bill';
+
+		$this->const = array();
 
 		// Define some features supported by module (triggers, login, substitutions, menus, css, etc...)
 		$this->module_parts = array(
@@ -115,9 +117,7 @@ class modClichaumeil extends DolibarrModules
 				//    '/clichaumeil/css/clichaumeil.css.php',
 			),
 			// Set this to relative path of js file if module must load a js on all pages
-			'js' => array(
-				//   '/clichaumeil/js/clichaumeil.js.php',
-			),
+			'js' => array(),
 			// Set here all hooks context managed by module. To find available hook context, make a "grep -r '>initHooks(' *" on source code. You can also set hook context to 'all'
 			/* BEGIN MODULEBUILDER HOOKSCONTEXTS */
 			'hooks' => array(
@@ -126,7 +126,9 @@ class modClichaumeil extends DolibarrModules
 				'projectthirdparty',
 				'bomcard',
 				'externalaccesssetup',
-				'externalaccess'
+				'externalaccess',
+				'productcard',
+				'imports'
 			),
 			/* END MODULEBUILDER HOOKSCONTEXTS */
 			// Set this to 1 if features of module are opened to external users
@@ -158,7 +160,7 @@ class modClichaumeil extends DolibarrModules
 		$this->langfiles = array("clichaumeil@clichaumeil");
 
 		// Prerequisites
-		$this->phpmin = array(7, 1); // Minimum version of PHP required by module
+		$this->phpmin = array(7, 4); // Minimum version of PHP required by module
 		$this->need_dolibarr_version = array(19, -3); // Minimum version of Dolibarr required by module
 		$this->need_javascript_ajax = 0;
 
@@ -228,6 +230,11 @@ class modClichaumeil extends DolibarrModules
 		$this->rights[$r][4] = 'SupplierProposal';
 		$this->rights[$r][5] = 'read';
 		$r++;
+		$this->rights[$r][0] = $this->numero . sprintf('%02d', (0 * 10) + 3 + 1);
+		$this->rights[$r][1] = 'ReadProductCostComposition';
+		$this->rights[$r][4] = 'product';
+		$this->rights[$r][5] = 'read_cost_composition';
+		$r++;
 		/* END MODULEBUILDER PERMISSIONS */
 
 		// Main menu entries to add
@@ -287,16 +294,21 @@ class modClichaumeil extends DolibarrModules
 		/* BEGIN MODULEBUILDER EXPORT MYOBJECT */
 
 		$langs->load("clichaumeil@clichaumeil");
-		$this->export_code[$r] = $this->rights_class.'_'.$r;
+		$this->export_code[$r] = $this->rights_class . '_' . $r;
 		$this->export_label[$r] = 'ChaumeilRfaLines';	// Translation key (used only if key ExportDataset_xxx_z not found)
 		$this->export_icon[$r] = $this->picto;
-		$keyforclass = 'ChaumeilRfa'; $keyforclassfile='/clichaumeil/class/chaumeilrfa.class.php'; $keyforelement='chaumeilrfa@clichaumeil';
-		include DOL_DOCUMENT_ROOT.'/core/commonfieldsinexport.inc.php';
-		$keyforselect='chaumeilrfa'; $keyforaliasextra='extra'; $keyforelement='chaumeilrfa@clichaumeil';
-		include DOL_DOCUMENT_ROOT.'/core/extrafieldsinexport.inc.php';
-		$this->export_sql_start[$r]='SELECT DISTINCT ';
-		$this->export_sql_end[$r]  =' FROM '.$db->prefix().'clichaumeil_chaumeilrfa as t';
-		$this->export_sql_end[$r] .=' WHERE 1 = 1';
+		$keyforclass = 'ChaumeilRfa';
+		$keyforclassfile = '/clichaumeil/class/chaumeilrfa.class.php';
+		$keyforelement = 'chaumeilrfa@clichaumeil';
+		include DOL_DOCUMENT_ROOT . '/core/commonfieldsinexport.inc.php';
+		$keyforselect = 'chaumeilrfa';
+		$keyforaliasextra = 'extra';
+		$keyforelement = 'chaumeilrfa@clichaumeil';
+		include DOL_DOCUMENT_ROOT . '/core/extrafieldsinexport.inc.php';
+		$this->export_sql_start[$r] = 'SELECT DISTINCT ';
+		$this->export_sql_end[$r] = ' FROM ' . $db->prefix() . 'clichaumeil_chaumeilrfa as t';
+		$this->export_sql_end[$r] .= ' WHERE 1 = 1';
+		$r = 0;
 
 	}
 
@@ -320,26 +332,33 @@ class modClichaumeil extends DolibarrModules
 		}
 
 		// Create extrafields during init
-		include_once DOL_DOCUMENT_ROOT.'/core/class/extrafields.class.php';
+		include_once DOL_DOCUMENT_ROOT . '/core/class/extrafields.class.php';
 		$extrafields = new ExtraFields($this->db);
-		$extrafields->addExtraField('clichaumeilreviewrate', 'CliChaumeilReviewRate', 'double', 100, '24,2', 'contrat', 0, 0, '', array ( 'options' => array ( '' => NULL, ), ), 1, '', '1', '', '', 0, 'clichaumeil@clichaumeil', 'isModEnabled("clichaumeil")', 0, '0', array ( 'css' => '', 'cssview' => '', 'csslist' => ''));
-		$extrafields->addExtraField('clichaumeil_reviewdate', 'CliChaumeilReviewDate', 'date', 100, '', 'contratdet', 0, 0, '', array ( 'options' => array ( '' => NULL, ), ), 1, '', '1', '', '', 0, 'clichaumeil@clichaumeil', 'isModEnabled("clichaumeil")', 0, '0', array ( 'css' => '', 'cssview' => '', 'csslist' => '', ));
-		$extrafields->addExtraField('clichaumeil_height', 'CliChaumeilHeight', 'double', 100, '24,2', 'propaldet', 0, 0, '', array ( 'options' => array ( '' => NULL, ), ), 1, '', '1', '', '', 0, 'clichaumeil@clichaumeil', 'isModEnabled("clichaumeil")', 0, '0', array ( 'css' => '', 'cssview' => '', 'csslist' => ''));
-		$extrafields->addExtraField('clichaumeil_length', 'CliChaumeilLength', 'double', 100, '24,2', 'propaldet', 0, 0, '', array ( 'options' => array ( '' => NULL, ), ), 1, '', '1', '', '', 0, 'clichaumeil@clichaumeil', 'isModEnabled("clichaumeil")', 0, '0', array ( 'css' => '', 'cssview' => '', 'csslist' => ''));
-		$extrafields->addExtraField('clichaumeil_height', 'CliChaumeilHeight', 'double', 100, '24,2', 'commandedet', 0, 0, '', array ( 'options' => array ( '' => NULL, ), ), 1, '', '1', '', '', 0, 'clichaumeil@clichaumeil', 'isModEnabled("clichaumeil")', 0, '0', array ( 'css' => '', 'cssview' => '', 'csslist' => ''));
-		$extrafields->addExtraField('clichaumeil_length', 'CliChaumeilLength', 'double', 100, '24,2', 'commandedet', 0, 0, '', array ( 'options' => array ( '' => NULL, ), ), 1, '', '1', '', '', 0, 'clichaumeil@clichaumeil', 'isModEnabled("clichaumeil")', 0, '0', array ( 'css' => '', 'cssview' => '', 'csslist' => ''));
-		$extrafields->addExtraField('clichaumeil_ref_required', 'CliChaumeilRefRequired', 'boolean', 100, '', 'thirdparty', 0, 0, '', array ( 'options' => array ( '' => NULL, ), ), 1, '', '1', '', '', 0, 'clichaumeil@clichaumeil', 'isModEnabled("clichaumeil")', 0, '0', array ( 'css' => '', 'cssview' => '', 'csslist' => ''));
-		$extrafields->addExtraField('clichaumeil_generalexpenses', 'CliChaumeilGeneralExpenses', 'double', 100, '24,2', 'bom_bom', 0, 0, '', array ( 'options' => array ( '' => NULL, ), ), 1, '', '1', '', '', 0, 'clichaumeil@clichaumeil', 1, 0, '0', array ( 'css' => '', 'cssview' => '', 'csslist' => '', ));
+		$extrafields->addExtraField('clichaumeilreviewrate', 'CliChaumeilReviewRate', 'double', 100, '24,2', 'contrat', 0, 0, '', array('options' => array('' => NULL, ), ), 1, '', '1', '', '', 0, 'clichaumeil@clichaumeil', 'isModEnabled("clichaumeil")', 0, '0', array('css' => '', 'cssview' => '', 'csslist' => ''));
+		$extrafields->addExtraField('clichaumeil_reviewdate', 'CliChaumeilReviewDate', 'date', 100, '', 'contratdet', 0, 0, '', array('options' => array('' => NULL, ), ), 1, '', '1', '', '', 0, 'clichaumeil@clichaumeil', 'isModEnabled("clichaumeil")', 0, '0', array('css' => '', 'cssview' => '', 'csslist' => '', ));
+		$extrafields->addExtraField('clichaumeil_height', 'CliChaumeilHeight', 'double', 100, '24,2', 'propaldet', 0, 0, '', array('options' => array('' => NULL, ), ), 1, '', '1', '', '', 0, 'clichaumeil@clichaumeil', 'isModEnabled("clichaumeil")', 0, '0', array('css' => '', 'cssview' => '', 'csslist' => ''));
+		$extrafields->addExtraField('clichaumeil_length', 'CliChaumeilLength', 'double', 100, '24,2', 'propaldet', 0, 0, '', array('options' => array('' => NULL, ), ), 1, '', '1', '', '', 0, 'clichaumeil@clichaumeil', 'isModEnabled("clichaumeil")', 0, '0', array('css' => '', 'cssview' => '', 'csslist' => ''));
+		$extrafields->addExtraField('clichaumeil_height', 'CliChaumeilHeight', 'double', 100, '24,2', 'commandedet', 0, 0, '', array('options' => array('' => NULL, ), ), 1, '', '1', '', '', 0, 'clichaumeil@clichaumeil', 'isModEnabled("clichaumeil")', 0, '0', array('css' => '', 'cssview' => '', 'csslist' => ''));
+		$extrafields->addExtraField('clichaumeil_length', 'CliChaumeilLength', 'double', 100, '24,2', 'commandedet', 0, 0, '', array('options' => array('' => NULL, ), ), 1, '', '1', '', '', 0, 'clichaumeil@clichaumeil', 'isModEnabled("clichaumeil")', 0, '0', array('css' => '', 'cssview' => '', 'csslist' => ''));
+		$extrafields->addExtraField('clichaumeil_ref_required', 'CliChaumeilRefRequired', 'boolean', 100, '', 'thirdparty', 0, 0, '', array('options' => array('' => NULL, ), ), 1, '', '1', '', '', 0, 'clichaumeil@clichaumeil', 'isModEnabled("clichaumeil")', 0, '0', array('css' => '', 'cssview' => '', 'csslist' => ''));
+		$extrafields->addExtraField('clichaumeil_generalexpenses', 'CliChaumeilGeneralExpenses', 'double', 100, '24,2', 'bom_bom', 0, 0, '', array('options' => array('' => NULL, ), ), 1, '', '1', '', '', 0, 'clichaumeil@clichaumeil', 1, 0, '0', array('css' => '', 'cssview' => '', 'csslist' => '', ));
 
-		$param = array(
-			'options' => array(
-				'CLICHAUMEIL_PENDING_FILE' => $langs->trans("CLICHAUMEIL_PENDING_FILE"),
-				'CLICHAUMEIL_FILE_RECEIVED' => $langs->trans("CLICHAUMEIL_FILE_RECEIVED"),
-			),
-		);
+		$permsCostComposition = '$user->hasRight(\'clichaumeil\',\'product\',\'read_cost_composition\') ? 1:0';
+		$permsPaFg = '$user->hasRight(\'clichaumeil\',\'product\',\'read_cost_composition\') ? 5:0';
 
-		// Use the KEY as default value, NOT the translated label
-		$extrafields->addExtraField('clichaumeil_supplierstatut', 'CliChaumeilSupplierStatut', 'select', 100, '24', 'supplier_proposal', 0, 0, 'CLICHAUMEIL_PENDING_FILE', $param, 1, '', '1', '', '', 0, 'clichaumeil@clichaumeil', 'isModEnabled("clichaumeil")', 0, '0', array ( 'css' => '', 'cssview' => '', 'csslist' => '', ));
+		$enabledSimpleProduct = '(!isset($object) || !property_exists($object, "type") || (int) $object->type === 0)';
+		$extrafields->addExtraField('clichaumeil_prc_separator', 'CliChaumeilCostBreakdown', 'separate', 100, '', 'product', 0, 0, '', '', 1, $permsCostComposition, $permsCostComposition, '', '', 0, 'clichaumeil@clichaumeil', $enabledSimpleProduct, 0, '0', array());
+		$extrafields->addExtraField('clichaumeil_pa_support', 'CliChaumeilPaSupport', 'double', 101, '24,4', 'product', 0, 0, '', '', 1, $permsCostComposition, $permsCostComposition, '', '', 0, 'clichaumeil@clichaumeil', $enabledSimpleProduct, 0, '0', array());
+		$extrafields->addExtraField('clichaumeil_pa_sav', 'CliChaumeilPaSav', 'double', 102, '24,4', 'product', 0, 0, '', '', 1, $permsCostComposition, $permsCostComposition, '', '', 0, 'clichaumeil@clichaumeil', $enabledSimpleProduct, 0, '0', array());
+		$extrafields->addExtraField('clichaumeil_pa_machine', 'CliChaumeilPaMachine', 'double', 103, '24,4', 'product', 0, 0, '', '', 1, $permsCostComposition, $permsCostComposition, '', '', 0, 'clichaumeil@clichaumeil', $enabledSimpleProduct, 0, '0', array());
+		$extrafields->addExtraField('clichaumeil_pa_encre', 'CliChaumeilPaInk', 'double', 104, '24,4', 'product', 0, 0, '', '', 1, $permsCostComposition, $permsCostComposition, '', '', 0, 'clichaumeil@clichaumeil', $enabledSimpleProduct, 0, '0', array());
+		$extrafields->addExtraField('clichaumeil_pa_mo', 'CliChaumeilPaLabor', 'double', 105, '24,4', 'product', 0, 0, '', '', 1, $permsCostComposition, $permsCostComposition, '', '', 0, 'clichaumeil@clichaumeil', $enabledSimpleProduct, 0, '0', array());
+		$extrafields->addExtraField('clichaumeil_fg_percent', 'CliChaumeilFgPercent', 'double', 106, '24,4', 'product', 1, 0, '', '', 1, $permsCostComposition, $permsCostComposition, '', '', 0, 'clichaumeil@clichaumeil', $enabledSimpleProduct, 0, '0', array());
+		$extrafields->addExtraField('clichaumeil_pa_fg', 'CliChaumeilPaFg', 'double', 107, '24,4', 'product', 0, 0, '', '', 0, $permsPaFg, $permsPaFg, '', '', 0, 'clichaumeil@clichaumeil', $enabledSimpleProduct, 0, '0', array());
+
+		if (!getDolGlobalInt('CLICHAUMEIL_DEFAULT_OVERHEAD_RATE')) {
+			dolibarr_set_const($this->db, 'CLICHAUMEIL_DEFAULT_OVERHEAD_RATE', CliChaumeilProductCostCalculator::DEFAULT_RATE_VALUE, 'chaine', 0, '', $conf->entity);
+		}
 
 		// Permissions
 		$this->remove($options);
@@ -353,12 +372,12 @@ class modClichaumeil extends DolibarrModules
 
 		foreach ($myTmpObjects as $myTmpObjectKey => $myTmpObjectArray) {
 			if ($myTmpObjectArray['includerefgeneration']) {
-				$src = DOL_DOCUMENT_ROOT.'/install/doctemplates/'.$moduledir.'/template_chaumeilrfas.odt';
-				$dirodt = DOL_DATA_ROOT.($conf->entity > 1 ? '/'.$conf->entity : '').'/doctemplates/'.$moduledir;
-				$dest = $dirodt.'/template_chaumeilrfas.odt';
+				$src = DOL_DOCUMENT_ROOT . '/install/doctemplates/' . $moduledir . '/template_chaumeilrfas.odt';
+				$dirodt = DOL_DATA_ROOT . ($conf->entity > 1 ? '/' . $conf->entity : '') . '/doctemplates/' . $moduledir;
+				$dest = $dirodt . '/template_chaumeilrfas.odt';
 
 				if (file_exists($src) && !file_exists($dest)) {
-					require_once DOL_DOCUMENT_ROOT.'/core/lib/files.lib.php';
+					require_once DOL_DOCUMENT_ROOT . '/core/lib/files.lib.php';
 					dol_mkdir($dirodt);
 					$result = dol_copy($src, $dest, '0', 0);
 					if ($result < 0) {
@@ -369,10 +388,10 @@ class modClichaumeil extends DolibarrModules
 				}
 
 				$sql = array_merge($sql, array(
-					"DELETE FROM ".$this->db->prefix()."document_model WHERE nom = 'standard_".strtolower($myTmpObjectKey)."' AND type = '".$this->db->escape(strtolower($myTmpObjectKey))."' AND entity = ".((int) $conf->entity),
-					"INSERT INTO ".$this->db->prefix()."document_model (nom, type, entity) VALUES('standard_".strtolower($myTmpObjectKey)."', '".$this->db->escape(strtolower($myTmpObjectKey))."', ".((int) $conf->entity).")",
-					"DELETE FROM ".$this->db->prefix()."document_model WHERE nom = 'generic_".strtolower($myTmpObjectKey)."_odt' AND type = '".$this->db->escape(strtolower($myTmpObjectKey))."' AND entity = ".((int) $conf->entity),
-					"INSERT INTO ".$this->db->prefix()."document_model (nom, type, entity) VALUES('generic_".strtolower($myTmpObjectKey)."_odt', '".$this->db->escape(strtolower($myTmpObjectKey))."', ".((int) $conf->entity).")"
+					"DELETE FROM " . $this->db->prefix() . "document_model WHERE nom = 'standard_" . strtolower($myTmpObjectKey) . "' AND type = '" . $this->db->escape(strtolower($myTmpObjectKey)) . "' AND entity = " . ((int) $conf->entity),
+					"INSERT INTO " . $this->db->prefix() . "document_model (nom, type, entity) VALUES('standard_" . strtolower($myTmpObjectKey) . "', '" . $this->db->escape(strtolower($myTmpObjectKey)) . "', " . ((int) $conf->entity) . ")",
+					"DELETE FROM " . $this->db->prefix() . "document_model WHERE nom = 'generic_" . strtolower($myTmpObjectKey) . "_odt' AND type = '" . $this->db->escape(strtolower($myTmpObjectKey)) . "' AND entity = " . ((int) $conf->entity),
+					"INSERT INTO " . $this->db->prefix() . "document_model (nom, type, entity) VALUES('generic_" . strtolower($myTmpObjectKey) . "_odt', '" . $this->db->escape(strtolower($myTmpObjectKey)) . "', " . ((int) $conf->entity) . ")"
 				));
 			}
 		}
