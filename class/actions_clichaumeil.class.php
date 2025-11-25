@@ -204,9 +204,9 @@ class ActionsClichaumeil extends CommonHookActions
 			return;
 		}
 
-		$key = 'options_fg_percent';
+		$key = 'options_clichaumeil_fg_percent';
 		$postedValue = GETPOST($key, 'alphanohtml');
-		if ($postedValue !== '') {
+		if ($postedValue !== null && $postedValue !== '') {
 			return;
 		}
 
@@ -309,12 +309,12 @@ class ActionsClichaumeil extends CommonHookActions
 
 		// Populate extrafields from import data
 		$product->array_options = [
-			'options_pa_support' => $values['extra.pa_support'] ?? '0',
-			'options_pa_sav' => $values['extra.pa_sav'] ?? '0',
-			'options_pa_machine' => $values['extra.pa_machine'] ?? '0',
-			'options_pa_encre' => $values['extra.pa_encre'] ?? '0',
-			'options_pa_mo' => $values['extra.pa_mo'] ?? '0',
-			'options_fg_percent' => $values['extra.fg_percent'] ?? CliChaumeilProductCostCalculator::getDefaultOverheadRate(),
+			'options_clichaumeil_pa_support' => $values['extra.clichaumeil_pa_support'] ?? '0',
+			'options_clichaumeil_pa_sav' => $values['extra.clichaumeil_pa_sav'] ?? '0',
+			'options_clichaumeil_pa_machine' => $values['extra.clichaumeil_pa_machine'] ?? '0',
+			'options_clichaumeil_pa_encre' => $values['extra.clichaumeil_pa_encre'] ?? '0',
+			'options_clichaumeil_pa_mo' => $values['extra.clichaumeil_pa_mo'] ?? '0',
+			'options_clichaumeil_fg_percent' => $values['extra.clichaumeil_fg_percent'] ?? CliChaumeilProductCostCalculator::getDefaultOverheadRate(),
 		];
 
 		return $product;
@@ -331,11 +331,11 @@ class ActionsClichaumeil extends CommonHookActions
 	private function calculateCostFromImportData(Product $product, array $values, User $user): int
 	{
 		// Update fg_percent extrafield
-		$fgPercent = $values['extra.fg_percent'];
-		$product->array_options['options_fg_percent'] = $fgPercent;
-		$result = $product->updateExtraField('fg_percent', 'CLICHAUMEIL_PRODUCT_COST', $user);
+		$fgPercent = $values['extra.clichaumeil_fg_percent'];
+		$product->array_options['options_clichaumeil_fg_percent'] = $fgPercent;
+		$result = $product->updateExtraField('clichaumeil_fg_percent', 'CLICHAUMEIL_PRODUCT_COST', $user);
 		if ($result < 0) {
-			dol_syslog('Erreur updateExtraField fg_percent pour produit ' . $product->id, LOG_ERR);
+			dol_syslog('Erreur updateExtraField clichaumeil_fg_percent pour produit ' . $product->id, LOG_ERR);
 			return -1;
 		}
 
@@ -373,11 +373,11 @@ class ActionsClichaumeil extends CommonHookActions
 
 	private function hasFgPercentValueInRecord(array $values): bool
 	{
-		if (!array_key_exists('extra.fg_percent', $values)) {
+		if (!array_key_exists('extra.clichaumeil_fg_percent', $values)) {
 			return false;
 		}
 
-		$value = $values['extra.fg_percent'];
+		$value = $values['extra.clichaumeil_fg_percent'];
 		return !($value === null || $value === '');
 	}
 
@@ -569,7 +569,7 @@ class ActionsClichaumeil extends CommonHookActions
 		} else {
 			$generalExpenses = $object->array_options['options_clichaumeil_generalexpenses'];
 		}
-		$object->total_cost = $object->total_cost * (1+(float) $generalExpenses / 100);
+		$object->total_cost = $object->total_cost * (1 + (float) $generalExpenses / 100);
 
 		return 0;
 	}
@@ -602,7 +602,8 @@ class ActionsClichaumeil extends CommonHookActions
 			$item = $formSetup->newItem('CLICHAUMEIL_ACTIVATE_SUPPLIER_PROPOSAL');
 			$item->setAsYesNo();
 
-			$item = $formSetup->newItem('CLICHAUMEIL_MANDATORY_ATTACHED_FILES_SUPPLIER_PROPOSAL');;
+			$item = $formSetup->newItem('CLICHAUMEIL_MANDATORY_ATTACHED_FILES_SUPPLIER_PROPOSAL');
+			;
 			$item->setAsYesNo();
 
 			print $formSetup->generateOutput();

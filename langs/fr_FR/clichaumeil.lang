@@ -61,6 +61,7 @@ ClichaumeilSetupPage = Paramètrages CliChaumeil
 CliChaumeilReviewRate=Taux de révision (en %%)
 CliChaumeilReviewDate=Date de révision
 
+CLICHAUMEIL_DEFAULT_OVERHEAD_RATE=Taux de frais généraux par défaut (%)
 CLICHAUMEIL_REVIEW_YEAR_DELAY=Décalage de la date de révision après renouvellement (en années)
 CLICHAUMEIL_PRICING_UPDATE_MANAGERS=Responsables de la mise à jour tarifaire
 CLICHAUMEIL_CRON_EMAIL_TEMPLATE=Modèle de mail à utiliser pour l’alerte par mail

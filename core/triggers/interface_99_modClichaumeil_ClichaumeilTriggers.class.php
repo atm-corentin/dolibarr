@@ -30,11 +30,11 @@
  * - The class name must be InterfaceMytrigger
  */
 
-require_once DOL_DOCUMENT_ROOT.'/core/triggers/dolibarrtriggers.class.php';
-require_once DOL_DOCUMENT_ROOT.'/core/class/cunits.class.php';
-require_once __DIR__.'/../../class/chaumeilrfa.class.php';
-require_once __DIR__.'/../../class/CliChaumeilProductCost.class.php';
-require_once __DIR__.'/../../lib/clichaumeil.lib.php';
+require_once DOL_DOCUMENT_ROOT . '/core/triggers/dolibarrtriggers.class.php';
+require_once DOL_DOCUMENT_ROOT . '/core/class/cunits.class.php';
+require_once __DIR__ . '/../../class/chaumeilrfa.class.php';
+require_once __DIR__ . '/../../class/CliChaumeilProductCost.class.php';
+require_once __DIR__ . '/../../lib/clichaumeil.lib.php';
 
 
 
@@ -94,42 +94,42 @@ class InterfaceClichaumeilTriggers extends DolibarrTriggers
 			case 'LINEPROPAL_INSERT':
 			case 'LINEPROPAL_MODIFY':
 
-			//Clean fields
-			$height = 0;
-			$length = 0;
-			if (!empty($object->array_options["options_clichaumeil_height"]) && !empty($object->array_options["options_clichaumeil_length"])){
-				$height = abs(price2num($object->array_options["options_clichaumeil_height"]));
-				$length = abs(price2num($object->array_options["options_clichaumeil_length"]));
-				$object->array_options["options_clichaumeil_height"] = $height;
-				$object->array_options["options_clichaumeil_length"] = $length;
-			}
+				//Clean fields
+				$height = 0;
+				$length = 0;
+				if (!empty($object->array_options["options_clichaumeil_height"]) && !empty($object->array_options["options_clichaumeil_length"])) {
+					$height = abs(price2num($object->array_options["options_clichaumeil_height"]));
+					$length = abs(price2num($object->array_options["options_clichaumeil_length"]));
+					$object->array_options["options_clichaumeil_height"] = $height;
+					$object->array_options["options_clichaumeil_length"] = $length;
+				}
 
 
-			if ($height > 0 && $length > 0) {
-				// Get rowid from c_units dictionary for the 'CM2' code
-				$object->fk_unit = (int)dol_getIdFromCode($this->db, 'CM2', 'c_units', 'code', 'rowid');
-				if ($object->fk_unit <= 0) {
+				if ($height > 0 && $length > 0) {
+					// Get rowid from c_units dictionary for the 'CM2' code
+					$object->fk_unit = (int) dol_getIdFromCode($this->db, 'CM2', 'c_units', 'code', 'rowid');
+					if ($object->fk_unit <= 0) {
+						setEventMessages($object->error, $object->errors, 'errors');
+						dol_syslog(__METHOD__ . ' ' . implode(',', $this->errors), LOG_ERR);
+						return -1;
+					}
+					$object->qty = (float) $height * (float) $length;
+					setEventMessages($langs->trans('SurfaceRecalculatedInCm2'), null, 'mesgs');
+
+				}
+				//For escape infinity loop ! use notriggers 1 !
+				$result = $object->update($user, 1);
+				if ($result <= 0) {
 					setEventMessages($object->error, $object->errors, 'errors');
 					dol_syslog(__METHOD__ . ' ' . implode(',', $this->errors), LOG_ERR);
 					return -1;
 				}
-				$object->qty = (float)$height * (float)$length;
-				setEventMessages($langs->trans('SurfaceRecalculatedInCm2'), null, 'mesgs');
-
-			}
-			//For escape infinity loop ! use notriggers 1 !
-			$result = $object->update($user, 1);
-			if ($result <= 0) {
-				setEventMessages($object->error, $object->errors, 'errors');
-				dol_syslog(__METHOD__.' '.implode(',', $this->errors), LOG_ERR);
-				return -1;
-			}
 
 
 			case 'ORDER_VALIDATE':
 
 				//Check for massaction
-				if (empty($object->thirdparty)){
+				if (empty($object->thirdparty)) {
 					$object->fetch_thirdparty();
 				}
 
@@ -137,23 +137,23 @@ class InterfaceClichaumeilTriggers extends DolibarrTriggers
 				$customerRefRequired = $object->thirdparty->array_options['options_clichaumeil_ref_required'];
 				$customerRefCommande = $object->ref_client;
 
-				if ($customerRefRequired == 1 && empty($customerRefCommande)){
-					setEventMessages($langs->trans('CliChaumeilCustomerRefRequired',$object->getNomUrl()), null, 'errors');
+				if ($customerRefRequired == 1 && empty($customerRefCommande)) {
+					setEventMessages($langs->trans('CliChaumeilCustomerRefRequired', $object->getNomUrl()), null, 'errors');
 					return -1;
 				}
 
-			case 'externalAccessInitController'	:
+			case 'externalAccessInitController':
 				externalAccessInitController($object, $user, $langs, $conf);
 				break;
 
 			default:
-				dol_syslog("Trigger '".$this->name."' for action '".$action."' launched by ".__FILE__.". id=".$object->id);
+				dol_syslog("Trigger '" . $this->name . "' for action '" . $action . "' launched by " . __FILE__ . ". id=" . $object->id);
 				break;
 		}
 
 		return 0;
 	}
-/**
+	/**
 	 * Handle product cost synchronization when a product is saved.
 	 *
 	 * This method checks if the action is a product-related event and if so,
@@ -210,14 +210,14 @@ class InterfaceClichaumeilTriggers extends DolibarrTriggers
 		}
 
 		$product->fetch_optionals($product->id);
-		$key = 'options_fg_percent';
+		$key = 'options_clichaumeil_fg_percent';
 		$currentValue = $product->array_options[$key] ?? null;
 		if ($currentValue !== null && $currentValue !== '') {
 			return 0;
 		}
 
 		$product->array_options[$key] = CliChaumeilProductCostCalculator::getDefaultOverheadRate();
-		$result = $product->updateExtraField('fg_percent', 'CLICHAUMEIL_PRODUCT_COST', $user);
+		$result = $product->updateExtraField('clichaumeil_fg_percent', 'CLICHAUMEIL_PRODUCT_COST', $user);
 
 		return ($result < 0) ? -1 : 1;
 	}
