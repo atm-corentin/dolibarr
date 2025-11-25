@@ -59,8 +59,7 @@ if (!$res) {
 require_once DOL_DOCUMENT_ROOT . "/core/lib/admin.lib.php";
 require_once DOL_DOCUMENT_ROOT . "/core/class/html.formmail.class.php";
 require_once '../lib/clichaumeil.lib.php';
-include_once __DIR__ . '/../class/CliChaumeilProductCost.class.php';
-include DOL_DOCUMENT_ROOT.'/core/actions_setmoduleoptions.inc.php';
+require_once __DIR__ . '/../class/CliChaumeilProductCost.class.php';
 
 /**
  * @var Conf $conf
@@ -185,6 +184,8 @@ if ($action == 'update' && !empty($user->admin)) {
 /*
  * View
  */
+
+include DOL_DOCUMENT_ROOT.'/core/actions_setmoduleoptions.inc.php';
 
 $form = new Form($db);
 
