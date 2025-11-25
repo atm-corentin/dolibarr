@@ -603,7 +603,6 @@ class ActionsClichaumeil extends CommonHookActions
 			$item->setAsYesNo();
 
 			$item = $formSetup->newItem('CLICHAUMEIL_MANDATORY_ATTACHED_FILES_SUPPLIER_PROPOSAL');
-			;
 			$item->setAsYesNo();
 
 			print $formSetup->generateOutput();
