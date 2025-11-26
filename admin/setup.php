@@ -155,16 +155,13 @@ buildUserMultiSelectField($formSetup, $form, NOTIF_USERS_KEY);
 
 //// --- Field 5: Category product ---
 $categories = new Categorie($db);
-$allCat = $categories->get_all_categories();
-$categorieTypeProduct = 0;
+$allCat = $categories->get_full_arbo(Categorie::TYPE_PRODUCT);
 
 $arrayCat = array();
 $counter = 0;
 if (!empty($allCat)) {
 	foreach ($allCat as $cat) {
-		if ($cat->type == $categorieTypeProduct) { // catégories produits
-			$arrayCat[$cat->rowid] = $cat->label;
-		}
+		$arrayCat[$cat->rowid] = $cat->label;
 	}
 }
 
