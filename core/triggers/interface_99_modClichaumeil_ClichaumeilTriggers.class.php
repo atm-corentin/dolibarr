@@ -125,7 +125,7 @@ class InterfaceClichaumeilTriggers extends DolibarrTriggers
 					return -1;
 				}
 
-
+			break;
 			case 'ORDER_VALIDATE':
 
 				//Check for massaction
