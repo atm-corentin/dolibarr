@@ -24,7 +24,10 @@
  * TODO: Write detailed description here.
  */
 
-require_once DOL_DOCUMENT_ROOT.'/core/class/commonhookactions.class.php';
+require_once DOL_DOCUMENT_ROOT . '/core/class/commonhookactions.class.php';
+require_once DOL_DOCUMENT_ROOT . '/product/class/product.class.php';
+require_once __DIR__ . '/CliChaumeilProductCost.class.php';
+require_once __DIR__ . '/../lib/clichaumeil.lib.php';
 require_once DOL_DOCUMENT_ROOT.'/categories/class/categorie.class.php';
 require_once DOL_DOCUMENT_ROOT.'/product/class/product.class.php';
 
@@ -48,7 +51,6 @@ class ActionsClichaumeil extends CommonHookActions
 	 */
 	public $errors = array();
 
-
 	/**
 	 * @var mixed[] Hook results. Propagated to $hookmanager->resArray for later reuse
 	 */
@@ -63,6 +65,7 @@ class ActionsClichaumeil extends CommonHookActions
 	 * @var int		Priority of hook (50 is used if value is not defined)
 	 */
 	public $priority;
+
 	private static $lineData = [];
 
 	/**
@@ -94,8 +97,6 @@ class ActionsClichaumeil extends CommonHookActions
 		return 0;
 	}
 
-
-
 	/**
 	 * Overload the addMoreMassActions function : replacing the parent's function with the one below
 	 *
@@ -114,7 +115,7 @@ class ActionsClichaumeil extends CommonHookActions
 
 		/* print_r($parameters); print_r($object); echo "action: " . $action; */
 		if (in_array($parameters['currentcontext'], array('somecontext1', 'somecontext2'))) {		// do something only for the context 'somecontext1' or 'somecontext2'
-			$this->resprints = '<option value="0"'.($disabled ? ' disabled="disabled"' : '').'>'.$langs->trans("ClichaumeilMassAction").'</option>';
+			$this->resprints = '<option value="0"' . ($disabled ? ' disabled="disabled"' : '') . '>' . $langs->trans("ClichaumeilMassAction") . '</option>';
 		}
 
 		if (!$error) {
@@ -125,7 +126,30 @@ class ActionsClichaumeil extends CommonHookActions
 		}
 	}
 
+	/**
+	 * Pre-fill product extrafields and lock computed fields when applicable.
+	 *
+	 * @param array<string,mixed> $parameters
+	 * @param CommonObject        $object
+	 * @param string              $action
+	 * @param HookManager         $hookmanager
+	 * @return int
+	 */
+	public function formObjectOptions($parameters, &$object, &$action, $hookmanager)
+	{
+		$context = $parameters['context'] ?? ($parameters['currentcontext'] ?? '');
+		if (strpos((string) $context, 'productcard') === false) {
+			return 0;
+		}
 
+		if (!$object instanceof Product || !CliChaumeilProductCostCalculator::isSupportedProduct($object)) {
+			return 0;
+		}
+
+		$this->populateDefaultOverheadRateOnCreate($object);
+
+		return 0;
+	}
 
 	/**
 	 * Overload the loadDataForCustomReports function : returns data to complete the customreport tool
@@ -156,7 +180,7 @@ class ActionsClichaumeil extends CommonHookActions
 			$this->results['picto'] = 'clichaumeil@clichaumeil';
 		}
 
-		$head[$h][0] = 'customreports.php?objecttype='.$parameters['objecttype'].(empty($parameters['tabfamily']) ? '' : '&tabfamily='.$parameters['tabfamily']);
+		$head[$h][0] = 'customreports.php?objecttype=' . $parameters['objecttype'] . (empty($parameters['tabfamily']) ? '' : '&tabfamily=' . $parameters['tabfamily']);
 		$head[$h][1] = $langs->trans("CustomReports");
 		$head[$h][2] = 'customreports';
 
@@ -170,7 +194,31 @@ class ActionsClichaumeil extends CommonHookActions
 		return 0;
 	}
 
+	/**
+	 * Pre-fill FG percent extrafield on new simple product when empty.
+	 *
+	 * @param Product $product
+	 * @return void
+	 */
+	private function populateDefaultOverheadRateOnCreate(Product $product): void
+	{
+		if (!empty($product->id) || (int) $product->type !== Product::TYPE_PRODUCT) {
+			return;
+		}
 
+		$key = 'options_clichaumeil_fg_percent';
+		$postedValue = GETPOST($key, 'alphanohtml');
+		if ($postedValue !== null && $postedValue !== '') {
+			return;
+		}
+
+		$currentValue = $product->array_options[$key] ?? null;
+		if ($currentValue !== null && $currentValue !== '') {
+			return;
+		}
+
+		$product->array_options[$key] = CliChaumeilProductCostCalculator::getDefaultOverheadRate();
+	}
 
 	/**
 	 * Overload the restrictedArea function : check permission on an object
@@ -190,13 +238,149 @@ class ActionsClichaumeil extends CommonHookActions
 			if ($user->hasRight('clichaumeil', 'myobject', 'read')) {
 				$this->results['result'] = 1;
 				return 1;
-			} else {
-				$this->results['result'] = 0;
-				return 1;
 			}
+
+			$this->results['result'] = 0;
+			return 1;
 		}
 
 		return 0;
+	}
+
+	/**
+	 * Apply CliChaumeil price calculation after an import finishes.
+	 *
+	 * @param array<string,mixed> $parameters
+	 * @param CommonObject        $object
+	 * @param string              $action
+	 * @param HookManager         $hookmanager
+	 * @return int
+	 */
+	public function afterImportInsert($parameters, &$object, &$action, $hookmanager)
+	{
+		global $user, $langs;
+
+		if ((int) ($parameters['step'] ?? 0) !== 6) {
+			return 0;
+		}
+
+		$code = (string) ($parameters['datatoimport'] ?? '');
+		if (strpos($code, 'produit_') !== 0) {
+			return 0;
+		}
+
+		$values = $this->extractImportValues($parameters);
+		if (!$this->hasFgPercentValueInRecord($values)) {
+			$langs->load('clichaumeil@clichaumeil');
+			setEventMessages($langs->trans('CliChaumeilErrorMissingFgPercent', $values['p.ref'] ?? ''), null, 'errors');
+			return -1;
+		}
+
+		// Build a minimal Product object directly from import data (performance optimization)
+		$product = $this->buildProductFromImportData($values);
+		if (!$product || !CliChaumeilProductCostCalculator::isSupportedProduct($product)) {
+			return 0;
+		}
+
+		// Apply fg_percent and calculate cost price using import data
+		$result = $this->calculateCostFromImportData($product, $values, $user);
+		return ($result < 0) ? -1 : 0;
+	}
+
+	/**
+	 * Build a lightweight Product object from import data without database fetch.
+	 * 
+	 * This is a performance optimization for bulk imports: instead of calling
+	 * Product::fetch() for each row (which would hit the database), we populate
+	 * only the fields needed for cost calculation directly from $values.
+	 *
+	 * @param array<string,mixed> $values Import data values
+	 * @return Product|null
+	 */
+	private function buildProductFromImportData(array $values): ?Product
+	{
+		$id = !empty($values['p.rowid']) ? (int) $values['p.rowid'] : 0;
+		if ($id <= 0) {
+			return null;
+		}
+
+		$product = new Product($this->db);
+		$product->id = $id;
+		$product->ref = $values['p.ref'] ?? '';
+		$product->type = isset($values['p.fk_product_type']) ? (int) $values['p.fk_product_type'] : Product::TYPE_PRODUCT;
+
+		// Populate extrafields from import data
+		$product->array_options = [
+			'options_clichaumeil_pa_support' => $values['extra.clichaumeil_pa_support'] ?? '0',
+			'options_clichaumeil_pa_sav' => $values['extra.clichaumeil_pa_sav'] ?? '0',
+			'options_clichaumeil_pa_machine' => $values['extra.clichaumeil_pa_machine'] ?? '0',
+			'options_clichaumeil_pa_encre' => $values['extra.clichaumeil_pa_encre'] ?? '0',
+			'options_clichaumeil_pa_mo' => $values['extra.clichaumeil_pa_mo'] ?? '0',
+			'options_clichaumeil_fg_percent' => $values['extra.clichaumeil_fg_percent'] ?? CliChaumeilProductCostCalculator::getDefaultOverheadRate(),
+		];
+
+		return $product;
+	}
+
+	/**
+	 * Calculate and update product cost from import data.
+	 *
+	 * @param Product $product Lightweight product object
+	 * @param array<string,mixed> $values Import data
+	 * @param User $user Current user
+	 * @return int <0 on error, >=0 on success
+	 */
+	private function calculateCostFromImportData(Product $product, array $values, User $user): int
+	{
+		// Update fg_percent extrafield
+		$fgPercent = $values['extra.clichaumeil_fg_percent'];
+		$product->array_options['options_clichaumeil_fg_percent'] = $fgPercent;
+		$result = $product->updateExtraField('clichaumeil_fg_percent', 'CLICHAUMEIL_PRODUCT_COST', $user);
+		if ($result < 0) {
+			dol_syslog('Erreur updateExtraField clichaumeil_fg_percent pour produit ' . $product->id, LOG_ERR);
+			return -1;
+		}
+
+		// Calculate and update cost price
+		return CliChaumeilProductCostCalculator::calculateAndUpdateProductCostPriceFromExtrafields($product, $user);
+	}
+
+	/**
+	 * @param array<string,mixed> $parameters
+	 * @return array<string,mixed>
+	 */
+	private function extractImportValues(array $parameters): array
+	{
+		$values = array();
+		$match = $parameters['array_match_file_to_database'] ?? array();
+		$records = $parameters['arrayrecord'] ?? array();
+
+		if (!is_array($match) || !is_array($records)) {
+			return $values;
+		}
+
+		foreach ($match as $position => $target) {
+			$index = ((int) $position) - 1;
+			if ($index < 0 || !isset($records[$index]['val'])) {
+				continue;
+			}
+
+			$values[$target] = $records[$index]['val'];
+		}
+
+		return $values;
+	}
+
+
+
+	private function hasFgPercentValueInRecord(array $values): bool
+	{
+		if (!array_key_exists('extra.clichaumeil_fg_percent', $values)) {
+			return false;
+		}
+
+		$value = $values['extra.clichaumeil_fg_percent'];
+		return !($value === null || $value === '');
 	}
 
 	/**
@@ -232,11 +416,11 @@ class ActionsClichaumeil extends CommonHookActions
 			$id = $parameters['object']->id;
 			// verifier le type d'onglet comme member_stats où ça ne doit pas apparaitre
 			// if (in_array($element, ['societe', 'member', 'contrat', 'fichinter', 'project', 'propal', 'commande', 'facture', 'order_supplier', 'invoice_supplier'])) {
-			if ($element == 'societe' && $user->hasRight('clichaumeil', 'chaumeilrfa', 'read')){
+			if ($element == 'societe' && $user->hasRight('clichaumeil', 'chaumeilrfa', 'read')) {
 				$datacount = 0;
 
 				//SQL COUNT RFA by socid
-				$rfaCountsql = "SELECT COUNT(*) as count FROM ".$this->db->prefix()."clichaumeil_chaumeilrfa WHERE fk_soc = ".(int)$id;
+				$rfaCountsql = "SELECT COUNT(*) as count FROM " . $this->db->prefix() . "clichaumeil_chaumeilrfa WHERE fk_soc = " . (int) $id;
 
 				$resql = $this->db->query($rfaCountsql);
 				if ($resql) {
@@ -246,7 +430,7 @@ class ActionsClichaumeil extends CommonHookActions
 					dol_print_error($this->db);
 				}
 
-				if ($object->fournisseur && $this->rfa_tab_added == false ) {
+				if ($object->fournisseur && $this->rfa_tab_added == false) {
 					$parameters['head'][$counter][0] = dol_buildpath('/clichaumeil/chaumeilrfa_list.php', 1) . '?socid=' . $id;
 					$parameters['head'][$counter][1] = $langs->trans('ClichaumeilTabRfa');
 					$this->rfa_tab_added = true;
@@ -287,7 +471,7 @@ class ActionsClichaumeil extends CommonHookActions
 		return CommonObject::commonReplaceThirdparty($dbs, $origin_id, $dest_id, $tables);
 	}
 
-/**
+	/**
 	 * Inject margin data into the page footer and load the JS script.
 	 *
 	 * This hook outputs a `<script>` tag containing JSON data used by
@@ -403,7 +587,6 @@ class ActionsClichaumeil extends CommonHookActions
 	}
 
 
-
 	/**
 	 * Overload the printObjectLine method to prepare margin-related data for each line.
 	 *
@@ -432,7 +615,7 @@ class ActionsClichaumeil extends CommonHookActions
 			$line = $parameters['line'];
 			$costPrice = 0;
 			if (!empty($line->pa_ht)) {
-				$costPrice = (float)$line->pa_ht;
+				$costPrice = (float) $line->pa_ht;
 			}
 
 			// 💸 Get unit price (PU HT)
@@ -445,8 +628,8 @@ class ActionsClichaumeil extends CommonHookActions
 
 			// 📦 Store the data for the JS script
 			self::$lineData[$line->id] = [
-				'pu_ht'        => $pu_ht,
-				'cost_price'   => $costPrice,
+				'pu_ht' => $pu_ht,
+				'cost_price' => $costPrice,
 				'warning_icon' => $warningIcon,
 			];
 		}
@@ -454,16 +637,117 @@ class ActionsClichaumeil extends CommonHookActions
 		return 0;
 	}
 
-	public function calculateCostsBomAfter($parameters, &$object, &$action, $hookmanager):int
+	public function calculateCostsBomAfter($parameters, &$object, &$action, $hookmanager): int
 	{
 		$action = GETPOST('action', 'alphanohtml');
-		if($action == 'update_extras' || $action == 'update') {
+		if ($action == 'update_extras' || $action == 'update') {
 			$generalExpenses = GETPOSTFLOAT('options_clichaumeil_generalexpenses');
-		}
-		else {
+		} else {
 			$generalExpenses = $object->array_options['options_clichaumeil_generalexpenses'];
 		}
-		$object->total_cost = $object->total_cost * (1+(float) $generalExpenses / 100);
+		$object->total_cost = $object->total_cost * (1 + (float) $generalExpenses / 100);
+
+		return 0;
+	}
+
+	/**
+	 * Hook to add more options to a setup form.
+	 *
+	 * @param   array        $parameters    Hook context parameters
+	 * @param   CommonObject $object        The object hooked (often $this, but context varies)
+	 * @param   string       $action        Current action
+	 * @param   HookManager  $hookmanager   Hook manager
+	 * @return  int                           <0 if KO, 0 if no action, >0 if OK
+	 */
+	public function formMoreOptions($parameters, &$object, &$action, $hookmanager)
+	{
+		global $db, $langs, $formSetup; // $formSetup is the key object from the setup page
+
+		$TContexts = explode(':', $parameters['context']);
+
+		if (in_array($parameters['currentcontext'], $TContexts)) {
+			if (empty($formSetup) || !is_object($formSetup)) {
+				dol_syslog("actions_clichaumeil.class.php::formMoreOptions hook failed: \$formSetup not available in global scope.", LOG_ERR);
+				return 0; // Do nothing if $formSetup is not available
+			}
+
+			// Add a title for the settings injected by this module (good practice)
+			$formSetup->newItem('CLICHAUMEIL_SPE_CUSTOMER')->setAsTitle();
+
+			// Add the new Yes/No setting for Supplier Proposals
+			$item = $formSetup->newItem('CLICHAUMEIL_ACTIVATE_SUPPLIER_PROPOSAL');
+			$item->setAsYesNo();
+
+			$item = $formSetup->newItem('CLICHAUMEIL_MANDATORY_ATTACHED_FILES_SUPPLIER_PROPOSAL');
+			$item->setAsYesNo();
+
+			print $formSetup->generateOutput();
+			// We successfully added items to the form
+			return 1;
+		}
+
+		return 0;
+	}
+
+	/**
+	 * Hook to add more services to the externalaccess home page.
+	 *
+	 * @param   array        $parameters    Hook context parameters
+	 * @param   CommonObject $object        The object hooked (in this case, the $context from the calling file)
+	 * @param   string       $action        Current action
+	 * @param   HookManager  $hookmanager   Hook manager
+	 * @return  int                           <0 if KO, 0 if no action/no block, >0 if block
+	 */
+	public function PrintServices($parameters, &$object, &$action, $hookmanager)
+	{
+		global $conf, $user, $langs;
+
+		$langs->load("clichaumeil@clichaumeil");
+
+		// $object is the $context passed from the calling file
+		$context = $object;
+
+		// Check if our specific service (Supplier Proposal) is activated
+		if (getDolGlobalInt("CLICHAUMEIL_ACTIVATE_SUPPLIER_PROPOSAL") && isModEnabled('supplier_proposal')) { // We assume this new right
+			// Get the URL for our controller
+			$link = $context->getControllerUrl('supplier_proposal');
+
+			// Start output buffering
+			ob_start();
+
+			// Call the function to print our new service
+			printService($langs->trans('CLICHAUMEIL_SUPPLIERPROPOSALS'), 'fa-handshake-o', $link);
+
+			// Add the captured HTML to the hook manager's output buffer
+			$this->resprints .= ob_get_clean();
+
+			// Return 0 to signal "OK" but DO NOT block the default services
+			return 0;
+		}
+
+		return 0; // No action
+	}
+
+	/**
+	 * Overloading the PrintPageView function : replacing the parent's function with the one below
+	 *
+	 * @param   array()         $parameters     Hook metadatas (context, etc...)
+	 * @param   CommonObject    &$object        The object to process (an invoice if you are in invoice module, a propale in propale's module, etc...)
+	 * @param   string          &$action        Current action (if set). Generally create or edit or null
+	 * @param   HookManager     $hookmanager    Hook manager propagated to allow calling another hook
+	 * @return  int                             < 0 on error, 0 on success, 1 to replace standard code
+	 */
+	public function PrintPageView($parameters, &$object, &$action, $hookmanager)
+	{
+		global $conf, $user, $langs;
+		$error = 0; // Error counter
+
+		if (in_array('externalaccesspage', explode(':', $parameters['context']))) {
+			$context = Context::getInstance();
+
+			// Note: supplier_proposal_card is now handled by a dedicated controller
+			// See www/controllers/supplierProposalCard.controller.php
+		}
 
 		return 0;
 	}
