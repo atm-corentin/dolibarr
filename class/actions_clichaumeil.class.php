@@ -497,73 +497,25 @@ class ActionsClichaumeil extends CommonHookActions
 		$allowedElements = array('propal', 'commande');
 
 		if (!empty($object) && in_array($object->element, $allowedElements, true) && $targetCatId > 0) {
-			$cat = new Categorie($db);
-			$catTool = new Categorie($db);
-
-			if ($cat->fetch($targetCatId) > 0) {
-				$targetProducts = array();
-
-				if ($cat->id > 0) {
-					foreach ($cat->getObjectsInCateg('product') as $p) {
-						$targetProducts[] = (int) $p->id;
-					}
-				}
-
-				$jstargetProductsArray = json_encode($targetProducts);
-
-
-				/* --------------------------------------------------------------------
-				 * 2) Parcours des lignes existantes → masquage extrafields si nécessaire
-				 * -------------------------------------------------------------------- */
-
+			$targetProducts = $this->getTargetProducts($targetCatId);
+			if (!empty($targetProducts)) {
 				$context = $object->element;
+				$productCategories = $this->mapProductCategories($object);
+				$lineVisibilities = $this->buildLineVisibilities($object->lines, $targetProducts, $targetCatId, $context, $productCategories);
 
-				$lineVisibilities = array();
-
-				foreach ((array) $object->lines as $line) {
-					$lineElement = !empty($line->element) ? $line->element : $context . 'det';
-
-					$isInCat = false;
-					if (!empty($line->fk_product)) {
-						// 1) Liste préchargée (rapide)
-						$isInCat = in_array((int) $line->fk_product, $targetProducts, true);
-
-						// 2) Fallback via la recherche de catégories (fiable si l'objet n'était pas dans la liste préchargée)
-						if (!$isInCat) {
-							$catIds = array_map('intval', $catTool->containing($line->fk_product, 'product', 'id'));
-							$isInCat = in_array($targetCatId, $catIds, true);
-						}
-					}
-
-					$lineVisibilities[] = array(
-						'element' => $lineElement,
-						'id' => (int) $line->id,
-						'show' => $isInCat,
-						'selectors' => array(
-							'length' => '#extrarow-' . $lineElement . '_clichaumeil_length_' . (int) $line->id,
-							'height' => '#extrarow-' . $lineElement . '_clichaumeil_height_' . (int) $line->id,
-						),
+				if (!empty($lineVisibilities)) {
+					$config = array(
+						'targetProducts' => $targetProducts,
+						'lines' => $lineVisibilities,
 					);
+
+					print '<script type="application/json" id="clichaumeil-extrafields-data">'
+						. json_encode($config, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT)
+						. '</script>';
+
+					$jsUrl = dol_buildpath('/clichaumeil/js/extrafields_visibility.js', 1);
+					echo '<script src="' . $jsUrl . '" defer></script>';
 				}
-
-				$jsonLineVisibilities = json_encode($lineVisibilities);
-
-
-				/* --------------------------------------------------------------------
-				 * 3) Injection données + JS (déporté dans un fichier dédié)
-				 * -------------------------------------------------------------------- */
-
-				$config = array(
-					'targetProducts' => $targetProducts,
-					'lines' => $lineVisibilities,
-				);
-
-				print '<script type="application/json" id="clichaumeil-extrafields-data">'
-					. json_encode($config, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT)
-					. '</script>';
-
-				$jsUrl = dol_buildpath('/clichaumeil/js/extrafields_visibility.js', 1);
-				echo '<script src="' . $jsUrl . '" defer></script>';
 			}
 		}
 
@@ -750,6 +702,107 @@ class ActionsClichaumeil extends CommonHookActions
 		}
 
 		return 0;
+	}
+
+	/**
+	 * Return product ids that belong to the target category.
+	 *
+	 * @param int $targetCatId
+	 * @return int[]
+	 */
+	private function getTargetProducts(int $targetCatId): array
+	{
+		$cat = new Categorie($this->db);
+		$targetProducts = array();
+
+		if ($cat->fetch($targetCatId) > 0 && $cat->id > 0) {
+			foreach ($cat->getObjectsInCateg('product') as $p) {
+				$targetProducts[] = (int) $p->id;
+			}
+		}
+
+		return $targetProducts;
+	}
+
+	/**
+	 * Build a map productId => array of category ids for all products present in object lines.
+	 *
+	 * @param CommonObject $object
+	 * @return array<int,int[]>
+	 */
+	private function mapProductCategories(CommonObject $object): array
+	{
+		$productIds = array();
+		foreach ((array) $object->lines as $line) {
+			if (!empty($line->fk_product)) {
+				$productIds[] = (int) $line->fk_product;
+			}
+		}
+		$productIds = array_values(array_unique(array_filter($productIds)));
+
+		if (empty($productIds)) {
+			return array();
+		}
+
+		$sql = 'SELECT cp.fk_product, cp.fk_categorie';
+		$sql .= ' FROM ' . $this->db->prefix() . 'categorie_product cp';
+		$sql .= ' INNER JOIN ' . $this->db->prefix() . 'categorie c ON c.rowid = cp.fk_categorie AND c.type = ' . (int) Categorie::TYPE_PRODUCT;
+		$sql .= ' WHERE cp.fk_product IN (' . implode(',', $productIds) . ')';
+
+		$productCategories = array();
+		$resql = $this->db->query($sql);
+		if ($resql) {
+			while ($obj = $this->db->fetch_object($resql)) {
+				$pid = (int) $obj->fk_product;
+				$cid = (int) $obj->fk_categorie;
+				if (!isset($productCategories[$pid])) {
+					$productCategories[$pid] = array();
+				}
+				$productCategories[$pid][] = $cid;
+			}
+		}
+
+		return $productCategories;
+	}
+
+	/**
+	 * Prepare visibility payload for JS.
+	 *
+	 * @param array     $lines
+	 * @param int[]     $targetProducts
+	 * @param int       $targetCatId
+	 * @param string    $context
+	 * @param array     $productCategories
+	 * @return array<int,array<string,mixed>>
+	 */
+	private function buildLineVisibilities(array $lines, array $targetProducts, int $targetCatId, string $context, array $productCategories): array
+	{
+		$lineVisibilities = array();
+
+		foreach ((array) $lines as $line) {
+			$lineElement = !empty($line->element) ? $line->element : $context . 'det';
+
+			$isInCat = false;
+			if (!empty($line->fk_product)) {
+				$isInCat = in_array((int) $line->fk_product, $targetProducts, true);
+
+				if (!$isInCat && isset($productCategories[$line->fk_product])) {
+					$isInCat = in_array($targetCatId, $productCategories[$line->fk_product], true);
+				}
+			}
+
+			$lineVisibilities[] = array(
+				'element' => $lineElement,
+				'id' => (int) $line->id,
+				'show' => $isInCat,
+				'selectors' => array(
+					'length' => '#extrarow-' . $lineElement . '_clichaumeil_length_' . (int) $line->id,
+					'height' => '#extrarow-' . $lineElement . '_clichaumeil_height_' . (int) $line->id,
+				),
+			);
+		}
+
+		return $lineVisibilities;
 	}
 
 }
