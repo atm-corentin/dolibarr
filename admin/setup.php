@@ -167,8 +167,6 @@ if (!empty($allCat)) {
 
 // --- New item category product target ---
 $item = $formSetup->newItem('CLICHAUMEIL_PRODUCT_TARGET_CATEGORY')->setAsCategory('product');
-$item->label = 'Catégorie cible produit';
-
 
 $setupnotempty += count($formSetup->items);
 

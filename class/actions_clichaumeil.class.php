@@ -289,7 +289,7 @@ class ActionsClichaumeil extends CommonHookActions
 
 	/**
 	 * Build a lightweight Product object from import data without database fetch.
-	 * 
+	 *
 	 * This is a performance optimization for bulk imports: instead of calling
 	 * Product::fetch() for each row (which would hit the database), we populate
 	 * only the fields needed for cost calculation directly from $values.
@@ -487,7 +487,6 @@ class ActionsClichaumeil extends CommonHookActions
 	 */
 	public function llxFooter($parameters, &$object, &$action, $hookmanager): int
 	{
-		global $db;
 
 		/* --------------------------------------------------------------------
 		 * 1) Récupération catégorie cible + produits

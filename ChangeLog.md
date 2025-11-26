@@ -1,7 +1,7 @@
 # CHANGELOG MODULE CLICHAUMEIL FOR [DOLIBARR ERP CRM](https://www.dolibarr.org)
 
 ### Unreleased
-- NEW : Add conf (category product)for display extrafields (Length & height) on propal/command line *24/11/2025* - 1.5.0 
+- NEW : Add conf (category product)to display extrafields (Length & height) on propal/command line *24/11/2025* - 1.5.0 
 
 ## 1.5
 - NEW : Add calcul cost_price from extrafields on product. *20/11/2025* - 1.5.0
