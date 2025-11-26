@@ -48,9 +48,6 @@ class SupplierProposalFileManager
 	public function uploadFileToSession(int $trackId) : array
 	{
 		dol_syslog("SupplierProposalFileManager::uploadFileToSession trackId=" . $trackId, LOG_DEBUG);
-		dol_syslog("SupplierProposalFileManager::uploadFileToSession _FILES=" . json_encode($_FILES), LOG_DEBUG);
-		dol_syslog("SupplierProposalFileManager::uploadFileToSession _POST=" . json_encode($_POST), LOG_DEBUG);
-
 		// Check if file input exists at all
 		if (!isset($_FILES['addedfile'])) {
 			dol_syslog("SupplierProposalFileManager::uploadFileToSession No file input found in \$_FILES", LOG_WARNING);

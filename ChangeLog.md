@@ -1,7 +1,7 @@
 # CHANGELOG MODULE CLICHAUMEIL FOR [DOLIBARR ERP CRM](https://www.dolibarr.org)
 
 ## 1.5
-- FIX : Upload file in some case. *26/11/2025* - 1.5.1
+- FIX : Upload file in some case when we upload file in session. *26/11/2025* - 1.5.1
 - NEW : Add calcul cost_price from extrafields on product. *20/11/2025* - 1.5.0
 
 ## 1.4
