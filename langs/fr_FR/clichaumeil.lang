@@ -173,3 +173,4 @@ SurfaceRecalculatedInCm2=Surface recalculée (en cm²)
 CliChaumeilGeneralExpenses=Frais généraux (en %)
 WarningNegativeMargin=Attention : le prix de revient est supérieur au prix de vente. Marge négative
 CliChaumeilErrorMissingFgPercent=Import impossible : le champ Frais généraux (%) est obligatoire pour le produit %s.
+CLICHAUMEIL_PRODUCT_TARGET_CATEGORY=Sélectionnez la catégorie de produits pour laquelle les champs Hauteur et Longueur doivent apparaître.

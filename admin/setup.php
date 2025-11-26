@@ -60,6 +60,8 @@ require_once DOL_DOCUMENT_ROOT . "/core/lib/admin.lib.php";
 require_once DOL_DOCUMENT_ROOT . "/core/class/html.formmail.class.php";
 require_once '../lib/clichaumeil.lib.php';
 require_once __DIR__ . '/../class/CliChaumeilProductCost.class.php';
+require_once DOL_DOCUMENT_ROOT.'/categories/class/categorie.class.php';
+require_once DOL_DOCUMENT_ROOT.'/product/class/product.class.php';
 
 /**
  * @var Conf $conf
@@ -150,6 +152,21 @@ $item = $formSetup->newItem(EMAIL_TEMPLATE_KEY)->setAsSelect($templates);
 
 // --- Field 4: Users to Notify (User Select) ---
 buildUserMultiSelectField($formSetup, $form, NOTIF_USERS_KEY);
+
+//// --- Field 5: Category product ---
+$categories = new Categorie($db);
+$allCat = $categories->get_full_arbo(Categorie::TYPE_PRODUCT);
+
+$arrayCat = array();
+$counter = 0;
+if (!empty($allCat)) {
+	foreach ($allCat as $cat) {
+		$arrayCat[$cat->rowid] = $cat->label;
+	}
+}
+
+// --- New item category product target ---
+$item = $formSetup->newItem('CLICHAUMEIL_PRODUCT_TARGET_CATEGORY')->setAsCategory('product');
 
 $setupnotempty += count($formSetup->items);
 

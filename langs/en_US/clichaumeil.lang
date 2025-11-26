@@ -165,3 +165,4 @@ SurfaceRecalculatedInCm2=Surface recalculated (in cm²)
 CliChaumeilGeneralExpenses=General expenses (%)
 WarningNegativeMargin=Warning: the cost price is higher than the selling price. Negative margin.
 CliChaumeilErrorMissingFgPercent=Import failed: Overhead rate (%) is required for product %s.
+CLICHAUMEIL_PRODUCT_TARGET_CATEGORY=Select the product category for which the Height and Length fields should be displayed.
