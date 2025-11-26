@@ -306,116 +306,82 @@ class ActionsClichaumeil extends CommonHookActions
 		global $db;
 
 		/* --------------------------------------------------------------------
-		 * 1) Récupération catégorie cible + produits M2
+		 * 1) Récupération catégorie cible + produits
 		 * -------------------------------------------------------------------- */
 
-		$cat = new Categorie($db);
 		$targetCatId = getDolGlobalInt('CLICHAUMEIL_PRODUCT_TARGET_CATEGORY');
-		$cat->fetch($targetCatId);
+		$allowedElements = array('propal', 'commande');
 
-		$targetProducts = [];
+		if (!empty($object) && in_array($object->element, $allowedElements, true) && $targetCatId > 0) {
+			$cat = new Categorie($db);
+			$catTool = new Categorie($db);
 
-		if ($cat->id > 0) {
-			foreach ($cat->getObjectsInCateg('product') as $p) {
-				$targetProducts[] = (int) $p->id;
+			if ($cat->fetch($targetCatId) > 0) {
+				$targetProducts = array();
+
+				if ($cat->id > 0) {
+					foreach ($cat->getObjectsInCateg('product') as $p) {
+						$targetProducts[] = (int) $p->id;
+					}
+				}
+
+				$jstargetProductsArray = json_encode($targetProducts);
+
+
+				/* --------------------------------------------------------------------
+				 * 2) Parcours des lignes existantes → masquage extrafields si nécessaire
+				 * -------------------------------------------------------------------- */
+
+				$context = $object->element;
+
+				$lineVisibilities = array();
+
+				foreach ((array) $object->lines as $line) {
+					$lineElement = !empty($line->element) ? $line->element : $context . 'det';
+
+					$isInCat = false;
+					if (!empty($line->fk_product)) {
+						// 1) Liste préchargée (rapide)
+						$isInCat = in_array((int) $line->fk_product, $targetProducts, true);
+
+						// 2) Fallback via la recherche de catégories (fiable si l'objet n'était pas dans la liste préchargée)
+						if (!$isInCat) {
+							$catIds = array_map('intval', $catTool->containing($line->fk_product, 'product', 'id'));
+							$isInCat = in_array($targetCatId, $catIds, true);
+						}
+					}
+
+					$lineVisibilities[] = array(
+						'element' => $lineElement,
+						'id' => (int) $line->id,
+						'show' => $isInCat,
+						'selectors' => array(
+							'length' => '#extrarow-' . $lineElement . '_clichaumeil_length_' . (int) $line->id,
+							'height' => '#extrarow-' . $lineElement . '_clichaumeil_height_' . (int) $line->id,
+						),
+					);
+				}
+
+				$jsonLineVisibilities = json_encode($lineVisibilities);
+
+
+				/* --------------------------------------------------------------------
+				 * 3) Injection données + JS (déporté dans un fichier dédié)
+				 * -------------------------------------------------------------------- */
+
+				$config = array(
+					'targetProducts' => $targetProducts,
+					'lines' => $lineVisibilities,
+				);
+
+				print '<script type="application/json" id="clichaumeil-extrafields-data">'
+					. json_encode($config, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT)
+					. '</script>';
+
+				$jsUrl = dol_buildpath('/clichaumeil/js/extrafields_visibility.js', 1);
+				echo '<script src="' . $jsUrl . '" defer></script>';
 			}
 		}
-
-		$jstargetProductsArray = json_encode($targetProducts);
-
-
-		/* --------------------------------------------------------------------
-		 * 2) Parcours des lignes existantes → masquage extrafields si nécessaire
-		 * -------------------------------------------------------------------- */
-
-		$product = new Product($db);
-		$catTool = new Categorie($db);
-		$context = $object->element;
-
-		$fieldsToHide = [];
-
-		foreach ($object->lines as $line) {
-
-			$product->fetch($line->fk_product);
-			$catIds = array_map('intval', $catTool->containing($line->fk_product, 'product', 'id'));
-
-			$isInCat = in_array($targetCatId, $catIds);
-
-			if (!$isInCat) {
-				$fieldsToHide[] = [
-					'length' => "#extrarow-{$context}det_clichaumeil_length_{$line->id}",
-					'height' => "#extrarow-{$context}det_clichaumeil_height_{$line->id}",
-				];
-			}
-		}
-
-		$jsonHide = json_encode($fieldsToHide);
-
-
-		/* --------------------------------------------------------------------
-		 * 3) Injection JS (un seul bloc propre)
-		 * -------------------------------------------------------------------- */
-
-		print <<<JS
-<script>
-$(document).ready(function () {
-
-    /* ---------------------------------------------------------
-     * A) Gestion extrafields dans le formulaire d’ajout
-     * --------------------------------------------------------- */
-
-    let targetProducts = $jstargetProductsArray;
-    let productSelect = $("#idprod");
-
-    function updateExtraFieldsAddForm(productId) {
-        productId = parseInt(productId);
-
-        let lengthInput = $("#options_clichaumeil_length");
-        let heightInput = $("#options_clichaumeil_height");
-
-        let lengthRow = lengthInput.closest(".fieldline_options_clichaumeil_length");
-        let heightRow = heightInput.closest(".fieldline_options_clichaumeil_height");
-
-        // Reset
-        lengthInput.val("");
-        heightInput.val("");
-
-        if (!productId || productId < 0) {
-            lengthRow.hide();
-            heightRow.hide();
-            return;
-        }
-
-        if (targetProducts.includes(productId)) {
-            lengthRow.show();
-            heightRow.show();
-        } else {
-            lengthRow.hide();
-            heightRow.hide();
-        }
-    }
-
-    productSelect.on("change", function () {
-        updateExtraFieldsAddForm($(this).val());
-    });
-
-    updateExtraFieldsAddForm(productSelect.val());
-
-
-    /* ---------------------------------------------------------
-     * B) Masquage extrafields sur les lignes existantes
-     * --------------------------------------------------------- */
-
-    let fieldsToHide = $jsonHide;
-
-    fieldsToHide.forEach(item => {
-        $(item.length).hide();
-        $(item.height).hide();
-    });
-
-});
-</script>
-JS;
 
 
 		/* --------------------------------------------------------------------
