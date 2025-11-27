@@ -630,31 +630,6 @@ class ActionsClichaumeil extends CommonHookActions
 	 */
 	public function formMoreOptions($parameters, &$object, &$action, $hookmanager)
 	{
-		global $db, $langs, $formSetup; // $formSetup is the key object from the setup page
-
-		$TContexts = explode(':', $parameters['context']);
-
-		if (in_array($parameters['currentcontext'], $TContexts)) {
-			if (empty($formSetup) || !is_object($formSetup)) {
-				dol_syslog("actions_clichaumeil.class.php::formMoreOptions hook failed: \$formSetup not available in global scope.", LOG_ERR);
-				return 0; // Do nothing if $formSetup is not available
-			}
-
-			// Add a title for the settings injected by this module (good practice)
-			$formSetup->newItem('CLICHAUMEIL_SPE_CUSTOMER')->setAsTitle();
-
-			// Add the new Yes/No setting for Supplier Proposals
-			$item = $formSetup->newItem('CLICHAUMEIL_ACTIVATE_SUPPLIER_PROPOSAL');
-			$item->setAsYesNo();
-
-			$item = $formSetup->newItem('CLICHAUMEIL_MANDATORY_ATTACHED_FILES_SUPPLIER_PROPOSAL');
-			$item->setAsYesNo();
-
-			print $formSetup->generateOutput();
-			// We successfully added items to the form
-			return 1;
-		}
-
 		return 0;
 	}
 
@@ -695,6 +670,47 @@ class ActionsClichaumeil extends CommonHookActions
 		}
 
 		return 0; // No action
+	}
+
+	/**
+	 * Inject CliChaumeil settings into FormSetup rendering for ExternalAccess.
+	 *
+	 * This runs inside FormSetup::generateOutput(), so items are added before the
+	 * ExternalAccess setup page renders, avoiding any duplicate blocks.
+	 *
+	 * @param array<string,mixed> $parameters Hook parameters (editMode, ...)
+	 * @param FormSetup           $formSetup  FormSetup instance
+	 * @param string              $action     Current action
+	 * @param HookManager         $hookmanager Hook manager
+	 * @return int
+	 */
+	public function formSetupBeforeGenerateOutput($parameters, &$formSetup, &$action, $hookmanager)
+	{
+		global $langs;
+
+		$TContexts = explode(':', $parameters['context']);
+
+		if (!in_array('externalaccesssetup', $TContexts )) {
+			return 0;
+		}
+
+		if (!is_object($formSetup) || !method_exists($formSetup, 'newItem')) {
+			return 0;
+		}
+
+		$langs->load('clichaumeil@clichaumeil');
+
+		static $added = false;
+		if ($added || !empty($formSetup->items['CLICHAUMEIL_ACTIVATE_SUPPLIER_PROPOSAL'])) {
+			return 0;
+		}
+		$added = true;
+
+		$formSetup->newItem('CLICHAUMEIL_SPE_CUSTOMER')->setAsTitle();
+		$formSetup->newItem('CLICHAUMEIL_ACTIVATE_SUPPLIER_PROPOSAL')->setAsYesNo();
+		$formSetup->newItem('CLICHAUMEIL_MANDATORY_ATTACHED_FILES_SUPPLIER_PROPOSAL')->setAsYesNo();
+
+		return 0;
 	}
 
 	/**
