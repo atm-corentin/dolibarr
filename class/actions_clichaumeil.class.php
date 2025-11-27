@@ -298,24 +298,42 @@ class ActionsClichaumeil extends CommonHookActions
 	private function buildProductFromImportData(array $values): ?Product
 	{
 		$id = !empty($values['p.rowid']) ? (int) $values['p.rowid'] : 0;
-		if ($id <= 0) {
+		$ref = $values['p.ref'] ?? '';
+
+		$product = new Product($this->db);
+
+		// Prefer the ID if it was provided by the import, otherwise fall back to a fetch by ref
+		if ($id > 0) {
+			$product->id = $id;
+			$product->ref = $ref;
+			$product->type = isset($values['p.fk_product_type']) ? (int) $values['p.fk_product_type'] : Product::TYPE_PRODUCT;
+		} elseif ($ref !== '') {
+			if ($product->fetch(0, $ref) <= 0) {
+				return null;
+			}
+		} else {
 			return null;
 		}
 
-		$product = new Product($this->db);
-		$product->id = $id;
-		$product->ref = $values['p.ref'] ?? '';
-		$product->type = isset($values['p.fk_product_type']) ? (int) $values['p.fk_product_type'] : Product::TYPE_PRODUCT;
+		if (empty($product->array_options)) {
+			$product->array_options = array();
+		}
 
 		// Populate extrafields from import data
-		$product->array_options = [
-			'options_clichaumeil_pa_support' => $values['extra.clichaumeil_pa_support'] ?? '0',
-			'options_clichaumeil_pa_sav' => $values['extra.clichaumeil_pa_sav'] ?? '0',
-			'options_clichaumeil_pa_machine' => $values['extra.clichaumeil_pa_machine'] ?? '0',
-			'options_clichaumeil_pa_encre' => $values['extra.clichaumeil_pa_encre'] ?? '0',
-			'options_clichaumeil_pa_mo' => $values['extra.clichaumeil_pa_mo'] ?? '0',
+		$importOptions = array(
+			'options_clichaumeil_pa_support' => $values['extra.clichaumeil_pa_support'] ?? null,
+			'options_clichaumeil_pa_sav' => $values['extra.clichaumeil_pa_sav'] ?? null,
+			'options_clichaumeil_pa_machine' => $values['extra.clichaumeil_pa_machine'] ?? null,
+			'options_clichaumeil_pa_encre' => $values['extra.clichaumeil_pa_encre'] ?? null,
+			'options_clichaumeil_pa_mo' => $values['extra.clichaumeil_pa_mo'] ?? null,
 			'options_clichaumeil_fg_percent' => $values['extra.clichaumeil_fg_percent'] ?? CliChaumeilProductCostCalculator::getDefaultOverheadRate(),
-		];
+		);
+
+		foreach ($importOptions as $key => $value) {
+			if ($value !== null) {
+				$product->array_options[$key] = $value;
+			}
+		}
 
 		return $product;
 	}
