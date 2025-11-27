@@ -1,0 +1,6 @@
+"ref","label","fk_product_type","tosell","tobuy","extra.pa_support","extra.pa_sav","extra.pa_machine","extra.pa_encre","extra.pa_mo","extra.fg_percent"
+"PRD-SIMPLE-001","Brochure premium A4","0","1","1","12.5000","2.3000","4.7500","1.1500","3.2000","15.0000"
+"PRD-SIMPLE-002","Flyer quadri","0","1","1","4.8000","1.0000","0.7500","0.5000","2.1000","8.5000"
+"PRD-SIMPLE-003","Affiche grand format","0","1","1","25.0000","5.2500","15.5000","3.7500","8.0000","12.0000"
+"PRD-SIMPLE-004","Carte de visite recyclée","0","1","1","1.2500","0.2500","0.1500","0.1200","0.6000","6.0000"
+"PRD-SIMPLE-005","Etiquette adhésive","0","1","1","6.9000","0.8500","1.9500","0.4500","1.5000","10.2500"

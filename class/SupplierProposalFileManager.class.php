@@ -48,26 +48,35 @@ class SupplierProposalFileManager
 	public function uploadFileToSession(int $trackId) : array
 	{
 		dol_syslog("SupplierProposalFileManager::uploadFileToSession trackId=" . $trackId, LOG_DEBUG);
-
-		// Check if file was uploaded
-		if (empty($_FILES['addedfile']['name'])) {
-			dol_syslog("SupplierProposalFileManager::uploadFileToSession No file uploaded (addedfile empty)", LOG_DEBUG);
+		// Check if file input exists at all
+		if (!isset($_FILES['addedfile'])) {
+			dol_syslog("SupplierProposalFileManager::uploadFileToSession No file input found in \$_FILES", LOG_WARNING);
 			return array(
 				'success' => false,
 				'error_code' => 'NO_FILE',
-				'error_message' => 'No file provided'
+				'error_message' => 'No file input found'
 			);
 		}
 
-		// Check for PHP upload errors
+		// Check for PHP upload errors FIRST (before checking name)
 		if (isset($_FILES['addedfile']['error']) && $_FILES['addedfile']['error'] !== UPLOAD_ERR_OK) {
 			$errorCode = $this->getUploadErrorCode($_FILES['addedfile']['error']);
 			$errorMessage = $this->getUploadErrorMessage($_FILES['addedfile']['error']);
-			dol_syslog("SupplierProposalFileManager::uploadFileToSession Upload error: " . $errorMessage, LOG_WARNING);
+			dol_syslog("SupplierProposalFileManager::uploadFileToSession Upload error: " . $errorMessage . " (error code: " . $_FILES['addedfile']['error'] . ")", LOG_WARNING);
 			return array(
 				'success' => false,
 				'error_code' => $errorCode,
 				'error_message' => $errorMessage
+			);
+		}
+
+		// Check if file name is empty (no file selected)
+		if (empty($_FILES['addedfile']['name'])) {
+			dol_syslog("SupplierProposalFileManager::uploadFileToSession No file selected (name empty but no error)", LOG_DEBUG);
+			return array(
+				'success' => false,
+				'error_code' => 'NO_FILE',
+				'error_message' => 'No file selected'
 			);
 		}
 
