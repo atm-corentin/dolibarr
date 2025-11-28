@@ -520,7 +520,6 @@ class ActionsClichaumeil extends CommonHookActions
 				$productCategories = $this->mapProductCategories($object);
 				$lineVisibilities = $this->buildLineVisibilities($object->lines, $targetProducts, $targetCatId, $context, $productCategories);
 
-				if (!empty($lineVisibilities)) {
 					$config = array(
 						'targetProducts' => $targetProducts,
 						'lines' => $lineVisibilities,
@@ -532,7 +531,6 @@ class ActionsClichaumeil extends CommonHookActions
 
 					$jsUrl = dol_buildpath('/clichaumeil/js/extrafields_visibility.js', 1);
 					echo '<script src="' . $jsUrl . '" defer></script>';
-				}
 			}
 		}
 

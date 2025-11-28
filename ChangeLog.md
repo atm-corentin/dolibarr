@@ -4,6 +4,7 @@
 - NEW : Add conf (category product)to display extrafields (Length & height) on propal/command line *24/11/2025* - 1.5.0 
 
 ## 1.5
+- FIX : Extrafields visibilities without line propal/commande. *28/11/2025* - 1.5.2
 - FIX : Upload file in some case when we upload file in session. *26/11/2025* - 1.5.1
 - NEW : Add calcul cost_price from extrafields on product. *20/11/2025* - 1.5.0
 
