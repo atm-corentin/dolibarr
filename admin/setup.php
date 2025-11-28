@@ -161,7 +161,7 @@ $arrayCat = array();
 $counter = 0;
 if (!empty($allCat)) {
 	foreach ($allCat as $cat) {
-		$arrayCat[$cat->rowid] = $cat->label;
+		$arrayCat[$cat['rowid']] = $cat['label'];
 	}
 }
 

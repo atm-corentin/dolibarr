@@ -342,6 +342,8 @@ class modClichaumeil extends DolibarrModules
 		$extrafields->addExtraField('clichaumeil_length', 'CliChaumeilLength', 'double', 100, '24,2', 'commandedet', 0, 0, '', array('options' => array('' => NULL, ), ), 1, '', '1', '', '', 0, 'clichaumeil@clichaumeil', 'isModEnabled("clichaumeil")', 0, '0', array('css' => '', 'cssview' => '', 'csslist' => ''));
 		$extrafields->addExtraField('clichaumeil_ref_required', 'CliChaumeilRefRequired', 'boolean', 100, '', 'thirdparty', 0, 0, '', array('options' => array('' => NULL, ), ), 1, '', '1', '', '', 0, 'clichaumeil@clichaumeil', 'isModEnabled("clichaumeil")', 0, '0', array('css' => '', 'cssview' => '', 'csslist' => ''));
 		$extrafields->addExtraField('clichaumeil_generalexpenses', 'CliChaumeilGeneralExpenses', 'double', 100, '24,2', 'bom_bom', 0, 0, '', array('options' => array('' => NULL, ), ), 1, '', '1', '', '', 0, 'clichaumeil@clichaumeil', 1, 0, '0', array('css' => '', 'cssview' => '', 'csslist' => '', ));
+		$extrafields->addExtraField('clichaumeil_units', 'CliChaumeilUnits', 'sellist', 210, '', 'propaldet', 0, 0, '', ['options' => ["c_units:short_label:rowid::((unit_type:=:'surface') AND (active:=:1))" => null]], 1, '', 1, '', '', 0, 'clichaumeil@clichaumeil', 'isModEnabled("clichaumeil")');
+		$extrafields->addExtraField('clichaumeil_units', 'CliChaumeilUnits', 'sellist', 210, '', 'commandedet', 0, 0, '', ['options' => ["c_units:short_label:rowid::((unit_type:=:'surface') AND (active:=:1))" => null]], 1, '', 1, '', '', 0, 'clichaumeil@clichaumeil', 'isModEnabled("clichaumeil")');
 
 		$permsCostComposition = '$user->hasRight(\'clichaumeil\',\'product\',\'read_cost_composition\') ? 1:0';
 		$permsPaFg = '$user->hasRight(\'clichaumeil\',\'product\',\'read_cost_composition\') ? 5:0';

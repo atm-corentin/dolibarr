@@ -107,14 +107,39 @@ class InterfaceClichaumeilTriggers extends DolibarrTriggers
 
 				if ($height > 0 && $length > 0) {
 					// Get rowid from c_units dictionary for the 'CM2' code
-					$object->fk_unit = (int) dol_getIdFromCode($this->db, 'CM2', 'c_units', 'code', 'rowid');
+					if ($object->array_options["options_clichaumeil_units"]) {
+						$object->fk_unit = $object->array_options["options_clichaumeil_units"];
+						$targetUnit = $object->fk_unit;
+						$baseUnit = (int) dol_getIdFromCode($this->db, 'CM2', 'c_units', 'code', 'rowid');
+					}else{
+						$object->fk_unit = (int) dol_getIdFromCode($this->db, 'CM2', 'c_units', 'code', 'rowid');
+						$baseUnit = $object->fk_unit;
+					}
+
+					//get unit
+					$unit = new CUnits($this->db);
+					$res = $unit->fetch($object->fk_unit);
+					if ($res > 0) {
+						$shortLabelUnit = $unit->short_label;
+					}
+
 					if ($object->fk_unit <= 0) {
 						setEventMessages($object->error, $object->errors, 'errors');
 						dol_syslog(__METHOD__ . ' ' . implode(',', $this->errors), LOG_ERR);
 						return -1;
 					}
 					$object->qty = (float) $height * (float) $length;
-					setEventMessages($langs->trans('SurfaceRecalculatedInCm2'), null, 'mesgs');
+					// Conversion avec Dolibarr
+					//$converted = CUnits::unitConverter($object->qty, $baseUnit, $targetUnit);
+					if (empty($targetUnit)){
+						$targetUnit = $baseUnit;
+					}
+					$converted = $unit->unitConverter($object->qty, $baseUnit, $targetUnit);
+					$object->qty = $converted;
+
+
+					//var_dump($object->array_options);exit;
+					setEventMessages($langs->trans('CliChaumeilSurfaceRecalculated',$shortLabelUnit), null, 'mesgs');
 
 				}
 				//For escape infinity loop ! use notriggers 1 !
