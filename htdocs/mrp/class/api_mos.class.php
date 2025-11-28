@@ -98,9 +98,11 @@ class Mos extends DolibarrApi
 	 * @phpstan-return Mo[]
 	 *
 	 * @throws RestException
-	 */
+ */
 	public function index($sortfield = "t.rowid", $sortorder = 'ASC', $limit = 100, $page = 0, $sqlfilters = '', $properties = '')
 	{
+		global $hookmanager;
+
 		if (!DolibarrApiAccess::$user->hasRight('mrp', 'read')) {
 			throw new RestException(403);
 		}
@@ -143,6 +145,10 @@ class Mos extends DolibarrApi
 				throw new RestException(400, 'Error when validating parameter sqlfilters -> '.$errormessage);
 			}
 		}
+
+		$parameters = array();
+		$hookmanager->executeHooks('printFieldListWhere', $parameters, $tmpobject); // Note that $action and $object may have been modified by hook
+		$sql .= $hookmanager->resPrint;
 
 		$sql .= $this->db->order($sortfield, $sortorder);
 		if ($limit) {

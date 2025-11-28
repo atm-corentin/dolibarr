@@ -1090,6 +1090,11 @@ class Productlot extends CommonObject
 				$sql .= " AND c.fk_soc = ".((int) $socid);
 			}
 
+			// Add where from hooks
+			$parameters = array('socid' => $socid, 'type_element' => 'mo', 'role' => $role, 'sql_alias' => 'c');
+			$reshook = $hookmanager->executeHooks('printFieldListWhere', $parameters, $this, $action); // Note that $action and $object may have been modified by hook
+			$sql .= $hookmanager->resPrint;
+
 			$result = $this->db->query($sql);
 			if ($result) {
 				$obj = $this->db->fetch_object($result);

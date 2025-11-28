@@ -3387,6 +3387,11 @@ class Product extends CommonObject
 				$sql .= " AND c.fk_soc = ".((int) $socid);
 			}
 
+			// Add where from hooks
+			$parameters = array('socid' => $socid, 'type_element' => 'mo', 'role' => $role, 'sql_alias' => 'c');
+			$reshook = $hookmanager->executeHooks('printFieldListWhere', $parameters, $this, $action); // Note that $action and $object may have been modified by hook
+			$sql .= $hookmanager->resPrint;
+
 			$result = $this->db->query($sql);
 			if ($result) {
 				$obj = $this->db->fetch_object($result);
@@ -4006,6 +4011,10 @@ class Product extends CommonObject
 		if (!empty($warehouseid)) {
 			$sql .= " AND m.fk_warehouse = ".((int) $warehouseid);
 		}
+		// Add where from hooks
+		$parameters = array('socid' => $socid, 'type_element' => 'mo', 'sql_alias' => 'm');
+		$reshook = $hookmanager->executeHooks('printFieldListWhere', $parameters, $this, $action); // Note that $action and $object may have been modified by hook
+		$sql .= $hookmanager->resPrint;
 		$sql .= " GROUP BY role";
 
 		if ($warehouseid) {
@@ -4866,7 +4875,7 @@ class Product extends CommonObject
 	public function get_nb_mos($socid, $mode, $filteronproducttype = -1, $year = 0, $morefilter = '')
 	{
 		// phpcs:enable
-		global $user;
+		global $user, $hookmanager;
 
 		$sql = "SELECT sum(d.qty), date_format(d.date_valid, '%Y%m')";
 		if ($mode == 'bynumber') {
@@ -4899,6 +4908,10 @@ class Product extends CommonObject
 			$sql .= " AND d.fk_soc = ".((int) $socid);
 		}
 		$sql .= $morefilter;
+		// Add where from hooks
+		$parameters = array('socid' => $socid, 'type_element' => 'mo', 'sql_alias' => 'd');
+		$hookmanager->executeHooks('printFieldListWhere', $parameters, $this); // Note that $action and $object may have been modified by hook
+		$sql .= $hookmanager->resPrint;
 		$sql .= " GROUP BY date_format(d.date_valid,'%Y%m')";
 		$sql .= " ORDER BY date_format(d.date_valid,'%Y%m') DESC";
 

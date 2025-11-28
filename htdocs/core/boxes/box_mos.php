@@ -64,7 +64,7 @@ class box_mos extends ModeleBoxes
 	 */
 	public function loadBox($max = 5)
 	{
-		global $user, $langs, $conf;
+		global $user, $langs, $conf, $hookmanager;
 
 		$this->max = $max;
 
@@ -92,6 +92,10 @@ class box_mos extends ModeleBoxes
 			$sql .= ", ".MAIN_DB_PREFIX."mrp_mo as c";
 			$sql .= " WHERE c.fk_product = p.rowid";
 			$sql .= " AND c.entity IN (".getEntity('mo').")";
+			// Add where from hooks (sharing by element, extra filters)
+			$parameters = array('boxcode' => $this->boxcode, 'sql_alias' => 'c', 'type_element' => 'mo');
+			$reshook = $hookmanager->executeHooks('printFieldListWhere', $parameters, $mostatic); // Note that $action and $object may have been modified by hook
+			$sql .= $hookmanager->resPrint;
 			$sql .= " ORDER BY c.tms DESC, c.ref DESC";
 			$sql .= $this->db->plimit($max, 0);
 

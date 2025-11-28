@@ -502,7 +502,12 @@ if ($usevirtualstock) {
 		$sqlProductionToConsume .= " WHERE mm5.rowid = mp5.fk_mo AND mm5.entity IN (".getEntity(getDolGlobalString('STOCK_CALCULATE_VIRTUAL_STOCK_TRANSVERSE_MODE') ? 'stock' : 'mo').")";
 		$sqlProductionToConsume .= " AND mp5.fk_product = p.rowid";
 		$sqlProductionToConsume .= " AND mp5.role IN ('toconsume', 'consumed')";
-		$sqlProductionToConsume .= " AND mm5.status IN (1,2))";
+		$sqlProductionToConsume .= " AND mm5.status IN (1,2)";
+		// Add where from hooks (sharing by element, extra filters)
+		$parameters = array('type_element' => 'mo', 'sql_alias' => 'mm5');
+		$hookmanager->executeHooks('printFieldListWhere', $parameters);
+		$sqlProductionToConsume .= $hookmanager->resPrint;
+		$sqlProductionToConsume .= ")";
 
 		$sqlProductionToProduce = "(SELECT GREATEST(0, ".$db->ifsql("SUM(".$db->ifsql("mp5.role = 'toproduce'", 'mp5.qty', '- mp5.qty').") IS NULL", "0", "SUM(".$db->ifsql("mp5.role = 'toproduce'", 'mp5.qty', '- mp5.qty').")").") as qty"; // We need the ifsql because if result is 0 for product p.rowid, we must return 0 and not NULL
 		$sqlProductionToProduce .= " FROM ".MAIN_DB_PREFIX."mrp_mo as mm5,";
@@ -510,7 +515,12 @@ if ($usevirtualstock) {
 		$sqlProductionToProduce .= " WHERE mm5.rowid = mp5.fk_mo AND mm5.entity IN (".getEntity(getDolGlobalString('STOCK_CALCULATE_VIRTUAL_STOCK_TRANSVERSE_MODE') ? 'stock' : 'mo').")";
 		$sqlProductionToProduce .= " AND mp5.fk_product = p.rowid";
 		$sqlProductionToProduce .= " AND mp5.role IN ('toproduce', 'produced')";
-		$sqlProductionToProduce .= " AND mm5.status IN (1,2))";
+		$sqlProductionToProduce .= " AND mm5.status IN (1,2)";
+		// Add where from hooks (sharing by element, extra filters)
+		$parameters = array('type_element' => 'mo', 'sql_alias' => 'mm5');
+		$hookmanager->executeHooks('printFieldListWhere', $parameters);
+		$sqlProductionToProduce .= $hookmanager->resPrint;
+		$sqlProductionToProduce .= ")";
 	} else {
 		$sqlProductionToConsume = '0';
 		$sqlProductionToProduce = '0';

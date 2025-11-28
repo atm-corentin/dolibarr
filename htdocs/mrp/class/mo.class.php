@@ -2014,7 +2014,7 @@ class Mo extends CommonObject
 	public function load_board($user)
 	{
 		// phpcs:enable
-		global $conf, $langs;
+		global $conf, $langs, $hookmanager;
 		if ($user->socid) {
 			return -1; // Protection pour éviter appel par utilisateur externe
 		}
@@ -2024,6 +2024,10 @@ class Mo extends CommonObject
 		$sql = "SELECT rowid, date_end_planned FROM ".$this->db->prefix()."mrp_mo";
 		$sql .= " WHERE status IN (" . self::STATUS_VALIDATED . ", " . self::STATUS_INPROGRESS .")"; // 1 = Ouvert, 2 = En cours
 		$sql .= " AND entity IN (".getEntity('mo').")";
+		// Add where from hooks (sharing by element, extra filters)
+		$parameters = array('sql_alias' => '', 'type_element' => 'mo');
+		$hookmanager->executeHooks('printFieldListWhere', $parameters, $this); // Note that $action and $object may have been modified by hook
+		$sql .= $hookmanager->resPrint;
 
 		$resql = $this->db->query($sql);
 		if ($resql) {

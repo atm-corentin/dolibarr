@@ -80,9 +80,18 @@ print '<div class="firstcolumn fichehalfleft boxhalfleft" id="boxhalfleft">';
  */
 
 if (isModEnabled('mrp') && $conf->use_javascript_ajax) {
-	$sql = "SELECT COUNT(t.rowid) as nb, status";
+	$sql = "SELECT COUNT(t.rowid) as nb, t.status";
 	$sql .= " FROM ".MAIN_DB_PREFIX."mrp_mo as t";
 	$sql .= " WHERE t.entity IN (".getEntity('mo').")";
+	// Add where from hooks (sharing by element, extra filters)
+	$parameters = array('sql_alias' => 't', 'deprecated_sql_alias' => 'a', 'type_element' => 'mo');
+	$reshook = $hookmanager->executeHooks('printFieldListWhere', $parameters, $staticmo, $action);
+	$hookres = $hookmanager->resPrint;
+	// Allow hooks that reference legacy alias "a" (historical alias name)
+	if (!empty($hookres) && strpos($hookres, 'a.') !== false) {
+		$hookres = preg_replace('/(?<![A-Za-z0-9_])a\\./', 't.', $hookres);
+	}
+	$sql .= $hookres;
 	$sql .= " GROUP BY t.status";
 	$sql .= " ORDER BY t.status ASC";
 	$resql = $db->query($sql);
@@ -244,16 +253,19 @@ if (isModEnabled('bom')) {
  */
 
 if (isModEnabled('mrp')) {
-	$sql = "SELECT a.rowid, a.status, a.ref, a.tms as datem, a.status";
-	$sql .= " FROM ".MAIN_DB_PREFIX."mrp_mo as a";
-	$sql .= " WHERE a.entity IN (".getEntity('mo').")";
-	$sql .= $db->order("a.tms", "DESC");
-	$sql .= $db->plimit($max, 0);
-
-	$sql = "SELECT a.rowid, a.status, a.ref, a.tms as datem, a.status";
-	$sql .= " FROM ".MAIN_DB_PREFIX."mrp_mo as a";
-	$sql .= " WHERE a.entity IN (".getEntity('mo').")";
-	$sql .= $db->order("a.tms", "DESC");
+	$sql = "SELECT t.rowid, t.status, t.ref, t.tms as datem, t.status";
+	$sql .= " FROM ".MAIN_DB_PREFIX."mrp_mo as t";
+	$sql .= " WHERE t.entity IN (".getEntity('mo').")";
+	// Add where from hooks (sharing by element, extra filters)
+	$parameters = array('sql_alias' => 't', 'deprecated_sql_alias' => 'a', 'type_element' => 'mo');
+	$reshook = $hookmanager->executeHooks('printFieldListWhere', $parameters, $staticmo, $action);
+	$hookres = $hookmanager->resPrint;
+	// Allow hooks that reference legacy alias "a" (historical alias name)
+	if (!empty($hookres) && strpos($hookres, 'a.') !== false) {
+		$hookres = preg_replace('/(?<![A-Za-z0-9_])a\\./', 't.', $hookres);
+	}
+	$sql .= $hookres;
+	$sql .= $db->order("t.tms", "DESC");
 	$sql .= $db->plimit($max, 0);
 
 	$resql = $db->query($sql);

@@ -41,7 +41,7 @@ class modMrp extends DolibarrModules
 	 */
 	public function __construct($db)
 	{
-		global $langs, $conf;
+		global $langs, $conf, $hookmanager;
 		$this->db = $db;
 
 		// Id for module (must be unique).
@@ -305,6 +305,9 @@ class modMrp extends DolibarrModules
 		$this->export_sql_end[$r] .= ' LEFT JOIN '.MAIN_DB_PREFIX.'mrp_mo_extrafields as extra ON m.rowid = extra.fk_object';
 		$this->export_sql_end[$r] .= ' LEFT JOIN '.MAIN_DB_PREFIX.'entrepot as e ON e.rowid = m.fk_warehouse';
 		$this->export_sql_end[$r] .= ' WHERE m.entity IN ('.getEntity('mo').')'; // For product and service profile
+		$parameters = array();
+		$hookmanager->executeHooks('printExportWhere', $parameters, $this); // Note that $action and $object may have been modified by hook
+		$this->export_sql_end[$r] .= $hookmanager->resPrint;
 
 		// Export of MO + liste of consumption / production
 		$r++;
@@ -405,6 +408,9 @@ class modMrp extends DolibarrModules
 		$this->export_sql_end[$r] .= ' LEFT JOIN '.MAIN_DB_PREFIX.'entrepot as e ON e.rowid = mp.fk_warehouse';
 		$this->export_sql_end[$r] .= ' LEFT JOIN '.MAIN_DB_PREFIX.'product as p ON p.rowid = mp.fk_product';
 		$this->export_sql_end[$r] .= ' WHERE m.entity IN ('.getEntity('mo').')'; // For product and service profile
+		$parameters = array();
+		$hookmanager->executeHooks('printExportWhere', $parameters, $this); // Note that $action and $object may have been modified by hook
+		$this->export_sql_end[$r] .= $hookmanager->resPrint;
 
 
 		// Imports profiles provided by this module

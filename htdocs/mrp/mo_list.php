@@ -396,10 +396,17 @@ if ($search_all) {
 //$sql.= dolSqlDateFilter("t.field", $search_xxxday, $search_xxxmonth, $search_xxxyear);
 // Add where from extra fields
 include DOL_DOCUMENT_ROOT.'/core/tpl/extrafields_list_search_sql.tpl.php';
-// Add where from hooks
-$parameters = array();
+// Add where from hooks (sharing by element, extra filters)
+$parameters = array('sql_alias' => 't', 'type_element' => 'mo');
 $reshook = $hookmanager->executeHooks('printFieldListWhere', $parameters, $object, $action); // Note that $action and $object may have been modified by hook
 $sql .= $hookmanager->resPrint;
+
+// Allow external modules to alter the full SQL (sharing by element, extra joins, ...)
+$parameters = array('sql' => &$sql, 'sql_alias' => 't');
+$reshook = $hookmanager->executeHooks('mrpmolist', $parameters, $object, $action);
+if ($reshook < 0) {
+	setEventMessages($hookmanager->error, $hookmanager->errors, 'errors');
+}
 /* If a group by is required
 $sql.= " GROUP BY ";
 foreach($object->fields as $key => $val) {

@@ -180,6 +180,11 @@ if ($id > 0 || !empty($ref)) {
 		$total_ht = 0;
 		$total_qty = 0;
 
+		// Add where from hooks
+		$parameters = array('socid' => $socid, 'type_element' => 'mo');
+		$reshook = $hookmanager->executeHooks('printFieldListWhere', $parameters, $object); // Note that $action and $object may have been modified by hook
+		$sql .= $hookmanager->resPrint;
+
 		// Count total nb of records
 		$totalofrecords = '';
 		if (!getDolGlobalInt('MAIN_DISABLE_FULL_SCANLIST')) {
