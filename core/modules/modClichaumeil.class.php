@@ -345,6 +345,15 @@ class modClichaumeil extends DolibarrModules
 		$extrafields->addExtraField('clichaumeil_units', 'CliChaumeilUnits', 'sellist', 210, '', 'propaldet', 0, 0, '', ['options' => ["c_units:short_label:rowid::((unit_type:=:'surface') AND (active:=:1))" => null]], 1, '', 1, '', '', 0, 'clichaumeil@clichaumeil', 'isModEnabled("clichaumeil")');
 		$extrafields->addExtraField('clichaumeil_units', 'CliChaumeilUnits', 'sellist', 210, '', 'commandedet', 0, 0, '', ['options' => ["c_units:short_label:rowid::((unit_type:=:'surface') AND (active:=:1))" => null]], 1, '', 1, '', '', 0, 'clichaumeil@clichaumeil', 'isModEnabled("clichaumeil")');
 
+		$param = array(
+			'options' => array(
+				'CLICHAUMEIL_PENDING_FILE' => $langs->trans("CLICHAUMEIL_PENDING_FILE"),
+				'CLICHAUMEIL_FILE_RECEIVED' => $langs->trans("CLICHAUMEIL_FILE_RECEIVED"),
+			),
+		);
+
+		$extrafields->addExtraField('clichaumeil_supplierstatut', 'CliChaumeilSupplierStatut', 'select', 100, '24', 'supplier_proposal', 0, 0, 'CLICHAUMEIL_PENDING_FILE', $param, 1, '', '1', '', '', 0, 'clichaumeil@clichaumeil', 'isModEnabled("clichaumeil")', 0, '0', array ( 'css' => '', 'cssview' => '', 'csslist' => '', ));
+
 		$permsCostComposition = '$user->hasRight(\'clichaumeil\',\'product\',\'read_cost_composition\') ? 1:0';
 		$permsPaFg = '$user->hasRight(\'clichaumeil\',\'product\',\'read_cost_composition\') ? 5:0';
 

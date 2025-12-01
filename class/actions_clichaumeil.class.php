@@ -300,24 +300,42 @@ class ActionsClichaumeil extends CommonHookActions
 	private function buildProductFromImportData(array $values): ?Product
 	{
 		$id = !empty($values['p.rowid']) ? (int) $values['p.rowid'] : 0;
-		if ($id <= 0) {
+		$ref = $values['p.ref'] ?? '';
+
+		$product = new Product($this->db);
+
+		// Prefer the ID if it was provided by the import, otherwise fall back to a fetch by ref
+		if ($id > 0) {
+			$product->id = $id;
+			$product->ref = $ref;
+			$product->type = isset($values['p.fk_product_type']) ? (int) $values['p.fk_product_type'] : Product::TYPE_PRODUCT;
+		} elseif ($ref !== '') {
+			if ($product->fetch(0, $ref) <= 0) {
+				return null;
+			}
+		} else {
 			return null;
 		}
 
-		$product = new Product($this->db);
-		$product->id = $id;
-		$product->ref = $values['p.ref'] ?? '';
-		$product->type = isset($values['p.fk_product_type']) ? (int) $values['p.fk_product_type'] : Product::TYPE_PRODUCT;
+		if (empty($product->array_options)) {
+			$product->array_options = array();
+		}
 
 		// Populate extrafields from import data
-		$product->array_options = [
-			'options_clichaumeil_pa_support' => $values['extra.clichaumeil_pa_support'] ?? '0',
-			'options_clichaumeil_pa_sav' => $values['extra.clichaumeil_pa_sav'] ?? '0',
-			'options_clichaumeil_pa_machine' => $values['extra.clichaumeil_pa_machine'] ?? '0',
-			'options_clichaumeil_pa_encre' => $values['extra.clichaumeil_pa_encre'] ?? '0',
-			'options_clichaumeil_pa_mo' => $values['extra.clichaumeil_pa_mo'] ?? '0',
+		$importOptions = array(
+			'options_clichaumeil_pa_support' => $values['extra.clichaumeil_pa_support'] ?? null,
+			'options_clichaumeil_pa_sav' => $values['extra.clichaumeil_pa_sav'] ?? null,
+			'options_clichaumeil_pa_machine' => $values['extra.clichaumeil_pa_machine'] ?? null,
+			'options_clichaumeil_pa_encre' => $values['extra.clichaumeil_pa_encre'] ?? null,
+			'options_clichaumeil_pa_mo' => $values['extra.clichaumeil_pa_mo'] ?? null,
 			'options_clichaumeil_fg_percent' => $values['extra.clichaumeil_fg_percent'] ?? CliChaumeilProductCostCalculator::getDefaultOverheadRate(),
-		];
+		);
+
+		foreach ($importOptions as $key => $value) {
+			if ($value !== null) {
+				$product->array_options[$key] = $value;
+			}
+		}
 
 		return $product;
 	}
@@ -502,7 +520,6 @@ class ActionsClichaumeil extends CommonHookActions
 				$productCategories = $this->mapProductCategories($object);
 				$lineVisibilities = $this->buildLineVisibilities($object->lines, $targetProducts, $targetCatId, $context, $productCategories);
 
-				if (!empty($lineVisibilities)) {
 					$config = array(
 						'targetProducts' => $targetProducts,
 						'lines' => $lineVisibilities,
@@ -514,7 +531,6 @@ class ActionsClichaumeil extends CommonHookActions
 
 					$jsUrl = dol_buildpath('/clichaumeil/js/extrafields_visibility.js', 1);
 					echo '<script src="' . $jsUrl . '" defer></script>';
-				}
 			}
 		}
 
@@ -612,31 +628,6 @@ class ActionsClichaumeil extends CommonHookActions
 	 */
 	public function formMoreOptions($parameters, &$object, &$action, $hookmanager)
 	{
-		global $db, $langs, $formSetup; // $formSetup is the key object from the setup page
-
-		$TContexts = explode(':', $parameters['context']);
-
-		if (in_array($parameters['currentcontext'], $TContexts)) {
-			if (empty($formSetup) || !is_object($formSetup)) {
-				dol_syslog("actions_clichaumeil.class.php::formMoreOptions hook failed: \$formSetup not available in global scope.", LOG_ERR);
-				return 0; // Do nothing if $formSetup is not available
-			}
-
-			// Add a title for the settings injected by this module (good practice)
-			$formSetup->newItem('CLICHAUMEIL_SPE_CUSTOMER')->setAsTitle();
-
-			// Add the new Yes/No setting for Supplier Proposals
-			$item = $formSetup->newItem('CLICHAUMEIL_ACTIVATE_SUPPLIER_PROPOSAL');
-			$item->setAsYesNo();
-
-			$item = $formSetup->newItem('CLICHAUMEIL_MANDATORY_ATTACHED_FILES_SUPPLIER_PROPOSAL');
-			$item->setAsYesNo();
-
-			print $formSetup->generateOutput();
-			// We successfully added items to the form
-			return 1;
-		}
-
 		return 0;
 	}
 
@@ -677,6 +668,47 @@ class ActionsClichaumeil extends CommonHookActions
 		}
 
 		return 0; // No action
+	}
+
+	/**
+	 * Inject CliChaumeil settings into FormSetup rendering for ExternalAccess.
+	 *
+	 * This runs inside FormSetup::generateOutput(), so items are added before the
+	 * ExternalAccess setup page renders, avoiding any duplicate blocks.
+	 *
+	 * @param array<string,mixed> $parameters Hook parameters (editMode, ...)
+	 * @param FormSetup           $formSetup  FormSetup instance
+	 * @param string              $action     Current action
+	 * @param HookManager         $hookmanager Hook manager
+	 * @return int
+	 */
+	public function formSetupBeforeGenerateOutput($parameters, &$formSetup, &$action, $hookmanager)
+	{
+		global $langs;
+
+		$TContexts = explode(':', $parameters['context']);
+
+		if (!in_array('externalaccesssetup', $TContexts )) {
+			return 0;
+		}
+
+		if (!is_object($formSetup) || !method_exists($formSetup, 'newItem')) {
+			return 0;
+		}
+
+		$langs->load('clichaumeil@clichaumeil');
+
+		static $added = false;
+		if ($added || !empty($formSetup->items['CLICHAUMEIL_ACTIVATE_SUPPLIER_PROPOSAL'])) {
+			return 0;
+		}
+		$added = true;
+
+		$formSetup->newItem('CLICHAUMEIL_SPE_CUSTOMER')->setAsTitle();
+		$formSetup->newItem('CLICHAUMEIL_ACTIVATE_SUPPLIER_PROPOSAL')->setAsYesNo();
+		$formSetup->newItem('CLICHAUMEIL_MANDATORY_ATTACHED_FILES_SUPPLIER_PROPOSAL')->setAsYesNo();
+
+		return 0;
 	}
 
 	/**
