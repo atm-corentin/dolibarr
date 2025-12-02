@@ -77,7 +77,7 @@ class modClichaumeil extends DolibarrModules
 		$this->editor_squarred_logo = '';					// Must be image filename into the module/img directory followed with @modulename. Example: 'myimage.png@clichaumeil'
 
 		// Possible values for version are: 'development', 'experimental', 'dolibarr', 'dolibarr_deprecated', 'experimental_deprecated' or a version string like 'x.y.z'
-		$this->version = '1.5.2';
+		$this->version = '1.6.0';
 		// Url to the file with your last numberversion of this module
 		//$this->url_last_version = 'http://www.example.com/versionmodule.txt';
 
@@ -342,6 +342,8 @@ class modClichaumeil extends DolibarrModules
 		$extrafields->addExtraField('clichaumeil_length', 'CliChaumeilLength', 'double', 100, '24,2', 'commandedet', 0, 0, '', array('options' => array('' => NULL, ), ), 1, '', '1', '', '', 0, 'clichaumeil@clichaumeil', 'isModEnabled("clichaumeil")', 0, '0', array('css' => '', 'cssview' => '', 'csslist' => ''));
 		$extrafields->addExtraField('clichaumeil_ref_required', 'CliChaumeilRefRequired', 'boolean', 100, '', 'thirdparty', 0, 0, '', array('options' => array('' => NULL, ), ), 1, '', '1', '', '', 0, 'clichaumeil@clichaumeil', 'isModEnabled("clichaumeil")', 0, '0', array('css' => '', 'cssview' => '', 'csslist' => ''));
 		$extrafields->addExtraField('clichaumeil_generalexpenses', 'CliChaumeilGeneralExpenses', 'double', 100, '24,2', 'bom_bom', 0, 0, '', array('options' => array('' => NULL, ), ), 1, '', '1', '', '', 0, 'clichaumeil@clichaumeil', 1, 0, '0', array('css' => '', 'cssview' => '', 'csslist' => '', ));
+		$extrafields->addExtraField('clichaumeil_units', 'CliChaumeilUnits', 'sellist', 210, '', 'propaldet', 0, 0, '', ['options' => ["c_units:short_label:rowid::((unit_type:=:'surface') AND (active:=:1))" => null]], 1, '', 1, '', '', 0, 'clichaumeil@clichaumeil', 'isModEnabled("clichaumeil")');
+		$extrafields->addExtraField('clichaumeil_units', 'CliChaumeilUnits', 'sellist', 210, '', 'commandedet', 0, 0, '', ['options' => ["c_units:short_label:rowid::((unit_type:=:'surface') AND (active:=:1))" => null]], 1, '', 1, '', '', 0, 'clichaumeil@clichaumeil', 'isModEnabled("clichaumeil")');
 
 		$param = array(
 			'options' => array(

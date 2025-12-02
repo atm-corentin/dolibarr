@@ -161,6 +161,7 @@ CliChaumeilPaInk=PA Encre
 CliChaumeilPaLabor=PA Main d'oeuvre
 CliChaumeilFgPercent=Frais généraux (%)
 CliChaumeilPaFg=PA Frais généraux
+CliChaumeilUnits=Unité Cible
 #
 # ERRORS
 #
@@ -169,7 +170,7 @@ WarningFieldHeightMustBeNumeric=Hauteur non définie : valeur numérique requise
 WarningFieldLengthMustBeNumeric=Longeur non définie : valeur numérique requise
 WarningFieldsHeightLengthNotDefined=Hauteur et Longueur non définies : valeurs numériques requises pour calculer la surface (en cm²)
 RollbackUnitsQtyforProduct=Réinitialisation de l’unité et de la quantité du produit
-SurfaceRecalculatedInCm2=Surface recalculée (en cm²)
+CliChaumeilSurfaceRecalculated=Surface recalculée (en %s)
 CliChaumeilGeneralExpenses=Frais généraux (en %)
 WarningNegativeMargin=Attention : le prix de revient est supérieur au prix de vente. Marge négative
 CliChaumeilErrorMissingFgPercent=Import impossible : le champ Frais généraux (%) est obligatoire pour le produit %s.

@@ -41,21 +41,26 @@
 
 		const lengthInput = $container.find('#options_clichaumeil_length');
 		const heightInput = $container.find('#options_clichaumeil_height');
+		const unitsInput = $container.find('#options_clichaumeil_units');
 
 		const lengthRow = $container.find('.fieldline_options_clichaumeil_length');
 		const heightRow = $container.find('.fieldline_options_clichaumeil_height');
+		const unitsRow = $container.find('.fieldline_options_clichaumeil_units');
 
 		if (shouldShow) {
 			lengthRow.show();
 			heightRow.show();
+			unitsRow.show();
 			return;
 		}
 
 		// Reset values to avoid persisting data on hidden fields
 		lengthInput.val('');
 		heightInput.val('');
+		unitsInput.val('');
 		lengthRow.hide();
 		heightRow.hide();
+		unitsRow.hide();
 	};
 
 	const findFieldLine = (line, key) => {
@@ -85,8 +90,10 @@
 		$(
 			'[id^="extrafield_lines_area_"] .fieldline_options_clichaumeil_length, ' +
 			'[id^="extrafield_lines_area_"] .fieldline_options_clichaumeil_height, ' +
+			'[id^="extrafield_lines_area_"] .fieldline_options_clichaumeil_units, ' +
 			'[id^="extrafield_lines_area_"] .field_options_clichaumeil_length, ' +
-			'[id^="extrafield_lines_area_"] .field_options_clichaumeil_height'
+			'[id^="extrafield_lines_area_"] .field_options_clichaumeil_height, ' +
+			'[id^="extrafield_lines_area_"] .field_options_clichaumeil_units'
 		).show();
 	};
 
@@ -126,10 +133,11 @@
 		lines.forEach((line) => {
 			const lengthRow = findFieldLine(line, 'clichaumeil_length');
 			const heightRow = findFieldLine(line, 'clichaumeil_height');
+			const unitsRow = findFieldLine(line, 'clichaumeil_units');
 
-			let $targets = lengthRow.add(heightRow);
+			let $targets = lengthRow.add(heightRow).add(unitsRow);
 			if (!$targets.length) {
-				$targets = $(`#extrafield_lines_area_${line.id}`).find('[class*="clichaumeil_length"], [class*="clichaumeil_height"]');
+				$targets = $(`#extrafield_lines_area_${line.id}`).find('[class*="clichaumeil_length"], [class*="clichaumeil_height"], [class*="clichaumeil_units"]');
 			}
 
 			if (line.show) {
