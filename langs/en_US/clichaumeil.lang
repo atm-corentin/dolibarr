@@ -152,6 +152,7 @@ CliChaumeilPaInk=PA Ink
 CliChaumeilPaLabor=PA Labor
 CliChaumeilFgPercent=Overhead rate (%)
 CliChaumeilPaFg=Overhead amount
+CliChaumeilSurfaceRecalculated = Recalculated surface (in %s)
 
 #
 # ERRORS
