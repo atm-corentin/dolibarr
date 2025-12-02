@@ -108,7 +108,7 @@ class InterfaceClichaumeilTriggers extends DolibarrTriggers
 				if ($height > 0 && $length > 0) {
 					// Get rowid from c_units dictionary for the 'CM2' code
 					if (!empty($object->array_options["options_clichaumeil_units"])) {
-						$object->fk_unit = $object->array_options["options_clichaumeil_units"];
+						$object->fk_unit = (int) $object->array_options["options_clichaumeil_units"];
 						$targetUnit = $object->fk_unit;
 						$baseUnit = (int) dol_getIdFromCode($this->db, 'CM2', 'c_units', 'code', 'rowid');
 					}else{
