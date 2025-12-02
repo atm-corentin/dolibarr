@@ -107,7 +107,7 @@ class InterfaceClichaumeilTriggers extends DolibarrTriggers
 
 				if ($height > 0 && $length > 0) {
 					// Get rowid from c_units dictionary for the 'CM2' code
-					if ($object->array_options["options_clichaumeil_units"]) {
+					if (!empty($object->array_options["options_clichaumeil_units"])) {
 						$object->fk_unit = $object->array_options["options_clichaumeil_units"];
 						$targetUnit = $object->fk_unit;
 						$baseUnit = (int) dol_getIdFromCode($this->db, 'CM2', 'c_units', 'code', 'rowid');
@@ -119,8 +119,10 @@ class InterfaceClichaumeilTriggers extends DolibarrTriggers
 					//get unit
 					$unit = new CUnits($this->db);
 					$res = $unit->fetch($object->fk_unit);
-					if ($res > 0) {
+					if ($res > 0 && !empty($unit->short_label)) {
 						$shortLabelUnit = $unit->short_label;
+					}else{
+						$shortLabelUnit = $unit->label;
 					}
 
 					if ($object->fk_unit <= 0) {
@@ -129,16 +131,13 @@ class InterfaceClichaumeilTriggers extends DolibarrTriggers
 						return -1;
 					}
 					$object->qty = (float) $height * (float) $length;
-					// Conversion avec Dolibarr
-					//$converted = CUnits::unitConverter($object->qty, $baseUnit, $targetUnit);
+
 					if (empty($targetUnit)){
 						$targetUnit = $baseUnit;
 					}
 					$converted = $unit->unitConverter($object->qty, $baseUnit, $targetUnit);
 					$object->qty = $converted;
 
-
-					//var_dump($object->array_options);exit;
 					setEventMessages($langs->trans('CliChaumeilSurfaceRecalculated',$shortLabelUnit), null, 'mesgs');
 
 				}
