@@ -1,6 +1,7 @@
 # CHANGELOG MODULE CLICHAUMEIL FOR [DOLIBARR ERP CRM](https://www.dolibarr.org)
 
 ### Unreleased
+- FIX : Supplier status no longer auto-fills when creating a request for quotation from a customer proposal. *05/12/2025* - 1.6.1 
 - NEW : Add Extrafield units on propal/command line *01/12/2025* - 1.6.0
 - NEW : Add conf (category product)to display extrafields (Length & height) on propal/command line *24/11/2025* - 1.5.0 
 

@@ -170,6 +170,35 @@ class InterfaceClichaumeilTriggers extends DolibarrTriggers
 				externalAccessInitController($object, $user, $langs, $conf);
 				break;
 
+			case 'PROPOSAL_SUPPLIER_CREATE':
+				// Set default supplier status extrafield when the supplier proposal originates from a customer proposal
+				if (get_class($object) === 'SupplierProposal' || $object instanceof SupplierProposal) {
+					$origin = !empty($object->origin) ? $object->origin : (isset($object->origin_type) ? $object->origin_type : '');
+					if (empty($origin) && !empty($object->linkedObjectsIds) && !empty($object->linkedObjectsIds['propal'])) {
+						$origin = 'propal';
+					}
+
+					if ($origin === 'propal') {
+						if (!is_array($object->array_options)) {
+							$object->array_options = array();
+						}
+
+						$key = 'options_clichaumeil_supplierstatut';
+
+						if (empty($object->array_options[$key])) {
+							$object->array_options[$key] = 'CLICHAUMEIL_PENDING_FILE';
+							if (method_exists($object, 'insertExtraFields')) {
+								$save = $object->insertExtraFields();
+								if ($save < 0) {
+									setEventMessages($object->error, $object->errors, 'errors');
+									return -1;
+								}
+							}
+						}
+					}
+				}
+				break;
+
 			default:
 				dol_syslog("Trigger '" . $this->name . "' for action '" . $action . "' launched by " . __FILE__ . ". id=" . $object->id);
 				break;
