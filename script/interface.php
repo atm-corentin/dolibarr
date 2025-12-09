@@ -46,13 +46,13 @@ $lineId = GETPOST('lineId', 'int');
 $newPrice = GETPOST('newPrice', 'alpha');  // Use 'alpha' for decimal numbers, then convert with price2num()
 $newPuHt = price2num($newPrice);
 
-	switch ($action) {
-	case 'update_line_price':
-		header('Content-Type: application/json'); // We will return JSON
-		$response = array('status' => 'error', 'message' => 'Unknown error');
+switch ($action) {
+case 'update_line_price':
+	header('Content-Type: application/json'); // We will return JSON
+	$response = array('status' => 'error', 'message' => 'Unknown error');
 
-		try {
-			dol_syslog("AJAX update_line_price: propalId=$propalId, lineId=$lineId, newPrice=$newPuHt");
+	try {
+		dol_syslog("AJAX update_line_price: propalId=$propalId, lineId=$lineId, newPrice=$newPuHt");
 
 			if (!$propalId || !$lineId) {
 				$response['message'] = 'Missing $propalId or lineId';
@@ -165,7 +165,7 @@ $newPuHt = price2num($newPrice);
 			dol_syslog("AJAX update_line_price: valid result=$validResult");
 
 			if ($validResult < 0) {
-				// Restore previous status so we don't leave the proposal in draft
+				// WARNING: manual rollback of status without full transaction/trigger rollback.
 				if ($previousStatus !== null) {
 					$db->query("UPDATE " . $db->prefix() . "supplier_proposal SET fk_statut = " . ((int) $previousStatus) . " WHERE rowid = " . ((int) $object->id));
 					$object->status = $previousStatus;
