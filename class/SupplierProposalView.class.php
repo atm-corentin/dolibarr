@@ -28,6 +28,9 @@ dol_include_once('/subtotal/lib/subtotal.lib.php');
  */
 class SupplierProposalView
 {
+	// Product type for subtotal lines (from subtotal module)
+	private const PRODUCT_TYPE_SUBTOTAL = 9;
+
 	/** @var Translate */
 	private $langs;
 
@@ -149,7 +152,7 @@ class SupplierProposalView
 		if (!empty($object->lines) && is_array($object->lines)) {
 			foreach ($object->lines as $line) {
 				// Hide subtotal lines (product_type = 9) on external access view
-				if ((int) $line->product_type === 9) {
+				if ((int) $line->product_type === self::PRODUCT_TYPE_SUBTOTAL) {
 					continue;
 				}
 				$out .= $this->renderLine($line, $currencyCode, $object);
