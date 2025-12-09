@@ -47,12 +47,12 @@ $newPrice = GETPOST('newPrice', 'alpha');  // Use 'alpha' for decimal numbers, t
 $newPuHt = price2num($newPrice);
 
 switch ($action) {
-	case 'update_line_price':
-		header('Content-Type: application/json'); // We will return JSON
-		$response = array('status' => 'error', 'message' => 'Unknown error');
+case 'update_line_price':
+	header('Content-Type: application/json'); // We will return JSON
+	$response = array('status' => 'error', 'message' => 'Unknown error');
 
-		try {
-			dol_syslog("AJAX update_line_price: propalId=$propalId, lineId=$lineId, newPrice=$newPuHt");
+	try {
+		dol_syslog("AJAX update_line_price: propalId=$propalId, lineId=$lineId, newPrice=$newPuHt");
 
 			if (!$propalId || !$lineId) {
 				$response['message'] = 'Missing $propalId or lineId';
@@ -100,6 +100,7 @@ switch ($action) {
 				exit;
 			}
 
+			$previousStatus = $object->status;
 			dol_syslog("AJAX update_line_price: BEFORE setDraft - object->status=" . $object->status . " (0=draft, 1=validated)");
 
 			$draftResult = $object->setDraft($user);
@@ -164,6 +165,13 @@ switch ($action) {
 			dol_syslog("AJAX update_line_price: valid result=$validResult");
 
 			if ($validResult < 0) {
+				// WARNING: manual rollback of status without full transaction/trigger rollback.
+				if ($previousStatus !== null) {
+					$db->query("UPDATE " . $db->prefix() . "supplier_proposal SET fk_statut = " . ((int) $previousStatus) . " WHERE rowid = " . ((int) $object->id));
+					$object->status = $previousStatus;
+					dol_syslog("AJAX update_line_price: restore status to $previousStatus after failed validation");
+				}
+
 				$response['message'] = 'Validation failed: ' . $object->error;
 				dol_syslog("AJAX update_line_price: validation failed: " . $object->error, LOG_ERR);
 				echo json_encode($response);

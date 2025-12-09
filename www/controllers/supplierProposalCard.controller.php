@@ -155,8 +155,8 @@ class SupplierProposalCardController extends Controller
 		// Render sections
 		print $this->view->renderProposalSummary($object, $thirdparty, $documents);
 		print $this->view->renderProposalLines($object, $currencyCode);
+		print $this->view->renderCommentForm($object); // Form first to keep it above discussion history
 		print $this->view->renderTimeline($TMessage, $object);
-		print $this->view->renderCommentForm($object);
 
 		// Close form
 		print '</form>';
@@ -212,7 +212,7 @@ class SupplierProposalCardController extends Controller
 		switch ($postAction) {
 			case 'add-comment-file':
 				$this->handleFileUpload($object);
-				$this->redirectToProposal($supplierPropalId);
+				$this->redirectToProposal($supplierPropalId, 'form-propal-message-container');
 				return false; // Stop execution after redirect
 
 			case 'validate_proposal':
@@ -222,7 +222,8 @@ class SupplierProposalCardController extends Controller
 
 			case 'new-comment':
 				$this->handleNewComment($object);
-				$this->redirectToProposal($supplierPropalId);
+				// Scroll back to the comment form after posting
+				$this->redirectToProposal($supplierPropalId, 'form-propal-message-container');
 				return false; // Stop execution after redirect
 
 			default:
@@ -501,12 +502,18 @@ class SupplierProposalCardController extends Controller
 	 * @param int $proposalId Supplier proposal ID
 	 * @return void
 	 */
-	private function redirectToProposal(int $proposalId) : void
+	private function redirectToProposal(int $proposalId, string $fragment = '') : void
 	{
 		$context = Context::getInstance();
 
 		// Build redirect URL without action parameter (clean URL for GET request)
 		$redirectUrl = $context->getControllerUrl('supplier_proposal_card') . '&id=' . $proposalId;
+
+		// Optionally add an anchor to keep the user near a specific section after redirect
+		if (!empty($fragment)) {
+			$redirectUrl .= '&scroll_to=' . urlencode(ltrim($fragment, '#'));
+			$redirectUrl .= '#' . ltrim($fragment, '#');
+		}
 
 		// Perform header redirect
 		header('Location: ' . $redirectUrl);
