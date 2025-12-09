@@ -20,6 +20,7 @@ require_once __DIR__.'/../lib/clichaumeil.lib.php';
 dol_include_once('/externalaccess/class/ExternalFormTicket.class.php');
 dol_include_once('/subtotal/class/subtotal.class.php');
 dol_include_once('/subtotal/class/actions_subtotal.class.php');
+dol_include_once('/subtotal/lib/subtotal.lib.php');
 
 /**
  * View class for Supplier Proposal rendering
@@ -130,7 +131,7 @@ class SupplierProposalView
 	 */
 	public function renderProposalLines(SupplierProposal $object, string $currencyCode) : string
 	{
-		$out = '<div class="container px-0" style="margin-top: 20px;">';
+		$out = '<div class="container px-0">';
 		$out .= '<div class="table-responsive">';
 		$out .= '<table class="table table-striped" id="supplier-propal-lines">';
 		$out .= '<thead>';
@@ -147,6 +148,10 @@ class SupplierProposalView
 
 		if (!empty($object->lines) && is_array($object->lines)) {
 			foreach ($object->lines as $line) {
+				// Hide subtotal lines (product_type = 9) on external access view
+				if ((int) $line->product_type === 9) {
+					continue;
+				}
 				$out .= $this->renderLine($line, $currencyCode, $object);
 			}
 		}
@@ -177,8 +182,10 @@ class SupplierProposalView
 	 */
 	private function renderLine(SupplierProposalLine $line, string $currencyCode, SupplierProposal $object) : string
 	{
-		if (isModEnabled('subtotal') && TSubtotal::isModSubtotalLine($line)) {
-			return $this->renderSubtotalLine($line, $currencyCode, $object);
+		// Always detect subtotal lines, even if module flag isn't exposed to external access
+		// Subtotal lines are hidden in this view (see renderProposalLines)
+		if (TSubtotal::isModSubtotalLine($line)) {
+			return '';
 		}
 
 		$out = '<tr>';
@@ -403,11 +410,13 @@ class SupplierProposalView
 	public function renderCommentForm(SupplierProposal $object) : string
 	{
 		$out = '<div class="container px-0">';
+		// Anchor placed just before the form to align scroll above the title
+		$out .= '<div id="form-propal-message-container"></div>';
 		$out .= '<ul class="timeline">';
 		$out .= '<li class="time-label"><span class="timeline-badge-date"><i class="fa fa-comments"></i> ' . $this->langs->transnoentities('CLICHAUMEIL_ADDMESSAGE') . '</span></li>';
 		$out .= '<li class="timeline-code-ticket_msg">';
 		$out .= '<div class="timeline-item">';
-		$out .= '<div id="form-propal-message-container" class="timeline-body form-ticket-message-container">';
+		$out .= '<div class="timeline-body form-ticket-message-container">';
 
 		// Textarea
 		$out .= '<div class="form-group">';
@@ -433,7 +442,7 @@ class SupplierProposalView
 		$out .= '</div>'; // timeline-body
 		$out .= '<div class="timeline-footer text-right">';
 		$out .= '<div class="btn-group">';
-		$out .= '<button type="submit" class="btn btn-success" name="action" value="new-comment" data-toggle="tooltip" title="' . dol_htmlentities($this->langs->transnoentities('CLICHAUMEIL_SENDMESSAGEHELP'), ENT_QUOTES) . '">' . $this->langs->transnoentities('CLICHAUMEIL_ADDMESSAGE') . '</button>';
+		$out .= '<button type="submit" class="btn btn-success" id="btn-send-comment" name="action" value="new-comment" data-toggle="tooltip" title="' . dol_htmlentities($this->langs->transnoentities('CLICHAUMEIL_SENDMESSAGEHELP'), ENT_QUOTES) . '">' . $this->langs->transnoentities('CLICHAUMEIL_ADDMESSAGE') . '</button>';
 		$out .= '</div>';
 		$out .= '</div>';
 		$out .= '</div>'; // timeline-item

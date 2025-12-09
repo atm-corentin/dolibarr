@@ -241,6 +241,8 @@ class SupplierProposalService
 		$sql .= ' FROM ' . $this->db->prefix() . 'actioncomm';
 		$sql .= ' WHERE fk_element = ' . intval($object->id);
 		$sql .= ' AND elementtype = "' . $this->db->escape($object->element) . '"';
+		// Only keep discussion-style actions to avoid showing automatic system events
+		$sql .= ' AND code = "' . $this->db->escape('AC_OTH') . '"';
 		$sql .= ' ORDER BY datep ASC';
 
 		$resql = $this->db->query($sql);

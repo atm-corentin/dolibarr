@@ -54,6 +54,12 @@ function initSupplierProposalCard(config) {
 		} else {
 			console.log("Validation handler NOT initialized (files not mandatory)");
 		}
+
+		// Keep focus near the message form after redirects that add files
+		scrollToMessageFormIfNeeded();
+
+		// Enhance comment submission: upload file then send message in one click
+		initCommentSubmission(config);
 	});
 }
 
@@ -132,7 +138,7 @@ function initValidationHandler(config) {
 		console.log("=== Validate button clicked ===");
 
 		var form = $(this).closest("form");
-		var fileInput = $("#addedfile");
+		var fileInput = getFileInput();
 
 		// Check if there are files to upload in the file input
 		if (fileInput.length > 0 && fileInput[0].files.length > 0) {
@@ -279,5 +285,133 @@ function sendErrorToServer(config, errorCode) {
 	url += 'file_error=' + encodeURIComponent(errorCode);
 
 	// Reload page with error parameter (server will display message via setEventMessages)
-	window.location.href = url;
+	// Keep user near the message form
+	var scrollTarget = '#form-propal-message-container';
+	if (url.indexOf('scroll_to=') === -1) {
+		url += '&scroll_to=' + encodeURIComponent(scrollTarget.replace('#', ''));
+	}
+	window.location.href = url + scrollTarget;
+}
+
+/**
+ * Submit comment + optional file in one click
+ * @param {object} config
+ */
+function initCommentSubmission(config) {
+	// Hide standalone "Add file" button; we handle upload automatically
+	$('#add-comment-file').hide();
+
+	$('#btn-send-comment').on('click', function(e) {
+		e.preventDefault();
+
+		var form = $(this).closest('form');
+		var fileInput = getFileInput();
+		var hasFile = fileInput.length > 0 && fileInput[0].files && fileInput[0].files.length > 0;
+
+		// If a file is selected, upload it to session first, then submit the message
+		if (hasFile) {
+			var file = fileInput[0].files[0];
+			if (!validateFileSize(file, config)) {
+				return; // too large, message already handled
+			}
+
+			var formData = new FormData();
+			formData.append('action', 'add-comment-file');
+			formData.append('id', config.propalId);
+			formData.append('token', config.token);
+			formData.append('addedfile', file);
+
+			$.ajax({
+				type: 'POST',
+				url: window.location.href,
+				data: formData,
+				processData: false,
+				contentType: false,
+				success: function() {
+					// After upload, submit the actual comment
+					submitCommentForm(form);
+				},
+				error: function(jqXHR, textStatus, errorThrown) {
+					console.error('Error uploading file before comment:', textStatus, errorThrown);
+					if (jqXHR.status === 413) {
+						sendErrorToServer(config, 'FILE_TOO_LARGE');
+					} else {
+						sendErrorToServer(config, 'UPLOAD_ERROR');
+					}
+				}
+			});
+		} else {
+			// No file: just send the comment
+			submitCommentForm(form);
+		}
+	});
+}
+
+/**
+ * Ensure form submits as "new-comment"
+ * @param {jQuery} form
+ */
+function submitCommentForm(form) {
+	form.find('input[name=action]').remove();
+	form.append('<input type="hidden" name="action" value="new-comment" />');
+	form.trigger('submit');
+}
+
+/**
+ * Retrieve the file input used for attachments (supports legacy/externalaccess IDs)
+ * @returns {jQuery}
+ */
+function getFileInput() {
+	var $input = $('#addedfile');
+	if ($input.length === 0) {
+		$input = $('#fileToUpload'); // id used by ExternalFormTicket
+	}
+	return $input;
+}
+
+/**
+ * Scroll to the message form when requested (via hash or scroll_to param)
+ * Helps keep the user in context after uploads/redirects.
+ */
+function scrollToMessageFormIfNeeded() {
+	var targetId = getUrlParameter('scroll_to');
+
+	if (!targetId && window.location.hash) {
+		targetId = window.location.hash.replace('#', '');
+	}
+
+	if (!targetId) {
+		return;
+	}
+
+	var $target = $('#' + targetId);
+	if ($target.length === 0) {
+		return;
+	}
+
+	// Prefer native anchor jump first
+	if (targetId) {
+		window.location.hash = '#' + targetId;
+	}
+
+	// Fallback: align to the very top of the target block (navbar removed only)
+	var navbarHeight = $('#mainNav').length ? $('#mainNav').outerHeight() : 0;
+	var offset = $target.offset().top - navbarHeight;
+	if (offset < 0) offset = 0;
+	// Apply twice (delayed) to avoid focus/anchor overrides after render
+	$('html, body').scrollTop(offset);
+	setTimeout(function() {
+		$('html, body').scrollTop(offset);
+	}, 100);
+}
+
+/**
+ * Read URL parameter by name
+ * @param {string} name
+ * @returns {string|null}
+ */
+function getUrlParameter(name) {
+	var regex = new RegExp('[?&]' + name + '=([^&#]*)');
+	var results = regex.exec(window.location.search);
+	return results === null ? null : decodeURIComponent(results[1].replace(/\+/g, ' '));
 }
