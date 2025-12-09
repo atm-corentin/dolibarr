@@ -279,6 +279,9 @@ class SupplierProposalView
 		$userGetNomUrlCache = array();
 
 		foreach ($TMessage as $actionstatic) {
+			// Only keep user comments (ignore system/status events)
+			if (!empty($actionstatic->code) && $actionstatic->code !== 'AC_OTH') continue;
+
 			if (empty($actionstatic->private)) {
 				if ($datelabel != dol_print_date($actionstatic->datep)) {
 					$datelabel = dol_print_date($actionstatic->datep);
