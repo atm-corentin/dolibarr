@@ -110,9 +110,6 @@ function initPriceUpdater(config) {
 				// Show error feedback
 				console.error("AJAX error response:", response);
 				$input.css("background-color", "#f2dede"); // error red
-				if (response && response.message) {
-					alert(response.message);
-				}
 			}
 		})
 		.fail(function(jqXHR, textStatus, errorThrown) {
