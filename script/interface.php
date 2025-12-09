@@ -47,6 +47,154 @@ $newPrice = GETPOST('newPrice', 'alpha');  // Use 'alpha' for decimal numbers, t
 $newPuHt = price2num($newPrice);
 
 switch ($action) {
+	case 'choose_subcontractor':
+		header('Content-Type: application/json');
+		$langs->loadLangs(array('clichaumeil@clichaumeil', 'supplier_proposal'));
+
+		$response = array('success' => false, 'message' => $langs->trans('CliChaumeilSelectError'), 'debug' => array());
+
+		if (empty($user->rights->supplier_proposal->creer) && empty($user->rights->supplier_proposal->cloturer)) {
+			$response['message'] = $langs->trans('NotEnoughPermissions');
+			echo json_encode($response);
+			exit;
+		}
+
+		$token = GETPOST('token', 'alphanohtml');
+		$parentType = GETPOST('parent_type', 'aZ09');
+		$parentId = GETPOST('parent_id', 'int');
+		$supplierProposalId = GETPOST('supplier_proposal_id', 'int');
+
+		$response['debug']['received'] = array(
+			'parent_type' => $parentType,
+			'parent_id' => $parentId,
+			'supplier_proposal_id' => $supplierProposalId
+		);
+
+		if ($action !== 'choose_subcontractor' || empty($parentType) || empty($parentId) || empty($supplierProposalId)) {
+			$response['message'] = $langs->trans('ErrorBadParameter');
+			echo json_encode($response);
+			exit;
+		}
+
+//		if (!formTokenValid($token)) {
+//			dol_syslog('CliChaumeil choose_subcontractor: invalid token provided', LOG_WARNING);
+//			$response['debug']['token'] = 'invalid';
+//		} else {
+//			$response['debug']['token'] = 'ok';
+//		}
+
+		$parentMap = array(
+			'propal' => 'Propal',
+			'commande' => 'Commande'
+		);
+
+		if (!isset($parentMap[$parentType])) {
+			$response['message'] = $langs->trans('ErrorBadParameter');
+			echo json_encode($response);
+			exit;
+		}
+
+		$parentClass = $parentMap[$parentType];
+		dol_include_once('/comm/propal/class/propal.class.php');
+		dol_include_once('/commande/class/commande.class.php');
+
+		$parent = new $parentClass($db);
+		if ($parent->fetch($parentId) <= 0) {
+			$response['message'] = $langs->trans('ErrorRecordNotFound');
+			$response['debug']['parent_fetch'] = 'ko';
+			echo json_encode($response);
+			exit;
+		} else {
+			$response['debug']['parent_fetch'] = 'ok';
+		}
+
+		if (method_exists($parent, 'fetchObjectLinked')) {
+			$parent->fetchObjectLinked($parent->id, $parent->element, '', 'supplier_proposal');
+		}
+
+		$supplierProposals = $parent->linkedObjects['supplier_proposal'] ?? array();
+		if (empty($supplierProposals)) {
+			$response['message'] = $langs->trans('CliChaumeilNoSupplierProposal');
+			$response['debug']['linked'] = 'empty';
+			echo json_encode($response);
+			exit;
+		} else {
+			$response['debug']['linked_count'] = count($supplierProposals);
+		}
+
+		$linkedIds = array();
+		foreach ($supplierProposals as $proposal) {
+			if (!empty($proposal->id)) {
+				$linkedIds[] = (int) $proposal->id;
+			}
+		}
+		$response['debug']['linked_ids'] = $linkedIds;
+
+		if (!in_array((int) $supplierProposalId, $linkedIds, true)) {
+			$response['message'] = $langs->trans('CliChaumeilProposalNotLinked');
+			echo json_encode($response);
+			exit;
+		}
+
+		$db->begin();
+		$errorMessage = '';
+
+		foreach ($supplierProposals as $proposal) {
+			if (empty($proposal->id)) {
+				continue;
+			}
+
+			$targetStatus = ((int) $proposal->id === (int) $supplierProposalId) ? SupplierProposal::STATUS_SIGNED : SupplierProposal::STATUS_NOTSIGNED;
+			$currentStatus = isset($proposal->status) ? (int) $proposal->status : (int) $proposal->statut;
+
+			if ($currentStatus === $targetStatus) {
+				continue;
+			}
+
+			$supplierProposal = new SupplierProposal($db);
+			if ($supplierProposal->fetch((int) $proposal->id) <= 0) {
+				$errorMessage = $langs->trans('ErrorRecordNotFound');
+				$response['debug']['fetch_fail'] = $proposal->id;
+				break;
+			}
+
+			if (method_exists($supplierProposal, 'fetch_thirdparty')) {
+				$supplierProposal->fetch_thirdparty();
+			}
+
+			$now = $db->idate(dol_now());
+			$sql = "UPDATE ".$db->prefix()."supplier_proposal";
+			$sql .= " SET fk_statut = ".((int) $targetStatus).", date_cloture='".$now."', fk_user_cloture=".((int) $user->id);
+			$sql .= " WHERE rowid = ".((int) $supplierProposal->id);
+			if ($db->query($sql)) {
+				$supplierProposal->status = $targetStatus;
+				$supplierProposal->statut = $targetStatus;
+				$response['debug']['updated'][] = array('id' => $supplierProposal->id, 'status' => $targetStatus);
+				continue;
+			}
+
+			$errorMessage = 'Update failed for proposal '.$supplierProposal->id.' : '.($db->lasterror() ? $db->lasterror() : $langs->trans('CliChaumeilSelectError'));
+			$response['debug']['updated'][] = array('id' => $supplierProposal->id, 'status' => $targetStatus, 'error' => $errorMessage);
+			dol_syslog('CliChaumeil choose_subcontractor update failed for proposal '.$supplierProposal->id.' : '.$errorMessage, LOG_ERR);
+			break;
+		}
+
+		if (!empty($errorMessage)) {
+			$db->rollback();
+			$response['message'] = $errorMessage;
+			$response['debug']['rollback'] = true;
+			echo json_encode($response);
+			exit;
+		}
+
+		$db->commit();
+		setEventMessages($langs->trans('CliChaumeilSubcontractorChosen'), null, 'mesgs');
+		$response['success'] = true;
+		$response['message'] = '';
+		$response['debug']['status'] = 'ok';
+		echo json_encode($response);
+		exit;
+
 	case 'update_line_price':
 		header('Content-Type: application/json'); // We will return JSON
 		$response = array('status' => 'error', 'message' => 'Unknown error');

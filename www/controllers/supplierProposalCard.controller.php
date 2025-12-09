@@ -155,8 +155,8 @@ class SupplierProposalCardController extends Controller
 		// Render sections
 		print $this->view->renderProposalSummary($object, $thirdparty, $documents);
 		print $this->view->renderProposalLines($object, $currencyCode);
-		print $this->view->renderTimeline($TMessage, $object);
 		print $this->view->renderCommentForm($object);
+		print $this->view->renderTimeline($TMessage, $object);
 
 		// Close form
 		print '</form>';

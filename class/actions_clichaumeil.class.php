@@ -68,6 +68,9 @@ class ActionsClichaumeil extends CommonHookActions
 
 	private static $lineData = [];
 
+	/** @var bool */
+	private $subcontractorAssetsLoaded = false;
+
 	/**
 	 * Constructor
 	 *
@@ -96,6 +99,166 @@ class ActionsClichaumeil extends CommonHookActions
 		$this->resprints = '';
 		return 0;
 	}
+
+
+	/**
+	 * Add a button to pick a subcontractor from linked supplier proposals on propal/order cards.
+	 *
+	 * @param array<string,mixed> $parameters Hook metadata (context, etc...)
+	 * @param CommonObject        $object     Current object
+	 * @param string              $action     Current action
+	 * @param HookManager         $hookmanager Hook manager instance
+	 * @return int
+	 */
+	public function addMoreActionsButtons($parameters, &$object, &$action, $hookmanager)
+	{
+		global $langs, $user, $conf;
+		$langs->loadLangs(array('clichaumeil@clichaumeil', 'supplier_proposal', 'companies', 'main'));
+
+		$contexts = isset($parameters['context']) ? explode(':', (string) $parameters['context']) : array();
+		$allowedContexts = array('propalcard', 'ordercard');
+		if (empty(array_intersect($allowedContexts, $contexts))) {
+			return 0;
+		}
+
+		if (empty($object->id) || empty($user->rights->supplier_proposal->creer)) {
+			return 0;
+		}
+
+		$status = isset($object->status) ? $object->status : $object->statut;
+		if ($object->element === 'propal' && in_array((int) $status, array(Propal::STATUS_NOTSIGNED, Propal::STATUS_CANCELED), true)) {
+			return 0;
+		}
+		if ($object->element === 'commande' && (int) $status === Commande::STATUS_CANCELED) {
+			return 0;
+		}
+
+		require_once DOL_DOCUMENT_ROOT.'/supplier_proposal/class/supplier_proposal.class.php';
+		require_once DOL_DOCUMENT_ROOT.'/comm/propal/class/propal.class.php';
+
+		if (empty($object->linkedObjects['supplier_proposal'])) {
+			$object->fetchObjectLinked($object->id, $object->element, '', 'supplier_proposal');
+		}
+
+		// Fallback: if order has no direct links, try to read them from its origin propal
+		if ($object->element === 'commande' && empty($object->linkedObjects['supplier_proposal']) && !empty($object->origin_id) && $object->origin === 'propal') {
+			$origin = new Propal($this->db);
+			if ($origin->fetch($object->origin_id) > 0) {
+				$origin->fetchObjectLinked($origin->id, $origin->element, '', 'supplier_proposal');
+				if (!empty($origin->linkedObjects['supplier_proposal'])) {
+					$object->linkedObjects['supplier_proposal'] = $origin->linkedObjects['supplier_proposal'];
+				}
+			}
+		}
+
+		if (empty($object->linkedObjects['supplier_proposal'])) {
+			return 0;
+		}
+
+		$supplierProposals = $object->linkedObjects['supplier_proposal'];
+
+		$rowsHtml = '';
+		$hasAcceptedProposal = false;
+		foreach ($supplierProposals as $supplierProposal) {
+			if (empty($supplierProposal->id)) {
+				continue;
+			}
+
+			if (empty($supplierProposal->thirdparty) && method_exists($supplierProposal, 'fetch_thirdparty')) {
+				$supplierProposal->fetch_thirdparty();
+			}
+
+			$supplierRef = '';
+			if (!empty($supplierProposal->ref_supplier)) {
+				$supplierRef = $supplierProposal->ref_supplier;
+			} elseif (!empty($supplierProposal->ref_fourn)) {
+				$supplierRef = $supplierProposal->ref_fourn;
+			}
+
+			$currentStatus = isset($supplierProposal->status) ? (int) $supplierProposal->status : (int) $supplierProposal->statut;
+			if ($currentStatus === SupplierProposal::STATUS_SIGNED) {
+				$hasAcceptedProposal = true;
+			}
+			$isSelected = ($currentStatus === SupplierProposal::STATUS_SIGNED);
+			$statusLabel = '';
+			if (method_exists($supplierProposal, 'LibStatut')) {
+				$statusLabel = dol_escape_htmltag($supplierProposal->LibStatut($currentStatus, 0)); // Text only, no picto/tooltip
+			}
+
+			$rowsHtml .= '<tr data-supplier-proposal-id="'.(int) $supplierProposal->id.'" class="clichaumeil-subcontractor-row'.($isSelected ? ' is-selected' : '').'">';
+			$rowsHtml .= '<td>';
+			if ($supplierProposal->thirdparty) {
+				$thirdpartyUrl = $supplierProposal->thirdparty->getNomUrl(1, '', 0, 0, '', 1);
+				$rowsHtml .= str_replace('<a ', '<a tabindex="-1" ', $thirdpartyUrl);
+			}
+			$rowsHtml .= '</td>';
+			$rowsHtml .= '<td>';
+			$proposalUrl = $supplierProposal->getNomUrl(1, '', 0, 0, '', 1);
+			$rowsHtml .= str_replace('<a ', '<a tabindex="-1" ', $proposalUrl);
+			$rowsHtml .= '</td>';
+			$rowsHtml .= '<td>'.dol_escape_htmltag($supplierRef).'</td>';
+			$rowsHtml .= '<td class="right">'.price($supplierProposal->total_ht).'</td>';
+			$rowsHtml .= '<td class="center nowraponall">'.$statusLabel.'</td>';
+			$rowsHtml .= '<td class="center">';
+			$rowsHtml .= '<a href="#" class="clichaumeil-select-subcontractor" data-supplier-proposal-id="'.(int) $supplierProposal->id.'">';
+			$rowsHtml .= img_picto('', 'tick'); // Pas d’alt/title sur l’image pour éviter tout tooltip
+			$rowsHtml .= '</a>';
+			$rowsHtml .= '</td>';
+			$rowsHtml .= '</tr>';
+		}
+
+		if (empty($rowsHtml) || $hasAcceptedProposal) {
+			return 0;
+		}
+
+		$buttonId = 'clichaumeil-open-subcontractor-modal-'.$object->id;
+		$modalId = 'clichaumeil-subcontractor-modal-'.$object->id;
+		$ajaxUrl = dol_buildpath('/clichaumeil/script/interface.php', 1);
+		$token = newToken();
+
+		// Button
+		print '<a class="butAction clichaumeil-open-subcontractor" href="#" id="'.$buttonId.'" data-modal-target="'.$modalId.'">'.$langs->trans('CliChaumeilChooseSubcontractor').'</a>';
+
+		// Modal markup
+		print '<div id="'.$modalId.'" class="clichaumeil-subcontractor-modal" data-ajax-url="'.$ajaxUrl.'" data-token="'.$token.'" data-parent-type="'.$object->element.'" data-parent-id="'.(int) $object->id.'" style="display:none;">';
+		print '<div class="clichaumeil-subcontractor-modal__body">';
+		print '<p class="clichaumeil-subcontractor-modal__intro">'.$langs->trans('CliChaumeilSubcontractorModalIntro').'</p>';
+		print '<div class="scrolling-table-container">';
+		print '<table class="noborder centpercent">';
+		print '<thead>';
+		print '<tr class="liste_titre">';
+		print '<th>'.$langs->trans('Supplier').'</th>';
+		print '<th>'.$langs->trans('Ref').'</th>';
+		print '<th>'.$langs->trans('RefSupplier').'</th>';
+		print '<th class="right">'.$langs->trans('AmountHT').'</th>';
+		print '<th class="center">'.$langs->trans('Status').'</th>';
+		print '<th class="center"></th>';
+		print '</tr>';
+		print '</thead>';
+		print '<tbody>'.$rowsHtml.'</tbody>';
+		print '</table>';
+		print '</div>';
+		print '</div>';
+		print '</div>';
+
+		// Styles
+		print '<style>
+			.clichaumeil-subcontractor-row.is-selected td { background: #e7f5ea; }
+			.clichaumeil-subcontractor-row td:last-child { width: 60px; }
+			.clichaumeil-select-subcontractor { display: inline-flex; align-items: center; justify-content: center; padding: 6px; border-radius: 50%; background: #e7f5ea; }
+			.scrolling-table-container { max-height: 420px; overflow: auto; }
+		</style>';
+
+		// External JS loader (printed once)
+		if (!$this->subcontractorAssetsLoaded) {
+			print '<script src="'.dol_buildpath('/clichaumeil/js/choose_subcontractor.js', 1).'" defer></script>';
+			$this->subcontractorAssetsLoaded = true;
+		}
+
+
+		return 0;
+	}
+
 
 	/**
 	 * Overload the addMoreMassActions function : replacing the parent's function with the one below
