@@ -3,7 +3,6 @@
 ### Unreleased
 
 ## 1.6 
-- FIX : External supplier proposal timeline now hides system events and keeps only user comments. *09/12/2025* - 1.6.2
 - FIX : Supplier status no longer auto-fills when creating a request for quotation from a customer proposal. *05/12/2025* - 1.6.1
 - NEW : Add Extrafield units on propal/command line *01/12/2025* - 1.6.0
 
