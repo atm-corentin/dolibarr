@@ -374,4 +374,60 @@ class SupplierProposalService
 
 		return $extrafieldsData;
 	}
+
+	/**
+	 * Load supplier proposals linked to a business object, including reverse links and commande->propal fallback.
+	 *
+	 * @param CommonObject $object Business object (propal or commande)
+	 * @param DoliDB       $db     Database handler
+	 * @return SupplierProposal[]
+	 */
+	public static function loadLinkedSupplierProposals($object, DoliDB $db)
+	{
+		$linkedSupplierProposals = array();
+
+		if (!method_exists($object, 'fetchObjectLinked')) {
+			return $linkedSupplierProposals;
+		}
+
+		// Collect supplier proposals linked in both directions on current object
+		$object->fetchObjectLinked($object->id, $object->element, '', 'supplier_proposal');
+		if (!empty($object->linkedObjects['supplier_proposal'])) {
+			$linkedSupplierProposals = $object->linkedObjects['supplier_proposal'];
+		}
+
+		if (method_exists($object, 'clearObjectLinkedCache')) {
+			$object->clearObjectLinkedCache();
+		}
+		$object->fetchObjectLinked('', '', $object->id, $object->element, 'OR', 1, 'sourcetype', 1);
+		if (!empty($object->linkedObjects['supplier_proposal'])) {
+			$linkedSupplierProposals = $linkedSupplierProposals + $object->linkedObjects['supplier_proposal'];
+		}
+
+		$object->linkedObjects['supplier_proposal'] = $linkedSupplierProposals;
+
+		// Fallback: if a commande has no direct links, try its origin propal (both directions)
+		if ($object->element === 'commande' && empty($object->linkedObjects['supplier_proposal']) && !empty($object->origin_id) && $object->origin === 'propal') {
+			dol_include_once('/comm/propal/class/propal.class.php');
+			$origin = new Propal($db);
+			if ($origin->fetch($object->origin_id) > 0) {
+				$origin->fetchObjectLinked($origin->id, $origin->element, '', 'supplier_proposal');
+				$originLinked = $origin->linkedObjects['supplier_proposal'] ?? array();
+
+				if (method_exists($origin, 'clearObjectLinkedCache')) {
+					$origin->clearObjectLinkedCache();
+				}
+				$origin->fetchObjectLinked('', '', $origin->id, $origin->element, 'OR', 1, 'sourcetype', 1);
+				if (!empty($origin->linkedObjects['supplier_proposal'])) {
+					$originLinked = $originLinked + $origin->linkedObjects['supplier_proposal'];
+				}
+
+				if (!empty($originLinked)) {
+					$object->linkedObjects['supplier_proposal'] = $originLinked;
+				}
+			}
+		}
+
+		return $object->linkedObjects['supplier_proposal'] ?? array();
+	}
 }

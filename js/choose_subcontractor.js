@@ -37,7 +37,7 @@ const CliChaumeilSubcontractor = {
 	},
 
 	bindActions() {
-		$(document).off('click', '.clichaumeil-select-subcontractor').on('click', '.clichaumeil-select-subcontractor', function (e) {
+		$(document).on('click', '.clichaumeil-select-subcontractor', function (e) {
 			e.preventDefault();
 			const $container = $(this).closest('.clichaumeil-subcontractor-modal');
 			const supplierProposalId = $(this).data('supplier-proposal-id');
