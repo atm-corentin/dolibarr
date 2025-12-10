@@ -136,17 +136,42 @@ class ActionsClichaumeil extends CommonHookActions
 		require_once DOL_DOCUMENT_ROOT.'/supplier_proposal/class/supplier_proposal.class.php';
 		require_once DOL_DOCUMENT_ROOT.'/comm/propal/class/propal.class.php';
 
-		if (empty($object->linkedObjects['supplier_proposal'])) {
-			$object->fetchObjectLinked($object->id, $object->element, '', 'supplier_proposal');
+		// Collect supplier proposals linked in both directions
+		$linkedSupplierProposals = array();
+		$object->fetchObjectLinked($object->id, $object->element, '', 'supplier_proposal');
+		if (!empty($object->linkedObjects['supplier_proposal'])) {
+			$linkedSupplierProposals = $object->linkedObjects['supplier_proposal'];
 		}
+
+		// Also read reverse links (supplier_proposal -> commande/propal) added manually from the target card
+		if (method_exists($object, 'clearObjectLinkedCache')) {
+			$object->clearObjectLinkedCache();
+		}
+		$object->fetchObjectLinked('', '', $object->id, $object->element, 'OR', 1, 'sourcetype', 1);
+		if (!empty($object->linkedObjects['supplier_proposal'])) {
+			$linkedSupplierProposals = $linkedSupplierProposals + $object->linkedObjects['supplier_proposal'];
+		}
+
+		$object->linkedObjects['supplier_proposal'] = $linkedSupplierProposals;
 
 		// Fallback: if order has no direct links, try to read them from its origin propal
 		if ($object->element === 'commande' && empty($object->linkedObjects['supplier_proposal']) && !empty($object->origin_id) && $object->origin === 'propal') {
 			$origin = new Propal($this->db);
 			if ($origin->fetch($object->origin_id) > 0) {
 				$origin->fetchObjectLinked($origin->id, $origin->element, '', 'supplier_proposal');
+				$originLinked = $origin->linkedObjects['supplier_proposal'] ?? array();
+
+				// Reverse links on origin propal
+				if (method_exists($origin, 'clearObjectLinkedCache')) {
+					$origin->clearObjectLinkedCache();
+				}
+				$origin->fetchObjectLinked('', '', $origin->id, $origin->element, 'OR', 1, 'sourcetype', 1);
 				if (!empty($origin->linkedObjects['supplier_proposal'])) {
-					$object->linkedObjects['supplier_proposal'] = $origin->linkedObjects['supplier_proposal'];
+					$originLinked = $originLinked + $origin->linkedObjects['supplier_proposal'];
+				}
+
+				if (!empty($originLinked)) {
+					$object->linkedObjects['supplier_proposal'] = $originLinked;
 				}
 			}
 		}

@@ -109,7 +109,43 @@ switch ($action) {
 			}
 
 			if (method_exists($parent, 'fetchObjectLinked')) {
+				// Collect supplier proposals linked in both directions on current object
+				$linkedSupplierProposals = array();
 				$parent->fetchObjectLinked($parent->id, $parent->element, '', 'supplier_proposal');
+				if (!empty($parent->linkedObjects['supplier_proposal'])) {
+					$linkedSupplierProposals = $parent->linkedObjects['supplier_proposal'];
+				}
+
+				if (method_exists($parent, 'clearObjectLinkedCache')) {
+					$parent->clearObjectLinkedCache();
+				}
+				$parent->fetchObjectLinked('', '', $parent->id, $parent->element, 'OR', 1, 'sourcetype', 1);
+				if (!empty($parent->linkedObjects['supplier_proposal'])) {
+					$linkedSupplierProposals = $linkedSupplierProposals + $parent->linkedObjects['supplier_proposal'];
+				}
+
+				$parent->linkedObjects['supplier_proposal'] = $linkedSupplierProposals;
+
+				// Fallback: if a commande has no direct links, try its origin propal (both directions)
+				if ($parent->element === 'commande' && empty($parent->linkedObjects['supplier_proposal']) && !empty($parent->origin_id) && $parent->origin === 'propal') {
+					$origin = new Propal($db);
+					if ($origin->fetch($parent->origin_id) > 0) {
+						$origin->fetchObjectLinked($origin->id, $origin->element, '', 'supplier_proposal');
+						$originLinked = $origin->linkedObjects['supplier_proposal'] ?? array();
+
+						if (method_exists($origin, 'clearObjectLinkedCache')) {
+							$origin->clearObjectLinkedCache();
+						}
+						$origin->fetchObjectLinked('', '', $origin->id, $origin->element, 'OR', 1, 'sourcetype', 1);
+						if (!empty($origin->linkedObjects['supplier_proposal'])) {
+							$originLinked = $originLinked + $origin->linkedObjects['supplier_proposal'];
+						}
+
+						if (!empty($originLinked)) {
+							$parent->linkedObjects['supplier_proposal'] = $originLinked;
+						}
+					}
+				}
 			}
 
 			$supplierProposals = $parent->linkedObjects['supplier_proposal'] ?? array();
