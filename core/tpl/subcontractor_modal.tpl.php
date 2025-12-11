@@ -20,7 +20,6 @@
 				<tr class="liste_titre">
 					<th><?php echo $langs->trans('Supplier'); ?></th>
 					<th><?php echo $langs->trans('Ref'); ?></th>
-					<th><?php echo $langs->trans('RefSupplier'); ?></th>
 					<th class="right"><?php echo $langs->trans('AmountHT'); ?></th>
 					<th class="center"><?php echo $langs->trans('Status'); ?></th>
 					<th class="center"></th>
@@ -31,12 +30,6 @@
 					<?php
 					if (empty($supplierProposal->id)) {
 						continue;
-					}
-					$supplierRef = '';
-					if (!empty($supplierProposal->ref_supplier)) {
-						$supplierRef = $supplierProposal->ref_supplier;
-					} elseif (!empty($supplierProposal->ref_fourn)) {
-						$supplierRef = $supplierProposal->ref_fourn;
 					}
 					$currentStatus = isset($supplierProposal->status) ? (int) $supplierProposal->status : (int) $supplierProposal->statut;
 					$isSelected = ($currentStatus === SupplierProposal::STATUS_SIGNED);
@@ -56,7 +49,6 @@
 					<tr data-supplier-proposal-id="<?php echo (int) $supplierProposal->id; ?>" class="clichaumeil-subcontractor-row<?php echo $isSelected ? ' is-selected' : ''; ?>">
 						<td><?php echo $thirdpartyUrl; ?></td>
 						<td><?php echo $proposalUrl; ?></td>
-						<td><?php echo dol_escape_htmltag($supplierRef); ?></td>
 						<td class="right"><?php echo price($supplierProposal->total_ht); ?></td>
 						<td class="center nowraponall"><?php echo $statusLabel; ?></td>
 						<td class="center">
