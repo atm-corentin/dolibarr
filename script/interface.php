@@ -155,12 +155,20 @@ switch ($action) {
 				$sql = "UPDATE ".$db->prefix()."supplier_proposal";
 				$sql .= " SET fk_statut = ".((int) $targetStatus).", date_cloture='".$now."', fk_user_cloture=".((int) $user->id);
 				$sql .= " WHERE rowid = ".((int) $supplierProposal->id);
-				if ($db->query($sql)) {
-					$supplierProposal->status = $targetStatus;
-					$supplierProposal->statut = $targetStatus;
-					$response['debug']['updated'][] = array('id' => $supplierProposal->id, 'status' => $targetStatus);
-					continue;
-				}
+					$resql = $db->query($sql);
+					if ($resql) {
+						$affected = $db->affected_rows($resql);
+						if ($affected > 0) {
+							$supplierProposal->status = $targetStatus;
+							$supplierProposal->statut = $targetStatus;
+							$response['debug']['updated'][] = array('id' => $supplierProposal->id, 'status' => $targetStatus);
+							continue;
+						}
+						$errorMessage = 'Update failed for proposal '.$supplierProposal->id.' : '.$langs->trans('ErrorRecordNotFound');
+						$response['debug']['updated'][] = array('id' => $supplierProposal->id, 'status' => $targetStatus, 'error' => $errorMessage, 'affected' => $affected);
+						dol_syslog('CliChaumeil choose_subcontractor update affected 0 row for proposal '.$supplierProposal->id, LOG_ERR);
+						break;
+					}
 
 				$errorMessage = 'Update failed for proposal '.$supplierProposal->id.' : '.($db->lasterror() ? $db->lasterror() : $langs->trans('CliChaumeilSelectError'));
 				$response['debug']['updated'][] = array('id' => $supplierProposal->id, 'status' => $targetStatus, 'error' => $errorMessage);

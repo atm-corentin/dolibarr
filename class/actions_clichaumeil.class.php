@@ -116,132 +116,114 @@ class ActionsClichaumeil extends CommonHookActions
 		global $langs, $user, $conf;
 		$langs->loadLangs(array('clichaumeil@clichaumeil', 'supplier_proposal', 'companies', 'main'));
 
+		require_once DOL_DOCUMENT_ROOT.'/supplier_proposal/class/supplier_proposal.class.php';
+		require_once DOL_DOCUMENT_ROOT.'/comm/propal/class/propal.class.php';
+		dol_include_once('/commande/class/commande.class.php');
+
+		if (!$this->shouldShowSubcontractorPicker($parameters, $object, $user)) {
+			return 0;
+		}
+
+		$supplierProposals = SupplierProposalService::loadLinkedSupplierProposals($object, $this->db);
+		if (!$this->hasSelectableSupplierProposal($supplierProposals)) {
+			return 0;
+		}
+
+		$this->renderSubcontractorPicker($object, $supplierProposals, $langs);
+
+		return 0;
+	}
+
+	/**
+	 * Check if the subcontractor picker should be displayed in the current context.
+	 *
+	 * @param array<string,mixed> $parameters
+	 * @param CommonObject        $object
+	 * @param User                $user
+	 * @return bool
+	 */
+	private function shouldShowSubcontractorPicker(array $parameters, CommonObject $object, User $user): bool
+	{
 		$contexts = isset($parameters['context']) ? explode(':', (string) $parameters['context']) : array();
 		$allowedContexts = array('propalcard', 'ordercard');
 		if (empty(array_intersect($allowedContexts, $contexts))) {
-			return 0;
+			return false;
 		}
 
 		if (empty($object->id) || empty($user->rights->supplier_proposal->creer)) {
-			return 0;
+			return false;
 		}
 
-		$status = isset($object->status) ? $object->status : $object->statut;
-		if ($object->element === 'propal' && in_array((int) $status, array(Propal::STATUS_NOTSIGNED, Propal::STATUS_CANCELED), true)) {
-			return 0;
+		$status = isset($object->status) ? (int) $object->status : (int) $object->statut;
+		if ($object->element === 'propal' && in_array($status, array(Propal::STATUS_NOTSIGNED, Propal::STATUS_CANCELED), true)) {
+			return false;
 		}
-		if ($object->element === 'commande' && (int) $status === Commande::STATUS_CANCELED) {
-			return 0;
+		if ($object->element === 'commande' && $status === Commande::STATUS_CANCELED) {
+			return false;
 		}
 
-		require_once DOL_DOCUMENT_ROOT.'/supplier_proposal/class/supplier_proposal.class.php';
-		require_once DOL_DOCUMENT_ROOT.'/comm/propal/class/propal.class.php';
+		return true;
+	}
 
-		$supplierProposals = SupplierProposalService::loadLinkedSupplierProposals($object, $this->db);
+	/**
+	 * Ensure there are selectable supplier proposals and none is already signed.
+	 *
+	 * @param SupplierProposal[] $supplierProposals
+	 * @return bool
+	 */
+	private function hasSelectableSupplierProposal(array $supplierProposals): bool
+	{
 		if (empty($supplierProposals)) {
-			return 0;
+			return false;
 		}
 
-		$rowsHtml = '';
-		$hasAcceptedProposal = false;
 		foreach ($supplierProposals as $supplierProposal) {
-			if (empty($supplierProposal->id)) {
-				continue;
-			}
-
-			if (empty($supplierProposal->thirdparty) && method_exists($supplierProposal, 'fetch_thirdparty')) {
-				$supplierProposal->fetch_thirdparty();
-			}
-
-			$supplierRef = '';
-			if (!empty($supplierProposal->ref_supplier)) {
-				$supplierRef = $supplierProposal->ref_supplier;
-			} elseif (!empty($supplierProposal->ref_fourn)) {
-				$supplierRef = $supplierProposal->ref_fourn;
-			}
-
 			$currentStatus = isset($supplierProposal->status) ? (int) $supplierProposal->status : (int) $supplierProposal->statut;
 			if ($currentStatus === SupplierProposal::STATUS_SIGNED) {
-				$hasAcceptedProposal = true;
+				return false;
 			}
-			$isSelected = ($currentStatus === SupplierProposal::STATUS_SIGNED);
-			$statusLabel = '';
-			if (method_exists($supplierProposal, 'LibStatut')) {
-				$statusLabel = dol_escape_htmltag($supplierProposal->LibStatut($currentStatus, 0)); // Text only, no picto/tooltip
-			}
-
-			$rowsHtml .= '<tr data-supplier-proposal-id="'.(int) $supplierProposal->id.'" class="clichaumeil-subcontractor-row'.($isSelected ? ' is-selected' : '').'">';
-			$rowsHtml .= '<td>';
-			if ($supplierProposal->thirdparty) {
-				$thirdpartyUrl = $supplierProposal->thirdparty->getNomUrl(1, '', 0, 0, '', 1);
-				$rowsHtml .= str_replace('<a ', '<a tabindex="-1" ', $thirdpartyUrl);
-			}
-			$rowsHtml .= '</td>';
-			$rowsHtml .= '<td>';
-			$proposalUrl = $supplierProposal->getNomUrl(1, '', 0, 0, '', 1);
-			$rowsHtml .= str_replace('<a ', '<a tabindex="-1" ', $proposalUrl);
-			$rowsHtml .= '</td>';
-			$rowsHtml .= '<td>'.dol_escape_htmltag($supplierRef).'</td>';
-			$rowsHtml .= '<td class="right">'.price($supplierProposal->total_ht).'</td>';
-			$rowsHtml .= '<td class="center nowraponall">'.$statusLabel.'</td>';
-			$rowsHtml .= '<td class="center">';
-			$rowsHtml .= '<a href="#" class="clichaumeil-select-subcontractor" data-supplier-proposal-id="'.(int) $supplierProposal->id.'">';
-			$rowsHtml .= img_picto('', 'tick'); // Pas d’alt/title sur l’image pour éviter tout tooltip
-			$rowsHtml .= '</a>';
-			$rowsHtml .= '</td>';
-			$rowsHtml .= '</tr>';
 		}
 
-		if (empty($rowsHtml) || $hasAcceptedProposal) {
-			return 0;
-		}
+		return true;
+	}
 
+	/**
+	 * Render button, modal and required assets for subcontractor selection.
+	 *
+	 * @param CommonObject        $object
+	 * @param SupplierProposal[]  $supplierProposals
+	 * @param Translate           $langs
+	 * @return void
+	 */
+	private function renderSubcontractorPicker(CommonObject $object, array $supplierProposals, Translate $langs): void
+	{
 		$buttonId = 'clichaumeil-open-subcontractor-modal-'.$object->id;
 		$modalId = 'clichaumeil-subcontractor-modal-'.$object->id;
 		$ajaxUrl = dol_buildpath('/clichaumeil/script/interface.php', 1);
 		$token = newToken();
 
-		// Button
-		print '<a class="butAction clichaumeil-open-subcontractor" href="#" id="'.$buttonId.'" data-modal-target="'.$modalId.'">'.$langs->trans('CliChaumeilChooseSubcontractor').'</a>';
-
-		// Modal markup
-		print '<div id="'.$modalId.'" class="clichaumeil-subcontractor-modal" data-ajax-url="'.$ajaxUrl.'" data-token="'.$token.'" data-parent-type="'.$object->element.'" data-parent-id="'.(int) $object->id.'" style="display:none;">';
-		print '<div class="clichaumeil-subcontractor-modal__body">';
-		print '<p class="clichaumeil-subcontractor-modal__intro">'.$langs->trans('CliChaumeilSubcontractorModalIntro').'</p>';
-		print '<div class="scrolling-table-container">';
-		print '<table class="noborder centpercent">';
-		print '<thead>';
-		print '<tr class="liste_titre">';
-		print '<th>'.$langs->trans('Supplier').'</th>';
-		print '<th>'.$langs->trans('Ref').'</th>';
-		print '<th>'.$langs->trans('RefSupplier').'</th>';
-		print '<th class="right">'.$langs->trans('AmountHT').'</th>';
-		print '<th class="center">'.$langs->trans('Status').'</th>';
-		print '<th class="center"></th>';
-		print '</tr>';
-		print '</thead>';
-		print '<tbody>'.$rowsHtml.'</tbody>';
-		print '</table>';
-		print '</div>';
-		print '</div>';
-		print '</div>';
-
-		// Styles
-		print '<style>
-			.clichaumeil-subcontractor-row.is-selected td { background: #e7f5ea; }
-			.clichaumeil-subcontractor-row td:last-child { width: 60px; }
-			.clichaumeil-select-subcontractor { display: inline-flex; align-items: center; justify-content: center; padding: 6px; border-radius: 50%; background: #e7f5ea; }
-			.scrolling-table-container { max-height: 420px; overflow: auto; }
-		</style>';
-
-		// External JS loader (printed once)
-		if (!$this->subcontractorAssetsLoaded) {
-			print '<script src="'.dol_buildpath('/clichaumeil/js/choose_subcontractor.js', 1).'" defer></script>';
-			$this->subcontractorAssetsLoaded = true;
+		$templatePath = __DIR__ . '/../core/tpl/subcontractor_picker.tpl.php';
+		if (file_exists($templatePath)) {
+			include $templatePath;
 		}
 
+		$this->printSubcontractorAssets();
+	}
 
-		return 0;
+	/**
+	 * Load JS/CSS for subcontractor selection once.
+	 *
+	 * @return void
+	 */
+	private function printSubcontractorAssets(): void
+	{
+		if ($this->subcontractorAssetsLoaded) {
+			return;
+		}
+
+		print '<link rel="stylesheet" type="text/css" href="'.dol_buildpath('/clichaumeil/css/subcontractor.css', 1).'" />';
+		print '<script src="'.dol_buildpath('/clichaumeil/js/choose_subcontractor.js', 1).'" defer></script>';
+		$this->subcontractorAssetsLoaded = true;
 	}
 
 

@@ -11,7 +11,7 @@
  * - $langs
  */
 ?>
-<div id="<?php echo dol_escape_htmltag($modalId); ?>" class="clichaumeil-subcontractor-modal" data-ajax-url="<?php echo dol_escape_htmltag($ajaxUrl); ?>" data-token="<?php echo dol_escape_htmltag($token); ?>" data-parent-type="<?php echo dol_escape_htmltag($object->element); ?>" data-parent-id="<?php echo (int) $object->id; ?>" style="display:none;">
+<div id="<?php echo dol_escape_htmltag($modalId); ?>" class="clichaumeil-subcontractor-modal" data-ajax-url="<?php echo dol_escape_htmltag($ajaxUrl); ?>" data-token="<?php echo dol_escape_htmltag($token); ?>" data-parent-type="<?php echo dol_escape_htmltag($object->element); ?>" data-parent-id="<?php echo (int) $object->id; ?>">
 	<div class="clichaumeil-subcontractor-modal__body">
 		<p class="clichaumeil-subcontractor-modal__intro"><?php echo $langs->trans('CliChaumeilSubcontractorModalIntro'); ?></p>
 		<div class="scrolling-table-container">
@@ -63,9 +63,22 @@
 						<td class="right"><?php echo price($supplierProposal->total_ht); ?></td>
 						<td class="center nowraponall"><?php echo $statusLabel; ?></td>
 						<td class="center">
-							<a href="#" class="clichaumeil-select-subcontractor" data-supplier-proposal-id="<?php echo (int) $supplierProposal->id; ?>">
-								<?php echo img_picto('', 'tick'); ?>
-							</a>
+							<?php
+							echo dolGetButtonTitle(
+								$langs->trans('Select'),
+								'',
+								'fa fa-check',
+								'#',
+								'',
+								1,
+								array(
+									'morecss' => 'clichaumeil-select-subcontractor',
+									'attr' => array(
+										'data-supplier-proposal-id' => (int) $supplierProposal->id
+									)
+								)
+							);
+							?>
 						</td>
 					</tr>
 				<?php endforeach; ?>
