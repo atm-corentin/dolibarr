@@ -45,6 +45,15 @@ $propalId = GETPOST('propalId', 'int');
 $lineId = GETPOST('lineId', 'int');
 $newPrice = GETPOST('newPrice', 'alpha');  // Use 'alpha' for decimal numbers, then convert with price2num()
 $newPuHt = price2num($newPrice);
+$token = GETPOST('token', 'alphanohtml');
+
+// CSRF protection: token must match current or next token stored in session
+if (empty($token) || (!hash_equals((string) $token, (string) newToken()) && !hash_equals((string) $token, (string) currentToken()))) {
+	header('Content-Type: application/json');
+	http_response_code(403);
+	echo json_encode(array('success' => false, 'message' => 'Invalid security token'));
+	exit;
+}
 
 switch ($action) {
 	case 'choose_subcontractor':
@@ -102,6 +111,8 @@ switch ($action) {
 			}
 
 			$supplierProposals = SupplierProposalService::loadLinkedSupplierProposals($parent, $db);
+			$supplierProposals = SupplierProposalService::preloadThirdparties($supplierProposals, $db);
+
 			if (empty($supplierProposals)) {
 				$response['message'] = $langs->trans('CliChaumeilNoSupplierProposal');
 				$response['debug']['linked'] = 'empty';
@@ -151,24 +162,11 @@ switch ($action) {
 					$supplierProposal->fetch_thirdparty();
 				}
 
-				$now = $db->idate(dol_now());
-				$sql = "UPDATE ".$db->prefix()."supplier_proposal";
-				$sql .= " SET fk_statut = ".((int) $targetStatus).", date_cloture='".$now."', fk_user_cloture=".((int) $user->id);
-				$sql .= " WHERE rowid = ".((int) $supplierProposal->id);
-					$resql = $db->query($sql);
-					if ($resql) {
-						$affected = $db->affected_rows($resql);
-						if ($affected > 0) {
-							$supplierProposal->status = $targetStatus;
-							$supplierProposal->statut = $targetStatus;
-							$response['debug']['updated'][] = array('id' => $supplierProposal->id, 'status' => $targetStatus);
-							continue;
-						}
-						$errorMessage = 'Update failed for proposal '.$supplierProposal->id.' : '.$langs->trans('ErrorRecordNotFound');
-						$response['debug']['updated'][] = array('id' => $supplierProposal->id, 'status' => $targetStatus, 'error' => $errorMessage, 'affected' => $affected);
-						dol_syslog('CliChaumeil choose_subcontractor update affected 0 row for proposal '.$supplierProposal->id, LOG_ERR);
-						break;
-					}
+				$result = $supplierProposal->cloture($user, $targetStatus, '');
+				if ($result > 0) {
+					$response['debug']['updated'][] = array('id' => $supplierProposal->id, 'status' => $targetStatus);
+					continue;
+				}
 
 				$errorMessage = 'Update failed for proposal '.$supplierProposal->id.' : '.($db->lasterror() ? $db->lasterror() : $langs->trans('CliChaumeilSelectError'));
 				$response['debug']['updated'][] = array('id' => $supplierProposal->id, 'status' => $targetStatus, 'error' => $errorMessage);

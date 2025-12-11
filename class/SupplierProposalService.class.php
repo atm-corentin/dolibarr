@@ -17,6 +17,7 @@
 
 require_once DOL_DOCUMENT_ROOT . '/supplier_proposal/class/supplier_proposal.class.php';
 require_once DOL_DOCUMENT_ROOT . '/core/class/commonobjectline.class.php';
+require_once DOL_DOCUMENT_ROOT . '/societe/class/societe.class.php';
 
 /**
  * Service class for Supplier Proposal operations
@@ -407,27 +408,102 @@ class SupplierProposalService
 		$object->linkedObjects['supplier_proposal'] = $linkedSupplierProposals;
 
 		// Fallback: if a commande has no direct links, try its origin propal (both directions)
-		if ($object->element === 'commande' && empty($object->linkedObjects['supplier_proposal']) && !empty($object->origin_id) && $object->origin === 'propal') {
-			dol_include_once('/comm/propal/class/propal.class.php');
-			$origin = new Propal($db);
-			if ($origin->fetch($object->origin_id) > 0) {
-				$origin->fetchObjectLinked($origin->id, $origin->element, '', 'supplier_proposal');
-				$originLinked = $origin->linkedObjects['supplier_proposal'] ?? array();
+		if ($object->element === 'commande' && empty($object->linkedObjects['supplier_proposal'])) {
+			self::loadSupplierProposalsFromOriginPropal($object, $db);
+		}
 
-				if (method_exists($origin, 'clearObjectLinkedCache')) {
-					$origin->clearObjectLinkedCache();
-				}
-				$origin->fetchObjectLinked('', '', $origin->id, $origin->element, 'OR', 1, 'sourcetype', 1);
-				if (!empty($origin->linkedObjects['supplier_proposal'])) {
-					$originLinked = $originLinked + $origin->linkedObjects['supplier_proposal'];
+		return $object->linkedObjects['supplier_proposal'] ?? array();
+	}
+
+	/**
+	 * Load supplier proposals from a commande origin propal (both directions).
+	 *
+	 * @param CommonObject $object
+	 * @param DoliDB       $db
+	 * @return void
+	 */
+	private static function loadSupplierProposalsFromOriginPropal($object, DoliDB $db): void
+	{
+		if (empty($object->origin_id) || $object->origin !== 'propal') {
+			return;
+		}
+
+		dol_include_once('/comm/propal/class/propal.class.php');
+		$origin = new Propal($db);
+		if ($origin->fetch($object->origin_id) <= 0) {
+			return;
+		}
+
+		$origin->fetchObjectLinked($origin->id, $origin->element, '', 'supplier_proposal');
+		$originLinked = $origin->linkedObjects['supplier_proposal'] ?? array();
+
+		if (method_exists($origin, 'clearObjectLinkedCache')) {
+			$origin->clearObjectLinkedCache();
+		}
+		$origin->fetchObjectLinked('', '', $origin->id, $origin->element, 'OR', 1, 'sourcetype', 1);
+		if (!empty($origin->linkedObjects['supplier_proposal'])) {
+			$originLinked = $originLinked + $origin->linkedObjects['supplier_proposal'];
+		}
+
+		if (!empty($originLinked)) {
+			$object->linkedObjects['supplier_proposal'] = $originLinked;
+		}
+	}
+
+	/**
+	 * Preload thirdparties for a list of supplier proposals to avoid N+1 queries in views.
+	 *
+	 * @param SupplierProposal[] $supplierProposals
+	 * @param DoliDB             $db
+	 * @return SupplierProposal[]
+	 */
+	public static function preloadThirdparties(array $supplierProposals, DoliDB $db): array
+	{
+		$proposalById = array();
+		$proposalIds = array();
+		foreach ($supplierProposals as $proposal) {
+			if (empty($proposal->id)) {
+				continue;
+			}
+			$proposalById[(int) $proposal->id] = $proposal;
+			$proposalIds[] = (int) $proposal->id;
+		}
+
+		if (empty($proposalIds)) {
+			return $supplierProposals;
+		}
+
+		$sql = 'SELECT sp.rowid as spid, sp.fk_soc, s.rowid as socid, s.nom as socname';
+		$sql .= ' FROM '.$db->prefix().'supplier_proposal sp';
+		$sql .= ' LEFT JOIN '.$db->prefix().'societe s ON s.rowid = sp.fk_soc';
+		$sql .= ' WHERE sp.rowid IN ('.implode(',', array_map('intval', $proposalIds)).')';
+
+		$resql = $db->query($sql);
+		if ($resql) {
+			while ($obj = $db->fetch_object($resql)) {
+				$propId = (int) $obj->spid;
+				if (!isset($proposalById[$propId])) {
+					continue;
 				}
 
-				if (!empty($originLinked)) {
-					$object->linkedObjects['supplier_proposal'] = $originLinked;
+				$proposal = $proposalById[$propId];
+				$socId = (int) $obj->fk_soc;
+				$proposal->socid = $socId;
+				$proposal->fk_soc = $socId;
+
+				if ($socId > 0 && !empty($obj->socid)) {
+					$thirdparty = new Societe($db);
+					$thirdparty->id = (int) $obj->socid;
+					$thirdparty->name = (string) $obj->socname;
+					$thirdparty->nom = $thirdparty->name;
+					$proposal->thirdparty = $thirdparty;
+				} elseif ($socId > 0 && method_exists($proposal, 'fetch_thirdparty')) {
+					// Fallback if LEFT JOIN does not return societe (edge cases)
+					$proposal->fetch_thirdparty();
 				}
 			}
 		}
 
-		return $object->linkedObjects['supplier_proposal'] ?? array();
+		return $supplierProposals;
 	}
 }

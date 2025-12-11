@@ -125,6 +125,7 @@ class ActionsClichaumeil extends CommonHookActions
 		}
 
 		$supplierProposals = SupplierProposalService::loadLinkedSupplierProposals($object, $this->db);
+		$supplierProposals = SupplierProposalService::preloadThirdparties($supplierProposals, $this->db);
 		if (!$this->hasSelectableSupplierProposal($supplierProposals)) {
 			return 0;
 		}

@@ -32,9 +32,6 @@
 					if (empty($supplierProposal->id)) {
 						continue;
 					}
-					if (empty($supplierProposal->thirdparty) && method_exists($supplierProposal, 'fetch_thirdparty')) {
-						$supplierProposal->fetch_thirdparty();
-					}
 					$supplierRef = '';
 					if (!empty($supplierProposal->ref_supplier)) {
 						$supplierRef = $supplierProposal->ref_supplier;
