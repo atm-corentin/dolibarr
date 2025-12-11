@@ -141,7 +141,7 @@ class CliChaumeilProductCostCalculator
 	 */
 	public static function isSupportedProduct(Product $product): bool
 	{
-		return ($product instanceof Product) && ((int) $product->type === Product::TYPE_PRODUCT);
+		return ($product instanceof Product) && in_array((int) $product->type, array(Product::TYPE_PRODUCT, Product::TYPE_SERVICE), true);
 	}
 
 	/**

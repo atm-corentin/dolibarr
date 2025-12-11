@@ -26,6 +26,7 @@
 
 require_once DOL_DOCUMENT_ROOT . '/core/class/commonhookactions.class.php';
 require_once DOL_DOCUMENT_ROOT . '/product/class/product.class.php';
+require_once DOL_DOCUMENT_ROOT . '/core/class/extrafields.class.php';
 require_once __DIR__ . '/CliChaumeilProductCost.class.php';
 require_once __DIR__ . '/../lib/clichaumeil.lib.php';
 require_once DOL_DOCUMENT_ROOT.'/categories/class/categorie.class.php';
@@ -67,6 +68,20 @@ class ActionsClichaumeil extends CommonHookActions
 	public $priority;
 
 	private static $lineData = [];
+
+	private const COST_BREAKDOWN_FIELDS = array(
+		'clichaumeil_pa_support',
+		'clichaumeil_pa_sav',
+		'clichaumeil_pa_machine',
+		'clichaumeil_pa_encre',
+		'clichaumeil_pa_mo',
+		'clichaumeil_fg_percent',
+		'clichaumeil_pa_fg',
+	);
+
+	private const PERCENT_FIELD = 'clichaumeil_fg_percent';
+
+	private const READONLY_FIELD = 'clichaumeil_pa_fg';
 
 	/**
 	 * Constructor
@@ -147,6 +162,88 @@ class ActionsClichaumeil extends CommonHookActions
 		}
 
 		$this->populateDefaultOverheadRateOnCreate($object);
+
+		return 0;
+	}
+
+	/**
+	 * Handle cost breakdown extrafields updates from supplier price tab.
+	 *
+	 * @param array<string,mixed> $parameters
+	 * @param CommonObject        $object
+	 * @param string              $action
+	 * @param HookManager         $hookmanager
+	 * @return int
+	 */
+	public function doActions($parameters, &$object, &$action, $hookmanager)
+	{
+		global $user, $langs;
+
+		$context = (string) ($parameters['context'] ?? ($parameters['currentcontext'] ?? ''));
+		if (strpos($context, 'pricesuppliercard') === false) {
+			return 0;
+		}
+
+		if (GETPOST('cancel', 'alpha')) {
+			$action = '';
+			return 0;
+		}
+
+		$attr = GETPOST('attr', 'aZ09');
+		$isCostBreakdown = (int) GETPOST('clichaumeil_cost_breakdown') === 1;
+		if ($action !== 'update_extrafields' || !$isCostBreakdown || !in_array($attr, self::COST_BREAKDOWN_FIELDS, true)) {
+			return 0;
+		}
+
+		if (!$user->hasRight('clichaumeil', 'product', 'read_cost_composition')) {
+			accessforbidden();
+		}
+
+		$productId = GETPOSTINT('id');
+		if (!$productId && !empty($parameters['id_prod'])) {
+			$productId = (int) $parameters['id_prod'];
+		}
+
+		if ($productId <= 0) {
+			return 0;
+		}
+
+		$product = new Product($this->db);
+		if ($product->fetch($productId) <= 0) {
+			setEventMessages($langs->trans('ErrorRecordNotFound'), null, 'errors');
+			return -1;
+		}
+
+		// Apply only to supported products
+		if (!CliChaumeilProductCostCalculator::isSupportedProduct($product)) {
+			return 0;
+		}
+
+		$product->fetch_optionals($productId);
+
+		$extrafields = new ExtraFields($this->db);
+		$extrafields->fetch_name_optionals_label('product');
+
+		$result = $extrafields->setOptionalsFromPost(null, $product, $attr);
+		if ($result < 0) {
+			setEventMessages($extrafields->error, $extrafields->errors, 'errors');
+			return -1;
+		}
+
+		$result = $product->insertExtraFields();
+		if ($result < 0) {
+			setEventMessages($product->error, $product->errors, 'errors');
+			return -1;
+		}
+
+		$result = CliChaumeilProductCostCalculator::calculateAndUpdateProductCostPriceFromExtrafields($product, $user);
+		if ($result < 0) {
+			setEventMessages($langs->trans('Error'), null, 'errors');
+			return -1;
+		}
+
+		setEventMessages($langs->trans('RecordSaved'), null, 'mesgs');
+		$action = '';
 
 		return 0;
 	}
@@ -505,6 +602,19 @@ class ActionsClichaumeil extends CommonHookActions
 	 */
 	public function llxFooter($parameters, &$object, &$action, $hookmanager): int
 	{
+		global $langs, $user;
+
+		$langs->load('clichaumeil@clichaumeil');
+
+		$context = (string) ($parameters['context'] ?? ($parameters['currentcontext'] ?? ''));
+		if (strpos($context, 'pricesuppliercard') !== false) {
+			$this->renderSupplierCostBreakdownRows($parameters, $object, $action);
+		}
+
+		// Hide moved extrafields on product card to avoid duplicate display
+		if (strpos($context, 'productcard') !== false && strpos($context, 'pricesuppliercard') === false) {
+			$this->hideCostBreakdownOnProductCard();
+		}
 
 		/* --------------------------------------------------------------------
 		 * 1) Récupération catégorie cible + produits
@@ -553,6 +663,227 @@ class ActionsClichaumeil extends CommonHookActions
 		return 0;
 	}
 
+
+	/**
+	 * Render CliChaumeil cost breakdown fields on supplier price tab.
+	 *
+	 * @param array<string,mixed> $parameters
+	 * @param mixed               $object
+	 * @param string              $action
+	 * @return void
+	 */
+	private function renderSupplierCostBreakdownRows(array $parameters, $object, string $action): void
+	{
+		global $langs, $user;
+
+		$context = (string) ($parameters['context'] ?? ($parameters['currentcontext'] ?? ''));
+		if (strpos($context, 'pricesuppliercard') === false) {
+			return;
+		}
+
+		if (!$user->hasRight('clichaumeil', 'product', 'read_cost_composition')) {
+			return;
+		}
+
+		$productId = GETPOSTINT('id');
+		if (!$productId && is_object($object) && property_exists($object, 'id')) {
+			$productId = (int) $object->id;
+		}
+		if (!$productId && !empty($parameters['id_prod'])) {
+			$productId = (int) $parameters['id_prod'];
+		}
+		if ($productId <= 0) {
+			return;
+		}
+
+		$product = new Product($this->db);
+		if ($product->fetch($productId) <= 0 || !CliChaumeilProductCostCalculator::isSupportedProduct($product)) {
+			return;
+		}
+		$product->fetch_optionals($productId);
+		$extrafields = new ExtraFields($this->db);
+		$extrafields->fetch_name_optionals_label('product');
+
+		$rowsHtml = $this->buildSupplierCostRows($product, $extrafields, $action, GETPOST('attr', 'aZ09'));
+		if ($rowsHtml === '') {
+			return;
+		}
+
+		print '<div id="clichaumeil-cost-breakdown" style="display:none;"><table><tbody>'.$rowsHtml.'</tbody></table></div>';
+		print '<script>
+			jQuery(function($){
+				var $holder = $("#clichaumeil-cost-breakdown");
+				var $rows = $holder.find("tr");
+				var $targetTable = $(".fichecenter .tableforfield tbody").first();
+				if ($targetTable.length && $rows.length) {
+					$rows.appendTo($targetTable);
+				}
+				$holder.remove();
+			});
+		</script>';
+	}
+
+	/**
+	 * Hide cost breakdown extrafields on product card to avoid duplicate display.
+	 *
+	 * @return void
+	 */
+	private function hideCostBreakdownOnProductCard(): void
+	{
+		$fields = json_encode(self::COST_BREAKDOWN_FIELDS);
+		$js = <<<JS
+jQuery(function($){
+	var fields = $fields || [];
+	fields.forEach(function(f){
+		var selectors = [
+			'[id*="'+f+'"]',
+			'[class*="'+f+'"]',
+			'[name="options_'+f+'"]',
+			'.field_options_'+f,
+			'.product_extras_'+f,
+			'[id^="extrarow-product_'+f+'_"]'
+		].join(',');
+		$(selectors).each(function(){
+			var \$el = $(this);
+			var \$row = \$el.closest('tr');
+			if (\$row.length) {
+				\$row.hide();
+			} else {
+				\$el.hide();
+			}
+		});
+	});
+});
+JS;
+		print '<script>' . $js . '</script>';
+	}
+
+	/**
+	 * Build HTML rows for cost breakdown.
+	 *
+	 * @param Product     $product
+	 * @param ExtraFields $extrafields
+	 * @param string      $action
+	 * @param string      $currentAttr
+	 * @return string
+	 */
+	private function buildSupplierCostRows(Product $product, ExtraFields $extrafields, string $action, string $currentAttr): string
+	{
+		global $langs;
+
+		$rows = '';
+		$editMode = ($action === 'edit_extrafields' && in_array($currentAttr, self::COST_BREAKDOWN_FIELDS, true));
+		$token = newToken();
+		$baseUrl = dol_buildpath('/product/price_suppliers.php', 1) . '?id=' . ((int) $product->id);
+
+		foreach (self::COST_BREAKDOWN_FIELDS as $field) {
+			if (!$this->extrafieldExists($extrafields, $field)) {
+				continue;
+			}
+			$labelKey = $extrafields->attributes['product']['label'][$field];
+			$label = $langs->trans($labelKey);
+
+			$value = $product->array_options['options_' . $field] ?? '';
+			$isReadonly = ($field === self::READONLY_FIELD);
+
+			if ($editMode && $currentAttr === $field && !$isReadonly) {
+				$inputField = $extrafields->showInputField($field, $value, '', '', '', '', $product, 'product');
+				if ($field === self::PERCENT_FIELD) {
+					$inputField .= ' %';
+				} else {
+					$inputField .= ' &euro;';
+				}
+
+				$rows .= '<tr class="field_'.$field.' clichaumeil-cost-row">';
+				$rows .= '<td class="titlefield">'.dol_escape_htmltag($label).'</td>';
+				$rows .= '<td>';
+				$rows .= '<form method="POST" action="'.dol_escape_htmltag($baseUrl).'">';
+				$rows .= '<input type="hidden" name="token" value="'.$token.'">';
+				$rows .= '<input type="hidden" name="action" value="update_extrafields">';
+				$rows .= '<input type="hidden" name="attr" value="'.$field.'">';
+				$rows .= '<input type="hidden" name="clichaumeil_cost_breakdown" value="1">';
+				$rows .= $inputField;
+				$rows .= '<div class="center marginstop marginbottomonly">';
+				$rows .= '<input type="submit" class="button button-save small" value="'.dol_escape_htmltag($langs->trans('Save')).'">';
+				$rows .= '<input type="submit" class="button button-cancel small" name="cancel" value="'.dol_escape_htmltag($langs->trans('Cancel')).'">';
+				$rows .= '</div>';
+				$rows .= '</form>';
+				$rows .= '</td></tr>';
+				continue;
+			}
+
+			$outputValue = $this->formatCostBreakdownOutput($extrafields, $product, $field, $value);
+			$rows .= '<tr class="field_'.$field.' clichaumeil-cost-row">';
+			$rows .= '<td class="titlefield">'.dol_escape_htmltag($label);
+			if (!$isReadonly) {
+				$rows .= ' '.$this->buildCostBreakdownEditLink($baseUrl, $field, $token);
+			}
+			$rows .= '</td>';
+			$rows .= '<td>'.$outputValue.'</td></tr>';
+		}
+
+		return $rows;
+	}
+
+	/**
+	 * Render formatted value with currency/percent suffixes.
+	 *
+	 * @param ExtraFields $extrafields
+	 * @param Product     $product
+	 * @param string      $field
+	 * @param mixed       $value
+	 * @return string
+	 */
+	private function formatCostBreakdownOutput(ExtraFields $extrafields, Product $product, string $field, $value): string
+	{
+		global $langs;
+
+		$output = $extrafields->showOutputField($field, $value, '', 'product', $langs, $product);
+
+		if ($field === self::PERCENT_FIELD) {
+			if ($output === '' && ($value !== '' && $value !== null)) {
+				$output = price((float) $value, 0, $langs, 0, 0, -2, '');
+			}
+			return ($output === '' ? '' : $output . ' %');
+		}
+
+		if ($output === '' && ($value !== '' && $value !== null)) {
+			$output = price((float) $value, 0, $langs, 0, 0, -2, 'EUR');
+		}
+
+		if ($output === '') {
+			return '';
+		}
+
+		return $output . ' &euro;';
+	}
+
+	/**
+	 * Return edit link with pencil icon.
+	 *
+	 * @param string $baseUrl
+	 * @param string $field
+	 * @param string $token
+	 * @return string
+	 */
+	private function buildCostBreakdownEditLink(string $baseUrl, string $field, string $token): string
+	{
+		$url = $baseUrl . '&action=edit_extrafields&attr=' . $field . '&token=' . $token;
+
+		return ' <a class="editfielda" href="'.dol_escape_htmltag($url).'">'.img_edit().'</a>';
+	}
+
+	/**
+	 * Check extrafield availability.
+	 *
+	 * @param ExtraFields $extrafields
+	 * @param string      $field
+	 * @return bool
+	 */
+	private function extrafieldExists(ExtraFields $extrafields, string $field): bool
+	{
+		return isset($extrafields->attributes['product']['label'][$field]);
+	}
 
 	/**
 	 * Overload the printObjectLine method to prepare margin-related data for each line.
