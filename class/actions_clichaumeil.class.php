@@ -31,6 +31,7 @@ require_once __DIR__ . '/CliChaumeilProductCost.class.php';
 require_once __DIR__ . '/../lib/clichaumeil.lib.php';
 require_once DOL_DOCUMENT_ROOT.'/categories/class/categorie.class.php';
 require_once DOL_DOCUMENT_ROOT.'/product/class/product.class.php';
+require_once __DIR__ . '/SupplierProposalService.class.php';
 
 /**
  * Class ActionsClichaumeil
@@ -68,6 +69,10 @@ class ActionsClichaumeil extends CommonHookActions
 	public $priority;
 
 	private static $lineData = [];
+
+	/** @var bool */
+	private $subcontractorAssetsLoaded = false;
+
 
 	private const COST_BREAKDOWN_FIELDS = array(
 		'clichaumeil_pa_support',
@@ -111,6 +116,133 @@ class ActionsClichaumeil extends CommonHookActions
 		$this->resprints = '';
 		return 0;
 	}
+
+
+	/**
+	 * Add a button to pick a subcontractor from linked supplier proposals on propal/order cards.
+	 *
+	 * @param array<string,mixed> $parameters Hook metadata (context, etc...)
+	 * @param CommonObject        $object     Current object
+	 * @param string              $action     Current action
+	 * @param HookManager         $hookmanager Hook manager instance
+	 * @return int
+	 */
+	public function addMoreActionsButtons(array $parameters, CommonObject &$object, string &$action, HookManager $hookmanager)
+	{
+		global $langs, $user, $conf;
+		$langs->loadLangs(array('clichaumeil@clichaumeil', 'supplier_proposal', 'companies', 'main'));
+
+		require_once DOL_DOCUMENT_ROOT.'/supplier_proposal/class/supplier_proposal.class.php';
+		require_once DOL_DOCUMENT_ROOT.'/comm/propal/class/propal.class.php';
+		require_once DOL_DOCUMENT_ROOT.'/commande/class/commande.class.php';
+
+		if (!$this->shouldShowSubcontractorPicker($parameters, $object, $user)) {
+			return 0;
+		}
+
+		$supplierProposals = SupplierProposalService::loadLinkedSupplierProposals($object, $this->db);
+		$supplierProposals = SupplierProposalService::preloadThirdparties($supplierProposals, $this->db);
+		if (!$this->hasSelectableSupplierProposal($supplierProposals)) {
+			return 0;
+		}
+
+		$this->renderSubcontractorPicker($object, $supplierProposals, $langs);
+
+		return 0;
+	}
+
+	/**
+	 * Check if the subcontractor picker should be displayed in the current context.
+	 *
+	 * @param array<string,mixed> $parameters
+	 * @param CommonObject        $object
+	 * @param User                $user
+	 * @return bool
+	 */
+	private function shouldShowSubcontractorPicker(array $parameters, CommonObject $object, User $user): bool
+	{
+		$contexts = isset($parameters['context']) ? explode(':', (string) $parameters['context']) : array();
+		$allowedContexts = array('propalcard', 'ordercard');
+		if (empty(array_intersect($allowedContexts, $contexts))) {
+			return false;
+		}
+
+		if (empty($object->id) || !$user->hasRight('supplier_proposal', 'creer')) {
+			return false;
+		}
+
+		$status = isset($object->status) ? (int) $object->status : (int) $object->statut;
+		if ($object->element === 'propal' && in_array($status, array(Propal::STATUS_NOTSIGNED, Propal::STATUS_CANCELED), true)) {
+			return false;
+		}
+		if ($object->element === 'commande' && $status === Commande::STATUS_CANCELED) {
+			return false;
+		}
+
+		return true;
+	}
+
+	/**
+	 * Ensure there are selectable supplier proposals and none is already signed.
+	 *
+	 * @param SupplierProposal[] $supplierProposals
+	 * @return bool
+	 */
+	private function hasSelectableSupplierProposal(array $supplierProposals): bool
+	{
+		if (empty($supplierProposals)) {
+			return false;
+		}
+
+		foreach ($supplierProposals as $supplierProposal) {
+			$currentStatus = isset($supplierProposal->status) ? (int) $supplierProposal->status : (int) $supplierProposal->statut;
+			if ($currentStatus === SupplierProposal::STATUS_SIGNED) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	/**
+	 * Render button, modal and required assets for subcontractor selection.
+	 *
+	 * @param CommonObject        $object
+	 * @param SupplierProposal[]  $supplierProposals
+	 * @param Translate           $langs
+	 * @return void
+	 */
+	private function renderSubcontractorPicker(CommonObject $object, array $supplierProposals, Translate $langs): void
+	{
+		$buttonId = 'clichaumeil-open-subcontractor-modal-'.$object->id;
+		$modalId = 'clichaumeil-subcontractor-modal-'.$object->id;
+		$ajaxUrl = dol_buildpath('/clichaumeil/script/interface.php', 1);
+		$token = newToken();
+
+		$templatePath = __DIR__ . '/../core/tpl/subcontractor_picker.tpl.php';
+		if (file_exists($templatePath)) {
+			include $templatePath;
+		}
+
+		$this->printSubcontractorAssets();
+	}
+
+	/**
+	 * Load JS/CSS for subcontractor selection once.
+	 *
+	 * @return void
+	 */
+	private function printSubcontractorAssets(): void
+	{
+		if ($this->subcontractorAssetsLoaded) {
+			return;
+		}
+
+		print '<link rel="stylesheet" type="text/css" href="'.dol_buildpath('/clichaumeil/css/subcontractor.css', 1).'" />';
+		print '<script src="'.dol_buildpath('/clichaumeil/js/choose_subcontractor.js', 1).'" defer></script>';
+		$this->subcontractorAssetsLoaded = true;
+	}
+
 
 	/**
 	 * Overload the addMoreMassActions function : replacing the parent's function with the one below
@@ -166,7 +298,7 @@ class ActionsClichaumeil extends CommonHookActions
 		return 0;
 	}
 
-	/**
+/**
 	 * Handle cost breakdown extrafields updates from supplier price tab.
 	 *
 	 * @param array<string,mixed> $parameters

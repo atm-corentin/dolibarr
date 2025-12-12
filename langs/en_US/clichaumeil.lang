@@ -121,6 +121,14 @@ CLICHAUMEIL_FILE_NO_TMP_DIR = Missing temporary folder on server
 CLICHAUMEIL_FILE_CANT_WRITE = Failed to write file to disk
 CLICHAUMEIL_FILE_EXTENSION_BLOCKED = A PHP extension blocked the file upload
 CLICHAUMEIL_FILE_UNKNOWN_ERROR = Unknown error during file upload
+CliChaumeilChooseSubcontractor=Choose subcontractor
+CliChaumeilSelectSubcontractor=Select this subcontractor
+CliChaumeilSelectError=Error while selecting subcontractor
+CliChaumeilNoSupplierProposal=No linked supplier proposal
+CliChaumeilProposalNotLinked=Supplier proposal not linked to this document
+CliChaumeilSubcontractorChosen=Subcontractor selected
+CliChaumeilSubcontractorModalIntro=Select the supplier proposal you want to keep as subcontractor.
+
 
 
 RfaStatusWon=Won
