@@ -922,13 +922,13 @@ JS;
 			$value = $product->array_options['options_' . $field] ?? '';
 			$isReadonly = ($field === self::READONLY_FIELD);
 
-			if ($editMode && $currentAttr === $field && !$isReadonly) {
-				$inputField = $extrafields->showInputField($field, $value, '', '', '', '', $product, 'product');
-				if ($field === self::PERCENT_FIELD) {
-					$inputField .= ' %';
-				} else {
-					$inputField .= ' &euro;';
-				}
+				if ($editMode && $currentAttr === $field && !$isReadonly) {
+					$inputField = $extrafields->showInputField($field, $value, '', '', '', '', $product, 'product');
+					if ($field === self::PERCENT_FIELD) {
+						$inputField .= ' %';
+					} else {
+						$inputField .= ' '.$langs->getCurrencySymbol('EUR');
+					}
 
 				$rows .= '<tr class="field_'.$field.' clichaumeil-cost-row">';
 				$rows .= '<td class="titlefield">'.dol_escape_htmltag($label).'</td>';
