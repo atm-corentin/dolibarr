@@ -327,6 +327,10 @@ class ActionsClichaumeil extends CommonHookActions
 			return 0;
 		}
 
+		if (!isValidToken(GETPOST('token', 'alpha'))) {
+			accessforbidden();
+		}
+
 		if (!$user->hasRight('clichaumeil', 'product', 'read_cost_composition')) {
 			accessforbidden();
 		}
