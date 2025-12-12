@@ -1,0 +1,4 @@
+.clichaumeil-subcontractor-modal { display: none; }
+.clichaumeil-subcontractor-row.is-selected td { background: #e7f5ea; }
+.clichaumeil-subcontractor-row td:last-child { width: 60px; }
+.clichaumeil-subcontractor-modal .scrolling-table-container { max-height: 420px; overflow: auto; }
