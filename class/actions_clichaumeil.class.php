@@ -1031,7 +1031,7 @@ JS;
 			return '';
 		}
 
-		return $output . ' &euro;';
+		return $output . ' ' . $langs->getCurrencySymbol('EUR');
 	}
 
 	/**
