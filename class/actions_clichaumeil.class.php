@@ -111,14 +111,14 @@ class ActionsClichaumeil extends CommonHookActions
 	 * @param HookManager         $hookmanager Hook manager instance
 	 * @return int
 	 */
-	public function addMoreActionsButtons($parameters, &$object, &$action, $hookmanager)
+	public function addMoreActionsButtons(array $parameters, CommonObject &$object, string &$action, HookManager $hookmanager)
 	{
 		global $langs, $user, $conf;
 		$langs->loadLangs(array('clichaumeil@clichaumeil', 'supplier_proposal', 'companies', 'main'));
 
 		require_once DOL_DOCUMENT_ROOT.'/supplier_proposal/class/supplier_proposal.class.php';
 		require_once DOL_DOCUMENT_ROOT.'/comm/propal/class/propal.class.php';
-		dol_include_once('/commande/class/commande.class.php');
+		require_once DOL_DOCUMENT_ROOT.'/commande/class/commande.class.php';
 
 		if (!$this->shouldShowSubcontractorPicker($parameters, $object, $user)) {
 			return 0;
@@ -151,7 +151,7 @@ class ActionsClichaumeil extends CommonHookActions
 			return false;
 		}
 
-		if (empty($object->id) || empty($user->rights->supplier_proposal->creer)) {
+		if (empty($object->id) || !$user->hasRight('supplier_proposal', 'creer')) {
 			return false;
 		}
 

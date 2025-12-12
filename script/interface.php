@@ -62,7 +62,7 @@ switch ($action) {
 
 			$response = array('success' => false, 'message' => $langs->trans('CliChaumeilSelectError'), 'debug' => array());
 
-			if (empty($user->rights->supplier_proposal->creer) && empty($user->rights->supplier_proposal->cloturer)) {
+			if (!$user->hasRight('supplier_proposal', 'creer') && !$user->hasRight('supplier_proposal', 'cloturer')) {
 				$response['message'] = $langs->trans('NotEnoughPermissions');
 				echo json_encode($response);
 				exit;
@@ -97,8 +97,8 @@ switch ($action) {
 			}
 
 			$parentClass = $parentMap[$parentType];
-			dol_include_once('/comm/propal/class/propal.class.php');
-			dol_include_once('/commande/class/commande.class.php');
+			require_once DOL_DOCUMENT_ROOT.'/comm/propal/class/propal.class.php';
+			require_once DOL_DOCUMENT_ROOT.'/commande/class/commande.class.php';
 
 			$parent = new $parentClass($db);
 			if ($parent->fetch($parentId) <= 0) {

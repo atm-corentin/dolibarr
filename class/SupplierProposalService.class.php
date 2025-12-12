@@ -383,7 +383,7 @@ class SupplierProposalService
 	 * @param DoliDB       $db     Database handler
 	 * @return SupplierProposal[]
 	 */
-	public static function loadLinkedSupplierProposals($object, DoliDB $db)
+	public static function loadLinkedSupplierProposals(CommonObject $object, DoliDB $db)
 	{
 		$linkedSupplierProposals = array();
 
@@ -422,13 +422,13 @@ class SupplierProposalService
 	 * @param DoliDB       $db
 	 * @return void
 	 */
-	private static function loadSupplierProposalsFromOriginPropal($object, DoliDB $db): void
+	private static function loadSupplierProposalsFromOriginPropal(CommonObject $object, DoliDB $db): void
 	{
 		if (empty($object->origin_id) || $object->origin !== 'propal') {
 			return;
 		}
 
-		dol_include_once('/comm/propal/class/propal.class.php');
+		require_once DOL_DOCUMENT_ROOT.'/comm/propal/class/propal.class.php';
 		$origin = new Propal($db);
 		if ($origin->fetch($object->origin_id) <= 0) {
 			return;
