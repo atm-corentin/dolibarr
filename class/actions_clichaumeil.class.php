@@ -327,7 +327,7 @@ class ActionsClichaumeil extends CommonHookActions
 			return 0;
 		}
 
-		if (!isValidToken(GETPOST('token', 'alpha'))) {
+		if (!$this->isCsrfTokenValid(GETPOST('token', 'alphanohtml'))) {
 			accessforbidden();
 		}
 
@@ -360,6 +360,30 @@ class ActionsClichaumeil extends CommonHookActions
 		$extrafields = new ExtraFields($this->db);
 		$extrafields->fetch_name_optionals_label('product');
 
+		$result = $this->handleCostUpdate($product, $extrafields, $attr, $user, $langs);
+		if ($result < 0) {
+			return -1;
+		}
+
+		setEventMessages($langs->trans('RecordSaved'), null, 'mesgs');
+		$action = '';
+
+		return 0;
+	}
+
+
+	/**
+	 * Persist extrafields and recompute cost.
+	 *
+	 * @param Product     $product
+	 * @param ExtraFields $extrafields
+	 * @param string      $attr
+	 * @param User        $user
+	 * @param Translate   $langs
+	 * @return int
+	 */
+	private function handleCostUpdate(Product $product, ExtraFields $extrafields, string $attr, User $user, Translate $langs): int
+	{
 		$result = $extrafields->setOptionalsFromPost(null, $product, $attr);
 		if ($result < 0) {
 			setEventMessages($extrafields->error, $extrafields->errors, 'errors');
@@ -378,10 +402,26 @@ class ActionsClichaumeil extends CommonHookActions
 			return -1;
 		}
 
-		setEventMessages($langs->trans('RecordSaved'), null, 'mesgs');
-		$action = '';
-
 		return 0;
+	}
+
+	/**
+	 * Check CSRF token validity against current and previous token.
+	 *
+	 * @param string $token
+	 * @return bool
+	 */
+	private function isCsrfTokenValid(string $token): bool
+	{
+		if ($token === '') {
+			return false;
+		}
+
+		$current = (string) newToken();
+		$previous = function_exists('currentToken') ? (string) currentToken() : '';
+
+		return (hash_equals($current, (string) $token))
+			|| ($previous !== '' && hash_equals($previous, (string) $token));
 	}
 
 	/**
