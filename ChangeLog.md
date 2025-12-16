@@ -2,6 +2,7 @@
 
 
 ## 1.9
+- NEW : Replace setup select categorie by multiselect *16/12/2025* - 1.9.0 
 - FIX : Product creation no longer blocks on "% Frais généraux" and purchase-tab composition fields on services now save correctly. *16/12/2025* - 1.9.0
 - FIX : Supplier status auto-populates when creating a supplier request from a customer proposal. *16/12/2025* - 1.9.0
 - FIX : Supplier portal UX — price button renamed to “Enregistrer les prix”, titles and free-text lines are visible (subtotal lines stay hidden), labels updated, and a red reminder warns that attaching the quote file is mandatory. *16/12/2025* - 1.9.0
