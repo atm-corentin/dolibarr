@@ -77,7 +77,7 @@ class modClichaumeil extends DolibarrModules
 		$this->editor_squarred_logo = '';					// Must be image filename into the module/img directory followed with @modulename. Example: 'myimage.png@clichaumeil'
 
 		// Possible values for version are: 'development', 'experimental', 'dolibarr', 'dolibarr_deprecated', 'experimental_deprecated' or a version string like 'x.y.z'
-		$this->version = '1.8.0';
+		$this->version = '1.9.0';
 		// Url to the file with your last numberversion of this module
 		//$this->url_last_version = 'http://www.example.com/versionmodule.txt';
 
@@ -352,7 +352,7 @@ class modClichaumeil extends DolibarrModules
 			),
 		);
 
-		$extrafields->addExtraField('clichaumeil_supplierstatut', 'CliChaumeilSupplierStatut', 'select', 100, '24', 'supplier_proposal', 0, 0, 'CLICHAUMEIL_PENDING_FILE', $param, 1, '', '1', '', '', 0, 'clichaumeil@clichaumeil', 'isModEnabled("clichaumeil")', 0, '0', array ( 'css' => '', 'cssview' => '', 'csslist' => '', ));
+		$extrafields->addExtraField('clichaumeil_supplierstatut', 'CliChaumeilSupplierStatut', 'select', 100, '24', 'supplier_proposal', 0, 0, 'CLICHAUMEIL_PENDING_FILE', $param, 1, '', '1', '', '', 0, 'clichaumeil@clichaumeil', 'isModEnabled("clichaumeil")', 0, '0', array('css' => '', 'cssview' => '', 'csslist' => '', ));
 
 		$permsCostComposition = '$user->hasRight(\'clichaumeil\',\'product\',\'read_cost_composition\') ? 1:0';
 		$permsPaFg = '$user->hasRight(\'clichaumeil\',\'product\',\'read_cost_composition\') ? 5:0';
