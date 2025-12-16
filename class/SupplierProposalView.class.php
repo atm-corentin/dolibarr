@@ -98,7 +98,9 @@ class SupplierProposalView
 		$out .= $this->renderDocumentsFooter($documents);
 
 		$out .= '</div>'; // panel
+		$out .= $this->renderAttachmentReminder();
 		$out .= '</div>'; // container
+
 
 		return $out;
 	}
@@ -151,10 +153,6 @@ class SupplierProposalView
 
 		if (!empty($object->lines) && is_array($object->lines)) {
 			foreach ($object->lines as $line) {
-				// Hide subtotal lines (product_type = 9) on external access view
-				if ((int) $line->product_type === self::PRODUCT_TYPE_SUBTOTAL) {
-					continue;
-				}
 				$out .= $this->renderLine($line, $currencyCode, $object);
 			}
 		}
@@ -187,7 +185,7 @@ class SupplierProposalView
 	{
 		// Always detect subtotal lines, even if module flag isn't exposed to external access
 		// Subtotal lines are hidden in this view (see renderProposalLines)
-		if (TSubtotal::isModSubtotalLine($line)) {
+		if (TSubtotal::isSubtotal($line)) {
 			return '';
 		}
 
@@ -205,14 +203,20 @@ class SupplierProposalView
 			$out .= nl2br($line->desc);
 		}
 		$out .= '</td>';
-		$out .= '<td class="text-right">' . $line->qty . '</td>';
-		$out .= '<td class="text-right">';
-		$out .= '<input type="text" class="form-control text-right line-price-input"';
-		$out .= ' name="line_prices[' . $line->id . ']"';
-		$out .= ' value="' . price($line->subprice, 0, $this->langs, 0, 2, -1, '', 1) . '"';
-		$out .= ' data-line-id="' . $line->id . '" />';
-		$out .= '</td>';
-		$out .= '<td class="text-right" id="line-total-' . $line->id . '">' . price($line->total_ht, 0, $this->langs, 1, 2, -1, $currencyCode) . '</td>';
+		if (TSubtotal::isModSubtotalLine($line)) {
+			$out .= '<td></td>';
+			$out .= '<td></td>';
+			$out .= '<td></td>';
+		} else {
+			$out .= '<td class="text-right">' . $line->qty . '</td>';
+			$out .= '<td class="text-right">';
+			$out .= '<input type="text" class="form-control text-right line-price-input"';
+			$out .= ' name="line_prices[' . $line->id . ']"';
+			$out .= ' value="' . price($line->subprice, 0, $this->langs, 0, 2, -1, '', 1) . '"';
+			$out .= ' data-line-id="' . $line->id . '" />';
+			$out .= '</td>';
+			$out .= '<td class="text-right" id="line-total-' . $line->id . '">' . price($line->total_ht, 0, $this->langs, 1, 2, -1, $currencyCode) . '</td>';
+		}
 		$out .= '</tr>';
 
 		return $out;
@@ -562,6 +566,20 @@ class SupplierProposalView
 	private function getEaNavbar() : string
 	{
 		return getEaNavbar($this->context->getControllerUrl('supplier_proposal'));
+	}
+
+	/**
+	 * Render the mandatory attachment reminder
+	 *
+	 * @return string HTML
+	 */
+	private function renderAttachmentReminder() : string
+	{
+		$out = '<div class="alert alert-danger" role="alert" style="margin-bottom: 15px;">';
+		$out .= $this->langs->transnoentities('CLICHAUMEIL_SUPPLIERPROPOSAL_ATTACHMENT_REMINDER');
+		$out .= '</div>';
+
+		return $out;
 	}
 
 	/**
