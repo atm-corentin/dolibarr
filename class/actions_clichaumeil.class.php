@@ -475,7 +475,7 @@ class ActionsClichaumeil extends CommonHookActions
 	 */
 	private function populateDefaultOverheadRateOnCreate(Product $product): void
 	{
-		if (!empty($product->id) || (int) $product->type !== Product::TYPE_PRODUCT) {
+		if (!empty($product->id)) {
 			return;
 		}
 

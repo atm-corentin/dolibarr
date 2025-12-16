@@ -357,15 +357,14 @@ class modClichaumeil extends DolibarrModules
 		$permsCostComposition = '$user->hasRight(\'clichaumeil\',\'product\',\'read_cost_composition\') ? 1:0';
 		$permsPaFg = '$user->hasRight(\'clichaumeil\',\'product\',\'read_cost_composition\') ? 5:0';
 
-		$enabledSimpleProduct = '(!isset($object) || !property_exists($object, "type") || (int) $object->type === 0)';
-		$extrafields->addExtraField('clichaumeil_prc_separator', 'CliChaumeilCostBreakdown', 'separate', 100, '', 'product', 0, 0, '', '', 1, $permsCostComposition, $permsCostComposition, '', '', 0, 'clichaumeil@clichaumeil', $enabledSimpleProduct, 0, '0', array());
-		$extrafields->addExtraField('clichaumeil_pa_support', 'CliChaumeilPaSupport', 'double', 101, '24,4', 'product', 0, 0, '', '', 1, $permsCostComposition, $permsCostComposition, '', '', 0, 'clichaumeil@clichaumeil', $enabledSimpleProduct, 0, '0', array());
-		$extrafields->addExtraField('clichaumeil_pa_sav', 'CliChaumeilPaSav', 'double', 102, '24,4', 'product', 0, 0, '', '', 1, $permsCostComposition, $permsCostComposition, '', '', 0, 'clichaumeil@clichaumeil', $enabledSimpleProduct, 0, '0', array());
-		$extrafields->addExtraField('clichaumeil_pa_machine', 'CliChaumeilPaMachine', 'double', 103, '24,4', 'product', 0, 0, '', '', 1, $permsCostComposition, $permsCostComposition, '', '', 0, 'clichaumeil@clichaumeil', $enabledSimpleProduct, 0, '0', array());
-		$extrafields->addExtraField('clichaumeil_pa_encre', 'CliChaumeilPaInk', 'double', 104, '24,4', 'product', 0, 0, '', '', 1, $permsCostComposition, $permsCostComposition, '', '', 0, 'clichaumeil@clichaumeil', $enabledSimpleProduct, 0, '0', array());
-		$extrafields->addExtraField('clichaumeil_pa_mo', 'CliChaumeilPaLabor', 'double', 105, '24,4', 'product', 0, 0, '', '', 1, $permsCostComposition, $permsCostComposition, '', '', 0, 'clichaumeil@clichaumeil', $enabledSimpleProduct, 0, '0', array());
-		$extrafields->addExtraField('clichaumeil_fg_percent', 'CliChaumeilFgPercent', 'double', 106, '24,4', 'product', 1, 0, '', '', 1, $permsCostComposition, $permsCostComposition, '', '', 0, 'clichaumeil@clichaumeil', $enabledSimpleProduct, 0, '0', array());
-		$extrafields->addExtraField('clichaumeil_pa_fg', 'CliChaumeilPaFg', 'double', 107, '24,4', 'product', 0, 0, '', '', 0, $permsPaFg, $permsPaFg, '', '', 0, 'clichaumeil@clichaumeil', $enabledSimpleProduct, 0, '0', array());
+		$extrafields->addExtraField('clichaumeil_prc_separator', 'CliChaumeilCostBreakdown', 'separate', 100, '', 'product', 0, 0, '', '', 1, $permsCostComposition, $permsCostComposition, '', '', 0, 'clichaumeil@clichaumeil', 1, 0, '0', array());
+		$extrafields->addExtraField('clichaumeil_pa_support', 'CliChaumeilPaSupport', 'double', 101, '24,4', 'product', 0, 0, '', '', 1, $permsCostComposition, $permsCostComposition, '', '', 0, 'clichaumeil@clichaumeil', 1, 0, '0', array());
+		$extrafields->addExtraField('clichaumeil_pa_sav', 'CliChaumeilPaSav', 'double', 102, '24,4', 'product', 0, 0, '', '', 1, $permsCostComposition, $permsCostComposition, '', '', 0, 'clichaumeil@clichaumeil', 1, 0, '0', array());
+		$extrafields->addExtraField('clichaumeil_pa_machine', 'CliChaumeilPaMachine', 'double', 103, '24,4', 'product', 0, 0, '', '', 1, $permsCostComposition, $permsCostComposition, '', '', 0, 'clichaumeil@clichaumeil', 1, 0, '0', array());
+		$extrafields->addExtraField('clichaumeil_pa_encre', 'CliChaumeilPaInk', 'double', 104, '24,4', 'product', 0, 0, '', '', 1, $permsCostComposition, $permsCostComposition, '', '', 0, 'clichaumeil@clichaumeil', 1, 0, '0', array());
+		$extrafields->addExtraField('clichaumeil_pa_mo', 'CliChaumeilPaLabor', 'double', 105, '24,4', 'product', 0, 0, '', '', 1, $permsCostComposition, $permsCostComposition, '', '', 0, 'clichaumeil@clichaumeil', 1, 0, '0', array());
+		$extrafields->addExtraField('clichaumeil_fg_percent', 'CliChaumeilFgPercent', 'double', 106, '24,4', 'product', 0, 0, '', '', 1, $permsCostComposition, $permsCostComposition, '', '', 0, 'clichaumeil@clichaumeil', 1, 0, '0', array());
+		$extrafields->addExtraField('clichaumeil_pa_fg', 'CliChaumeilPaFg', 'double', 107, '24,4', 'product', 0, 0, '', '', 0, $permsPaFg, $permsPaFg, '', '', 0, 'clichaumeil@clichaumeil', 1, 0, '0', array());
 
 		if (!getDolGlobalInt('CLICHAUMEIL_DEFAULT_OVERHEAD_RATE')) {
 			dolibarr_set_const($this->db, 'CLICHAUMEIL_DEFAULT_OVERHEAD_RATE', CliChaumeilProductCostCalculator::DEFAULT_RATE_VALUE, 'chaine', 0, '', $conf->entity);

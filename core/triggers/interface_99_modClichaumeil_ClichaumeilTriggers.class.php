@@ -177,8 +177,7 @@ class InterfaceClichaumeilTriggers extends DolibarrTriggers
 					if (empty($origin) && !empty($object->linkedObjectsIds) && !empty($object->linkedObjectsIds['propal'])) {
 						$origin = 'propal';
 					}
-
-					if ($origin === 'propal') {
+					if ($origin === 'propal' || $origin === 'commande') {
 						if (!is_array($object->array_options)) {
 							$object->array_options = array();
 						}
@@ -258,7 +257,7 @@ class InterfaceClichaumeilTriggers extends DolibarrTriggers
 	 */
 	private function applyDefaultOverheadRateIfMissing(Product $product, User $user): int
 	{
-		if ((int) $product->type !== Product::TYPE_PRODUCT || empty($product->id)) {
+		if (empty($product->id)) {
 			return 0;
 		}
 
