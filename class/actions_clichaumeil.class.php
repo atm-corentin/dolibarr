@@ -29,8 +29,8 @@ require_once DOL_DOCUMENT_ROOT . '/product/class/product.class.php';
 require_once DOL_DOCUMENT_ROOT . '/core/class/extrafields.class.php';
 require_once __DIR__ . '/CliChaumeilProductCost.class.php';
 require_once __DIR__ . '/../lib/clichaumeil.lib.php';
-require_once DOL_DOCUMENT_ROOT.'/categories/class/categorie.class.php';
-require_once DOL_DOCUMENT_ROOT.'/product/class/product.class.php';
+require_once DOL_DOCUMENT_ROOT . '/categories/class/categorie.class.php';
+require_once DOL_DOCUMENT_ROOT . '/product/class/product.class.php';
 require_once __DIR__ . '/SupplierProposalService.class.php';
 
 /**
@@ -132,9 +132,9 @@ class ActionsClichaumeil extends CommonHookActions
 		global $langs, $user, $conf;
 		$langs->loadLangs(array('clichaumeil@clichaumeil', 'supplier_proposal', 'companies', 'main'));
 
-		require_once DOL_DOCUMENT_ROOT.'/supplier_proposal/class/supplier_proposal.class.php';
-		require_once DOL_DOCUMENT_ROOT.'/comm/propal/class/propal.class.php';
-		require_once DOL_DOCUMENT_ROOT.'/commande/class/commande.class.php';
+		require_once DOL_DOCUMENT_ROOT . '/supplier_proposal/class/supplier_proposal.class.php';
+		require_once DOL_DOCUMENT_ROOT . '/comm/propal/class/propal.class.php';
+		require_once DOL_DOCUMENT_ROOT . '/commande/class/commande.class.php';
 
 		if (!$this->shouldShowSubcontractorPicker($parameters, $object, $user)) {
 			return 0;
@@ -214,8 +214,8 @@ class ActionsClichaumeil extends CommonHookActions
 	 */
 	private function renderSubcontractorPicker(CommonObject $object, array $supplierProposals, Translate $langs): void
 	{
-		$buttonId = 'clichaumeil-open-subcontractor-modal-'.$object->id;
-		$modalId = 'clichaumeil-subcontractor-modal-'.$object->id;
+		$buttonId = 'clichaumeil-open-subcontractor-modal-' . $object->id;
+		$modalId = 'clichaumeil-subcontractor-modal-' . $object->id;
 		$ajaxUrl = dol_buildpath('/clichaumeil/script/interface.php', 1);
 		$token = newToken();
 
@@ -238,8 +238,8 @@ class ActionsClichaumeil extends CommonHookActions
 			return;
 		}
 
-		print '<link rel="stylesheet" type="text/css" href="'.dol_buildpath('/clichaumeil/css/subcontractor.css', 1).'" />';
-		print '<script src="'.dol_buildpath('/clichaumeil/js/choose_subcontractor.js', 1).'" defer></script>';
+		print '<link rel="stylesheet" type="text/css" href="' . dol_buildpath('/clichaumeil/css/subcontractor.css', 1) . '" />';
+		print '<script src="' . dol_buildpath('/clichaumeil/js/choose_subcontractor.js', 1) . '" defer></script>';
 		$this->subcontractorAssetsLoaded = true;
 	}
 
@@ -298,7 +298,7 @@ class ActionsClichaumeil extends CommonHookActions
 		return 0;
 	}
 
-/**
+	/**
 	 * Handle cost breakdown extrafields updates from supplier price tab.
 	 *
 	 * @param array<string,mixed> $parameters
@@ -475,7 +475,7 @@ class ActionsClichaumeil extends CommonHookActions
 	 */
 	private function populateDefaultOverheadRateOnCreate(Product $product): void
 	{
-		if (!empty($product->id) || (int) $product->type !== Product::TYPE_PRODUCT) {
+		if (!empty($product->id)) {
 			return;
 		}
 
@@ -796,27 +796,32 @@ class ActionsClichaumeil extends CommonHookActions
 		 * 1) Récupération catégorie cible + produits
 		 * -------------------------------------------------------------------- */
 
-		$targetCatId = getDolGlobalInt('CLICHAUMEIL_PRODUCT_TARGET_CATEGORY');
+		$targetCatIds = array();
+		$confValue = getDolGlobalString('CLICHAUMEIL_PRODUCT_TARGET_CATEGORY');
+		if (!empty($confValue)) {
+			$targetCatIds = explode(',', $confValue);
+		}
+
 		$allowedElements = array('propal', 'commande');
 
-		if (!empty($object) && in_array($object->element, $allowedElements, true) && $targetCatId > 0) {
-			$targetProducts = $this->getTargetProducts($targetCatId);
+		if (!empty($object) && in_array($object->element, $allowedElements, true) && !empty($targetCatIds)) {
+			$targetProducts = $this->getTargetProducts($targetCatIds);
 			if (!empty($targetProducts)) {
 				$context = $object->element;
 				$productCategories = $this->mapProductCategories($object);
-				$lineVisibilities = $this->buildLineVisibilities($object->lines, $targetProducts, $targetCatId, $context, $productCategories);
+				$lineVisibilities = $this->buildLineVisibilities($object->lines, $targetProducts, $targetCatIds, $context, $productCategories);
 
-					$config = array(
-						'targetProducts' => $targetProducts,
-						'lines' => $lineVisibilities,
-					);
+				$config = array(
+					'targetProducts' => $targetProducts,
+					'lines' => $lineVisibilities,
+				);
 
-					print '<script type="application/json" id="clichaumeil-extrafields-data">'
-						. json_encode($config, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT)
-						. '</script>';
+				print '<script type="application/json" id="clichaumeil-extrafields-data">'
+					. json_encode($config, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT)
+					. '</script>';
 
-					$jsUrl = dol_buildpath('/clichaumeil/js/extrafields_visibility.js', 1);
-					echo '<script src="' . $jsUrl . '" defer></script>';
+				$jsUrl = dol_buildpath('/clichaumeil/js/extrafields_visibility.js', 1);
+				echo '<script src="' . $jsUrl . '" defer></script>';
 			}
 		}
 
@@ -885,7 +890,7 @@ class ActionsClichaumeil extends CommonHookActions
 			return;
 		}
 
-		print '<div id="clichaumeil-cost-breakdown" style="display:none;"><table><tbody>'.$rowsHtml.'</tbody></table></div>';
+		print '<div id="clichaumeil-cost-breakdown" style="display:none;"><table><tbody>' . $rowsHtml . '</tbody></table></div>';
 		print '<script>
 			jQuery(function($){
 				var $holder = $("#clichaumeil-cost-breakdown");
@@ -962,26 +967,26 @@ JS;
 			$value = $product->array_options['options_' . $field] ?? '';
 			$isReadonly = ($field === self::READONLY_FIELD);
 
-				if ($editMode && $currentAttr === $field && !$isReadonly) {
-					$inputField = $extrafields->showInputField($field, $value, '', '', '', '', $product, 'product');
-					if ($field === self::PERCENT_FIELD) {
-						$inputField .= ' %';
-					} else {
-						$inputField .= ' '.$langs->getCurrencySymbol('EUR');
-					}
+			if ($editMode && $currentAttr === $field && !$isReadonly) {
+				$inputField = $extrafields->showInputField($field, $value, '', '', '', '', $product, 'product');
+				if ($field === self::PERCENT_FIELD) {
+					$inputField .= ' %';
+				} else {
+					$inputField .= ' ' . $langs->getCurrencySymbol('EUR');
+				}
 
-				$rows .= '<tr class="field_'.$field.' clichaumeil-cost-row">';
-				$rows .= '<td class="titlefield">'.dol_escape_htmltag($label).'</td>';
+				$rows .= '<tr class="field_' . $field . ' clichaumeil-cost-row">';
+				$rows .= '<td class="titlefield">' . dol_escape_htmltag($label) . '</td>';
 				$rows .= '<td>';
-				$rows .= '<form method="POST" action="'.dol_escape_htmltag($baseUrl).'">';
-				$rows .= '<input type="hidden" name="token" value="'.$token.'">';
+				$rows .= '<form method="POST" action="' . dol_escape_htmltag($baseUrl) . '">';
+				$rows .= '<input type="hidden" name="token" value="' . $token . '">';
 				$rows .= '<input type="hidden" name="action" value="update_extrafields">';
-				$rows .= '<input type="hidden" name="attr" value="'.$field.'">';
+				$rows .= '<input type="hidden" name="attr" value="' . $field . '">';
 				$rows .= '<input type="hidden" name="clichaumeil_cost_breakdown" value="1">';
 				$rows .= $inputField;
 				$rows .= '<div class="center marginstop marginbottomonly">';
-				$rows .= '<input type="submit" class="button button-save small" value="'.dol_escape_htmltag($langs->trans('Save')).'">';
-				$rows .= '<input type="submit" class="button button-cancel small" name="cancel" value="'.dol_escape_htmltag($langs->trans('Cancel')).'">';
+				$rows .= '<input type="submit" class="button button-save small" value="' . dol_escape_htmltag($langs->trans('Save')) . '">';
+				$rows .= '<input type="submit" class="button button-cancel small" name="cancel" value="' . dol_escape_htmltag($langs->trans('Cancel')) . '">';
 				$rows .= '</div>';
 				$rows .= '</form>';
 				$rows .= '</td></tr>';
@@ -989,13 +994,13 @@ JS;
 			}
 
 			$outputValue = $this->formatCostBreakdownOutput($extrafields, $product, $field, $value);
-			$rows .= '<tr class="field_'.$field.' clichaumeil-cost-row">';
-			$rows .= '<td class="titlefield">'.dol_escape_htmltag($label);
+			$rows .= '<tr class="field_' . $field . ' clichaumeil-cost-row">';
+			$rows .= '<td class="titlefield">' . dol_escape_htmltag($label);
 			if (!$isReadonly) {
-				$rows .= ' '.$this->buildCostBreakdownEditLink($baseUrl, $field, $token);
+				$rows .= ' ' . $this->buildCostBreakdownEditLink($baseUrl, $field, $token);
 			}
 			$rows .= '</td>';
-			$rows .= '<td>'.$outputValue.'</td></tr>';
+			$rows .= '<td>' . $outputValue . '</td></tr>';
 		}
 
 		return $rows;
@@ -1046,7 +1051,7 @@ JS;
 	{
 		$url = $baseUrl . '&action=edit_extrafields&attr=' . $field . '&token=' . $token;
 
-		return ' <a class="editfielda" href="'.dol_escape_htmltag($url).'">'.img_edit().'</a>';
+		return ' <a class="editfielda" href="' . dol_escape_htmltag($url) . '">' . img_edit() . '</a>';
 	}
 
 	/**
@@ -1195,7 +1200,7 @@ JS;
 
 		$TContexts = explode(':', $parameters['context']);
 
-		if (!in_array('externalaccesssetup', $TContexts )) {
+		if (!in_array('externalaccesssetup', $TContexts)) {
 			return 0;
 		}
 
@@ -1243,23 +1248,25 @@ JS;
 	}
 
 	/**
-	 * Return product ids that belong to the target category.
+	 * Return product ids that belong to the target categories.
 	 *
-	 * @param int $targetCatId
+	 * @param array $targetCatIds
 	 * @return int[]
 	 */
-	private function getTargetProducts(int $targetCatId): array
+	private function getTargetProducts(array $targetCatIds): array
 	{
-		$cat = new Categorie($this->db);
 		$targetProducts = array();
 
-		if ($cat->fetch($targetCatId) > 0 && $cat->id > 0) {
-			foreach ($cat->getObjectsInCateg('product') as $p) {
-				$targetProducts[] = (int) $p->id;
+		foreach ($targetCatIds as $targetCatId) {
+			$cat = new Categorie($this->db);
+			if ($cat->fetch($targetCatId) > 0 && $cat->id > 0) {
+				foreach ($cat->getObjectsInCateg('product') as $p) {
+					$targetProducts[] = (int) $p->id;
+				}
 			}
 		}
 
-		return $targetProducts;
+		return array_unique($targetProducts);
 	}
 
 	/**
@@ -1308,12 +1315,12 @@ JS;
 	 *
 	 * @param array     $lines
 	 * @param int[]     $targetProducts
-	 * @param int       $targetCatId
+	 * @param array     $targetCatIds
 	 * @param string    $context
 	 * @param array     $productCategories
 	 * @return array<int,array<string,mixed>>
 	 */
-	private function buildLineVisibilities(array $lines, array $targetProducts, int $targetCatId, string $context, array $productCategories): array
+	private function buildLineVisibilities(array $lines, array $targetProducts, array $targetCatIds, string $context, array $productCategories): array
 	{
 		$lineVisibilities = array();
 
@@ -1325,7 +1332,7 @@ JS;
 				$isInCat = in_array((int) $line->fk_product, $targetProducts, true);
 
 				if (!$isInCat && isset($productCategories[$line->fk_product])) {
-					$isInCat = in_array($targetCatId, $productCategories[$line->fk_product], true);
+					$isInCat = !empty(array_intersect($targetCatIds, $productCategories[$line->fk_product]));
 				}
 			}
 

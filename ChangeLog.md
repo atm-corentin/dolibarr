@@ -1,7 +1,16 @@
 # CHANGELOG MODULE CLICHAUMEIL FOR [DOLIBARR ERP CRM](https://www.dolibarr.org)
 
-### Unreleased
-- New : display and edit CliChaumeil cost breakdown extrafields directly on supplier price tab, recomputing cost price, and extend calculator support to service products - *12/12/2025* - 1.8.0 
+
+## 1.9
+- NEW : Replace setup select categorie by multiselect *16/12/2025* - 1.9.0 
+- FIX : Product creation no longer blocks on "% Frais généraux" and purchase-tab composition fields on services now save correctly. *16/12/2025* - 1.9.0
+- FIX : Supplier status auto-populates when creating a supplier request from a customer proposal. *16/12/2025* - 1.9.0
+- FIX : Supplier portal UX — price button renamed to “Enregistrer les prix”, titles and free-text lines are visible (subtotal lines stay hidden), labels updated, and a red reminder warns that attaching the quote file is mandatory. *16/12/2025* - 1.9.0
+- 
+## 1.8
+- New : display and edit CliChaumeil cost breakdown extrafields directly on supplier price tab, recomputing cost price, and extend calculator support to service products - *12/12/2025* - 1.8.0
+
+## 1.7
 - NEW : Add new button to a new modal on proposal/order card to select on supplier proposal - *10/12/2025* - 1.7.0
 
 ## 1.6
