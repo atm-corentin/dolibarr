@@ -116,6 +116,7 @@ CLICHAUMEIL_ADDMESSAGE = Envoyer
 CLICHAUMEIL_STATUS = Statut :
 CLICHAUMEIL_DATECREATION = Date de création :
 CLICHAUMEIL_TOTALHT = Total HT :
+CLICHAUMEIL_ATTACHED_FILES = Pièces jointes :
 CLICHAUMEIL_LABEL_OWNER = Message de %s
 CLICHAUMEIL_MANDATORY_ATTACHED_FILES_SUPPLIER_PROPOSAL = L'utilisateur doit fournir une pièce jointe pour valider
 CLICHAUMEIL_ERROR_NO_PDF_ATTACHED = Vous devez joindre un fichier avant de pouvoir valider la proposition.

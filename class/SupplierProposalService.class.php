@@ -285,7 +285,7 @@ class SupplierProposalService
 		$elementType = 'supplier_proposal';
 		$refDir = dol_sanitizeFileName($object->ref);
 
-		$sql = 'SELECT ecm.rowid as id, ecm.src_object_type, ecm.src_object_id, ecm.filepath, ecm.filename, ecm.share';
+		$sql = 'SELECT ecm.rowid as id, ecm.src_object_type, ecm.src_object_id, ecm.filepath, ecm.filename, ecm.share, ecm.gen_or_uploaded';
 		$sql .= ' FROM ' . $this->db->prefix() . 'ecm_files ecm';
 		$sql .= ' WHERE ((ecm.src_object_type = \'' . $this->db->escape($elementType) . '\' ';
 		$sql .= ' AND  ecm.src_object_id = ' . intval($object->id) . ') ';
