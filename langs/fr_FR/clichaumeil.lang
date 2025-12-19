@@ -115,6 +115,7 @@ CLICHAUMEIL_YOURCOMMENTHERE = Ajouter un commentaire.
 CLICHAUMEIL_STATUS = Statut :
 CLICHAUMEIL_DATECREATION = Date de création :
 CLICHAUMEIL_TOTALHT = Total HT :
+CLICHAUMEIL_ATTACHED_FILES = Pièces jointes :
 CLICHAUMEIL_LABEL_OWNER = Message de %s
 CLICHAUMEIL_MANDATORY_ATTACHED_FILES_SUPPLIER_PROPOSAL = L'utilisateur doit fournir une pièce jointe pour valider
 CLICHAUMEIL_SUPPLIERPROPOSAL_ATTACHMENT_REMINDER = Lors de la réponse à une demande de prix, le dépôt du devis en pièce-jointe est obligatoire

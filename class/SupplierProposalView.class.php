@@ -88,6 +88,10 @@ class SupplierProposalView
 		$out .= $this->renderField('CLICHAUMEIL_STATUS', $this->getSupplierStatusLabel($object));
 		$out .= $this->renderField('CLICHAUMEIL_DATEDELIVERYPLANNED', dol_print_date($object->delivery_date), '' ,' :');
 		$out .= $this->renderField('CLICHAUMEIL_TOTALHT', price($object->total_ht, 0, $this->langs, 1, 2, -1, $currencyCode), 'object-total-ht');
+		$uploadedAttachments = $this->renderUploadedAttachments($documents, $object);
+		if (!empty($uploadedAttachments)) {
+			$out .= $this->renderField('CLICHAUMEIL_ATTACHED_FILES', $uploadedAttachments, 'object-attachments');
+		}
 
 		// Extrafields
 		$out .= $this->renderExtrafields($object);
@@ -95,7 +99,7 @@ class SupplierProposalView
 		$out .= '</div>'; // panel-body
 
 		// Documents
-		$out .= $this->renderDocumentsFooter($documents);
+		$out .= $this->renderDocumentsFooter($documents, $object);
 
 		$out .= '</div>'; // panel
 		$out .= $this->renderAttachmentReminder();
@@ -524,35 +528,107 @@ class SupplierProposalView
 	 * Render documents footer
 	 *
 	 * @param array $documents
+	 * @param SupplierProposal $object
 	 * @return string HTML
 	 */
-	private function renderDocumentsFooter(array $documents) : string
+	private function renderDocumentsFooter(array $documents, SupplierProposal $object) : string
 	{
 		if (empty($documents)) {
 			return '';
 		}
 
+		$visibleDocuments = array();
+		foreach ($documents as $doc) {
+			if (empty($doc->gen_or_uploaded) || $doc->gen_or_uploaded !== 'uploaded') {
+				$visibleDocuments[] = $doc;
+			}
+		}
+
+		if (empty($visibleDocuments)) {
+			return '';
+		}
+
 		$out = '<div class="panel-footer">';
 
-		foreach ($documents as $doc) {
+		foreach ($visibleDocuments as $doc) {
 			$filePath = DOL_DATA_ROOT . '/' . $doc->filepath . '/' . $doc->filename;
 			$mime = dol_mimetype($filePath);
 			$class = in_array($mime, array('image/png', 'image/jpeg', 'application/pdf')) ? 'documentpreview' : '';
+			$downloadUrl = $this->context->getControllerUrl('supplier_proposal_card', array(
+				'id' => $object->id,
+				'action' => 'download-proposal-file',
+				'fileid' => $doc->id
+			));
 
 			$out .= '<span id="document_' . $doc->id . '" class="timeline-documents" data-id="' . $doc->id . '" data-path="' . $doc->filepath . '" data-filename="' . dol_escape_htmltag($doc->filename) . '" mime="' . $mime . '">';
 
-			if (!empty($doc->share)) {
-				$doclink = $this->context->getControllerUrl(false, array('action' => 'get-file', 'share' => $doc->share)) . 'script/interface.php?action=get-file&amp;share=' . $doc->share;
-				$out .= '<a href="' . $doclink . '" class="btn-link ' . $class . '" target="_blank">';
-				$out .= img_mime($filePath) . ' ' . $doc->filename;
-				$out .= '</a>';
-			} else {
-				$out .= img_mime($filePath) . ' ' . $doc->filename;
-			}
+			$out .= '<a href="' . $downloadUrl . '" class="btn-link ' . $class . '" target="_blank">';
+			$out .= img_mime($filePath) . ' ' . dol_escape_htmltag($doc->filename);
+			$out .= '</a>';
 
 			$out .= '</span>';
 		}
 
+		$out .= '</div>';
+
+		return $out;
+	}
+
+	/**
+	 * Render uploaded attachments list inside summary
+	 *
+	 * @param array $documents
+	 * @param SupplierProposal $object
+	 * @return string HTML
+	 */
+	private function renderUploadedAttachments(array $documents, SupplierProposal $object) : string
+	{
+		if (empty($documents)) {
+			return '';
+		}
+
+		$uploaded = array();
+		foreach ($documents as $doc) {
+			if (!empty($doc->gen_or_uploaded) && $doc->gen_or_uploaded === 'uploaded') {
+				$uploaded[] = $doc;
+			}
+		}
+
+		if (empty($uploaded)) {
+			return '';
+		}
+
+		$out = '<div class="clichaumeil-attachments">';
+		foreach ($uploaded as $doc) {
+			$out .= $this->renderDocumentLink($doc, $object);
+		}
+		$out .= '</div>';
+
+		return $out;
+	}
+
+	/**
+	 * Render a single document link
+	 *
+	 * @param object $doc
+	 * @param SupplierProposal $object
+	 * @return string HTML
+	 */
+	private function renderDocumentLink(object $doc, SupplierProposal $object) : string
+	{
+		$filePath = DOL_DATA_ROOT . '/' . $doc->filepath . '/' . $doc->filename;
+		$mime = dol_mimetype($filePath);
+		$class = in_array($mime, array('image/png', 'image/jpeg', 'application/pdf')) ? 'documentpreview' : '';
+		$downloadUrl = $this->context->getControllerUrl('supplier_proposal_card', array(
+			'id' => $object->id,
+			'action' => 'download-proposal-file',
+			'fileid' => $doc->id
+		));
+
+		$out = '<div class="attachment-item">';
+		$out .= '<a href="' . $downloadUrl . '" class="btn-link ' . $class . '" target="_blank">';
+		$out .= img_mime($filePath) . ' ' . dol_escape_htmltag($doc->filename);
+		$out .= '</a>';
 		$out .= '</div>';
 
 		return $out;

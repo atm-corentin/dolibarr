@@ -17,6 +17,7 @@
 require_once DOL_DOCUMENT_ROOT.'/core/class/html.formother.class.php';
 require_once DOL_DOCUMENT_ROOT.'/societe/class/societe.class.php';
 require_once DOL_DOCUMENT_ROOT.'/comm/action/class/actioncomm.class.php';
+require_once DOL_DOCUMENT_ROOT.'/ecm/class/ecmfiles.class.php';
 
 require_once __DIR__.'/../../class/SupplierProposalService.class.php';
 require_once __DIR__.'/../../class/SupplierProposalFileManager.class.php';
@@ -78,6 +79,10 @@ class SupplierProposalCardController extends Controller
 		$postAction = GETPOST('action', 'alpha');
 		if ($postAction == 'download-action-file') {
 			$this->handleFileDownload();
+			return true; // Stop execution after download
+		}
+		if ($postAction == 'download-proposal-file') {
+			$this->handleProposalDocumentDownload();
 			return true; // Stop execution after download
 		}
 
@@ -271,6 +276,52 @@ class SupplierProposalCardController extends Controller
 				exit;
 			}
 		}
+	}
+
+	/**
+	 * Handle supplier proposal document download (ECM files)
+	 *
+	 * @return void
+	 */
+	private function handleProposalDocumentDownload() : void
+	{
+		global $conf, $db, $user;
+
+		$fileId = GETPOST('fileid', 'int');
+		$supplierPropalId = GETPOST('id', 'int');
+
+		if (empty($fileId) || empty($supplierPropalId)) {
+			return;
+		}
+
+		$ecmFile = new EcmFiles($db);
+		if ($ecmFile->fetch($fileId) <= 0) {
+			return;
+		}
+
+		// Security: ensure the file is tied to the current supplier proposal
+		if ($ecmFile->src_object_type !== 'supplier_proposal' || (int) $ecmFile->src_object_id !== (int) $supplierPropalId) {
+			return;
+		}
+
+		// Confirm the proposal belongs to the connected thirdparty
+		$service = new SupplierProposalService($db, $conf);
+		$proposal = $service->fetchProposalWithLines($supplierPropalId, $user->socid);
+		if (!$proposal || (int) $proposal->socid !== (int) $user->socid) {
+			return;
+		}
+
+		$filePath = DOL_DATA_ROOT . '/' . $ecmFile->filepath . '/' . $ecmFile->filename;
+		if (!dol_is_file($filePath)) {
+			return;
+		}
+
+		$mime = dol_mimetype($filePath);
+		header('Content-Type: ' . $mime);
+		header('Content-Disposition: attachment; filename="' . basename($ecmFile->filename) . '"');
+		header('Content-Length: ' . filesize($filePath));
+		readfile($filePath);
+		exit;
 	}
 
 	/**

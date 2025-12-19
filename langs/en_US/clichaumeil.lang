@@ -94,6 +94,7 @@ CLICHAUMEIL_YOURCOMMENTHERE = Add a comment.
 CLICHAUMEIL_STATUS = Status
 CLICHAUMEIL_DATECREATION = Creation date
 CLICHAUMEIL_TOTALHT = Total excl. tax
+CLICHAUMEIL_ATTACHED_FILES = Attachments
 CLICHAUMEIL_LABEL_OWNER = Message from %s
 CLICHAUMEIL_MANDATORY_ATTACHED_FILES_SUPPLIER_PROPOSAL = The user must provide an attachment to validate
 CLICHAUMEIL_SUPPLIERPROPOSAL_ATTACHMENT_REMINDER = When replying to a price request, attaching the quote file is mandatory
