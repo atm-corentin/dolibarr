@@ -2,6 +2,7 @@
 
 
 ## 1.9
+- FIX : Add attachment on supplier portal proposal form *19/12/2025* - 1.9.1
 - NEW : Replace setup select categorie by multiselect *16/12/2025* - 1.9.0 
 - FIX : Product creation no longer blocks on "% Frais généraux" and purchase-tab composition fields on services now save correctly. *16/12/2025* - 1.9.0
 - FIX : Supplier status auto-populates when creating a supplier request from a customer proposal. *16/12/2025* - 1.9.0
