@@ -139,6 +139,28 @@ CliChaumeilTestSeedCaseExisting=Create a thirdparty with 2 invoices to become Ex
 CliChaumeilTestSeedCaseBackToNew=Create an inactive Existing thirdparty that becomes New
 CliChaumeilTestSeedCaseProspect=Create a prospect with no invoice (stays New)
 CliChaumeilTestSeedCaseMulti=Create a thirdparty with Public + Subcontracting + New, then make it Existing
+CliChaumeilTestSeedNamesIntro=Base names generated (a suffix is added if already exists):
+CliChaumeilTestSeedNamesList=%s, %s, %s, %s
+CliChaumeilTestSeedResultTitle=Result
+CliChaumeilTestSeedHeaderExisting=Case 1: New -> Existing (2 invoices)
+CliChaumeilTestSeedHeaderBackToNew=Case 2: Existing -> New (inactive >= 18 months)
+CliChaumeilTestSeedHeaderProspect=Case 3: Prospect with no invoices (stays New)
+CliChaumeilTestSeedHeaderMulti=Case 4: Multiple categories + New -> Existing
+CliChaumeilTestSeedCreatedThirdparty=Created thirdparty #%s %s (type=%s)
+CliChaumeilTestSeedCreatedInvoice=Created invoice #%s for thirdparty #%s (date=%s)
+CliChaumeilTestSeedCategoryAttached=Attached category "%s" to thirdparty #%s %s
+CliChaumeilTestSeedCategoryAlready=Category "%s" already attached to thirdparty #%s %s
+CliChaumeilTestSeedSummary=Summary
+CliChaumeilTestSeedSummaryExisting=%s %s (should become Existing)
+CliChaumeilTestSeedSummaryNew=%s %s (should become New)
+CliChaumeilTestSeedSummaryMulti=%s %s (manual categories + New, should become Existing)
+CliChaumeilTestSeedRunCron=Run the cron manually to apply segmentation.
+CliChaumeilTestSeedErrCreateThirdparty=Failed to create thirdparty %s: %s
+CliChaumeilTestSeedErrCreateInvoice=Failed to create invoice for thirdparty %s: %s
+CliChaumeilTestSeedErrAddInvoiceLine=Failed to add invoice line for invoice %s: %s
+CliChaumeilTestSeedErrFetchCategory=Failed to fetch category #%s: %s
+CliChaumeilTestSeedErrAttachCategory=Failed to attach category "%s" to thirdparty %s: %s
+CliChaumeilTestSeedMissingCategories=Missing categories. Activate the module and ensure categories exist.
 ClichaumeilDescription = Description of CliChaumeil
 CLICHAUMEIL_SPE_CUSTOMER = Special Configurations CliChaumeil
 CLICHAUMEIL_ACTIVATE_SUPPLIER_PROPOSAL = Enable supplier proposal management

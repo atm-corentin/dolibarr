@@ -153,6 +153,28 @@ CliChaumeilTestSeedCaseExisting=Créer un tiers avec 2 factures pour le faire pa
 CliChaumeilTestSeedCaseBackToNew=Créer un tiers Ancien inactif qui repassera Nouveau
 CliChaumeilTestSeedCaseProspect=Créer un prospect sans facture (reste Nouveau)
 CliChaumeilTestSeedCaseMulti=Créer un tiers avec Marché public + Sous-traitance + Nouveau, puis le faire passer Ancien
+CliChaumeilTestSeedNamesIntro=Noms de base générés (un suffixe est ajouté si déjà existant) :
+CliChaumeilTestSeedNamesList=%s, %s, %s, %s
+CliChaumeilTestSeedResultTitle=Résultat
+CliChaumeilTestSeedHeaderExisting=Cas 1 : Nouveau -> Ancien (2 factures)
+CliChaumeilTestSeedHeaderBackToNew=Cas 2 : Ancien -> Nouveau (inactif >= 18 mois)
+CliChaumeilTestSeedHeaderProspect=Cas 3 : Prospect sans facture (reste Nouveau)
+CliChaumeilTestSeedHeaderMulti=Cas 4 : Plusieurs catégories + Nouveau -> Ancien
+CliChaumeilTestSeedCreatedThirdparty=Création du tiers #%s %s (type=%s)
+CliChaumeilTestSeedCreatedInvoice=Création de la facture #%s pour le tiers #%s (date=%s)
+CliChaumeilTestSeedCategoryAttached=Catégorie "%s" attachée au tiers #%s %s
+CliChaumeilTestSeedCategoryAlready=Catégorie "%s" déjà attachée au tiers #%s %s
+CliChaumeilTestSeedSummary=Résumé
+CliChaumeilTestSeedSummaryExisting=%s %s (doit devenir Ancien)
+CliChaumeilTestSeedSummaryNew=%s %s (doit devenir Nouveau)
+CliChaumeilTestSeedSummaryMulti=%s %s (catégories manuelles + Nouveau, doit devenir Ancien)
+CliChaumeilTestSeedRunCron=Lancez ensuite la tâche planifiée manuellement pour appliquer la segmentation.
+CliChaumeilTestSeedErrCreateThirdparty=Impossible de créer le tiers %s : %s
+CliChaumeilTestSeedErrCreateInvoice=Impossible de créer la facture pour le tiers %s : %s
+CliChaumeilTestSeedErrAddInvoiceLine=Impossible d'ajouter la ligne de facture pour la facture %s : %s
+CliChaumeilTestSeedErrFetchCategory=Impossible de charger la catégorie #%s : %s
+CliChaumeilTestSeedErrAttachCategory=Impossible d'attacher la catégorie "%s" au tiers %s : %s
+CliChaumeilTestSeedMissingCategories=Catégories manquantes. Activez le module et vérifiez les catégories.
 ClichaumeilDescription = Description de CliChaumeil
 ClichaumeilCaYearHT = CA achats année HT
 ClichaumeilHelpAmountCaYearHT = Montant HT achats sur l’année en cours
