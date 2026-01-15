@@ -93,6 +93,7 @@ class SupplierProposalController extends Controller
 		// Load language files
 		$langs->load('supplier_proposal');
 		$langs->load('fourn');
+		$langs->load('clichaumeil@clichaumeil');
 
 		// Initialize service
 		$service = new SupplierProposalService($db, $conf, $langs);
