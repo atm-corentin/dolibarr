@@ -321,7 +321,7 @@ class SupplierProposalService
 		$sql = 'SELECT sp.rowid, sp.ref, sp.ref_ext, sp.datec, sp.total_ht, sp.total_tva, sp.fk_statut, sp.entity, sp.date_livraison ';
 		$sql .= ' FROM `'.$this->db->prefix().'supplier_proposal` sp';
 		$sql .= ' WHERE sp.fk_soc = '.intval($socId);
-		$sql .= ' AND sp.fk_statut IN ('.SupplierProposal::STATUS_VALIDATED.', '.SupplierProposal::STATUS_SIGNED.', '.SupplierProposal::STATUS_CLOSE.')';
+		$sql .= ' AND sp.fk_statut IN ('.SupplierProposal::STATUS_VALIDATED.', '.SupplierProposal::STATUS_SIGNED.', '.SupplierProposal::STATUS_CLOSE.', '.SupplierProposal::STATUS_NOTSIGNED.')';
 		$sql .= ' ORDER BY sp.datec DESC';
 
 		return $sql;
