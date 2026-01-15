@@ -69,7 +69,6 @@ $hookmanager->initHooks(array('clichaumeilsetup', 'globalsetup'));
 
 $action = GETPOST('action', 'aZ09');
 $backtopage = GETPOST('backtopage', 'alpha');
-$modulepart = GETPOST('modulepart', 'aZ09');
 
 $form = new Form($db);
 $setupnotempty = 0;

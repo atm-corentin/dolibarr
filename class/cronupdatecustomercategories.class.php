@@ -69,7 +69,7 @@ class CronJobUpdateCustomerCategories
 			if (!in_array($message, $this->errors, true)) {
 				$this->errors[] = $message;
 			}
-			$this->output = $this->buildOutput(0, 0, $runId, 0, 0, 0, 0);
+			$this->output = $this->buildOutput(0, 0, $runId, 0, 0, 0, 0, 0);
 			dol_syslog(__METHOD__ . ' run=' . $runId . ' ' . implode(' | ', $this->errors), LOG_ERR);
 			return -1;
 		}
@@ -82,7 +82,7 @@ class CronJobUpdateCustomerCategories
 			if (!in_array($message, $this->errors, true)) {
 				$this->errors[] = $message;
 			}
-			$this->output = $this->buildOutput(0, 0, $runId, 0, 0, 0, 0);
+			$this->output = $this->buildOutput(0, 0, $runId, 0, 0, 0, 0, 0);
 			dol_syslog(__METHOD__ . ' run=' . $runId . ' ' . implode(' | ', $this->errors), LOG_ERR);
 			return -1;
 		}
@@ -96,7 +96,7 @@ class CronJobUpdateCustomerCategories
 		if (!is_array($rows)) {
 			$this->error = $langs->trans('CliChaumeilCronFetchError');
 			$this->errors[] = $this->error . ' (' . $this->db->lasterror() . ')';
-			$this->output = $this->buildOutput(0, 0, $runId, 0, 0, 0, 0);
+			$this->output = $this->buildOutput(0, 0, $runId, 0, 0, 0, 0, 0);
 			dol_syslog(__METHOD__ . ' run=' . $runId . ' ' . implode(' | ', $this->errors), LOG_ERR);
 			return -1;
 		}

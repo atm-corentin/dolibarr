@@ -2,11 +2,8 @@
 
 $isCli = (PHP_SAPI === 'cli');
 if ($isCli) {
-	define('NOSESSION', 1);
-	define('NOREQUIREMENU', 1);
-	define('NOREQUIREHTML', 1);
-	define('NOREQUIREAJAX', 1);
-	define('NOREQUIRETRAN', 1);
+	print "This script must be executed from the browser only.\n";
+	exit(1);
 }
 
 require __DIR__ . '/../../..//main.inc.php';
@@ -25,20 +22,11 @@ if (!$isCli) {
 	}
 }
 
-if ($isCli && (empty($user) || empty($user->id))) {
-	$user = new User($db);
-	$user->fetch(1);
-}
-
 $entity = (int) $conf->entity;
 
 $outputLines = array();
-function outputLine(string $line, bool $isCli, array &$outputLines): void
+function outputLine(string $line, array &$outputLines): void
 {
-	if ($isCli) {
-		print $line . "\n";
-		return;
-	}
 	$outputLines[] = $line;
 }
 
@@ -223,7 +211,7 @@ function findUniqueThirdpartyName(DoliDB $db, string $baseName, int $entity): st
 	}
 }
 
-function createThirdparty(DoliDB $db, User $user, string $name, int $clientType, int $entity, bool $isCli, array &$outputLines): Societe
+function createThirdparty(DoliDB $db, User $user, string $name, int $clientType, int $entity, array &$outputLines): Societe
 {
 	$thirdparty = new Societe($db);
 	$thirdparty->name = findUniqueThirdpartyName($db, $name, $entity);
@@ -236,12 +224,12 @@ function createThirdparty(DoliDB $db, User $user, string $name, int $clientType,
 		exit(1);
 	}
 
-	outputLine($GLOBALS['langs']->trans('CliChaumeilTestSeedCreatedThirdparty', $thirdparty->id, $thirdparty->name, $clientType), $isCli, $outputLines);
+	outputLine($GLOBALS['langs']->trans('CliChaumeilTestSeedCreatedThirdparty', $thirdparty->id, $thirdparty->name, $clientType), $outputLines);
 
 	return $thirdparty;
 }
 
-function addCategoryToThirdparty(DoliDB $db, int $categoryId, Societe $thirdparty, bool $isCli, array &$outputLines): void
+function addCategoryToThirdparty(DoliDB $db, int $categoryId, Societe $thirdparty, array &$outputLines): void
 {
 	if ($categoryId <= 0) {
 		return;
@@ -257,14 +245,14 @@ function addCategoryToThirdparty(DoliDB $db, int $categoryId, Societe $thirdpart
 		exit(1);
 	}
 	if ($result == -3) {
-		outputLine($GLOBALS['langs']->trans('CliChaumeilTestSeedCategoryAlready', $category->label, $thirdparty->id, $thirdparty->name), $isCli, $outputLines);
+		outputLine($GLOBALS['langs']->trans('CliChaumeilTestSeedCategoryAlready', $category->label, $thirdparty->id, $thirdparty->name), $outputLines);
 		return;
 	}
 
-	outputLine($GLOBALS['langs']->trans('CliChaumeilTestSeedCategoryAttached', $category->label, $thirdparty->id, $thirdparty->name), $isCli, $outputLines);
+	outputLine($GLOBALS['langs']->trans('CliChaumeilTestSeedCategoryAttached', $category->label, $thirdparty->id, $thirdparty->name), $outputLines);
 }
 
-function createInvoice(DoliDB $db, User $user, int $thirdpartyId, int $date, bool $isCli, array &$outputLines): int
+function createInvoice(DoliDB $db, User $user, int $thirdpartyId, int $date, array &$outputLines): int
 {
 	$invoice = new Facture($db);
 	$invoice->socid = $thirdpartyId;
@@ -286,7 +274,7 @@ function createInvoice(DoliDB $db, User $user, int $thirdpartyId, int $date, boo
 		exit(1);
 	}
 
-	outputLine($GLOBALS['langs']->trans('CliChaumeilTestSeedCreatedInvoice', $invoice->id, $thirdpartyId, dol_print_date($date, '%Y-%m-%d')), $isCli, $outputLines);
+	outputLine($GLOBALS['langs']->trans('CliChaumeilTestSeedCreatedInvoice', $invoice->id, $thirdpartyId, dol_print_date($date, '%Y-%m-%d')), $outputLines);
 
 	return (int) $invoice->id;
 }
@@ -304,38 +292,38 @@ if (empty($catNew) || empty($catExisting) || empty($catPublic) || empty($catSub)
 $now = dol_now();
 
 // Case 1: Should become Existing (Ancien)
-outputLine($langs->trans('CliChaumeilTestSeedHeaderExisting'), $isCli, $outputLines);
-$tpExisting = createThirdparty($db, $user, 'UTest Existing', 1, $entity, $isCli, $outputLines);
-createInvoice($db, $user, $tpExisting->id, dol_time_plus_duree($now, -13, 'm'), $isCli, $outputLines);
-createInvoice($db, $user, $tpExisting->id, dol_time_plus_duree($now, -2, 'm'), $isCli, $outputLines);
-addCategoryToThirdparty($db, $catNew, $tpExisting, $isCli, $outputLines);
+outputLine($langs->trans('CliChaumeilTestSeedHeaderExisting'), $outputLines);
+$tpExisting = createThirdparty($db, $user, 'UTest Existing', 1, $entity, $outputLines);
+createInvoice($db, $user, $tpExisting->id, dol_time_plus_duree($now, -13, 'm'), $outputLines);
+createInvoice($db, $user, $tpExisting->id, dol_time_plus_duree($now, -2, 'm'), $outputLines);
+addCategoryToThirdparty($db, $catNew, $tpExisting, $outputLines);
 
 // Case 2: Was Existing, should become New (inactive >= 18 months)
-outputLine($langs->trans('CliChaumeilTestSeedHeaderBackToNew'), $isCli, $outputLines);
-$tpBackToNew = createThirdparty($db, $user, 'UTest BackToNew', 1, $entity, $isCli, $outputLines);
-createInvoice($db, $user, $tpBackToNew->id, dol_time_plus_duree($now, -24, 'm'), $isCli, $outputLines);
-createInvoice($db, $user, $tpBackToNew->id, dol_time_plus_duree($now, -19, 'm'), $isCli, $outputLines);
-addCategoryToThirdparty($db, $catExisting, $tpBackToNew, $isCli, $outputLines);
+outputLine($langs->trans('CliChaumeilTestSeedHeaderBackToNew'), $outputLines);
+$tpBackToNew = createThirdparty($db, $user, 'UTest BackToNew', 1, $entity, $outputLines);
+createInvoice($db, $user, $tpBackToNew->id, dol_time_plus_duree($now, -24, 'm'), $outputLines);
+createInvoice($db, $user, $tpBackToNew->id, dol_time_plus_duree($now, -19, 'm'), $outputLines);
+addCategoryToThirdparty($db, $catExisting, $tpBackToNew, $outputLines);
 
 // Case 3: Prospect with no invoices (should become New)
-outputLine($langs->trans('CliChaumeilTestSeedHeaderProspect'), $isCli, $outputLines);
-$tpProspect = createThirdparty($db, $user, 'UTest Prospect', 2, $entity, $isCli, $outputLines);
+outputLine($langs->trans('CliChaumeilTestSeedHeaderProspect'), $outputLines);
+$tpProspect = createThirdparty($db, $user, 'UTest Prospect', 2, $entity, $outputLines);
 
 // Case 4: Multiple categories (manual tags + New)
-outputLine($langs->trans('CliChaumeilTestSeedHeaderMulti'), $isCli, $outputLines);
-$tpMulti = createThirdparty($db, $user, 'UTest MultiTags', 1, $entity, $isCli, $outputLines);
-addCategoryToThirdparty($db, $catPublic, $tpMulti, $isCli, $outputLines);
-addCategoryToThirdparty($db, $catSub, $tpMulti, $isCli, $outputLines);
-addCategoryToThirdparty($db, $catNew, $tpMulti, $isCli, $outputLines);
-createInvoice($db, $user, $tpMulti->id, dol_time_plus_duree($now, -13, 'm'), $isCli, $outputLines);
-createInvoice($db, $user, $tpMulti->id, dol_time_plus_duree($now, -2, 'm'), $isCli, $outputLines);
+outputLine($langs->trans('CliChaumeilTestSeedHeaderMulti'), $outputLines);
+$tpMulti = createThirdparty($db, $user, 'UTest MultiTags', 1, $entity, $outputLines);
+addCategoryToThirdparty($db, $catPublic, $tpMulti, $outputLines);
+addCategoryToThirdparty($db, $catSub, $tpMulti, $outputLines);
+addCategoryToThirdparty($db, $catNew, $tpMulti, $outputLines);
+createInvoice($db, $user, $tpMulti->id, dol_time_plus_duree($now, -13, 'm'), $outputLines);
+createInvoice($db, $user, $tpMulti->id, dol_time_plus_duree($now, -2, 'm'), $outputLines);
 
-outputLine($langs->trans('CliChaumeilTestSeedSummary'), $isCli, $outputLines);
-outputLine($langs->trans('CliChaumeilTestSeedSummaryExisting', $tpExisting->id, $tpExisting->name), $isCli, $outputLines);
-outputLine($langs->trans('CliChaumeilTestSeedSummaryNew', $tpBackToNew->id, $tpBackToNew->name), $isCli, $outputLines);
-outputLine($langs->trans('CliChaumeilTestSeedSummaryNew', $tpProspect->id, $tpProspect->name), $isCli, $outputLines);
-outputLine($langs->trans('CliChaumeilTestSeedSummaryMulti', $tpMulti->id, $tpMulti->name), $isCli, $outputLines);
-outputLine($langs->trans('CliChaumeilTestSeedRunCron'), $isCli, $outputLines);
+outputLine($langs->trans('CliChaumeilTestSeedSummary'), $outputLines);
+outputLine($langs->trans('CliChaumeilTestSeedSummaryExisting', $tpExisting->id, $tpExisting->name), $outputLines);
+outputLine($langs->trans('CliChaumeilTestSeedSummaryNew', $tpBackToNew->id, $tpBackToNew->name), $outputLines);
+outputLine($langs->trans('CliChaumeilTestSeedSummaryNew', $tpProspect->id, $tpProspect->name), $outputLines);
+outputLine($langs->trans('CliChaumeilTestSeedSummaryMulti', $tpMulti->id, $tpMulti->name), $outputLines);
+outputLine($langs->trans('CliChaumeilTestSeedRunCron'), $outputLines);
 
 if (!$isCli) {
 	llxHeader('', $langs->trans('CliChaumeilTestSeedTitle'));
