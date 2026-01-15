@@ -34,7 +34,12 @@ require_once DOL_DOCUMENT_ROOT . '/core/triggers/dolibarrtriggers.class.php';
 require_once DOL_DOCUMENT_ROOT . '/core/class/cunits.class.php';
 require_once __DIR__ . '/../../class/chaumeilrfa.class.php';
 require_once __DIR__ . '/../../class/CliChaumeilProductCost.class.php';
+require_once __DIR__ . '/../../class/CliChaumeilCommissionConfig.class.php';
 require_once __DIR__ . '/../../lib/clichaumeil.lib.php';
+require_once DOL_DOCUMENT_ROOT . '/categories/class/categorie.class.php';
+require_once DOL_DOCUMENT_ROOT . '/societe/class/societe.class.php';
+require_once DOL_DOCUMENT_ROOT . '/supplier_proposal/class/supplier_proposal.class.php';
+require_once DOL_DOCUMENT_ROOT . '/user/class/user.class.php';
 
 
 
@@ -43,6 +48,7 @@ require_once __DIR__ . '/../../lib/clichaumeil.lib.php';
  */
 class InterfaceClichaumeilTriggers extends DolibarrTriggers
 {
+
 	/**
 	 * Constructor
 	 *
@@ -77,6 +83,12 @@ class InterfaceClichaumeilTriggers extends DolibarrTriggers
 
 		$handled = false;
 		$result = $this->handleProductCostSynchronization($action, $object, $user, $langs, $handled);
+		if ($handled) {
+			return $result;
+		}
+
+		$handled = false;
+		$result = $this->handleThirdpartyCategoryManagement($action, $object, $user, $langs, $handled);
 		if ($handled) {
 			return $result;
 		}
@@ -195,6 +207,15 @@ class InterfaceClichaumeilTriggers extends DolibarrTriggers
 							}
 						}
 					}
+
+					if (!empty($user->id)) {
+						$add = $object->add_contact($user->id, 'SALESREPFOLL', 'internal', 1);
+						if ($add < 0 && $add != -2) {
+							setEventMessages($object->error, $object->errors, 'errors');
+							dol_syslog(__METHOD__ . ' ' . $object->error, LOG_ERR);
+							return -1;
+						}
+					}
 				}
 				break;
 
@@ -203,6 +224,59 @@ class InterfaceClichaumeilTriggers extends DolibarrTriggers
 				break;
 		}
 
+		return 0;
+	}
+
+	/**
+	 * Handle thirdparty category changes and apply default category on creation.
+	 *
+	 * @param string       $action Event action code
+	 * @param CommonObject $object Object being processed
+	 * @param User         $user   User performing the action
+	 * @param Translate    $langs  Translation object
+	 * @param bool         $handled Output parameter set to true if action was handled
+	 * @return int Return integer <0 if KO, 0 if OK or not handled
+	 */
+	private function handleThirdpartyCategoryManagement($action, $object, User $user, Translate $langs, &$handled = false)
+	{
+		if ($action === 'COMPANY_CREATE') {
+			$handled = true;
+
+			if (!($object instanceof Societe)) {
+				return 0;
+			}
+
+			$categoryId = getDolGlobalInt(CliChaumeilCommissionConfig::CAT_NOUVEAU);
+			if (empty($categoryId)) {
+				return 0;
+			}
+
+			$category = new Categorie($this->db);
+			if ($category->fetch($categoryId) <= 0) {
+				return 0;
+			}
+
+			if ($category->containsObject('customer', $object->id) > 0) {
+				return 0;
+			}
+
+			$result = $category->add_type($object, 'customer');
+			if ($result < 0) {
+				$this->error = $category->error;
+				$this->errors = $category->errors;
+				return -1;
+			}
+
+			return 1;
+		}
+
+		if ($action !== 'CATEGORY_MODIFY') {
+			$handled = false;
+			return 0;
+		}
+
+		$handled = true;
+		// Category change events are logged only by the cron job (single event per tier).
 		return 0;
 	}
 	/**

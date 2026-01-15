@@ -1,5 +1,8 @@
 # CHANGELOG MODULE CLICHAUMEIL FOR [DOLIBARR ERP CRM](https://www.dolibarr.org)
 
+## 1.10
+- NEW: Add user contact assignment to supplier proposals in triggers *15/01/2026* - 1.10.0
+- NEW: Implement commission configuration and automatic customer category management *14/01/2026* - 1.10.0
 
 ## 1.9
 - FIX : Add attachment on supplier portal proposal form *19/12/2025* - 1.9.1

@@ -28,6 +28,7 @@
  */
 include_once DOL_DOCUMENT_ROOT . '/core/modules/DolibarrModules.class.php';
 include_once __DIR__ . '/../../class/CliChaumeilProductCost.class.php';
+include_once __DIR__ . '/../../class/CliChaumeilCommissionConfig.class.php';
 
 
 /**
@@ -77,7 +78,7 @@ class modClichaumeil extends DolibarrModules
 		$this->editor_squarred_logo = '';					// Must be image filename into the module/img directory followed with @modulename. Example: 'myimage.png@clichaumeil'
 
 		// Possible values for version are: 'development', 'experimental', 'dolibarr', 'dolibarr_deprecated', 'experimental_deprecated' or a version string like 'x.y.z'
-		$this->version = '1.9.1';
+		$this->version = '1.10.0';
 		// Url to the file with your last numberversion of this module
 		//$this->url_last_version = 'http://www.example.com/versionmodule.txt';
 
@@ -189,6 +190,12 @@ class modClichaumeil extends DolibarrModules
 		// Cronjobs (List of cron jobs entries to add when module is enabled)
 		// unit_frequency must be 60 for minute, 3600 for hour, 86400 for day, 604800 for week
 		/* BEGIN MODULEBUILDER CRON */
+		$now = dol_now();
+		$cronStart = dol_mktime(1, 0, 0, (int) dol_print_date($now, '%m'), (int) dol_print_date($now, '%d'), (int) dol_print_date($now, '%Y'));
+		if ($cronStart <= $now) {
+			$cronStart = dol_time_plus_duree($cronStart, 1, 'd');
+		}
+
 		$this->cronjobs = array(
 			0 => array(
 				'label' => $langs->trans('CliChaumeilAutomaticRenewalContract'),
@@ -200,6 +207,22 @@ class modClichaumeil extends DolibarrModules
 				'comment' => $langs->trans('CliChaumeilApplyRenewalRate'),
 				'frequency' => 24,
 				'unitfrequency' => 3600,
+				'status' => 0, // 0 for disabled by default, 1 for enabled
+				'priority' => 50,
+			)
+			,
+			1 => array(
+				'label' => $langs->trans('CliChaumeilCronCustomerSegmentation'),
+				'jobtype' => 'method',
+				'class' => '/clichaumeil/class/cronupdatecustomercategories.class.php',
+				'objectname' => 'CronJobUpdateCustomerCategories',
+				'method' => 'run',
+				'parameters' => '',
+				'comment' => $langs->trans('CliChaumeilCronCustomerSegmentationDesc'),
+				'frequency' => 1,
+				'unitfrequency' => 86400,
+				'datestart' => $cronStart,
+				'datenextrun' => $cronStart,
 				'status' => 0, // 0 for disabled by default, 1 for enabled
 				'priority' => 50,
 			)
@@ -370,6 +393,8 @@ class modClichaumeil extends DolibarrModules
 			dolibarr_set_const($this->db, 'CLICHAUMEIL_DEFAULT_OVERHEAD_RATE', CliChaumeilProductCostCalculator::DEFAULT_RATE_VALUE, 'chaine', 0, '', $conf->entity);
 		}
 
+		$this->initCommissionConfiguration();
+
 		// Permissions
 		$this->remove($options);
 
@@ -421,5 +446,126 @@ class modClichaumeil extends DolibarrModules
 	{
 		$sql = array();
 		return $this->_remove($sql, $options);
+	}
+
+	/**
+	 * Initialize commission configuration (constants and categories) during module activation.
+	 *
+	 * @return void
+	 */
+	private function initCommissionConfiguration(): void
+	{
+		global $conf, $langs, $user;
+
+		$langs->loadLangs(array('clichaumeil@clichaumeil'));
+
+		foreach (CliChaumeilCommissionConfig::getDefaultCoefficients() as $constKey => $defaultValue) {
+			if (getDolGlobalString($constKey) === '') {
+				dolibarr_set_const($this->db, $constKey, $defaultValue, 'chaine', 0, '', $conf->entity);
+			}
+		}
+
+		require_once DOL_DOCUMENT_ROOT . '/categories/class/categorie.class.php';
+		require_once DOL_DOCUMENT_ROOT . '/user/class/user.class.php';
+
+		if (empty($user) || empty($user->id)) {
+			$user = new User($this->db);
+			$user->fetch(1);
+		}
+
+		$labels = CliChaumeilCommissionConfig::getDefaultCategoryLabels($langs);
+		$refExts = CliChaumeilCommissionConfig::getDefaultCategoryRefExt();
+		foreach ($labels as $constKey => $label) {
+			if (getDolGlobalInt($constKey)) {
+				continue;
+			}
+
+			$refExt = $refExts[$constKey] ?? '';
+			$categoryId = $this->findOrCreateCustomerCategory($label, $user, $refExt);
+			if ($categoryId > 0) {
+				dolibarr_set_const($this->db, $constKey, $categoryId, 'integer', 0, '', $conf->entity);
+			}
+		}
+	}
+
+	/**
+	 * Find a customer category by label, or create it if missing.
+	 *
+	 * @param string $label
+	 * @param User   $user
+	 * @return int Category id, or 0 on failure
+	 */
+	private function findOrCreateCustomerCategory(string $label, User $user, string $refExt = ''): int
+	{
+		global $conf;
+
+		$sql = "SELECT rowid, ref_ext FROM " . $this->db->prefix() . "categorie";
+		$sql .= " WHERE entity = " . ((int) $conf->entity);
+		$sql .= " AND type = " . ((int) Categorie::TYPE_CUSTOMER);
+		if (!empty($refExt)) {
+			$sql .= " AND ref_ext = '" . $this->db->escape($refExt) . "'";
+		} else {
+			$sql .= " AND label = '" . $this->db->escape($label) . "'";
+		}
+
+		$resql = $this->db->query($sql);
+		if ($resql) {
+			$obj = $this->db->fetch_object($resql);
+			if (!empty($obj->rowid)) {
+				$category = new Categorie($this->db);
+				if ($category->fetch((int) $obj->rowid) > 0) {
+					if (!empty($refExt) && $category->ref_ext !== $refExt) {
+						$category->ref_ext = $refExt;
+						$updateResult = $category->update($user, 1);
+						if ($updateResult < 0) {
+							dol_syslog(__METHOD__ . ' category ref_ext update failed: ' . $category->error, LOG_ERR);
+						}
+					}
+				}
+
+				return (int) $obj->rowid;
+			}
+		}
+
+		if (!empty($refExt)) {
+			$sql = "SELECT rowid FROM " . $this->db->prefix() . "categorie";
+			$sql .= " WHERE label = '" . $this->db->escape($label) . "'";
+			$sql .= " AND entity = " . ((int) $conf->entity);
+			$sql .= " AND type = " . ((int) Categorie::TYPE_CUSTOMER);
+
+			$resql = $this->db->query($sql);
+			if ($resql) {
+				$obj = $this->db->fetch_object($resql);
+				if (!empty($obj->rowid)) {
+					$category = new Categorie($this->db);
+					if ($category->fetch((int) $obj->rowid) > 0) {
+						$category->ref_ext = $refExt;
+						$updateResult = $category->update($user, 1);
+						if ($updateResult < 0) {
+							dol_syslog(__METHOD__ . ' category ref_ext update failed: ' . $category->error, LOG_ERR);
+						}
+					}
+					return (int) $obj->rowid;
+				}
+			}
+		}
+
+		$category = new Categorie($this->db);
+		$category->label = $label;
+		$category->ref_ext = $refExt;
+		$category->visible = 1;
+		$category->type = Categorie::TYPE_CUSTOMER;
+		$category->entity = (int) $conf->entity;
+
+		$result = $category->create($user, 1);
+		if ($result > 0) {
+			return $category->id;
+		}
+
+		if (!empty($category->error)) {
+			dol_syslog(__METHOD__ . ' category create failed: ' . $category->error, LOG_ERR);
+		}
+
+		return 0;
 	}
 }
