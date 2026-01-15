@@ -38,6 +38,8 @@ require_once __DIR__ . '/../../class/CliChaumeilCommissionConfig.class.php';
 require_once __DIR__ . '/../../lib/clichaumeil.lib.php';
 require_once DOL_DOCUMENT_ROOT . '/categories/class/categorie.class.php';
 require_once DOL_DOCUMENT_ROOT . '/societe/class/societe.class.php';
+require_once DOL_DOCUMENT_ROOT . '/supplier_proposal/class/supplier_proposal.class.php';
+require_once DOL_DOCUMENT_ROOT . '/user/class/user.class.php';
 
 
 
@@ -203,6 +205,15 @@ class InterfaceClichaumeilTriggers extends DolibarrTriggers
 									return -1;
 								}
 							}
+						}
+					}
+
+					if (!empty($user->id)) {
+						$add = $object->add_contact($user->id, 'SALESREPFOLL', 'internal', 1);
+						if ($add < 0 && $add != -2) {
+							setEventMessages($object->error, $object->errors, 'errors');
+							dol_syslog(__METHOD__ . ' ' . $object->error, LOG_ERR);
+							return -1;
 						}
 					}
 				}
