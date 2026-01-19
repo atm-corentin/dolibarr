@@ -87,7 +87,7 @@ class SupplierProposalService
 	 */
 	private function fetchMainProposalData(int $id)
 	{
-		$sql = 'SELECT sp.rowid, sp.ref, sp.ref_ext, sp.fk_soc, sp.fk_projet, sp.datec, sp.date_valid,';
+		$sql = 'SELECT sp.rowid, sp.ref, sp.ref_ext, sp.ref_fourn, sp.fk_soc, sp.fk_projet, sp.datec, sp.date_valid,';
 		$sql .= ' sp.date_livraison, sp.total_ht, sp.total_tva, sp.total_ttc, sp.fk_statut,';
 		$sql .= ' sp.note_private, sp.note_public, sp.entity,';
 		$sql .= ' sp.multicurrency_code, sp.multicurrency_tx, sp.multicurrency_total_ht,';
@@ -125,6 +125,7 @@ class SupplierProposalService
 		$object->id = $obj->rowid;
 		$object->ref = $obj->ref;
 		$object->ref_ext = $obj->ref_ext;
+		$object->ref_fourn = $obj->ref_fourn;
 		$object->socid = $obj->fk_soc;
 		$object->fk_project = $obj->fk_projet;
 		$object->date_creation = $this->db->jdate($obj->datec);
@@ -318,7 +319,7 @@ class SupplierProposalService
 	 */
 	public function getSqlForExternalList(int $socId) : string
 	{
-		$sql = 'SELECT sp.rowid, sp.ref, sp.ref_ext, sp.datec, sp.total_ht, sp.total_tva, sp.fk_statut, sp.entity, sp.date_livraison ';
+		$sql = 'SELECT sp.rowid, sp.ref, sp.ref_ext, sp.ref_fourn, sp.datec, sp.total_ht, sp.total_tva, sp.fk_statut, sp.entity, sp.date_livraison ';
 		$sql .= ' FROM `'.$this->db->prefix().'supplier_proposal` sp';
 		$sql .= ' WHERE sp.fk_soc = '.intval($socId);
 		$sql .= ' AND sp.fk_statut IN ('.SupplierProposal::STATUS_VALIDATED.', '.SupplierProposal::STATUS_SIGNED.', '.SupplierProposal::STATUS_CLOSE.', '.SupplierProposal::STATUS_NOTSIGNED.')';

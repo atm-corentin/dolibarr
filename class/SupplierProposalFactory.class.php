@@ -51,6 +51,7 @@ class SupplierProposalFactory
 		$object->id = $row->rowid;
 		$object->ref = $row->ref;
 		$object->ref_ext = $row->ref_ext ?? '';
+		$object->ref_fourn = $row->ref_fourn ?? '';
 		$object->date_creation = $row->datec;
 		$object->delivery_date = $row->date_livraison ?? null;
 		$object->total_ht = $row->total_ht;

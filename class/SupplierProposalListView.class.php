@@ -109,6 +109,7 @@ class SupplierProposalListView
 	{
 		$out = '<thead><tr>';
 		$out .= '<th class="text-center">' . $this->langs->trans('Ref') . '</th>';
+		$out .= '<th class="text-center">' . $this->langs->trans('Label') . '</th>';
 		$out .= '<th class="text-center">' . $this->langs->trans('CLICHAUMEIL_DATEDELIVERYPLANNED') . '</th>';
 
 		if (!empty($extraFields)) {
@@ -149,6 +150,9 @@ class SupplierProposalListView
 		$url = $this->context->getControllerUrl('supplier_proposal_card', '&id=' . $object->id);
 		$ref = dol_escape_htmltag($object->ref);
 		$out .= '<td data-search="' . $ref . '" data-order="' . $ref . '"><a href="' . $url . '">' . $ref . '</a></td>';
+
+		$label = dol_escape_htmltag($object->ref_fourn);
+		$out .= '<td data-search="' . $label . '" data-order="' . $label . '">' . $label . '</td>';
 
 		$dateFormatted = dol_print_date($object->delivery_date);
 		$out .= '<td data-search="' . $dateFormatted . '" data-order="' . intval($object->delivery_date) . '">' . $dateFormatted . '</td>';
