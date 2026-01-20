@@ -16,7 +16,7 @@ if (php_sapi_name() !== 'cli') {
 }
 
 $table = $db->prefix() . 'supplier_proposal';
-$sql = "SHOW COLUMNS FROM " . $table . " LIKE 'ref_fourn'";
+$sql = "SHOW COLUMNS FROM " . $table . " LIKE 'ref_supplier'";
 $resql = $db->query($sql);
 if (! $resql) {
 	print 'Error checking column: ' . $db->lasterror() . "\n";
@@ -24,14 +24,14 @@ if (! $resql) {
 }
 
 if ($db->num_rows($resql) > 0) {
-	print "Column ref_fourn already exists on " . $table . ".\n";
+	print "Column ref_supplier already exists on " . $table . ".\n";
 	exit(0);
 }
 
-$alter = "ALTER TABLE " . $table . " ADD COLUMN ref_fourn varchar(255) DEFAULT NULL AFTER ref_ext";
+$alter = "ALTER TABLE " . $table . " ADD COLUMN ref_supplier varchar(255) DEFAULT NULL AFTER ref_ext";
 if (! $db->query($alter)) {
 	print 'Error adding column: ' . $db->lasterror() . "\n";
 	exit(1);
 }
 
-print "Column ref_fourn added on " . $table . ".\n";
+print "Column ref_supplier added on " . $table . ".\n";
