@@ -84,7 +84,7 @@ class SupplierProposalView
 
 		// Main fields
 		$out .= $this->renderField('CLICHAUMEIL_REFNAME', $thirdparty->name ?? '');
-		$out .= $this->renderField('Label', $object->ref_fourn ?? '');
+		$out .= $this->renderField('Label', $object->ref_supplier ?? '');
 		$out .= $this->renderField('CLICHAUMEIL_PROJECT', $object->project_ref ?? '' );
 		$out .= $this->renderField('CLICHAUMEIL_STATUS', $this->getSupplierStatusLabel($object));
 		$out .= $this->renderField('CLICHAUMEIL_DATEDELIVERYPLANNED', dol_print_date($object->delivery_date), '' ,' :');

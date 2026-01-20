@@ -290,7 +290,7 @@ switch ($action) {
 					$lineToUpdate->label,                  // label
 					$lineToUpdate->product_type,           // type (0=product, 1=service)
 					$lineToUpdate->array_options,          // array_options (extrafields)
-					$lineToUpdate->ref_fourn,              // ref_supplier
+					$lineToUpdate->ref_supplier,           // ref_supplier
 					$lineToUpdate->fk_unit                 // fk_unit
 				);
 
