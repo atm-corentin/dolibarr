@@ -1,6 +1,7 @@
 # CHANGELOG MODULE CLICHAUMEIL FOR [DOLIBARR ERP CRM](https://www.dolibarr.org)
 
 ## Unreleased
+- FIX : External supplier proposal list/card now uses ref_supplier alias for label display - *20/01/2026* - 1.11.0
 - NEW : External supplier proposal list/card show supplier label (ref_fourn) and hydration updated *19/01/2026* -1.11.0
 - NEW : Add script to add ref_fourn column to supplier proposals *19/01/2026* - 1.11.0
 

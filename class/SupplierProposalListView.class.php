@@ -151,7 +151,7 @@ class SupplierProposalListView
 		$ref = dol_escape_htmltag($object->ref);
 		$out .= '<td data-search="' . $ref . '" data-order="' . $ref . '"><a href="' . $url . '">' . $ref . '</a></td>';
 
-		$label = dol_escape_htmltag($object->ref_fourn);
+		$label = dol_escape_htmltag($object->ref_supplier);
 		$out .= '<td data-search="' . $label . '" data-order="' . $label . '">' . $label . '</td>';
 
 		$dateFormatted = dol_print_date($object->delivery_date);
