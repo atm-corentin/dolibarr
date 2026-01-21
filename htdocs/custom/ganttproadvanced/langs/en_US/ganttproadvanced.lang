@@ -1,0 +1,105 @@
+Module933330070Name=Gantt Professional Advanced
+Module933330070Desc=Gantt Professional Advanced
+ganttproadvanced=Gantt Professional Advanced
+ProgressProject=Project progress
+The=On
+ConfirmDeleteObject=Are you sure you want to delete this object?
+
+ColorTaskByUserFieldColor=Set task color based on user color field
+ContactTypeTasksFromWhereWeGetColor=Main contact (task) type
+
+UseCtrlWheelInOrderToZoom=Use CTRL + Mouse-wheel inside GANTT in order to zoom
+ShowUserNameInChart=Show user name inside Chart
+AutomaticlyScrollToCurrentDay=Automaticly scroll to the current Day
+DefaultZoomBy=Default Zoom By
+show_leftmenu=Show Left menu
+JalonDate=Milestone Date
+
+
+
+
+#--------------------------------------------------------------------------- 
+viewgantt=Gantt view
+viewkanban=Kanban view
+hide_leftmenu=Hide Left menu
+
+alert_depasse_dure = You have exceeded the expected workload
+ConfirmCloneTask=Are you sure you want to clone this task?
+CloneTaskFiles=Clone task attachments
+minperiodtask=Maximum period of one month per task
+empechecreatesubtask=Prevent sub-sub task creation
+
+FinishedTasks=Show/hide finished tasks
+HideFinishedTasks=Hide elapsed tasks older than a month
+
+
+SelectByDefaultAProject=Select by default
+SelectAll=Select All
+
+totalcoutstemp=Cost time consumed
+
+TaskDependencyManagement=Managing Task Dependencies
+TypeRelation=Relationship type
+TYPE_NULL=None
+TYPE_END_START=End - Start
+TYPE_START_END=Start - End
+TYPE_START_START=Start - Start
+TYPE_END_END=End - End
+confirm=Confirm
+ConfirmCloseProject=Are you sure you want to close these projects?
+CloseProject=Close projects
+ThisProjectisClosed=%s projects closed successfully
+NoProjectToClose=No project has closed
+
+ExcludeProjectWithTags=Exclude projects with tags/categories
+
+ModifyParentTasks=Edit Parent Tasks
+RelatedToTask=Related to the task
+NumberDaysLate=No. days late
+
+FilterBy=filter by
+Projectmanageruser=Project manager user
+
+WillBeDeleted=will be deleted
+LinkStart=Start
+LinkEnd=End
+ThereIsADependencyOfTaskFor=There is a task dependency for
+
+setMinMaxTasksDatesToProject=Automatically set Min/Max date of tasks to project dates
+budget=Budget
+percentdure=Percent of time spent
+dureeffectiv=Time spent
+liverescheduleddata=LIVE RESCHEDULED DATA
+livehours=LIVE HOURS
+
+
+
+
+Changingparenttaskprohibited=Changing parent task prohibited
+CheckThisToSearchByAllContactType=Check this to get and search by all contact types
+AffectedTo=Affected to
+ShowWeekEnd=Show weekend days
+
+
+
+------------------------------------------------------------------------------------------------------------------------------------------------------- Not translated
+ShowMarkerBarOnlyAtTop=Show milestone bar only at top
+ShowProjectsEvenWithoutDates=Show projects even without dates
+ViewingTasksByresources=Viewing tasks by resource
+GanttByResource=By resource
+ColorOfMarkerBar=Milestone bar color
+ExcludeWeekendFromDurationCalculGantt=Exclude weekends when calculating duration
+KeepRecentFilter=Keep Recent Filter
+PerPrincipalContact=Principal contact
+PerPrincipalAndContributeurContact=Principal and contributor contact
+viewhours=LIVE RESCHEDULED DATA
+departement=Département
+
+showhoursingantt=Display tasks by hours on Gantt
+taskworkingtime=Task Working time
+exemploftaskworkingtime=Mode 1: (Ex: 09:00 - 17:00) <br> Mode 2: (Ex: 09:00 - 13:00 | 15:00 - 19:00)
+
+viewressource=LIVE HOURS
+
+DefaultOnglet=Display tab by default
+ShowGridResourceInTabLivehours=Display time consumed by resource on the LIVE HOURS tab

@@ -1,0 +1,120 @@
+# Copyright (C) 2024 SuperAdmin
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+#
+# Generic
+#
+
+# Module label 'ModuleSuperSearchName'
+ModuleSuperSearchName = SuperSearch
+# Module description 'ModuleSuperSearchDesc'
+ModuleSuperSearchDesc = Module utilisant la librairie 'InstantSearch' pour une recherche + efficace des objets sur dolibarr
+
+#
+# Admin page
+#
+SuperSearchSetup = Paramètre
+Settings = Paramètre
+SuperSearchSetupPage = Page de Parametre
+
+#
+# v18.0.00
+#
+SuperSearchMigrationPageTitle = Page des migrations
+SuperSearchInformationPageTitle = Informations technique
+SuperSearchChangelog = Changelog
+H2G2MinimumVersionRequired = La version minimum du module H2G2 doit être la version %s.
+SuperSearchServerTitle = Paramètre Serveur
+SuperSearchURLMeilisearch = URL Meilisearch
+SuperSearchUrlError = L'url '%s' est incorrect
+SuperSearchAPIKey = Clé API
+SuperSearchSettingsMeilisearchTitle = Paramètre
+SuperSearchSettingsMeilisearchHelp = Documentation <a href="https://www.meilisearch.com/docs/reference/api/settings" target="_blank">ici</a>
+SuperSearchSend = Envoyer
+SuperSearchError = Une erreur est survenue.
+SuperSearchErrorNotProvided = Erreur : Aucun '%s' fournis
+
+#
+# v18.1.00
+#
+SuperSearchCRUDKey = Clé API de gestion des données
+SuperSearchInsertMeilisearch = Insertion dans meilisearch
+SuperSearchUpdateMeilisearch = Mise a jour dans meilisearch
+SuperSearchDeleteMeilisearch = Suppression dans meilisearch de '%s' => rowid : %s
+SuperSearchTasksManage = Gestionnaire des Taches
+SuperSearchTasks = Liste des tâches
+SuperSearchFinishedAt = Terminée
+SuperSearchTaskUid = Id
+SuperSearchIndexUid = Index
+SuperSearchDataMigrations = Migrations de données
+SupersearchDataInMeilisearch = Données présente dans Meilisearch
+SuperSearchDeleteInMeilisearch = Supprimer dans Meilisearch
+SuperSearchImportInMeilisearch = Envoyer vers Meilisearch
+SuperSearchEmptyIndex = Vider l'index
+SuperSearchIndexEmpty = L'index %s à été vider de ces données
+SuperSearchTaskInProgress = Tache en cours
+SuperSearchMasterKey = Clé API principale
+SuperSearchAdminKey = Clé API Admin
+SuperSearchMasterKeyNeedToBeSet = La clé principale doit être renseignée pour utiliser supersearch
+SuperSearchAdminKeyMissing = La clé d'administration est manquante
+SuperSearchURLNeedToBeSet = L'URL de meilisearch doit être renseignée pour utiliser supersearch
+SuperSearchURLMissing = L'URL de meilisearch est manquante
+SuperSearchPopupSettingsTitle = Configuration du popup
+SuperSearchHitPerPage = Nombre d'objet à afficher sur le popup par index
+SuperSearchTestConnection = Tester la connexion
+SuperSearchDeleteAllTasksConfirm = Voulez-vous supprimer toutes les taches ?
+SuperSearchSettingsUpdated = Paramètres correctement modifié, veuillez attendre quelques secondes pour voir les changements.
+SuperSearchSearchInMultiIndex = Recherche en Multi-index...
+SuperSearchSearchIn = Recherche dans
+SuperSearchKeyNotFound = la clé '%s' n'a pas été trouvée
+SuperSearchErrorInitKey = Une erreur est survenue lors de la génération des clés. Aucune clé n'a été générée. Merci de vérifier que les informations saisies sont correctes
+SuperSearchTooltipPopup = Utilisez des guillemets (" ") pour rechercher une phrase
+SupersearchDataInDolibarrEntity = Données présentes dans l'entité active
+SupersearchDataInDolibarrTotal = Total en base de données
+SuperSearchConfigureInConfigEntity = À configurer dans l'entité de configuration
+
+#
+# v18.2.01
+#
+SuperSearchIncorrectClass = La classe de l'objet n'est pas correcte, l'objet n'a pas été ajouté à SuperSearch
+
+SuperSearchIndexCustomization = Personnalisation
+SuperSearchTooltipHelpURL = URL de redirection vers l'objet cible sous la forme de '<span style="color: red;  font-weight: bold">/</span> + url + <span style="color: red; font-weight: bold">?id=</span>' (ex : <span style="padding: 0.5em; border-radius: 0.5em ;color: var(--colortexttitle); background: var(--colorbacktitle1); font-weight: bold"><span style="color: red">/</span>product/card.php<span style="color: red;">?id=</span></span>)
+SuperSearchTooltipHelpColor = Couleur de l'icône et de la boîte associée à l'objet
+SuperSearchTooltipHelpIcon = Icône de l'objet : il est conseillé de conserver celle déjà configurée ou celle par défaut
+
+#
+# v18.3.00
+#
+SuperSearchReset = Réinitialiser
+SuperSearchResetIndexDisplayedAttributesDesc = Ceci va réinitialiser les champs à afficher
+SuperSearchRemoveValue = Retirer les valeurs
+SuperSearchRemoveConstError = Une erreur est survenue pour la suppression des valeurs, l'action à été annulé
+SuperSearchTopBarInitNewVersion = Nouvelle version <b>(%s)</b> déployé ! vous pouvez utiliser le raccourci 'option ou alt + s' pour ouvrir le popup
+SuperSearchRestoreKey = Restaurer les valeurs
+SuperSearchErrorUpdateIndexCustomization = Une erreur est survenue dans la mise à jour da la personnalisation.
+SuperSearchActions = Actions
+SuperSearchUpdateIndexCustomization = Mise à jour de la personnalisation réussite
+SuperSearchServerNotReachable = Le serveur meilisearch est inaccessible
+SuperSearchResetIndexAttributesTitle = Etes-vous sur de vouloir réinitialiser les paramètres ?
+SuperSearchPlaceholderSearchBox = Entrez %s caractere(s) ou plus
+SuperSearchCharsBeforeSearch = Nombre de caractères à taper avant de lancer une recherche
+SuperSearchErrorFetchIndexes = Le serveur Meilisearch est inaccessible.<br>Vérifiez la configuration ou réessayez plus tard.
+
+#
+# v18.4.01
+#
+SuperSearchAccess = Accéder à la recherche
+SuperSearchNoAccessRight = RECHERCHE DÉSACTIVÉE

@@ -1,0 +1,57 @@
+{
+  "displayedAttributes": [
+    "rowid",
+    "ref",
+    "fk_soc",
+    "price",
+    "fk_statut",
+    "datec",
+    "entity"
+  ],
+  "searchableAttributes": [
+    "ref",
+    "fk_soc",
+    "price",
+    "fk_statut",
+    "datec",
+    "entity"
+  ],
+  "filterableAttributes": [
+    "entity"
+  ],
+  "sortableAttributes": [],
+  "rankingRules": [
+    "words",
+    "typo",
+    "proximity",
+    "attribute",
+    "sort",
+    "exactness"
+  ],
+  "stopWords": [],
+  "nonSeparatorTokens": [],
+  "separatorTokens": [],
+  "dictionary": [],
+  "synonyms": {},
+  "distinctAttribute": "",
+  "proximityPrecision": "byWord",
+  "typoTolerance": {
+    "enabled": true,
+    "minWordSizeForTypos": {
+      "oneTypo": 3,
+      "twoTypos": 5
+    },
+    "disableOnWords": [],
+    "disableOnAttributes": []
+  },
+  "faceting": {
+    "maxValuesPerFacet": 100,
+    "sortFacetValuesBy": {
+      "*": "alpha"
+    }
+  },
+  "pagination": {
+    "maxTotalHits": 1000
+  },
+  "searchCutoffMs": null
+}

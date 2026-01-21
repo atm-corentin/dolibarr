@@ -1,0 +1,49 @@
+.wysiwyg_custom .cke_toolbar_end,.cke_toolbar_start, .cke_combo::after, .cke_toolbar_separator {
+    display:none;
+}
+.wysiwyg_custom .cke_toolgroup, .cke_combo {
+    margin:0;
+    padding:0;
+}
+
+/*HIDDEN ACTIONS*/
+.wysiwyg_custom a.cke_button__newpage,
+.wysiwyg_custom a.cke_button__preview,
+.wysiwyg_custom a.cke_button__pastetext,
+.wysiwyg_custom a.cke_button__pastefromword,
+.wysiwyg_custom a.cke_button__print,
+.wysiwyg_custom a.cke_button__undo,
+.wysiwyg_custom a.cke_button__redo,
+.wysiwyg_custom a.cke_button__find,
+.wysiwyg_custom a.cke_button__replace,
+.wysiwyg_custom a.cke_button__selectall,
+.wysiwyg_custom a.cke_button__creatediv,
+.wysiwyg_custom a.cke_button__showblocks,
+.wysiwyg_custom a.cke_button__form,
+.wysiwyg_custom a.cke_button__checkbox,
+.wysiwyg_custom a.cke_button__radio,
+.wysiwyg_custom a.cke_button__textfield,
+.wysiwyg_custom a.cke_button__textarea,
+.wysiwyg_custom a.cke_button__select,
+.wysiwyg_custom a.cke_button__button,
+.wysiwyg_custom a.cke_button__imagebutton,
+.wysiwyg_custom a.cke_button__hiddenfield,
+.wysiwyg_custom a.cke_button__superscript,
+.wysiwyg_custom a.cke_button__blockquote,
+.wysiwyg_custom a.cke_button__bidiltr,
+.wysiwyg_custom a.cke_button__bidirtl,
+.wysiwyg_custom a.cke_button__image,
+.wysiwyg_custom a.cke_button__table,
+.wysiwyg_custom a.cke_button__horizontalrule,
+.wysiwyg_custom a.cke_button__smiley,
+.wysiwyg_custom a.cke_button__pagebreak,
+.wysiwyg_custom a.cke_button__iframe
+{
+    display: none !important;
+}
+
+.wysiwyg_custom span.cke_combo__styles,
+.wysiwyg_custom span.cke_toolbar_break,
+.wysiwyg_custom span.cke_combo__font {
+    display: none !important;
+}

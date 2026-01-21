@@ -1,0 +1,215 @@
+:root{
+	--main-cube-width: 20px;
+	--main-cube-height: 20px;
+	--main-color-today : #959fb6;
+	--main-color-today-width :5px;
+	--main-bgcolor-cubeless : rgba(246, 182, 182, 0.21);
+	--main-bgcolor-grid-disabled : rgba(246, 194, 194, 0.56);
+	--main-bgcolor-grid : rgba(197, 194, 194, 0.56);
+	--main-font-size : 15px;
+}
+
+.advancedhrm-button-icon{
+
+	margin-bottom: 3px;
+	margin-top: 3px;
+	margin-left: 5px;
+	margin-right: 5px;
+	font-family: roboto,arial,tahoma,verdana,helvetica;
+	display: inline-block;
+	padding: 5px 7px;
+	text-align: center;
+	cursor: pointer;
+	text-decoration: none !important;
+	background-color: #f5f5f5;
+	background-image: -moz-linear-gradient(top, #ffffff, #e6e6e6);
+	background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#ffffff), to(#e6e6e6));
+	background-image: -webkit-linear-gradient(top, #ffffff, #e6e6e6);
+	background-image: -o-linear-gradient(top, #ffffff, #e6e6e6);
+	background-image: linear-gradient(to bottom, #ffffff, #e6e6e6);
+	background-repeat: repeat-x;
+	border-color: rgba(0, 0, 0, 0.1) rgba(0, 0, 0, 0.1) rgba(0, 0, 0, 0.25);
+	border: 1px solid #aaa;
+	-webkit-border-radius: 2px;
+	border-radius: 1px;
+	font-weight: bold;
+	text-transform: uppercase;
+	color: #444;
+
+}
+
+.popFavoris .fa{
+	color: #d2b704;
+}
+
+.wrapper-input{
+	border: 2px solid #18336e;
+	border-radius:15px ;
+	margin:8px;
+}
+.inputMap {
+	margin:8px;
+	position: relative;
+	letter-spacing: .01428571em;
+	font-size: .875rem;
+	font-weight: 400;
+	line-height: 1.25rem;
+	z-index: 1;
+	border: none;
+	background-color: transparent;
+	resize: none;
+	outline: none;
+	text-decoration: none;
+}
+
+input:focus{
+	outline: none;
+}
+
+/** PLANNING TABLE DESIGN  **/
+.csscube {
+	width:var(--main-cube-width);
+	height:var(--main-cube-height);
+font-size: 18px;
+	border:0.005em solid var(--main-bgcolor-grid);
+
+}
+.csscubeday {
+	width:var(--main-cube-width);
+	height:var(--main-cube-height);
+	font-size: 9px;
+	/*border:1px solid grey;*/
+
+}
+.csscubeless-header{
+	width:var(--main-cube-width);
+	height:var(--main-cube-height);
+
+}
+.csscubeless{
+	width:var(--main-cube-width);
+	height:var(--main-cube-height);
+	/*border:0.005em solid var(--main-bgcolor-grid-disabled);*/
+	/*background: var(--main-bgcolor-cubeless);*/
+	opacity: 1;
+}
+
+/*.ui-dialog {*/
+/*	z-index: 1000 !important; Laurent a fait un correctif plus adapté peu de temps après cette modif de Kevin qui crée un bug lors du clone d'une note de frais (sélection utilisateur)*/
+/*}*/
+
+.legende {
+	width:var(--main-cube-width);
+	height:var(--main-cube-height);
+	font-size: 6px;
+	border:1px solid grey;
+}
+.cssline {
+	height:13px;
+	font-size: var(--main-font-size);
+	min-width:250px !important;
+}
+.wrapper{
+	width:99%;
+	padding: 20px!important;
+	border-collapse: collapse;
+	border-spacing: 0;
+}
+.planning {
+	border-collapse: collapse;
+	border-spacing: 0px;
+	/*box-shadow: 2px 2px 2px #cecbcb;*/
+	/*background: #f5f5f5;*/
+	border-radius: 0.25em;
+	margin: 0.5em;
+	color : #0c0c0c;
+	padding :0.5em;
+}
+
+.planninglegende{
+
+	background: #f3f1f1;
+	box-shadow: 2px 2px 2px #cecbcb;
+	border-radius-topleft: 0.25em;
+	border-radius-topright: 0.25em;
+	/**border-collapse: collapse;**/
+	/**margin: 0.5em;**/
+	color : #0c0c0c;
+	padding :0.5em;
+}
+
+td {
+	color : #0c0c0c;
+}
+.presence-right {
+	border: solid 1px var(--main-bgcolor-grid);
+	border-bottom: solid 1px var(--main-bgcolor-grid);
+	font-size: var(--main-font-size);
+
+}
+.presence-left {
+	border-left: solid 1px var(--main-bgcolor-grid);
+
+}
+
+
+.disabled td {
+	color: #4F5F64;
+}
+tbody tr {}
+tbody tr:hover {color : #fff;}
+
+.legendeallcolumn {Rowspan:7;}
+
+
+.header-today{
+	position: relative;
+	border-left: var(--main-color-today-width) solid var(--main-color-today);
+	border-top: var(--main-color-today-width) solid var(--main-color-today);
+	border-right: var(--main-color-today-width) solid var(--main-color-today);
+	z-index: 1000;
+}
+
+.footer-today{
+	position: relative;
+	border-left: var(--main-color-today-width) solid var(--main-color-today);
+	border-bottom: var(--main-color-today-width) solid var(--main-color-today);
+	border-right: var(--main-color-today-width) solid var(--main-color-today);
+	z-index: 1000;
+}
+
+.body-today-left {
+	position: relative;
+	border-left: var(--main-color-today-width) solid var(--main-color-today);
+	z-index: 1000;
+
+}
+.body-today-right {
+	z-index: 1000;
+	border-right: var(--main-color-today-width) solid var(--main-color-today);
+}
+
+.year-title{
+	font-size: 28px;
+	font-style: italic;
+	font-weight: bold
+}
+.month-title{
+	font-size: 14px;
+	font-style: italic;
+
+}
+
+.small{
+
+
+	font-size: 12px;
+}
+
+.linkFontsized{
+	font-size: 14px;
+}
+
+.canOpenPopin:hover{
+	background: lightgrey;
+}

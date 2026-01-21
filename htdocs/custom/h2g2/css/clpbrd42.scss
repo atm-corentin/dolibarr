@@ -1,0 +1,28 @@
+.clpbrd42 {
+  transition: all 0.25s;
+  &:hover {
+    cursor: pointer;
+    transition: none;
+    text-decoration: underline dotted;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.2em;
+  }
+  &:active {
+    color: lightblue !important;
+  }
+  &:hover:before {
+    transition: all 0.25s;
+    opacity: 0.5;
+    content: "⧉";
+    display: inline-block;
+    font-size: 1em;
+    width: 1.5em;
+    height: 1.5em;
+    margin: -0.25em 0 -0.25em 0.5em;
+    background: var(--colortextlink, black);
+    color: var(--colorbackbody, white);
+    line-height: 1.5em;
+    text-align: center;
+    border-radius: 50%;
+  }
+}

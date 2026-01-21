@@ -1,0 +1,96 @@
+Module104250Name = Doc 2 project
+Module104250Desc = Permet de créer automatiquement un projet et ses tâches en se basant sur les lignes d'une proposition signée ou d'une commande client validée
+
+ATMAbout = Ce module a été développé par <a href="http://www.atm-consulting.fr" target="_blank">ATM Consulting</a><br>Vous pouvez retrouver la documentation sur notre <a href="http://wiki.atm-consulting.fr/index.php/Accueil" target="_blank">wiki</a><br><br>Pour toute question technique ou retour, contactez-nous sur <a href="mailto:support@atm-consulting.fr">support@atm-consulting.fr</a><br><br>Pour toute question commerciale, contactez-nous sur <a href="mailto:contact@atm-consulting.fr">contact@atm-consulting.fr</a> ou au +33 9 77 19 50 70<br><br>Retrouvez nos autres modules sur <a href="http://www.dolistore.com/search.php?orderby=position&orderway=desc&search_query=atm&submit_search=Rechercher" target="_blank">Dolistore</a>
+
+Doc2ProjectSetup = Configuration du module Doc2Project
+Doc2ProjectAbout = A propos du module Doc2Project
+
+CreateProjectAndTasks = Créer projet et tâches
+CreateTasksInProject = Créer les tâches dans le projet associé
+DocConverted = convertie
+AbricotNeeded = Le module Abricot est nécessaire.
+Doc2ProjectUseQtyOfNomenclature=Lors de la conversion d'une nomenclature en tâche, prendre uniquement la quantité de la nomenclature sans multiplier par la quantité de la ligne du document
+
+# SETUP
+DisplayOnProposal = Afficher le bouton de conversion sur la fiche proposition
+DisplayOnOrder = Afficher le bouton de conversion sur la fiche commande client
+TaskRefPrefix = Préfixe pour la référence des tâches (si vide, utilisera la numérotation du module <i>Projets</i>)
+NbHoursPerDay = Nombre d'heures journalier
+ModuleNeedProposalOrOrderModule = Le module proposition commerciale ou commande client doit être activé pour pouvoir utiliser ce module
+Doc2ProjectValidateProjectOnValidateOrder=Créer et valider un projet sur la validation d'une commande client
+Doc2ProjectClotureProjectOnValidateExpedition=Clôturer le projet sur la validation d'une expédition
+Doc2ProjectCloneExtrafields=Copier les attributs supplémentaires du document d'origine sur le projet
+Doc2ProjectCreateTaskForVirtualProduct=Créer autant de tâche que de sous-services associés au service parent
+Doc2ProjectCreateTaskForParent=Créer le service initial en tant que tâche parente des sous-produits associés
+Doc2ProjectAddUsageTaskOnProject=Cocher la case "Suivre des tâches ou du temps passé" lors de la création automatique d'un projet
+Doc2projectWithWorkstation=Créer autant de tâches qu'il y a de postes de travail associés au produit/service
+Doc2ProjectAutoAffectProjectLeader=Affecter en tant que chef de projet l'utilisateur créant le projet depuis la propale, commande.
+DOC2PROJECT_TITLE_PROJECT=Titre du projet créé
+DOC2PROJECT_TITLE_PROJECT_info=Clef de remplacement {ref_client},{ref},{thirdparty_name}, {options_...}, ...
+DOC2PROJECT_SET_PROJECT_DRAFT=Repasser le projet au statut brouillon sur la création de nouvelles tâches
+Doc2ProjectCreateSprintFromTitle=Créer les sprints en fonction des lignes titres contenus dans le document
+DOC2PROJECT_TASK_NAME=Label à appliquer lors de la création des tâches
+DOC2PROJECT_TASK_NAME_HELP=Clés de substitutions :<br />- {product_ref} => référence du produit<br />- {product_label} => libellé de la ligne
+DOC2PROJECT_VALIDATE_CREATED_PROJECT=Valider automatiquement les projets créés depuis un devis ou une commande
+DOC2PROJECT_DISPLAY_LINKED_TASKS=Afficher sur les lignes de document les tâches qui leur sont liées (uniquement sur la fiche du document validé, non fonctionnel avel le module nomenclature/ouvrage  )
+DOC2PROJECT_TASK_RECALC_DATE_BY_VELOCITY = Lors de l'ajout des tâches au projet, prendre en compte la vélocité (nombre d'heures journalier) dans la planification
+Doc2ProjectUseSpecificStoryToCreateTasks = Permet de passer un libellé de sprint pour spécifier un sprint dans lequel créer les tâches
+Doc2ProjectDocumentsSourceParameters = Paramètres liés aux documents source
+Doc2ProjectParameters = Paramètres liés au projet
+Doc2ProjectTasksParameters = Paramètres liés aux tâches
+
+Doc2ProjectTitle=%s
+Doc2ProjectProjectCreated=Projet %s créé
+Doc2ProjectErrorCreateProject=Impossible de créer un projet, code retour : %s
+Doc2ProjectErrorClassNotFoundProject=Impossible de créer un projet, class non trouvée : %s
+Doc2ProjectErrorCommandeNotFound=Impossible de clôturer le projet : commande non trouvée
+Doc2ProjectErrorProjectNotFound=Aucun projet lié
+Doc2ProjectErrorProjectCantBeClose=Impossible de clôturer le projet %s
+Doc2ProjectProjectAlreadyClose=Projet (%s) déjà clos
+Doc2ProjectProjectAsBeenClose=Le projet (%s) a été clôturé
+Doc2ProjectExcludedProducts=Ne pas convertir les services suivants
+Doc2ProjectExcludedProductsDesc=Renseigner les références des services à exclure, séparés par un point virgule
+Doc2ProjectDoNotConvertServiceWithPriceToZero=Ne pas convertir les services dont le prix est à 0
+Doc2ProjectDoNotConvertServiceWithQuantityToZero=Ne pas convertir les services dont la quantité est à 0
+LinkedTasks=Tâches liées
+
+CostEffective=Coût effectif (temps consommé)
+SoldPrice=Montant vendu
+TotalBill=Montant total des factures
+OtherExpenses=Autres dépenses (Achat, NdF, ...)
+TotalPropal=Montant total des propositions signées
+
+Doc2ProjectUseNomenclatureAndWorkstation=Si une "Nomenclature" est présente sur la ligne du produit/service, alors on cherche à créer une tâche projet avec le service de plus bas niveau pour chaque ligne de nomenclature (attention s'il y a des sous nomenclatures, une seul tâche est créer avec la ligne service de plus bas niveau)
+Doc2ProjectAllowFreeLine=Autoriser la création de tâche pour une ligne libre
+Doc2ProjectUpdateProgressOfSituationInvoice=Récupérer la progression des tâches pour les reporter dans les factures de situations
+
+Doc2ProjectCreateGlobalTask=Créer une tâche globale lors de la validation d'une commande
+Doc2ProjectGlobalTaskLabel=Tâche globale
+Doc2ProjectGlobalTaskDesc=Utilisée pour la saisie de temps
+Doc2ProjectCreateTaskWithSubtotal=Créer des tâches correspondant aux titres afin de garder une hiérarchie (module "Subtotal" requis)
+Doc2ProjectCreateTaskWithSubtotalTooltip=Attention : la bonne hiérarchisation des tâches, nécessite que les niveaux de titre se suivent (pas de titre 1 puis subitement un titre 3) et que des sous-totaux soient présents en tant que délimiteur
+
+
+Doc2ProjectConversionRule=Règle de conversion de temps des services en tâche
+Doc2ProjectConversionRuleDesc=Nombre d'heure alimentant la durée planifiée. Si vide prendra la durée du service. {qty} quantité de la ligne, {totalht} total HT de la ligne
+
+Doc2ProjectErrorCanNotFetchProject=Erreur : impossible de charger ou de créer le projet
+
+Doc2ProjectViewStats = Voir les statistiques doc2project
+
+DOC2PROJECT_CONVERT_NOMENCLATUREDET_INTO_TASKS=Convertir les lignes de nomenclature en tant que sous tâches (incompatible avec la conf : Si une "Nomenclature" est présente sur la ligne du produit/service...)
+d2p_onlyTNomenclatureDet=Uniquement les lignes de nomenclature
+d2p_onlyTNomenclatureWorkstation=Uniquement les lignes de poste de travail (TODO)
+d2p_Both=Les deux (TODO)
+DOC2PROJECT_ALWAYS_ADD_THIRDPARTY_PROJECT_TITLE=Toujours avoir le nom de la société dans le titre du projet
+DOC2PROJECT_ALWAYS_ADD_THIRDPARTY_PROJECT_TITLE_help=Par défaut si le document a une référence client non vide, c'est elle qui est utilisée comme titre, sinon c'est "nom de la société - référence du document convertie". <br> Cette configuration permet donc, dans le cas de la référence client d'avoir "nom de la société - référence client"
+Doc2ProjectGroupTasksBySprint=Grouper les tâches par nom dans un sprint
+Doc2ProjectGroupTasks=Grouper les tâches par nom
+Doc2ProjectPrevueBeforeConvert=prévisualisation et selection des lignes avant l'import
+
+Doc2ProjectErrorUpdateProject=Erreur à la sauvegarde du projet
+Doc2ProjectTaskCreationMessage_mesgs=%s lignes converties en tâches.
+Doc2ProjectTaskCreationMessage_warnings=%s lignes ignorées à la conversion en tâches.
+Doc2ProjectTaskCreationMessage_errors=erreur à la conversion de %s lignes en tâches.
+Doc2ProjectTaskCreationMessage_NoTasksCreated=Aucune ligne convertie en tâche.

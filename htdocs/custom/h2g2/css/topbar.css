@@ -1,0 +1,59 @@
+:root {
+  --top-info-success: #198754;
+  --top-info-success--text: white;
+  --top-info-utility: #2778c4;
+  --top-info-utility--text: white;
+  --top-info-warning: #e09200;
+  --top-info-warning--text: black;
+  --top-info-danger: #dc3545;
+  --top-info-danger--text: white;
+}
+
+.top-info {
+  display: flex;
+  gap: 1em;
+  align-items: center;
+  /* STATUS */
+}
+.top-info-content {
+  padding: 1em;
+  display: flex;
+  align-items: center;
+  gap: 1em;
+  flex: 1;
+}
+.top-info-content-text {
+  display: flex;
+  align-items: baseline;
+  gap: 1em;
+  flex: 1;
+}
+.top-info-content-text > * {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+.top-info a {
+  color: inherit;
+}
+.top-info-close {
+  padding: 1em;
+  margin: 0;
+  line-height: 1;
+  color: inherit;
+}
+.top-info-success {
+  background: var(--top-info-success);
+  color: var(--top-info-success--text);
+}
+.top-info-utility {
+  background: var(--top-info-utility);
+  color: var(--top-info-utility--text);
+}
+.top-info-warning {
+  background: var(--top-info-warning);
+  color: var(--top-info-warning--text);
+}
+.top-info-danger {
+  background: var(--top-info-danger);
+  color: var(--top-info-danger--text);
+}

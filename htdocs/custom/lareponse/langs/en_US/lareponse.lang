@@ -1,0 +1,375 @@
+# Copyright (C) 2020 SuperAdmin
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+#
+# Generic
+#
+
+# Module label 'ModuleLareponseName'
+ModuleLareponseName = Lareponse
+# Module description 'ModuleLareponseDesc'
+ModuleLareponseDesc = Create your sales and technical documentation
+ConfigurationMenu = <span class="fa fa-cog" aria-hidden="true"></span> Setup
+NewsMenu = <span class="fa fa-exclamation fa-beat" aria-hidden="true"></span> News
+DocumentationMenu = <span class="fa fa-info" aria-hidden="true"></span> Documentation
+NewsTitle = News
+UserDocTitle = User Documentation
+
+#
+# Index Page
+#
+LareponseArea= Lareponse - Dashboard
+LastArticles = Last %s articles
+LastArticlesUpdated = Last %s articles updated
+NoArticle = No article
+NoContributor = No contributor
+MostActiveContributor = The %s most active contributors
+articlesPublished = published articles
+articlePublished = published article
+MyFavoritesArticles = My favorite articles
+NoFavorite = No favorite
+
+#
+# Admin page
+#
+LareponseSetup = Lareponse setup
+Settings = Settings
+LareponseSetupPage = Lareponse setup page
+LAREPONSE_MYPARAM1 = My param 1
+LAREPONSE_MYPARAM1Tooltip = My param 1 tooltip
+LAREPONSE_MYPARAM2=My param 2
+LAREPONSE_MYPARAM2Tooltip=My param 2 tooltip
+
+
+#
+# About page
+#
+About = About
+LareponseAbout = About Lareponse
+AboutPage = about page
+LareponseAboutPage = Lareponse about page
+
+#
+# Sample page
+#
+MyPageName = My page name
+
+#
+# Sample widget
+#
+MyWidget = My widget
+MyWidgetDescription = My widget description
+
+#
+# Comment
+#
+Comments=Commentaries
+CommentSpace=Comments space
+CommentDelete=Comment deleted
+ErrorCommentDelete=Error when deleting the comment
+CommentPost=Comment posted
+ErrorCommentPost=Error while posting the comment
+DeleteCommentMsg=Do you really want to delete this comment?
+DeleteComment=Deleting the comment
+
+#
+# Articles
+#
+FilterByDate = Filter by date
+ArticleUpdate=Article Updated
+ErrorArticleUpdate=Error while updating the article
+NewTag=New tag
+CreateTag=Create a tag
+TagCreate=Tag created
+ErrorTagCreate=Error while creating the tag<br> (duplicated or null value)
+TagDelete=Tag deleted
+ListArticle=<span class="fa fa-newspaper-o" aria-hidden="true"></span>  Articles list
+ListTag=<span class="fa fa-tag" aria-hidden="true"></span>  Tag list
+NewArticle = <span class="fa fa-plus-square-o" aria-hidden="true"></span>  New article
+NewArticleImport = <span class="fa fa-plus-square-o" aria-hidden="true"></span>  New import
+FilterByDate = Filter by date
+Deletearticle = Delete an article
+ConfirmDeleteObject = Are you sure you want to delete this article ?
+ConfirmClonearticle = Are you sure you want to clone this article ?
+NewRefForArticleClone = Title for the new article
+SuccessfullyCloned = cloned successfully
+FailedCloned = could not be cloned
+Article = Article
+LinkToArticle = Link to the article
+ArticleSuccessExport = Article successfully exported
+ArticleFailureExport = The article couldn't be exported
+ExportArticle = Article export
+ConfirmExportArticle = Are you sure you want to export this article ?
+WarningConfirmExport = The article will directly be downloaded
+ConfirmMassExport = Bulk export confirmation
+ConfirmMassExportQuestion = Are you sure you want to export the %s selected record ?
+NewImport = New Import
+
+#
+# Setup page
+#
+SetupDemo = <span class="fa fa-comments-o" aria-hidden="true"></span> Wizard configuration
+Parameter = Parameter
+Value = Value
+ActivateDemoMode = Activate wizard mode
+wizardindex = Dayly message / Dashboard
+wizardarticlelist = Article list
+ConfugurationOfModule = Configuration of %s module
+SetupTags = <span class="fa fa-tag" aria-hidden="true"></span>  Tags configuration
+TagsGestionParc = Activate GestionParc tags into Lareponse tags list (If GestionParc module is enabled)
+TagsCategories = Activate Categories tags into Lareponse tags list
+
+#
+# Tag
+#
+LareponseTag = Tag
+product = Product
+supplier = Supplier
+customer = Customer
+member = Member
+contact = Contact
+bank_account = Bank/Cash
+project = Project
+user = User
+TagType = Tag Type
+TagUpdate = Tag updated
+ConfirmDeleteTag = Are you sure you want to delete this tag ?
+TagsMigrationFailure = Error : The tags migration failed
+LinkedArticles = Linked articles
+linkedarticles = linked articles
+TagLinkedArticlesList = List of linked articles
+
+#
+# Imports
+#
+AskUserToInputImportFile = Select the .zip folder to import
+WrongImportFileZip = The import file must be a .zip
+FailedToUpload = %s could not be imported
+SuccessfullyUploaded = %s successfully imported
+FailedToReadImport = An error occured while reading the file
+FileNotSupported = The input file is not valid
+
+#
+# Web publication
+#
+ArticlePubTokenTitle = Article publicly accessible via this link
+ArticlePubNoTokenInfo = Article needs to be published first
+PublicPublish = Publish
+ConfirmPubliclyPublish = Do you wish to publish this article ?
+PublishSuccess = Article successfully published
+PublishFail = The article couldn't be published
+PublicUnPublish = Unpublish to the public
+ConfirmPubliclyUnPublish = Do you wish to unpublish this article ?
+UnPublishSuccess = Article successfully unpublished
+UnPublishFail = The article couldn't be unpublished
+ProvidedModule = Module provided by
+GeneratedArticle = Article generated by the Dolibarr module
+
+#
+# v.13.0.01
+#
+LaReponseCategories = Tags
+LaReponseCategoriesUseOrOperatorForCategories = Use the 'or' operator for tags
+
+#
+# v.13.0.02
+#
+LaReponseWidgetNumber = <strong>Value</strong>
+LaReponseWidgetNumberNext = Enter the value that will indicate the number of articles to display on the module home page
+LaReponseWidgetNumberTitle = <span class="fa fa-newspaper-o"></span> Number of articles
+LaReponseActivateTagDeletionProtection = Activate the blocking of the deletion of a tag if it is associated with one or more objects
+DeleteErrorTagLinkedToObject = The tag is linked to one or more objects. Remove the links or deactivate the blocking of deletion in the administration of the module.
+product = Product
+supplier = Supplier
+customer = Customer
+member = Member
+contact = Contact
+bank_account = Bank account
+project = Project
+user = User
+bank_line = Bank line
+GestionParc = GestionParc
+Lareponse = Lareponse
+
+
+#
+# v.14.0.00
+#
+ShareTag = Enable Tag Sharing
+ShareArticle = Enable article sharing
+TAGSharing = Sharing tags
+TAGSharingDescription = Selection of entities that will share their tags with this entity.
+ARTICLESharing = Sharing articles
+ARTICLESharingDescription = Selection of entities that will share their articles with this entity.
+ListTagGlobal = Global tag list
+LareponseTagArea = Answer tags/categories space
+AddTagIntoArticle = Add next item
+ArticleWasAddedSuccessfully = The article was successfully linked
+lareponseNewArticle = Adding an item
+ArticleCard = Article
+Private = Private
+Public = Internal
+H2G2MinimumVersionRequired = La version minimum du module H2G2 doit être la version %s
+
+
+#
+# v.14.1.00
+#
+LaReponseArticle = <span class="fa fa-newspaper-o"></span> Article
+LaReponseFavorite = Favorite
+LaReponseCopyLink = Copy public link
+LaReponseSuccessfullycopied =  Successfully copied!
+LaReponseSuccessfullyNotcopied = Failed to copy!
+LaReponseSuccess = Success
+LaReponseError = Error
+
+#
+# v15.0.00
+#
+contactUs = <span class="fas fa-headset"></span> Contact us
+LaReponseContent = Content
+
+#
+# v16.0.00
+#
+
+LaReponseInputTitlePlaceHolder = Search in titles or content
+Articles = <span class="fas fa-newspaper"></span>  Articles
+
+
+#
+# v16.1.00
+#
+
+PlaceholderTags = Tags articles, customers, ...
+CreatedBy = Created by
+UpdatedBy = Modified by
+The = on
+
+#
+# v16.2.00
+#
+
+AssociatedArticles = Related articles
+ArticleOnglet = Article
+LaReponseThirdParty = Third-party :
+LaReponseProject = Project :
+LaReponseModuleH2G2Missing = The <b> '%s' module cannot work without the 'H2G2'</b> module. This module is provided <b>for free</b> by Code42 at the following address: <b><a href='https://www.dolistore.com/fr/modules/1226-H2G2---CODE- 42.html?search_query=H2G2&results=9'> Download H2G2</a></b><br>Please download and install before activating '%1$s' module.
+
+#
+# v19.0.0
+#
+
+ArticleClosed = Closed
+ConfirmCloseArticle = Are you sure you want to close this article ?
+WarningConfirmClose = The article will be automatically closed
+ConfirmOpenArticle = Are you sure you want to reopen this article ?
+WarningOpenClose = The article will be automatically reopened
+OpenArticleSuccess = The article has been reopened
+OpenArticleFailed = Article could not be reopened
+CloseArticleSuccess = Article closed
+CloseArticleFailed = Article could not be reopened
+
+#
+# v19.1.00
+#
+LaReponseArticlePreviewTooltip = Number of letters visible in the tooltip of an article
+LaReponseNoContent = No Content
+LaReponseAll = All
+LaReponseWYSIWYGReduceToolbar = Reduce the number of buttons in the toolbar
+
+#
+# v19.1.01
+#
+LaReponseContinue = Save and Continue
+LaReponseContinueTooltip = Saves your changes and remains in edit mode.
+LaReponseSaveCard = Save and View
+LaReponseSaveCardTooltip = Saves your changes and returns to the article view.
+LaReponseSaveList = Save and Exit
+LaReponseSaveListTooltip = Saves your changes and returns to the list of articles.
+
+#
+# v19.2.00
+#
+LaReponseEventArticleCreated = Article created
+LaReponseEventArticleModified = Article modified
+LaReponseEventArticleDeleted = Article deleted
+LaReponseEventArticleCommentCreated = Article commented
+ActionARTICLE_CR = Article created
+ActionARTICLE_MO = Article modified
+ActionARTICLE_DE = Article deleted
+ActionCOMMENT_CR = Article commented
+LaReponseCronNotificationArticle = Notification of "subscribers" when an article is modified
+LaReponseSendArticles = Sends recently updated articles
+LaReponseMailArticlesUpdated = Articles have been updated recently.
+LaReponseHello = Hello
+LaReponseEmailTemplateArticleUpdated = we inform you of the update of the content of this (these) article(s):
+LaReponseSetupNotifications = <span class="far fa-envelope"></span> Notifications
+LaReponseSetupNotificationSend = Enable sending notifications when an article is updated
+LaReponseSetupTimeBeforeNotificationSend = Time between each notification sending (in minutes)
+LaReponseSetupTimeBeforeNotificationSendHelp = Every x minutes, a task will examine the updated articles to send an email notification to users subscribed to the articles (creator, favorites or commented)
+LaReponseSetupFrequencyCronUpdated = The notification configuration has been updated
+LaReponseSetupFrequencyCronUpdatedError = An error occurred while saving data. Check the log for more information
+LaReponseWizardArticleAssistant = Help message for creating an article
+LaReponseSetupEmailTemplateUsedForNotification = Email template used for sending notifications
+LaReponseSetupEmailTemplateUsedForNotificationHelp = This list contains all templates of type 'Article'. The email will be sent with the substitution values replaced.<br>IMPORTANT: the substitution value __LAREPONSE_ARTICLE_LIST_LINKS__ will be replaced by the links of the recently modified articles. This value is only used with automatic sending of notifications.
+LaReponseArticleCronDisabled = Cron is disabled in LaReponse configuration, no email sent.
+LareponseArticleCronErrorEventCantBeLoaded = At least one event could not be loaded
+LareponseArticleCronErrorArticleCantBeLoaded = At least one article could not be loaded
+LaReponseSetupWarningTemplateEmpty = The saved template is empty or not found, please save a value to avoid errors.
+
+#
+# v19.2.03
+#
+LaReponseConfigModule = Configure Lareponse module
+LaReponseCreUpdTags = Create/Update Lareponse tags
+LaReponseDeleteTags = Delete Lareponse tags
+LaReponseExpImpArticles = Export/Import Lareponse articles
+LaReponsepublishArticles = Publish lareponse articles
+
+#
+# v20.0.00
+#
+LaReponseIframeUrl = URL
+
+#
+# v20.1.00
+#
+LaReponseDisplayImagesInTooltip = Display images in article tooltips
+LaReponseReadObjects = View public articles
+LaReponseCreUpdArticles = Create / modify / delete your articles
+LaReponseDeleteArticles = Delete articles from other contributors
+LaReponseClosedArticles = Close your articles
+LaReponseOpenedArticles = Publish an article (external consultation possible)
+LaReponseUpdateOtherArticles = Edit other contributors' articles
+
+#
+#v20.2.00
+#
+LaReponseCreateCustomTemplateTitle = Create your custom template
+LaReponseCreateCustomTemplateDesc = Contact Code 42 to obtain a custom template
+LaReponseTemplateUpVersionTitleTitleDesc = Upgrade title
+LaReponseTemplateUpVersionTextImageTitleDesc = Text + Image
+LaReponseTemplateUpVersion2ColTextImageTitleDesc = 2 columns Text + Image
+LaReponseTemplateUpVersion3ColTextImageTitleDesc = 3 columns Text + Image
+LaReponseTemplateUpVersionCTAOrange = CTA Orange
+
+#
+# v20.3.00
+#
+LaReponseSetupToc = <span class="fa fa-list"></span> Summaries
+LareponseFoldTocByDefault = Hide article summaries by default
+LareponseIhmFoldTocByDefault = Hide article summaries Default response
+LaReponseToc = Table of contents

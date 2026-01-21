@@ -1,0 +1,117 @@
+# Dolibarr language file - en_US - extraitcompteclient
+CHARSET=UTF-8
+Module163030Name = Customer / Supplier Account Statement
+Module163030Desc = Module to generate a statement of a customer / supplier account.
+
+#######################################################################
+# Admin
+#######################################################################
+ExtraitCompteClientSetup=Setup of the "Customer / Supplier Account Statement" module
+ExtraitCompteClientSetupOptions=Options
+ExtraitCompteClientSetupDefaultOptionsExtractGenerator=Default account statement generation popup options
+ExtraitCompteClientDefaultAddSubsidiariesName=Take into account the subsidiaries
+ExtraitCompteClientDefaultAddSubsidiariesDesc=Check by default the option allowing the subsidiaries to be taken into account on the generated documents
+ExtraitCompteClientDefaultInvoicePayedName=Paid invoices
+ExtraitCompteClientDefaultInvoicePayedDesc=Check by default the option to display paid invoices on generated documents
+ExtraitCompteClientDefaultInvoiceAbandonedName=Abandoned invoices
+ExtraitCompteClientDefaultInvoiceAbandonedDesc=Check by default the option to display abandoned invoices on generated documents
+ExtraitCompteClientDefaultDeadlineName=Payment deadlines
+ExtraitCompteClientDefaultDeadlineDesc=Check by default the option to display the payment deadlines on the generated documents
+ExtraitCompteClientDefaultDetailsName=View payment details
+ExtraitCompteClientDefaultDetailsDesc=View payment details
+ExtraitCompteClientDefaultRefSupplierName=External label of suppliers
+ExtraitCompteClientDefaultRefSupplierDesc=On accounts payable statements, in the column name, add the display of the internal reference (that of your Dolibarr) to the external reference (that of the supplier)
+ExtraitCompteClientDefaultSpaceDeletedName=Remove spaces in numbers
+ExtraitCompteClientDefaultSpaceDeletedDesc=Remove spaces in number display (effective only on CSV)
+ExtraitCompteClientDefaultAddProductTagsName=Tags/categories product
+ExtraitCompteClientDefaultAddProductTagsDesc=Check by default the option to display product tags/categories on generated documents
+ExtraitCompteClientDefaultAddPaymentDetailsName=Payment details
+ExtraitCompteClientDefaultAddPaymentDetailsDesc=Check by default the option to add payment details to generated documents
+ExtraitCompteClientEntityNameBeginLocationInFilenameName=Entity in file name
+ExtraitCompteClientEntityNameBeginLocationInFilenameDesc=Place the name of the entity at the beginning of the name of the generated file instead of at the end
+ExtraitCompteClientThirdpertyRefName=External reference
+ExtraitCompteClientThirdpertyRefDesc=Check by default the option to add the external reference on the generated documents
+ExtraitCompteClientDefaultAddMulticurrencyName=Multi-currency
+ExtraitCompteClientDefaultAddMulticurrencyDesc=Check by default the option to display amounts in the invoices' currency
+ExtraitCompteClientProductTagsSeparatorName=Separator tags/categories product
+ExtraitCompteClientProductTagsSeparatorDesc=In CSV export, tag separator to be used (";" by default)
+ExtraitCompteClientFactureExtrafieldName=Additional attribute invoice
+ExtraitCompteClientFactureExtrafieldDesc=Select additional attribute (invoice) to be displayed on the generated documents
+ExtraitCompteClientSortByName=Sorting of invoices
+ExtraitCompteClientSortByDesc=Allows you to define by default in which order the invoices will be sorted
+ExtraitCompteClientSortByDescTooltip=Sort by date, then by invoice reference
+ExtraitCompteClientDesc=Descending sorting
+ExtraitCompteClientAsc=Ascending sorting
+ExtraitCompteClientFactureLineColorName=Invoice line background color
+ExtraitCompteClientFactureLineColorDesc=Select background color for invoice lines
+#######################################################################
+# General
+#######################################################################
+ExtraitCompteClientPropalRemainingPrice=Remaining amount
+ExtraitCompteClientGenerateAccountStatutRightsLabel=Generation of the thirdparty account status
+ExtraitCompteClientGenerateAccountStatut=Generation of the account status
+ExtraitCompteClientGenerateAccountStatutTitle=Generation of the account status
+ExtraitCompteClientGenerateAccountStatutDateStart=Start of the period concerned
+ExtraitCompteClientGenerateAccountStatutDateEnd=End of the period concerned
+ExtraitCompteClientGenerateAccountStatutType=Export type
+ExtraitCompteClientGenerateAccountStatutTypeCustomer=Customer
+ExtraitCompteClientGenerateAccountStatutTypeSupplier=Supplier
+ExtraitCompteClientGenerateAccountStatutTypeCustomerSupplier=Customer/Supplier
+ExtraitCompteClientGenerateAccountStatutAddSubsidiaries=Take into account the subsidiaries
+ExtraitCompteClientGenerateAccountStatutInvoicePayed=Show invoice(s) paid
+ExtraitCompteClientGenerateAccountStatutInvoiceAbandoned=Show invoice(s) abandoned
+ExtraitCompteClientGenerateAccountStatutPaymentDeadline=Show payment deadlines
+ExtraitCompteClientGenerateAccountStatutPaymentDetails=View payment details
+ExtraitCompteClientGenerateAccountStatutAddProductTags=Add product tags
+ExtraitCompteClientGenerateAccountStatutAddPaymentDetails=Add payment details
+ExtraitCompteClientGenerateAccountStatutThirdpartyRef=Add third party reference
+ExtraitCompteClientGenerateAccountStatutAddMulticurrency=Display amounts in invoices currency
+ExtraitCompteClientGenerateAccountStatutModel=File type of the file
+ExtraitCompteClientGenerateAccountStatutModelsPDF=Basic template PDF
+ExtraitCompteClientGenerateAccountStatutModelsCSV=Basic template CSV
+ExtraitCompteClientGenerateAccountStatutConfirmLabel=Are you sure you want to generate the status of this thirdparty account?
+ExtraitCompteClientPDFAccountStatutDescription=Thirdparty account status template PDF account_status
+ExtraitCompteClientCSVAccountStatutDescription=Thirdparty account status template CSV account_status_csv
+ExtraitCompteClientCSVAccountStatutExternalLabel=External label
+ExtraitCompteClientPDFAccountStatutPeriod=Period from %s to %s
+ExtraitCompteClientPDFAccountStatutAccount=Thirdparty %s
+ExtraitCompteClientPDFAccountStatutDate=Date
+ExtraitCompteClientPDFAccountStatutLabel=Label
+ExtraitCompteClientPDFAccountStatutDeuxLabel=Label (external label)
+ExtraitCompteClientPDFAccountStatutProductTags=Product tags
+ExtraitCompteClientPDFAccountStatutTotalAmountHT=Total (excl.)
+ExtraitCompteClientPDFAccountStatutAmountRuleHT=Amount paid (excl.)
+ExtraitCompteClientPDFAccountStatutBalanceHT=Remaining amount (excl.)
+ExtraitCompteClientPDFAccountStatutLimitDate=Payment deadline
+ExtraitCompteClientPDFAccountStatutTotalAmountTTC=Total (inc. tax)
+ExtraitCompteClientPDFAccountStatutAmountRuleTTC=Amount paid (inc. tax)
+ExtraitCompteClientPDFAccountStatutBalanceTTC=Remain. amount (inc. tax)
+ExtraitCompteClientPDFAccountStatutPaymentType=Type
+ExtraitCompteClientPDFAccountStatutPaymentModeLabel=Method of payment
+ExtraitCompteClientPDFAccountStatutPaymentDate=Payment date
+ExtraitCompteClientPDFAccountStatutPaymentNumber=Type / Number
+ExtraitCompteClientPDFAccountStatutPaymentSender=Transmitter
+ExtraitCompteClientPDFAccountStatutPaymentBank=Bank
+ExtraitCompteClientPDFAccountStatutCreditNote=Down payments created
+ExtraitCompteClientPDFAccountStatutCreditNoteUsed=Down payments used
+ExtraitCompteClientPDFAccountStatutDetailsConditions=Terms of payment
+ExtraitCompteClientPDFAccountStatutDetailsDate=Date
+ExtraitCompteClientPDFAccountStatutDetailsAmount=Amount
+ExtraitCompteClientPDFAccountStatutCustomer=Customer account status
+ExtraitCompteClientPDFAccountStatutSupplier=Supplier account status
+ExtraitCompteClientPDFAccountStatutFileName=Account_status_%s_%s_%s
+ExtraitCompteClientAmountInMultiCurrency = Amounts expressed in %s
+#######################################################################
+# Payment methods
+#######################################################################
+PaymentTypeShortCB=Debit card
+PaymentTypeShortVIR=Bank transfer
+PaymentTypeShortCHQ=Check
+PaymentTypeShortLIQ=Species
+PaymentTypeShortPRE=Withdrawal
+PaymentTypeShorTIP=TIP
+PaymentTypeShortVAD=On line
+#######################################################################
+# Autres
+#######################################################################
+Escompte=Escompte

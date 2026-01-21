@@ -1,0 +1,69 @@
+.modinfo-box {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.modinfo-box__container {
+    width: 40%;
+    box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
+    margin: 2%;
+    border-radius: 5px;
+}
+
+.modinfo-box__container div.modinfo-box__title {
+    padding: 2% 0 2% 0;
+    text-align: center;
+    font-size: 1.4rem;
+    font-weight: bold;
+    color: white;
+    border-top-left-radius: 5px;
+    border-top-right-radius: 5px;
+    background: #3b405e;  /* fallback for old browsers */
+    background: -webkit-linear-gradient(to right, #3b405e, #717dac);  /* Chrome 10-25, Safari 5.1-6 */
+    background: linear-gradient(to right, #3b405e, #717dac); /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
+
+}
+
+.modinfo-box__container div.modinfo-box__content {
+    padding: 2% 5% 2% 5%;
+    font-size: 0.9rem;
+    text-align: center;
+}
+
+#modinfoBoxResume {
+    display: none;
+}
+
+.tooltip {
+    position: relative;
+    display: inline-block;
+}
+
+.tooltip .tooltiptext {
+    display: none;
+    width: 140px;
+    background-color: #555;
+    color: #fff;
+    text-align: center;
+    border-radius: 6px;
+    padding: 5px;
+    position: absolute;
+    z-index: 1;
+    bottom: 150%;
+    left: 50%;
+    margin-left: -75px;
+    opacity: 1;
+    transition: opacity 0.3s;
+}
+
+.tooltip .tooltiptext::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: #555 transparent transparent transparent;
+}

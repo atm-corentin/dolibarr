@@ -1,0 +1,390 @@
+# Copyright (C) 2020 SuperAdmin
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+#
+# Générique
+#
+
+# Module label 'ModuleLareponseName'
+ModuleLareponseName = Lareponse
+# Module description 'ModuleLareponseDesc'
+ModuleLareponseDesc = Créez votre documentation commerciale et technique
+ConfigurationMenu = <span class="fa fa-cog" aria-hidden="true"></span> Configuration
+NewsMenu = <span class="fa fa-exclamation fa-beat" aria-hidden="true"></span> Nouveautés
+NewsTitle = Nouveautés
+DocumentationMenu = <span class="fa fa-info" aria-hidden="true"></span> Documentation
+UserDocTitle = Documentation Utilisateur
+NoArticledFound = Pas d'article(s) trouvé(s)
+
+#
+# Page Index
+#
+LareponseArea= LaReponse - Tableau de bord
+LastArticles = Les %s derniers articles
+LastArticlesUpdated = Les %s derniers articles mis à jour
+NoArticle = Aucun article
+NoContributor = Aucun contributeur
+MostActiveContributor = Les %s contributeurs les plus actifs
+articlesPublished = articles publiés
+articlePublished = article publié
+MyFavoritesArticles = Mes articles en favoris
+NoFavorite = Aucun favoris
+
+#
+# Page d'administration
+#
+LareponseSetup = Configuration du module Lareponse
+Settings = Réglages
+LareponseSetupPage = Page de configuration du module Lareponse
+
+#
+# Page À propos
+#
+About = À propos
+LareponseAbout = À propos de Lareponse
+AboutPage = à propos
+LareponseAboutPage = Page à propos de Lareponse
+
+#
+# Page d'exemple
+#
+MyPageName = Nom de ma page
+
+#
+# Box d'exemple
+#
+MyWidget = Mon widget
+MyWidgetDescription = Description de mon widget
+
+#
+# Comment
+#
+Comments=Commentaires
+CommentSpace=Espace commentaires
+CommentDelete=Commentaire supprimé
+ErrorCommentDelete=Erreur lors de la suppression du commentaire
+CommentPost=Commentaire posté
+ErrorCommentPost=Erreur lors du post du commentaire
+DeleteCommentMsg=Voulez-vous vraiment supprimer ce commentaire ?
+DeleteComment=Suppression du commentaire
+
+#
+# Article
+#
+ArticleUpdate=Article mis à jour
+ErrorArticleUpdate=Erreur lors de la mise à jour de l'article
+NewTag = Nouveau tag
+CreateTag=Créer un tag
+TagCreate=Tag créé
+ErrorTagCreate=Erreur lors de la création du tag<br> (valeur dupliquée ou nulle)
+TagDelete=Tag supprimé
+ListArticle = <span class="fa fa-newspaper-o"></span>  Liste articles
+ListTag=<span class="fa fa-tag" aria-hidden="true"></span>  Liste tag
+
+NewArticleImport=<span class="fa fa-plus-square-o" aria-hidden="true"></span>  Nouvel import
+FilterByDate = Trier par date
+Private = Privé
+Public = Interne
+Deletearticle = Supprimer un article
+ConfirmDeleteObject = Êtes-vous sûr de vouloir supprimer cet article ?
+ConfirmClonearticle = Êtes-vous sûr de vouloir cloner cet article ?
+NewRefForArticleClone = Titre du nouvel article
+SuccessfullyCloned = clonée avec succès
+FailedCloned = n'a pas pu être clonée
+ArticleCard = Article
+LinkToArticle = Lien vers l'article
+ArticleSuccessExport = Article exporté avec succès
+ArticleFailureExport = L'article n'a pas pu être exporté
+ExportArticle = Export d'article
+ConfirmExportArticle = Êtes-vous sûr d'exporter cet article ?
+WarningConfirmExport = L'article sera automatiquement téléchargé (Attention, si vous avez mis des images du dossier local de votre dolibarr, certaines images seront mal exportés)
+ConfirmMassExport = Confirmation d'export en masse
+ConfirmMassExportQuestion = Êtes-vous sur de vouloir exporter la(les) %s valeur(s) sélectionnée(s) ?
+Print = Imprimer
+NewImport = Nouvel import
+
+#
+# Page setup
+#
+SetupWizard = <span class="fa fa-comments-o" aria-hidden="true"></span> Configuration du wizard
+Parameter = Paramètre
+Value = Valeur
+ActivateDemoMode = Activer le mode wizard
+wizardindex = Message du jour / Tableau de bord
+wizardarticlelist = Liste des articles
+ConfugurationOfModule = Configuration du module %s
+SetupTags = <span class="fa fa-tag" aria-hidden="true"></span>  Configuration des tags
+TagsGestionParc = Activer les tags GestionParc dans le listing des tags Lareponse (Si le module GestionParc est activé)
+TagsCategories = Activer les tags Categories dans le listing des tags Lareponse
+
+#
+# Tag
+#
+LareponseTag = Tag
+product = Produit
+supplier = Fournisseur
+customer = Client
+member = Membre
+contact = Contact
+bank_account = Banques/Caisses
+project = Projet
+user = Utilisateur
+TagType = Type de Tag
+TagUpdate = Tag mis à jour
+ConfirmDeleteTag = Êtes-vous sûr de vouloir supprimer ce tag ?
+TagsMigrationFailure = Erreur : Les tags n'ont pas pu être migrés
+LinkedArticles = Articles liés
+linkedarticles = articles liés
+TagLinkedArticlesList = Liste des articles liés
+
+#
+# Imports
+#
+Step = Étape
+AskUserToInputImportFile = Sélectionnez le dossier .zip à importer
+WrongImportFileZip = Le fichier à envoyer doit être en .zip
+FailedToUpload = %s n'a pas pu être importé
+SuccessfullyUploaded = %s a été importé avec succès
+FailedToReadImport = Une erreur est survenue à la lecture du fichier
+FileNotSupported = Le fichier entré n'est pas valide
+
+#
+# Publication web
+#
+ArticlePubTokenTitle = Article accessible publiquement via ce lien
+ArticlePubNoTokenInfo = L'article doit être auparavant publié
+PublicPublish = Publier
+ConfirmPubliclyPublish = Souhaitez-vous publier cet article ?
+PublishSuccess = Article publié avec succès
+PublishFail = L'article n'a pas pu être publié
+PublicUnPublish = Supprimer au public
+ConfirmPubliclyUnPublish = Souhaitez-vous supprimer au public cet article ?
+UnPublishSuccess = Article supprimé publiquement avec succès
+UnPublishFail = L'article n'a pas pu être supprimé publiquement
+ProvidedModule = Module fourni par
+GeneratedArticle = Article généré par le Module Dolibarr
+Published = Publié
+
+#
+# v.13.0.01
+#
+LaReponseCategories = Tags
+LaReponseCategoriesUseOrOperatorForCategories = Utiliser l'opérateur 'ou' pour les tags
+
+#
+# v.13.0.02
+#
+LaReponseWidgetNumber = <strong>Valeur</strong>
+LaReponseWidgetNumberNext = Saisissez la valeur qui indiquera le nombre d'articles à afficher sur la page d'accueil du module
+LaReponseWidgetNumberTitle = <span class="fa fa-newspaper-o"></span> Nombre d'articles
+LaReponseActivateTagDeletionProtection = Activer le blocage de la suppression d'un tag si il est associé à un ou plusieurs objets
+DeleteErrorTagLinkedToObject = Le tag est lié à un ou plusieurs objets. Supprimez les liens ou désactivez le blocage de la suppression dans l'administration du module.
+product = Produit
+supplier = Fournisseur
+customer = Client
+member = Membre
+contact = Contact
+bank_account = Compte bancaire
+project = Projet
+user = Utilisateur
+bank_line = Ligne bancaire
+GestionParc = GestionParc
+Lareponse = Lareponse
+
+
+#
+# v.14.0.00
+#
+ShareTag = Activer le partage des Tags
+ShareArticle = Activer le partage des Articles
+TAGSharing = Partage des tags
+TAGSharingDescription = Sélection des entités qui partagerons leurs tags avec cette entité.
+ARTICLESharing = Partage des articles
+ARTICLESharingDescription = Sélection des entités qui partagerons leurs articles avec cette entité.
+ListTagGlobal = <span class="fa fa-tag" aria-hidden="true"></span> Liste global tag
+LareponseTagArea = Espace tags/catégories de lareponse
+AddTagIntoArticle = Ajouter l'article suivant
+ArticleWasAddedSuccessfully = L'article a été lier avec succès
+lareponseNewArticle = Ajout d'un article
+NewArticle = <span class="fa fa-plus-square-o" aria-hidden="true"></span>  Nouvel article
+H2G2MinimumVersionRequired = La version minimum du module H2G2 doit être la version %s
+
+#
+# v.14.1.00
+#
+LaReponseArticle = <span class="fa fa-newspaper-o"></span> Article
+LaReponseFavorite = Favori
+LaReponseCopyLink = Copier le lien public
+LaReponseSuccessfullycopied =  Copié avec success !
+LaReponseSuccessfullyNotcopied = La copie a échoué
+LaReponseSuccess = Succès
+LaReponseError = Erreur
+
+#
+# v15.0.00
+#
+contactUs = <span class="fas fa-headset"></span> Nous contacter
+LaReponseContent = Contenu
+
+#
+# v16.0.00
+#
+
+LaReponseInputTitlePlaceHolder = Recherche dans les titres ou dans le contenu
+Articles = <span class="fas fa-newspaper"></span>  Articles
+
+
+#
+# v16.1.00
+#
+
+PlaceholderTags = Tags articles, clients, ...
+CreatedBy = Crée par
+UpdatedBy = Modifiée par
+The = le
+
+#
+# v16.2.00
+#
+
+ArticleOnglet = Article
+AssociatedArticles = Articles associés
+LaReponseThirdParty = Tiers :
+LaReponseProject = Projet :
+LaReponseModuleH2G2Missing = Le module<b> '%s' ne peut pas fonctionner sans le module 'H2G2'</b>. Ce module est fourni <b>gratuitement</b> par Code42 à l'adresse suivante : <b><a href='https://www.dolistore.com/fr/modules/1226-H2G2---CODE-42.html?search_query=H2G2&results=9'> Télécharger H2G2</a></b><br>Veuillez le télécharger, puis l'installer avant d'activer le module '%1$s'.
+
+#
+# v19.0.0
+#
+
+ArticleClosed = Clôturé
+Close = Clôturer
+Open = Rendre visible
+ConfirmCloseArticle = Êtes-vous sûr de clôturer cet article ?
+WarningConfirmClose = L'article sera automatiquement clôturer
+ConfirmOpenArticle = Êtes-vous sûr de réouvrir cet article ?
+WarningOpenClose = L'article sera automatiquement réouvert
+OpenArticleSuccess = L'article a été réouvert
+OpenArticleFailed = L'article n'a pas pu etre réouvert
+CloseArticleSuccess = L'article est clos
+CloseArticleFailed = L'article n'a pas pu etre réouvert
+
+#
+# v19.1.00
+#
+LaReponseArticlePreviewTooltip = Nombre de lettres visible dans le tooltip d'un article
+LaReponseNoContent = Aucun contenu
+LaReponseAll = Tous
+LaReponseWYSIWYGReduceToolbar = Réduire le nombre de boutons dans la barre d'outils
+
+#
+# v19.1.01
+#
+LaReponseContinue = Enregistrer et Continuer
+LaReponseContinueTooltip = Enregistre vos modifications et reste en mode édition.
+LaReponseSaveCard = Enregistrer et Visualiser
+LaReponseSaveCardTooltip = Enregistre vos modifications et revient à la vue de l'article.
+LaReponseSaveList = Enregistrer et Quitter
+LaReponseSaveListTooltip = Enregistre vos modifications et revient à la liste des articles.
+
+#
+# v19.2.00
+#
+LaReponseEventArticleCreated = Article créé
+LaReponseEventArticleModified = Article modifié
+LaReponseEventArticleDeleted = Article supprimé
+LaReponseEventArticleCommentCreated = Article commenté
+ActionARTICLE_CR = Article créé
+ActionARTICLE_MO = Article modifié
+ActionARTICLE_DE = Article supprimé
+ActionCOMMENT_CR = Article commenté
+LaReponseCronNotificationArticle = Notification des "abonnés" à la modification d'un article
+LaReponseSendArticles = Envoie des articles mis à jour récemment
+LaReponseMailArticlesUpdated = Des articles ont été mis à jour récemment.
+LaReponseHello = Bonjour
+LaReponseEmailTemplateArticleUpdated = nous vous informons de la mise à jour du contenu de cet(ces) article(s) :
+LaReponseSetupNotifications = <span class="far fa-envelope"></span> Notifications
+LaReponseSetupNotificationSend = Activer l'envoi des notifications à la mise à jour d'un article
+LaReponseSetupTimeBeforeNotificationSend = Temps entre chaque envoi de notification (en minutes)
+LaReponseSetupTimeBeforeNotificationSendHelp = Toutes les x minutes, une tâche va examiner les articles mis à jour pour envoyer une notification par mail aux utilisateurs abonnés aux articles (créateur, favoris ou commenté)
+LaReponseSetupFrequencyCronUpdated = La configuration des notifications a été mise à jour
+LaReponseSetupFrequencyCronUpdatedError = Une erreur est survenue dans l'enregistrement des données. Consultez le journal des traces pour plus d'information
+LaReponseWizardArticleAssistant = Message d'aide à la création d'article
+LaReponseSetupEmailTemplateUsedForNotification = Modèle de mail utilisé pour l'envoi de notifications
+LaReponseSetupEmailTemplateUsedForNotificationHelp = Cette liste contient tous les modèles de type 'Article'. Le mail sera envoyé avec remplacement des valeurs de substitutions.<br>IMPORTANT : la valeur de substitution __LAREPONSE_ARTICLE_LIST_LINKS__ sera remplacée par les liens des articles modifiés récemment. Cette valeur n'est utilisée qu'avec l'envoi automatique de notifications.
+LaReponseArticleCronDisabled = Le cron est désactivé dans la configuration de LaRéponse, aucun e-mail envoyé.
+LareponseArticleCronErrorEventCantBeLoaded = Au moins un événement n'a pas pu être chargé
+LareponseArticleCronErrorArticleCantBeLoaded =  Au moins un article n'a pas pu être chargé
+LaReponseSetupWarningTemplateEmpty = Le modèle enregistré est vide ou introuvable, veuillez enregistrer une valeur pour être sûr du template à utiliser.
+LaReponseCommentModified = Le commentaire a bien été modifié
+LaReponseCommentModifiedError = Le commentaire n'a pas pu être modifié, son contenu ne peut être vide
+LaReponseModified = Modifié
+LaReponseCommentPageSelectorInfo = Appuyez sur "entrée" pour valider votre choix de page
+LaReponseSetupComments = <span class="far fa-keyboard"></span> Commentaires
+LaReponseSetupCommentNumber = Nombre de commentaires affichés par article
+
+#
+# v19.2.02
+#
+LaReponseSetupPublic = <span class="fas fa-globe"></span> Article Publique
+LaReponseSetupBannerColorLabel = Couleur du bandeau dans la page publique d'un article
+
+#
+# v19.2.03
+#
+LaReponseConfigModule = Configurer le module Lareponse
+LaReponseCreUpdTags = Créer/Modifier les tags Lareponse
+LaReponseDeleteTags = Supprimer les tags Lareponse
+LaReponseExpImpArticles = Exporter/Importer des articles Lareponse
+LaReponseReadObjectImages = Voir les images d'un article
+LaReponsepublishArticles = Publier des articles Lareponse
+
+#
+# v20.0.00
+#
+LaReponseIframeUrl = URL
+LaReponseIframeUrlLabel = URL du contenu
+LaReponseContentNotAnURL = le "contenu" n'est pas une URL
+
+#
+# v20.1.00
+#
+LaReponseDisplayImagesInTooltip = Afficher les images dans les infos-bulles des articles
+LaReponseReadObjects = Consulter les articles publiques
+LaReponseCreUpdArticles = Créer / modifier / supprimer ses articles
+LaReponseDeleteArticles = Supprimer les articles des autres contributeurs
+LaReponseClosedArticles = Clôturer l'article
+LaReponseOpenedArticles = Publier un article (consultation externe possible)
+LaReponseUpdateOtherArticles = Modifier les articles des autres contributeurs
+
+#
+# v20.2.00
+#
+LaReponseCreateCustomTemplateTitle = Créez votre modèle sur mesure
+LaReponseCreateCustomTemplateDesc =  Prenez contact avec Code 42 pour obtenir un template personnalisé
+LaReponseTemplateUpVersionTitleTitleDesc = Titre montée de version
+LaReponseTemplateUpVersionTextImageTitleDesc = Texte + Image
+LaReponseTemplateUpVersion2ColTextImageTitleDesc = 2 colonnes Texte + image
+LaReponseTemplateUpVersion3ColTextImageTitleDesc = 3 colonnes Texte + image
+LaReponseTemplateUpVersion2ColTextTitleDesc = 2 colonnes Texte seul
+LaReponseTemplateUpVersionCTAOrange = CTA Orange
+
+#
+# v20.3.00
+#
+LaReponseSetupToc = <span class="fa fa-list"></span> Sommaires
+LareponseFoldTocByDefault = Cacher les sommaires d'articles par défaut
+LareponseIhmFoldTocByDefault = Cacher les sommaires d'articles Lareponse par défaut
+LaReponseToc = Table des matières

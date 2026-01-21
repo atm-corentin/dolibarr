@@ -1,0 +1,56 @@
+{
+  "Product": {
+    "url": "/product/card.php?id=",
+    "picto": "fas fa-cube",
+    "color": "#a69944",
+    "position": "1"
+  },
+  "Societe": {
+    "url": "/societe/card.php?socid=",
+    "picto": "fas fa-building",
+    "color": "#6c6aa8",
+    "position": "2"
+  },
+  "Article": {
+    "url": "/custom/lareponse/article_card.php?id=",
+    "picto": "far fa-newspaper",
+    "color": "#fc925b",
+    "position": "3"
+  },
+  "Device": {
+    "url": "/custom/gestionparc/device_card.php?id=",
+    "picto": "fas fa-cube",
+    "color": "#fc925b",
+    "position": "4"
+  },
+  "Application": {
+    "url": "/custom/gestionparc/application_card.php?id=",
+    "picto": "fa fa-mobile",
+    "color": "#fc925b",
+    "position": "5"
+  },
+  "Fichinter": {
+    "url": "/fichinter/card.php?id=",
+    "picto": "fas fa-ambulance",
+    "color": "#3bbfa8",
+    "position": "6"
+  },
+  "Propal": {
+    "url": "/comm/propal/card.php?id=",
+    "picto": "fas fa-file-signature",
+    "color": "#65953d",
+    "position": "7"
+  },
+  "Contact": {
+    "url": "/contact/card.php?id=",
+    "picto": "fas fa-address-book",
+    "color": "#6c6aa8",
+    "position": "8"
+  },
+  "Project": {
+    "url": "/projet/card.php?id=",
+    "picto": "fas fa-project-diagram",
+    "color": "#6c6aa8",
+    "position": "9"
+  }
+}

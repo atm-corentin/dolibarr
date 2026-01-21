@@ -1,0 +1,33 @@
+Module104250Name = Doc 2 project
+Module104250Desc = Allow to automatically create a project and its tasks based on signed proposal lines or on validated customer order lines
+
+ATMAbout = This module has been developed by <a href="http://www.atm-consulting.fr" target="_blank">ATM Consulting</a><br>You can find the documentation on our <a href="http://wiki.atm-consulting.fr/index.php/Accueil" target="_blank">wiki</a><br><br>For any question or feedback, contact us on <a href="mailto:support@atm-consulting.fr">support@atm-consulting.fr</a><br><br>For any commercial question, contact us on <a href="mailto:contact@atm-consulting.fr">contact@atm-consulting.fr</a> or at +33 9 77 19 50 70<br><br>Find our other modules on <a href="http://www.dolistore.com/search.php?orderby=position&orderway=desc&search_query=atm&submit_search=Rechercher" target="_blank">Dolistore</a>
+
+Doc2ProjectSetup = Doc2Project module setup
+Doc2ProjectAbout = About Doc2Project
+
+CreateProjectAndTasks = Create project and tasks
+CreateTasksInProject = Create task in associated project
+DocConverted = converted
+
+# SETUP
+DisplayOnProposal = Display conversion button on proposal card
+DisplayOnOrder = Display conversion button on order card
+TaskRefPrefix = Prefix for task reference (will use numbering from the <i>Projects</i> module if left empty)
+NbHoursPerDay = # of hours per day
+ModuleNeedProposalOrOrderModule = The proposal or customer order module must be activated in order to use this module
+Doc2ProjectCreateTaskForParent = Create the initial service as a parent task  for all composed products
+
+Doc2ProjectViewStats = View doc2project stats
+
+Doc2ProjectPrevueBeforeConvert=Preview and select lines before import
+Doc2ProjectGroupTasksBySprint=Group task with same label by sprint
+Doc2ProjectGroupTasks=Group task with same label
+
+Doc2ProjectErrorUpdateProject=Erreur saving project's updates.
+Doc2ProjectTaskCreationMessage_mesgs=%s lines converted as tasks.
+Doc2ProjectTaskCreationMessage_warnings=%s lines ignored during task conversion.
+Doc2ProjectTaskCreationMessage_errors=error converting %s lines as task.
+Doc2ProjectTaskCreationMessage_NoTasksCreated=No line converted as task.
+Doc2ProjectCloneExtrafields=Copy extrafields from the original document to the project
+Doc2ProjectAddUsageTaskOnProject = Check the box "track tasks and time spent" on automatic project creation

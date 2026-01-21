@@ -1,0 +1,8 @@
+@import '../../../theme/quarantedeux/modules/breadcrumb/breadcrumb';
+
+.top-info {
+  @extend .breadCrumbHolder;
+  @extend .module;
+
+  display: flex !important;
+}

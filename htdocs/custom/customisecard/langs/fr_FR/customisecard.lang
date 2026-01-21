@@ -1,0 +1,124 @@
+# Copyright (C) 2021 SuperAdmin <root@roor.fr>
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+#
+# Générique
+#
+
+# Module label 'ModuleCustomiseCardName'
+ModuleCustomiseCardName = CustomiseCard
+# Module description 'ModuleCustomiseCardDesc'
+ModuleCustomiseCardDesc = Permet l'édition des pages card de Dolibarr
+
+#
+# Page d'administration
+#
+CustomiseCardSetup = Configuration du module CustomiseCard
+Settings = Réglages
+CustomiseCardSetupPage = Page de configuration du module CustomiseCard
+CustomMultientity = Partage des customisations mutli entité
+TooltipCustomMultientity = Cette option ne peut uniquement être modifiée depuis l'entité maître
+CustomiseCardPermToCustom = Permission de customiser les vues pour tous les utilisateurs
+
+#
+# Page À propos
+#
+About = À propos
+CustomiseCardAbout = À propos de CustomiseCard
+CustomiseCardAboutPage = Page à propos de CustomiseCard
+
+EditView = Editer la vue
+EditViewRunning = Edition en cours...
+EditViewSaved = Vue personnalisée ici
+HideOrNot = Cacher ou rendre visible
+HighLight = Mettre en gras
+PickColor = Choisir une couleur de fond
+SaveView = Sauvegarder toute la vue
+YouCanEditThisTable = Vous pouvez éditer cette fiche
+RemoveView = Supprimer toute cette vue
+EditTitle = Modifier le titre de la ligne
+RefreshLine = Supprimer les modifications faites à la ligne
+Tooltip = Ajouter une tooltip
+YouCanEditThisActions = Vous pouvez éditer ces boutons
+DeleteCustom = Supprimer les modifications
+DeleteTooltip = Supprimer la tooltip
+AddTooltip = Ajouter une tooltip
+UpdateTitle = Modifier le titre
+AlertCustomSocCard = Attention il faudra une customisation différente de la page en fonction de si le tier est client ou non !
+
+#
+# Information page
+#
+InformationPage = <i class="fas fa-info-circle"></i> Information
+TecInformation = Informations techniques
+Infodolibarr = Infos dolibarr
+Infobrowser = Infos navigateur
+Infoos = Infos OS
+Infowebserver = Infos serveur web
+Infophp = Infos PHP
+Infodb = Infos BDD
+Infomodule = Infos module
+InformationBoxVersion = Version
+InformationBoxInitialVersion = Version d'installation
+InformationBoxName = Nom
+InformationBoxPilote = Pilote
+InformationBoxOs = Os
+InformationBoxUserAgent = User Agent
+CopyInformation = Copier les informations
+InformationBoxScreen = Ecran
+
+#
+# 16.0.00
+#
+CustomiseCardPersonalization = Personnalisation
+CustomiseCardPersonalizationPage = Page de personnalisation
+MAIN_DISABLE_FREE_LINES = Interdire l'utilisation de lignes libres pour ajouter une ligne dans les documents
+CUSTOMISECARD_HIDE_DESCRIPTION_PROPAL = Cacher le champ description sur les proposition commerciales
+CUSTOMISECARD_HIDE_DESCRIPTION_ORDER = Cacher le champ description sur les commandes
+CUSTOMISECARD_HIDE_DESCRIPTION_INVOICE = Cacher le champ description sur les factures
+CUSTOMISECARD_HIDE_DESCRIPTION_SUPPLIER_ORDER = Cacher le champ description sur les commandes fournisseur
+CUSTOMISECARD_HIDE_DESCRIPTION_SUPPLIER_INVOICE = Cacher le champ description sur les factures fournisseur
+
+#
+# v16.1.00
+#
+CustomiseCardAdvancedProductSearch = Recherche avancée
+CustomiseCardBasedOnVersion = (Basé sur la version %s du module "Recherche avancée")
+CUSTOMIZE_CARD_DISABLE_AS_REF = Désactiver la colonne "Référence" dans l'outil de recherche avancé sur les documents commerciaux
+CUSTOMIZE_CARD_DISABLE_AS_LABEL = Désactiver la colonne "Libellé" dans l'outil de recherche avancé sur les documents commerciaux
+CUSTOMIZE_CARD_DISABLE_AS_STOCK-REEL = Désactiver la colonne "Stock réél" dans l'outil de recherche avancé sur les documents commerciaux
+CUSTOMIZE_CARD_DISABLE_AS_STOCK-THEORIQUE = Désactiver la colonne "Stock virtuel" dans l'outil de recherche avancé sur les documents commerciaux
+CUSTOMIZE_CARD_DISABLE_AS_BUY-PRICE = Désactiver la colonne "Prix d'achat" dans l'outil de recherche avancé sur les documents commerciaux
+CUSTOMIZE_CARD_DISABLE_AS_SUBPRICE = Désactiver la colonne "Prix" dans l'outil de recherche avancé sur les documents commerciaux
+CUSTOMIZE_CARD_DISABLE_AS_DISCOUNT = Désactiver la colonne "Remise" dans l'outil de recherche avancé sur les documents commerciaux
+CUSTOMIZE_CARD_DISABLE_AS_FINALSUBPRICE = Désactiver la colonne "Prix unitaire remisé" dans l'outil de recherche avancé sur les documents commerciaux
+CUSTOMIZE_CARD_DISABLE_AS_QTY = Désactiver la colonne "Quantité" dans l'outil de recherche avancé sur les documents commerciaux
+CUSTOMIZE_CARD_DISABLE_AS_UNIT = Désactiver la colonne "Unité" dans l'outil de recherche avancé sur les documents commerciaux
+CUSTOMIZE_CARD_DISABLE_AS_FINALPRICE = Désactiver la colonne "Prix final" dans l'outil de recherche avancé sur les documents commerciaux
+
+#
+# v16.2.00
+#
+CustomiseCardCommercialsInformation = Informations commerciales
+CustomiseCardSellingPrice = Prix de vente
+CustomiseCardMargin = Marge
+CustomiseCardDocumentElements = Contenu du document
+CustomiseCardTotalPrice = Prix total
+CUSTOMISECARD_HIDE_LIMITED_DURATION = Cacher la partie "Durée limitée" du formulaire d'ajout de produit sur les propositions commerciales, commandes et factures client.
+
+#
+# v16.2.01
+#
+CustomiseCardModuleH2G2Missing = Le module<b> '%s' ne peut pas fonctionner sans le module 'H2G2'</b>. Ce module est fourni <b>gratuitement</b> par Code42 à l'adresse suivante : <b><a href='https://www.dolistore.com/fr/modules/1226-H2G2---CODE-42.html?search_query=H2G2&results=9'> Télécharger H2G2</a></b><br>Veuillez le télécharger, puis l'installer avant d'activer le module '%1$s'.

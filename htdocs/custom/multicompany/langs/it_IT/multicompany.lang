@@ -1,0 +1,346 @@
+# Copyright (C) 2009-2023 Regis Houssin  <regis.houssin@inodbox.com>
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+CHARSET=UTF-8
+Module5000Name=Multi-Azienda
+Module5000Desc=Gestione Multi-Azienda per una singola installazione
+Permission5001=Visualizzare le entità (Per utenti Super Amministratori)
+Permission5002=Creare/modificare le entità (Per utenti Super Amministratori)
+Permission5003=Eliminare le entità (Per utenti Super Amministratori)
+
+# Third parties
+Permission5011=Visualizzare i soggetti terzi condivisi
+Permission5012=Creare/modificare i soggetti terzi condivisi
+Permission5013=Eliminare i soggetti terzi condivisi
+
+# Contacts
+Permission5021=Visualizzare i contatti condivisi
+Permission5022=Creare/modificare i contatti condivisi
+Permission5023=Eliminare i contatti condivisi
+
+# Products/Services
+Permission5031=Visualizzare i prodotti/servizi condivisi
+Permission5032=Creare/modificare i prodotti/servizi condivisi
+Permission5033=Eliminare i prodotti/servizi condivisi
+
+# Customer proposals
+Permission5041=Visualizzare le proposte commerciali condivise
+Permission5042=Creare/modificare le proposte commerciali condivise
+Permission5043=Convalidare le proposte commerciali condivise
+Permission5044=Inviare le proposte commerciali condivise
+Permission5045=Chiudere le proposte commerciali condivise
+Permission5046=Eliminare le proposte commerciali condivise
+
+# Customer orders
+Permission5051=Visualizzare gli ordini clienti condivisi
+Permission5052=Creare/modificare gli ordini clienti condivisi
+Permission5054=Convalidare gli ordini clienti condivisi
+Permission5056=Inviare gli ordini clienti condivisi
+Permission5057=Chiudere gli ordini clienti condivisi
+Permission5058=Annullare gli ordini clienti condivisi
+Permission5059=Eliminare gli ordini clienti condivisi
+
+# Customer invoices
+Permission5061=Visualizzare le fatture attive condivise
+Permission5062=Creare/modificare le fatture attive condivise
+Permission5063=Riportare in bozza le fatture attive condivise
+Permission5064=Convalidare le fatture attive condivise
+Permission5065=Inviare le fatture attive condivise
+Permission5066=Inserire i pagamenti sule fatture attive condivise
+Permission5067=Riaprire le fatture attive condivise classificate "pagate"
+Permission5069=Eliminare le fatture attive condivise
+
+# Products/Services
+Permission5071=Read shared categories
+Permission5072=Create/modify shared categories
+Permission5073=Delete shared categories
+
+MasterEntity=Azienda Principale
+MasterEntityDesc=L'azienda principale non può essere cancellata
+SwitchToAnotherEntity=Cambia azienda
+SelectAnEntity=Seleziona un'entità:
+AllEntities=Tutte le aziende
+SelectEntity=Seleziona entità
+
+# Admin parameters tab
+EntitiesManagement=Gestione aziende / entità
+ListOfEntities=Elenco aziende
+AddEntity=Aggiungi un'azienda
+EditEntity=Modifica azienda
+EntityName=Nome azienda
+NoOtherEntityAvailable=Nessuna altra entità disponibile
+DefaultLanguageShort=Lingua predefinita
+CommonParameters=Parametri comuni da condividere
+ReferringEntity=Azienda di riferimento per la configurazione dei valori
+ReferringEntityForElementNumber=Entità di riferimento per la condifigurazione dei valori di questo elemento di numerazione
+DeleteAnEntity=Elimina entità
+ModifyEntity=Cambia entità
+SwitchEntity=Cambia entità
+AddAndStay=Aggiungi e rimani
+UpdateAndStay=Aggiorna e rimani
+CancelAndStay=Elimina e rimani
+ConfirmDeleteEntity=Sei sicuro di voler eliminare questa azienda?
+ConfirmedEntityDeleted=L'azienda è stata cancellata.
+MulticompanyMoreModules=Other modules of the same author and Dolibarr secure web hosting are available on %s
+MultiCompanyUpgradeIsNeeded=You use a new version of MULTICOMPANY module, please deactivate and reactivate the module to apply the update.
+MultiCompanyIsOlderThanDolibarr=You are using an old version of the Multicompany module, it is better to update it if you have any problems.
+DolibarrIsOlderThanMulticompany=Your Multicompany module is newer than your Dolibarr, please update your Dolibarr or use a previous version of Multicompany!
+
+THIRDPARTYSharing=Condivisione soggetti terzi e contatti
+THIRDPARTYSharingDescription=Selezione delle aziende che condividono i loro database di soggetti terzi e contatti con l'azienda selezionata.
+PRODUCTSharing=Condivisione prodotti/Servizi
+PRODUCTSharingDescription=Selezione delle aziende che condividono i loro database di Prodotti/Servizi con l'azienda selezionata.
+PRODUCTPRICESharing=Condivisione prezzi dei Serivizi/Prodotti
+PRODUCTPRICESharingDescription=Selezione delle aziende che condividono i prezzi dei prodotti/servizi con l'azienda selezionata.
+PRODUCTSUPPLIERPRICESharing=Condivisione prezzi fornitori dei prodotti/servizi
+PRODUCTSUPPLIERPRICESharingDescription=Selection of entities that share supplier prices of products/services with this entity.
+CATEGORYSharing=Condivisione categorie
+CATEGORYSharingDescription=Selezione delle aziende che condividono le categorie con l'azienda selezionata.
+AGENDASharing=Condivisione Calendario
+AGENDASharingDescription=Selezione delle aziende che condividono il calendario con l'azienda selezionata.
+STOCKSharing=Condivisione scorte e magazzini
+STOCKSharingDescription=Selezione delle aziende che condivisono le scorte con l'azienda selezionata.
+BANKACCOUNTSharing=Condivisione Banche/Casse
+BANKACCOUNTSharingDescription=Selezione delle aziende che condividono le banche/casse con l'azienda selezionata.
+PROPOSALNUMBERSharing=Condivisione numerazione proposte commerciali
+PROPOSALNUMBERSharingDescription=Selezione delle aziende che condividono le proposte commerciali con l'azienda selezionata.
+INVOICENUMBERSharing=Condivisione numerazione fatture attive
+INVOICENUMBERSharingDescription=Selection of entities that share invoice number with this entity.
+ORDERNUMBERSharing=Condivisione numerazione ordini clienti
+ORDERNUMBERSharingDescription=Selection of entities that share order number with this entity.
+PROJECTNUMBERSharing=Condivisione numerazione progetti
+PROJECTNUMBERSharingDescription=Selezione delle aziende che condividono la numerazione dei progetti con l'azienda selezionata.
+TICKETNUMBERSharing=Ticket number sharing
+TICKETNUMBERSharingDescription=Selection of entities that share ticket number with this entity.
+EXPENSEREPORTSharing=Condivisione numerazione note spesa
+EXPENSEREPORTSharingDescription=Selection of entities that share the expense report with this entity.
+PROJECTSharing=Condivisione progetti
+PROJECTSharingDescription=Selezione delle aziende che condividono i progetti con l'azienda selezionata.
+MEMBERSharing=Condivisione soci
+MEMBERSharingDescription=Selezione delle aziende che condividono i soci con l'azienda selezionata.
+MEMBER_TYPESharing=Condivisione tipi di cosi
+MEMBER_TYPESharingDescription=Selezione delle aziende che condividono i tipi di soci con l'azienda selezionata.
+HOLIDAYSharing=Condivisione ferie e permessi
+HOLIDAYSharingDescription=SSelezione delle aziende che condividono le ferie e permessi con l'azienda selezionata.
+PROPOSALSharing=Condivisione proposte commerciali
+PROPOSALSharingDescription=Selezione delle aziende che condividono la proposte commerciali con l'azienda selezionata.
+ORDERSharing=Condivisione ordini clienti
+ORDERSharingDescription=Selezione delle aziende che condividono gli ordini clienti con l'azienda selezionata.
+INVOICESharing=Condivisione fatture attive
+INVOICESharingDescription=Selezione delle aziende che condividono le fatture attive con l'azienda selezionata.
+CONTRACTSharing=Condivisione contratti
+CONTRACTSharingDescription=Selezione delle aziende che condividono i contratti con l'azienda selezionata.
+TICKETSharing=Condivisione tickets
+TICKETSharingDescription=Selezione delle aziende che condividono i tickets con l'azienda selezionata.
+SUPPLIER_PROPOSALSharing=Supplier proposal sharing
+SUPPLIER_PROPOSALSharingDescription=Selection of entities that share suppliers proposals with this entity.
+SUPPLIER_ORDERSharing=Supplier order sharing
+SUPPLIER_ORDERSharingDescription=Selection of entities that share suppliers orders with this entity.
+SUPPLIER_INVOICESharing=Supplier invoice sharing
+SUPPLIER_INVOICESharingDescription=Selection of entities that share suppliers invoices with this entity.
+INTERVENTIONSharing=Interventions sharing
+INTERVENTIONSharingDescription=Selection of entities that share interventions with this entity.
+
+# Admin options tab
+Options=Opzioni
+Template=Template
+EntityCompanyName=Company name
+RedirectDomainName=Redirect domain name
+RedirectDomainNameInfo=The domain name must be an alias or a subdomain different from this Dolibarr instance.<br>Enter the domain name without the "http(s)://" and without the trailing slash. (eg entity2.mydomain.net)
+LeaveEmptyForNoRedirection=Leave empty for no redirection
+DomainName=Domain name
+DuplicateRights=Duplica i permessi di questo gruppo utenti
+DuplicateRightsInfo=Duplica i permessi d iquesto da un'entitò oppure da un template su più entità
+SelectRightsOfEntityToDuplicate=Seleziona l'entità che sarà usata come modello:
+SelectEntitiesToOverride=Seleziona l'entità da modificare:
+TemplateOfEntity=Template dell'entità
+ActivatingShares=Attivazione condivisione
+EntityActiveByDefault=Abilita l'entità di default quando viene creata
+EntityVisibleByDefault=Rendi visibile di default nella tendina quando viene creata
+EntityLogoInLoginPage=Mostra il logo dell'azienda selezionata sulla pagina di login
+EntityBackgroundInLoginPage=Mostra lo sfondo dell'azienda selezionata sulla pagina di login
+DisableSwitchEntityDropdownMenu=Disabilita il cambio di entità dal menù a tendina.
+OpenNewSessionWhenSwitchingToAnotherEntity=Open a new session when switching to another entity
+OpenNewSessionWhenSwitchingToAnotherEntityInfo=This option allows you to open a new session in a different tab of your browser when you switch to another entity. A new "Redirect domain name" parameter must be entered in the configuration of each entity.
+GroupModeTransversal=Abilita la gestione centralizzata degli utenti e dei gruppi dall'entità primaria
+GroupModeTransversalTitle=Abilita la gestione centralizzata degli utenti e dei gruppi
+GroupModeTransversalInfo=By default each entity is autonomous with its own user management. This option makes it possible to centralize the management of users and groups on the main entity by assigning rights to them relative to a group and to an entity.
+GroupModeTransversalInfoFull=By default each entity is autonomous with its own user management. This option makes it possible to centralize the management of users and groups on the main entity by assigning rights to them relative to a group and to an entity. Creating user groups is required to manage entity access rights.
+HideLoginCombobox=Nascondi la scelta dell'azienda nella schermata di login
+EnableGlobalSharings=Abilita la condivisione di dati tra le aziende
+ShareProduct=Abilita la condivisione dei Prodotti/Servizi
+ProductSharingInfo=This option allows you to share products/services between entities.<br>INFO: If you want to be able to customize the price of the product in each entity, this requires enabling the "Several segment of prices per product/service" option in the Product/Service module configuration in each entity that uses this share.<br>If you want to personalize the VAT rates of the price levels, you have to add this constant:<br>"PRODUIT_MULTIPRICES_USE_VAT_PER_LEVEL" with as value 1 in each entity that uses this share.
+ShareProductprice=Abilita la condivisione dei prezzi dei Prodotti/Servizi
+ProductPriceSharingInfo=This option allows you to share the price levels of a product.<br>IMPORTANT: This requires enabling the "Several segment of prices per product/service" option in the Product/Service module configuration.
+ShareProductsupplierprice=Abilita la condivisione dei prezzi fornitori dei servizi/prodotti
+ShareThirdpartiesAndContacts=Abilita la condivisione dei soggetti terzi e dei contatti
+ShareCategory=Abilita la condivisione delle categorie
+ShareAgenda=Abilita la condivisione dei calendari
+ShareStock=Abilita la condivisione del magazzino
+ShareBankaccount=Abilita la condivisione delle banche/casse
+ElementNumberSharingInfo=This option allows you to have an overall incrementation of the element numbers between the entities that use this share. You will need to select a referring entity for the configuration values of the selected numbering module. Each entity will have to use the same numbering model.
+ShareProposalnumber=Abilita la condivisione della numerazione delle proposte commerciali
+ShareOrdernumber=Abilita la condivisione della numerazione degli ordini
+ShareInvoicenumber=Abilita la condivisione della numerazione delle fatture
+ShareProjectnumber=Abilita la condivisione della numerazione dei progetti
+ShareTicketnumber=Enable sharing of tickets number
+ShareExpensereport=Abilita la condivisione delle note spesa
+ShareProject=Abilita la condivisione dei progetti
+ShareMember=Abilita la condivisione dei soci
+ShareMember_type=Abilita la condivisione dei tipi di soci
+ShareHoliday=Abilita la condivisione delle ferie e permessi
+GlobalSharings=Condivisione
+GlobalSharingsInfo=After sharing options are activated, it will be necessary to configure each entity in the "Environments" tab to allow the shares between entities.
+ActivatingDictsShares=Personalizzazione dizionari
+DictsSharingsInfo=By default, all entities use the dictionaries of the main entity.<br>You can activate the customization of a dictionary in order to have a different version by entity.
+CustomDictionaryVAT=Enable customization of VAT rates by entity (llx_c_tva)
+CustomPaiement=Abilita la personalizzazione dei metodi di pagament per entità (llx_c_paiement)
+CustomPaymentTerm=Abilita la personalizzazione dei termini di pagament per entità(llx_c_payment_term)
+CustomAccountingJournal=Abilita la personalizzazione dei giornali di contabilità per entità (llx_accounting_journal)
+CustomAccountingCategory=Abilita la personalizzazione delle categorie in contabilità per entità (llx_c_accounting_category)
+CustomSocialNetworks=Abilita la personalizzazione dei social network per entità (llx_c_socialnetworks)
+CustomTypeContainer=Abilita la personalizzazione dei tipi di container per entità per il modulo Website (llx_c_type_container)
+CustomTicketDictType=Enable customization of ticket type by entity (llx_c_ticket_type)
+CustomTicketDictSeverity=Enable customization of ticket severity by entity (llx_c_ticket_severity)
+CustomTicketDictCategory=Enable customization of ticket category by entity (llx_c_ticket_category)
+CustomTicketDictResolution=Enable customization of ticket resolution by entity (llx_c_ticket_resolution)
+CustomHolidayDictType=Enable customization of holiday types by entity (llx_c_holiday_types)
+CustomHolidayDictPublic=Enable customization of public holiday by entity (llx_c_hrm_public_holiday)
+ActivatingObjectShares=Attivazione condivisione oggetti
+ObjectSharingsInfo=After sharing options are activated, it will be necessary to configure each entity in the "Environments" tab to allow the shares between entities.
+ActivatingObjectNumberShares=Activating objects number sharing
+ObjectNumberSharingsInfo=After sharing options are activated, it will be necessary to configure each entity in the "Environments" tab to allow the shares between entities.
+ShareProposal=Abilita la condivisione delle proposte commerciali
+ShareOrder=Abilita la condivisione degli ordini clienti
+ShareInvoice=Abilita la condivisione delle fatture attive
+TemplateOfEntityManagement=Template per la gestione delle entità
+TemplateOfEntityManagementInfo=This option allows you to create feature templates to enable and pre-configure modules, shares between entities, and user access rights only with the user centralization mode on the primary entity.
+TemplateOfCompany=Definisci come template per un'entità
+SelectTemplateOfCompany=Utilizza un template per questa nuova entità
+AddNewEntityInAllOtherEntities=Aggiungi questa nuova entità nella condivisione di altre entitò
+WarningThisIsATemplate=Attenzione! Questa è un entità "template" ed è visibile solo ai Super Amministratori.
+WarningMulticompanyIsInDevelopMode=Attenzione! Sei in modalità "develop" nel tuo Dolibarr
+ShowTopMenuEntityLabel=Mostra l'etichetta dell'azienda nel top menù
+ShareContract=Abilita la condivisione dei contratti
+ShareTicket=Abilita la condivisione dei tickets
+ShareSupplier_proposal=Enable sharing of suppliers proposals
+ShareSupplier_order=Enable sharing of suppliers orders
+ShareSupplier_invoice=Enable sharing of suppliers invoices
+ShareIntervention=Enable sharing of interventions
+SelectOneOrMoreEntities=Select one or more entities
+SelectUser=Select a user
+SelectGroup=Select a group
+
+# Granularity tab
+EnableSharingsByElement=Enable features of sharings by element
+MultiCompanySharingsByElementSetup=Setup of sharings by element
+SharingsByElement=Sharings by element
+SharingsByElementInfo=This option allows you to define a granularity of sharings between entities.
+ShareByElement=Share by element
+EnableGranularityForThirdparties=Activate the granularity of shares on thirdparties
+EnableGranularityForContacts=Activate the granularity of shares on contacts
+EnableGranularityForProducts=Activate the granularity of shares on products/services
+EnableGranularityForCategories=Activate the granularity of shares on categories
+ConfirmMassThirdpartySharingByElement=Select the entities with which you want to share these third parties and their associated contacts.
+ConfirmMassThirdpartySharingByElementQuestion=Are you sure you want to modify the shares of the %s selected third parties?
+MassActionThirdpartySharingByElementIsOk=The sharing of third parties and associated contacts was successful.
+ConfirmMassProductSharingByElement=Select the entities with which you want to share these products/services.
+ConfirmMassProductSharingByElementQuestion=Are you sure you want to modify the shares of the %s selected products/services?
+MassActionProductSharingByElementIsOk=The sharing of products/services was successful.
+ShareAllByDefault=Share all  by default
+ShareAllByDefaultInfo=If this option is enabled, all items will be shared by default. Leave this option disabled if you have few items to share, and enable this option if you have few items not to share.
+
+# Admin caches tab
+MulticompanyCacheSystemInfo=The use of a cache can be useful if you have a large number of entities (≈50+), this will accelerate the display of Dolibarr.
+MulticompanySession=PHP $_SESSION cache
+MulticompanySessionDescription=The data is stored in the PHP $_SESSION global variable.<br>This cache is not shared and is limited to the current user.
+MulticompanyMemcached=Memcached server
+MulticompanyMemcachedDescription=This option allows you to use a Memcached server to improve the speed of display.<br>Requires a Memcached server and the Memcached or Memcache plugin for PHP.
+MulticompanyMemcachedUnavailable=Memcached or Memcache are not available on your PHP.
+MemcachedServerIsReady=The Memcached server is accessible
+MemcachedServerIsNotReady=The Memcached server is not accessible, check the address and port.
+MulticompanyShmop=Shared Memory (Shmop)
+MulticompanyShmopDescription=Shmop is a set of simple functions to manage shared memory with PHP.<br>(Read, write, create and delete UNIX shared memory Segments).
+MulticompanyShmopAvailable=Shmop is available on your PHP
+MulticompanyShmopUnavailable=Shmop is not available on your PHP
+
+# Select/Change entity
+GlobalEntityDesc=Modification of the entity will only be permitted if no documents have been created. (Commercial proposal, orders, invoices, etc ...)
+ThirdpartyEntityDesc=You can use the current entity or assign that third party to another entity
+ThirdpartyModifyEntity=You can change its membership entity
+ThirdpartyModifyEntityDescription=Would you like to change the entity of that third party?
+ThirdpartyModifyEntitySuccess=The entity of this third party has been modified successfully
+ContactModifyEntity=You can change its membership entity
+ContactModifyEntityDescription=Would you like to change the entity of that contact?
+ContactModifyEntitySuccess=The entity of this contact has been modified successfully
+ProjectModifyEntity=You can change its membership entity
+ProjectModifyEntityDescription=Would you like to change the entity of that project?
+ProjectModifyEntitySuccess=The entity of this project has been modified successfully
+ModifyEntityNotAllowed=Modification of the entity is not permitted
+
+# Errors
+ErrorEntityLabelAlreadyExist=Errore: l'etichetta dell'entità esiste già.
+ErrorEntityIsNotValid=Errore: questa entità non è valida.
+ErrorNotDeleteMasterEntity=Errore: impossibile eliminare l'entità principale.
+ErrorThirdpartyModifyEntity=Error: Changing the entity of that third party can not be finalized!
+ErrorDropDownListOfEntitiesMustBeHidden=The drop-down list of entities on the login page must be hidden!
+ErrorLinkUserGroupEntity=You must associate user with a group and one or more entities in order to define permissions !!
+ErrorMulticompanyConfAuthentication=You need to enable Multicompany authentication by changing this line in conf.php with this value: $dolibarr_main_authentication = 'mc';
+ErrorDolibarrConfAuthentication=You need to enable Dolibarr authentication by changing this line in conf.php with this value: $dolibarr_main_authentication = 'dolibarr';
+ErrorElementIsUsedBy=The entities below cannot be removed because this element is used in this one: <br><br>%s
+ErrorOnlySuperadminCanManageUserAdnGroup=In "centralized management of users and groups on the main entity" mode, only a superadmin can manage users and groups!
+ErrorUserOrEntitiesNotSelected=You must select a user and one or more entities.
+ErrorGroupOrEntitiesNotSelected=You must select a group and one or more entities.
+
+# Multiselect
+EntitiesSelected=Entità selezionate
+EntitiesAvailable=Entità disponibili
+MulticompanySharingElementByEntity=Share with these entities
+MulticompanySharedWithThisEntities=Shared with this entities
+MulticompanySharedWithThisEntity=Shared with this entity
+MulticompanyOriginatingEntity=Originating entity
+InfoRemoveThisShareFromContacts=This sharing will also be deleted in the contacts associated with this third party.
+
+#Upgrade
+MulticompanyUpdateProductPMPPerEntity=Update of the WAP of products by entity
+MulticompanyUpdateSocialNetworksPerEntity=Update of social networks by entity
+MulticompanyUpdateAccountingJournalPerEntity=Update of accounting journal by entity
+MulticompanyUpdatetypeContainerPerEntity=Update of type of container by entity
+
+# Others
+SelectEntityToCloneAccounts=Select the entity with which you want to copy the accounting accounts:
+CloneAccountingAccountFromOtherEntity=Activate the possibility of copying the accounting accounts of another entity
+
+# Import
+WarningTableFieldsDiffExists=Warning! the old table <b>%s</b> has fields that do not exists in this Dolibarr, you risk losing data! <b>(%s)</b>
+
+# Datatables
+CloseDialog=Chiudi
+LineEntries=righe
+Showing=Mostra
+ShowingOf=Mostra di
+TotalOf=totale di
+Print=Stampa
+FilteredFrom=filtrate da
+TotalEntries=righe totali
+ShowHideColumns=Mostra/Nascondi colonne
+LoadingDataFromServer=In caricamento dal server
+NoRecordsToDisplay=Nessun dato da mostrare
+NoEntriesToShow=Nessun risultato da mostrare
+Processing=In elaborazione...
+To=a
+First=Primo
+Last=Ultimo
+Tools=Strumenti

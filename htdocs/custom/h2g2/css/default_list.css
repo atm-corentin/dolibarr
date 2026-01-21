@@ -1,0 +1,10 @@
+.loader {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+.loader img {
+  width: 40%;
+}
+
+/*# sourceMappingURL=default_list.css.map */

@@ -1,0 +1,106 @@
+#speednomenclature {
+	border:1px dashed #eee;
+	padding: 3px 3px 100px 3px;
+	margin:0 200px 0 0;
+}
+#speednomenclature li,#sortableListsBase li { 
+	padding: 10px 10px 10px 10px;
+	background-color: #5f6e7d;
+    border: 1px solid #ccc;
+    margin: 5px;
+    color:white;
+    font-size:14px;
+    list-style: none;
+}
+#speednomenclature li div.label {
+	display:inline-block;
+	width:70%;
+}
+#speednomenclature li div.qty {
+	display:inline-block;
+	width:10%;
+}
+#speednomenclature li div.qtyws {
+	display:inline-block;
+	width:30%;
+}
+
+li.currElemClass div.qty, li.currElemClass ul {
+	display:none;
+}
+
+#speednomenclature li div.title {
+	color:#666;
+	font-weight: bold;
+	
+}
+#speednomenclature li>div>a.editline {
+	visibility: hidden;
+	float:left;
+	margin-right:5px;
+}
+#speednomenclature li:hover>div>a.editline {
+	visibility: visible;
+}
+
+#speednomenclature li div.total {
+	color:#000;
+	font-weight: bold;
+	text-align: right;
+}
+#speednomenclature li div.free {
+	color:#000;
+}
+
+#speednomenclature a {
+	color:#eee;
+	font-weight: bold;
+}
+
+#speednomenclature ul.notanomenclature {
+	border:1px dashed #fff;
+}
+
+#speednomenclature li.workstation {
+	background-color: #79BD9A;
+}
+
+#speednomenclature .placeholderClass {
+	background-color:yellow;
+}
+#speednomenclature .hintClass {
+	background-color:#E0E4CC;
+	border:1px dashed white
+}
+#speednomenclature .currElemClass {
+	background-color:#A7DBD8;
+	color:#fff;
+}
+#speednomenclature li.lineObject {
+	background-color: #4E9CB5;
+	color:#fff;
+}
+#speednomenclature li.special {
+	background-color: #FA6900;
+	color:#fff;
+}
+
+div#addto {
+	position:absolute;
+	top:0;
+	right:-1px;
+	padding: 10px 20px 10px 10px;
+	background-color: #A7DBD8;
+    border: 1px solid #ccc;
+    color:#fff;
+}
+#speednomenclature li.selectedElement {
+	background-color: #A7DBD8;
+}
+#speednomenclature li.newElement {
+	background-color: #6666ff;
+}
+div[rel=delete] {
+	float:right;
+	cursor: hand;
+}

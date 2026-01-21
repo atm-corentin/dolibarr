@@ -1,0 +1,80 @@
+Module933330070Name=Gantt Professionnel Advanced
+Module933330070Desc=Gantt Professionnel Advanced
+ganttproadvanced=Gantt Professionnel Advanced
+ProgressProject=Progreso del proyecto
+The=EL
+ConfirmDeleteObject=¿Está seguro de que desea eliminar este objeto?
+
+ColorTaskByUserFieldColor=Establecer el color de la tarea según el campo de color del usuario
+ContactTypeTasksFromWhereWeGetColor=Tipo de contacto principal (tarea)
+ChangeColorTaskByAdmin=Cambiar el color de la tarea solo por el usuario administrador
+
+UseCtrlWheelInOrderToZoom=Use CTRL + rueda del mouse en GANTT para hacer zoom
+ShowUserNameInChart=Mostrar nombre de usuario en el gráfico
+AutomaticlyScrollToCurrentDay=Desplazarse automáticamente al día actual
+DefaultZoomBy=Zoom predeterminado
+show_leftmenu=Mostrar menú izquierdo
+JalonDate=Fecha Hito
+
+
+
+
+#--------------------------------------------------------------------------- 
+viewgantt=Vista de Gantt
+viewkanban=Vista Kanban
+hide_leftmenu=Ocultar menú izquierdo
+
+alert_depasse_dure=Has excedido la carga de trabajo planificada
+ConfirmCloneTask=¿Estás seguro de que quieres clonar esta tarea?
+CloneTaskFiles=Clonar archivos adjuntos de tareas
+minperiodtask=Plazo máximo de un mes por tarea
+empechecreatesubtask=Evitar la creación de sub-subtareas.
+
+FinishedTasks=Mostrar/ocultar tareas transcurridas
+HideFinishedTasks=Ocultar tareas de más de un mes
+
+
+SelectByDefaultAProject=Seleccione por defecto
+SelectAll=Seleccionar todo
+
+totalcoutstemp=Costo del tiempo consumido
+
+TaskDependencyManagement=Gestión de dependencias de tareas
+TypeRelation=Tipo de relación
+TYPE_NULL=Ninguno
+TYPE_END_START=Fin - Inicio
+TYPE_START_END=Principio fin
+TYPE_START_START=Empezar - Empezar
+TYPE_END_END=Fin - Fin
+confirm=Confirmar
+ConfirmCloseProject=¿Estás seguro de que quieres cerrar estos proyectos?
+CloseProject=Cerrar proyectos
+ThisProjectisClosed=%s proyectos cerrados exitosamente
+NoProjectToClose=No se han cerrado proyectos
+
+ExcludeProjectWithTags=Excluir proyectos con etiquetas/categorías
+
+ModifyParentTasks=Editar tareas principales
+RelatedToTask=Relacionado con la tarea
+NumberDaysLate=No. días de retraso
+
+FilterBy=filtrado por
+Projectmanageruser=Usuario administrador de proyectos
+
+WillBeDeleted=Será borrado
+LinkStart=Inicio
+LinkEnd=FIN
+ThereIsADependencyOfTaskFor=Hay una dependencia de tareas para
+
+setMinMaxTasksDatesToProject=Asigne automáticamente la fecha mínima/máxima de las tareas a las fechas del proyecto
+budget=Presupuesto
+percentdure=Porcentaje de tiempo invertido
+dureeffectiv=Tiempo pasado
+
+
+
+
+Changingparenttaskprohibited=Prohibido cambiar la tarea principal
+CheckThisToSearchByAllContactType=Marque esto para obtener y buscar por todos los tipos de contacto.
+AffectedTo=Afectado a
+ShowWeekEnd=Mostrar días de fin de semana

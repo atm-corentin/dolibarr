@@ -1,0 +1,45 @@
+#tablelines.indexcustomization {
+	td.linecolmove.tdlineupdown {
+		background-image: url("/theme/quarantedeux/img/grip.png");
+		background-repeat: no-repeat;
+		background-position: center center;
+	}
+}
+
+div.btndiv {
+	display: flex;
+	justify-content: center;
+	gap: 1em;
+}
+
+textarea.settings {
+	min-height: 300px;
+	height: 100%;
+	width: 100%;
+	resize: none
+}
+
+a.butAction[href*="index_property_reset"], #reset-attributes, tr[id*="settings-"] > td > .fa-retweet, .linecolreset > a {
+	--btn-color : var(--btn-color-danger);
+}
+
+a.butAction[data-action*="reset"] {
+	--btn-color: #ffa500;
+}
+
+div.btndiv > button.butAction, #send-settings, .linecolsave > a {
+	--btn-color: var(--btn-color-success);
+}
+
+a[data-action*="save"] {
+	--btn-color: yellowgreen;
+}
+
+.linecoldropdown > a {
+	text-decoration: none;
+}
+
+a.disabled-switch {
+	cursor: pointer;
+	text-decoration: none;
+}

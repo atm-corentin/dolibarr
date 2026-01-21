@@ -1,0 +1,6 @@
+# Dolibarr language file - fr_FR - opendsi
+CHARSET=UTF-8
+easyaFamily=Easya Solutions
+OpenDsiAboutDesc=Ce module a été développé par <a href="https://easya.solutions" target="_blank">Easya Solutions</a><br><br>Pour toute question technique ou retour, déposez une demande de support sur <button type="submit">notre portail support</button><br><br>Pour toute question commerciale, contactez-nous sur <a href="mailto:info@easya.solutions">info@easya.solutions</a> ou au +33 4 82 53 94 76<br><br>Retrouvez nos autres modules sur <a href="https://www.dolistore.com/fr/recherche?controller=search&orderby=position&orderway=desc&search_query=easya&submit_search=" target="_blank">Dolistore</a>
+OpenDsiChangeLog=Fichier de log
+OpenDsiTicketInformation=Informations importantes d'utilisation du module à communiquer à notre support

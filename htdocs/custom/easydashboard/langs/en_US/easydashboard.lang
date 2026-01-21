@@ -1,0 +1,169 @@
+# Copyright (C) 2019 Florian Dufourg
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+#
+# en_US
+#
+
+#
+# Générique
+#
+ModuleEasyDashboardName = Easy Dashboard
+ModuleEasyDashboardDesc = Show many informations usefull to manage a business with a clear display
+
+#
+# Page d'administration
+#
+EasyDashboardSetup = Configuration of Easy Dashboard module
+Settings = Setting
+EasyDashboardSetupPage = Setup page of Easy Dashboard module
+EASYDASHBOARD_IDPROJET_COUTFIXE = ID of the projects to calculate fixed costs
+EASYDASHBOARD_IDPROJET_COUTFIXETooltip = The costs considered as fixed have to be link to this projects (separate project ID with coma)<br> example : 2,4,5,16
+EASYDASHBOARD_USE_CFCV = Display mode
+EASYDASHBOARD_USE_STAT_ON_PROJECTS = Show Statistics of projects
+EASYDASHBOARD_USE_STAT_ON_PROJECTSTooltip = Select yes only if every invoices of Dolibarr are connected with a project
+EASYDASHBOARD_USE_CFCVTooltip = Simple display : fixed costs and variable costs are not displayed<br>Advance display : fixed costs and variable costs are displayed
+EASYDASHBOARD_GRAPH_NB_MAX_CF = Number of datas to show on the cost graph
+EASYDASHBOARD_GRAPH_NB_MAX_CFTooltip = Choose a number higher than 3 (ex : 10)
+EASYDASHBOARD_GRAPH_NB_MAX_CA = Number of datas to show on the turnover graph
+EASYDASHBOARD_GRAPH_NB_MAX_CATooltip = Choose a number higher than 3 (ex : 10)
+EASYDASHBOARD_ROUND_NUMBERS = Round values
+EASYDASHBOARD_ROUND_NUMBERSTooltip = Number of unit after the comma (ex : 0)
+EASYDASHBOARD_EMPTYPROJECT_ISVARIABLECOST = Costs without project :
+EASYDASHBOARD_EMPTYPROJECT_ISVARIABLECOSTTooltip = fixed costs : The costs with no project linked are fixed costs<br>variable costs : The costs with no project linked are variable costs
+EASYDASHBOARD_PERIOD_START = Beginning of the period
+EASYDASHBOARD_PERIOD_STARTTooltip = If empty period would be the current year
+EASYDASHBOARD_PERIOD_END = End of the period
+EASYDASHBOARD_PERIOD_ENDTooltip = If empty period would be the current year
+EASYDASHBOARD_CHARGES_EXCLUDES = Tax and charge to filter from calculations
+EASYDASHBOARD_CHARGES_EXCLUDESTooltip = Put the codes (Dictionaries) of tax and social charge which should not be include on calculations, names separate by comma without space (ej : TAXIS,TAXIR)
+SimpleDisplay = Simple display
+AdvancedDisplay = Advance display
+
+#
+# Page À propos
+#
+About = À propos
+EasyDashboardAbout = About Easy Dashboard
+EasyDashboardAboutPage = About Easy Dashboard page
+
+#
+# Page easy dashboard
+#
+show = Show
+last12months = 12 last months
+facturesClientCumul = Sum of turnovers
+depensesCumul = Sum of spending
+beneficesCumul = Sum of profit
+facturesClientMois = Revenue
+CFMois = Fixed costs (excl. vat)
+CVMois = Variable costs (excl. vat)
+depensesMois = Spending (excl. vat)
+BeneficesMois = Profit / loss
+turnover = Revenue
+cost = Spending
+
+topCAOnPeriod = Revenue on the period of time by customer
+topCFOnPeriod = Fixed costs on the period of time by type and provider
+topCostOnPeriod = Costs on the period of time by type and provider
+
+REVENUE = REVENUE
+COST = SPENDING
+VariableCosts = Variable costs
+FixedCosts = Fixed costs
+Total = Total
+TotalFixedCosts = Total fixed costs
+TotalVariableCosts = Total variable costs
+TotalCost = Total of spending
+TotalOrders = Total of current orders
+TotalContracts = Total of current contracts
+Provider = Provider
+Salaries = Salaries
+Charges = Social/fiscal taxes
+Loans = Loans
+ofCA = of revenue
+RESULTS = RESULTS
+ProfitLoss = Profit / Loss
+MCV = Variable cost margin
+BreakEven = Break even
+VAT = VAT
+VATCalculated = VAT calculated on the period of time
+VATPaid = VAT paid on the period of time
+dueVAT = Due VAT
+deductibleVAT = Deductible VAT
+RunningOrdersAndContracts = CURRENT ORDERS AND CONTRACTS
+REVENUE_AND_RESULTS = REVENUE AND RESULTS
+turnoverProjection = Turnover projection
+ProfitLossProjection = Profit / Loss projection
+timeByProject = Time spent by project
+
+EASYDASHBOARD_OPPORTUNITIES_TO_SHOW_PERCENT = Lead probability to show
+EASYDASHBOARD_OPPORTUNITIES_TO_SHOW_PERCENTTooltip = From which Lead probability of project linked to proposal Easydashboard should show the proposals.
+
+TOTAL_COST = TOTAL COSTS
+FIXED_COST = FIXED COSTS
+VARIABLES_COST = VARIABLES COSTS
+TotalCA = Total Revenue
+ofTotal = of total
+ProjectionFacturesClientCumul = Projected sum of revenue
+ProjectionDepensesCumul = Projected sum of spending
+ProjectionMargeCumul = Projected sum of profit
+ProjCACde = Revenue (orders)
+ProjCAContrats = Revenue (contracts)
+MainFixCost = Projected fixed costs
+ProjVariableCost = Projected variable costs
+ProjMarge = Projected profit / loss
+ResultsByMonth = Revenue, costs and profit per month
+ShowProjection = Show projection
+InfosProjection = The projection function is a simulation of the next results.<br>To work, the module 'Margins' has to be enable, the extrafields 'Cost price' of contract services and if necessary the extrafields 'Already spent' of sales orders have to be filled.<br><br> - Revenue (orders) : Sum of the remaining unbilled orders divided by the number of remaining periods<br> - Revenue (contracts) : Sum of total amount of the contracts divided by 12 months<br> - Projected fixed costs : Average of the fixed costs on the past period<br> - Projected variable costs : Average of cost price of the contracts + average of the remaining cost price to spend of the sales orders<br>Projected profit / loss : Difference between total of revenues and total of costs.<br><br>* If you updated Easydashboard from a version < 3.0, you should deactivate/activate the module to create the extrafields.
+SalariesAndCharges = Salaries and charges
+TurnoverCostMCVByProject =Revenues, costs et margins of projects (projects created during this period)
+MCVByProject = Margins per project
+RevenuByCustomer = Revenue per customer
+TOTAL_COST_BY_CUSTOMER = Total cost per vendor
+TOTAL_COST_BY_TYPE = Total cost per type
+FIXE_COST_BY_CUSTOMER = Fixed cost per vendor
+FIXE_COST_BY_TYPE = Fixed cost per type
+VARIABLE_COST_BY_CUSTOMER = Variable cost per vendor
+VARIABLE_COST_BY_TYPE = Variable cost per type
+InterestAndInsurance = Interest and insurance
+ExpenseReport = Expense report
+LOAN = LOAN
+totalLoanRestToPay = Remaining unpaid
+totalLoans = Total of loans
+totalLoanPaid = Already paid
+RunningOrders = RUNNING ORDERS
+RestToInvoice = Remains to be billed
+Marge = Margin
+TxMarque = Margin
+Ref_customer = Ref. customer
+Total_ca = Revenue
+RestToSpend = Remains to spend
+alreadySpent = already spent
+InfosAlreadySpent = Fill the 'Already spent' extrafield in the order card
+RunningContracts = RUNNING CONTRACTS
+InfosMargeContracts = Fill the extrafield 'Cost price' in the contract card
+Opportunities = LEADS
+Societe = Third-party
+revient = Cost price
+percentExpense = Already spent
+PricePerUnity = Price per unity
+
+contractValuePeriod = Period of the contract (help Easydashboard projection function)
+period_contract = Period
+Annual_Total_ca = Annual turnover
+Annual_Marge = Annual margin
+InfosPeriodContracts = Fill the extrafield 'Period' in the contract card
+Treso = Treasury

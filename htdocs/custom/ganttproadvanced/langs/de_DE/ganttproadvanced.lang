@@ -1,0 +1,80 @@
+Module933330070Name=Gantt Professionnel Advanced
+Module933330070Desc=Gantt Professionnel Advanced
+ganttproadvanced=Gantt Professionnel Advanced
+ProgressProject=Projektfortschritt
+The=DER
+ConfirmDeleteObject=Sind Sie sicher, dass Sie dieses Objekt löschen möchten?
+
+ColorTaskByUserFieldColor=Legen Sie die Aufgabenfarbe basierend auf dem Benutzerfarbfeld fest
+ContactTypeTasksFromWhereWeGetColor=Typ des primären Kontakts (Aufgabe).
+ChangeColorTaskByAdmin=Ändern Sie die Aufgabenfarbe nur durch den Administrator
+
+UseCtrlWheelInOrderToZoom=Verwenden Sie zum Zoomen STRG + Mausrad in GANTT
+ShowUserNameInChart=Benutzernamen im Diagramm anzeigen
+AutomaticlyScrollToCurrentDay=Scrollen Sie automatisch zum aktuellen Tag
+DefaultZoomBy=Standardzoom
+show_leftmenu=Linkes Menü anzeigen
+JalonDate=Datum Meilenstein
+
+
+
+
+#--------------------------------------------------------------------------- 
+viewgantt=Gantt-Ansicht
+viewkanban=Kanban-Ansicht
+hide_leftmenu=Linkes Menü ausblenden
+
+alert_depasse_dure=Sie haben den geplanten Arbeitsaufwand überschritten
+ConfirmCloneTask=Sind Sie sicher, dass Sie diese Aufgabe klonen möchten?
+CloneTaskFiles=Klonen Sie Aufgabenanhänge
+minperiodtask=Maximaler Zeitraum von einem Monat pro Aufgabe
+empechecreatesubtask=Verhindern Sie die Erstellung von Sub-Sub-Aufgaben
+
+FinishedTasks=Abgelaufene Aufgaben ein-/ausblenden
+HideFinishedTasks=Verstecken Sie Aufgaben, die älter als einen Monat sind
+
+
+SelectByDefaultAProject=Standardmäßig auswählen
+SelectAll=Wählen Sie Alle
+
+totalcoutstemp=Kosten der verbrauchten Zeit
+
+TaskDependencyManagement=Aufgabenabhängigkeiten verwalten
+TypeRelation=Beziehungstyp
+TYPE_NULL=Keiner
+TYPE_END_START=Ende – Anfang
+TYPE_START_END=Anfangsende
+TYPE_START_START=Start – Start
+TYPE_END_END=Ende – Ende
+confirm=Bestätigen
+ConfirmCloseProject=Sind Sie sicher, dass Sie diese Projekte schließen möchten?
+CloseProject=Schließen Sie Projekte ab
+ThisProjectisClosed=%s Projekte erfolgreich geschlossen
+NoProjectToClose=Es wurden keine Projekte abgeschlossen
+
+ExcludeProjectWithTags=Schließen Sie Projekte mit Tags/Kategorien aus
+
+ModifyParentTasks=Bearbeiten Sie übergeordnete Aufgaben
+RelatedToTask=Aufgabenbezogen
+NumberDaysLate=NEIN. Tage zu spät
+
+FilterBy=Filtern nach
+Projectmanageruser=Benutzer des Projektmanagers
+
+WillBeDeleted=Wird gelöscht
+LinkStart=Anfang
+LinkEnd=ENDE
+ThereIsADependencyOfTaskFor=Es besteht eine Aufgabenabhängigkeit für
+
+setMinMaxTasksDatesToProject=Ordnen Sie den Projektterminen automatisch das Min./Max.-Datum von Aufgaben zu
+budget=Budget
+percentdure=Prozentsatz der aufgewendeten Zeit
+dureeffectiv=Zeitaufwand
+
+
+
+
+Changingparenttaskprohibited=Das Ändern der übergeordneten Aufgabe ist verboten
+CheckThisToSearchByAllContactType=Aktivieren Sie diese Option, um alle Kontakttypen abzurufen und nach ihnen zu suchen
+AffectedTo=Betroffen von
+ShowWeekEnd=Wochenendtage anzeigen

@@ -1,0 +1,45 @@
+.migrationPreview {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    box-shadow: rgb(0 0 0 / 24%) 0px 3px 8px;
+    padding: 2%;
+    margin: 2%;
+    border-radius: 5px;
+}
+
+.migrationPreview__title {
+    font-size: large;
+}
+
+.migrationPreview__content {
+    min-width: 80%;
+}
+
+.migrationPreview__content p {
+    text-align: center;
+}
+
+.historyContainer {
+    margin-top: 2em;
+}
+
+#historyTable thead th {
+    text-align: center;
+}
+
+.mpaction-update {
+    color: #ffbc42;
+}
+
+.mpaction-create {
+    color: #2a9d8f;
+}
+
+.mpaction-rollback {
+    color: #e76f51;
+}
+
+.mpaction-reset {
+    color: #1f75cb;
+}

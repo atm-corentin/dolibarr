@@ -1,0 +1,89 @@
+# < en_GB language file >
+# Copyright (C) <2017>  <AXeL>
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+#
+# Generic
+#
+
+Module513000Name = List Export / Import
+Module513000Desc = Allow users to download / upload lists in various formats
+
+Permission513001 = Export lists
+Permission513002 = Import lists
+
+DoliExportListAbout = <a href="http://www.dolistore.com/fr/modules/845-Liste-exportation---importation.html" target="_blank"><b>List export / import</b></a> : Allow you to download / import Dolibarr lists easily<br/><br/>Developed by <a href="https://github.com/AXeL-dev" target="_blank">AXeL</a><br/><br/>For any question or feedback, contact me on <a href="mailto:contact.axel.dev@gmail.com">contact.axel.dev@gmail.com</a><br><br>Find my other modules on <a href="http://www.dolistore.com/search.php?orderby=position&orderway=desc&search_query=axel-dev&submit_search=Rechercher" target="_blank">Dolistore</a>
+
+Setup = Module Setup
+About = About Module
+Documentation = Documentation
+Settings = Settings
+DoliExportListSettings = General Settings
+ListExportFormats = List Export Formats
+ListImportFormats = List Import Formats
+Formats = Formats
+Active = Active
+Description = Description
+Position = Position
+Down = Down
+Up = Up
+
+UseCompactMode = Use Compact Mode
+EnableFreeList = Enable free list option
+ForTestPurposeOnly = for test purpose only, use it at your own risk
+DataShouldFitToTableFields = %s File data should fit to the table fields
+CSVFromDBDescription = %s Export to CSV from database data (<b>you should use the same file format for CSV import</b>)
+CSVExportDataSeparator = Data Separator for CSV Export/Import
+IgnoredLists = Ignored lists
+DoNotRemoveTotal = Do not remove total row from exported lists
+DeleteSpaceFromNumbers = Delete space from numbers
+
+ListExport = Export
+ListImport = Import
+
+FileGenerationInProgress = %s file generation in progress...
+FileImportationInProgress = %s file importation in progress...
+FileIsEmpty = The selected file is empty.
+WrongFileExt = The selected file is not an %s file.
+FileContentNotMatchWithTableName = File content does not match with the current list, please try with another %s file.
+ImportFailed = Import failed
+ConfirmImport = Would you like to confirm import?
+OnlySqlInsertStatementIsAccepted = Sorry, but only INSERT statement(s) are accepted when importing from SQL files.
+ConfirmFreeList = Are you sure that you want to free the list?<br><br>(This will erase all the list data from your database! please be sure that you have a backup before doing this)
+ExportsFullList = The entire list will be exported
+
+ExportCSV = Export > CSV
+ExportCSVFromDB = Export > CSV from DB data
+ExportSQL = Export > SQL
+ExportPDF = Export > PDF
+ExportPNG = Export > PNG
+ImportSQL = Import < SQL
+ImportCSV = Import < CSV
+FreeList = Free List
+PrintDateOnPdfExport = Print date on PDF export
+
+#
+# Documentation
+#
+HowToUseIt = How to use it ?
+HowToUseItDesc = You can dowload any list from Dolibarr in the available format(s). A button/icon is available next to each list title.
+HowToUseItMore = <i>(You can change the mode from module settings)</i>
+HowExportWorks = How export works ?
+HowExportWorksDesc = Once you choose the export format, a small popup will show up, and all you need to do is to wait until the export process ends, after this you can download your file.
+HowImportWorks = How import works?
+HowImportWorksDesc = The same way, first, you choose the import format, then you should choose your import file, and wait until the import process is done, that's it.
+HowImportWorksNotes = <b>Notes</b>: You should know that import process is very sensitive, so if you're not using the good import file or even your data does not fit to the table fields, then the import process may fail.<br><br><b>Cases where importation may fail</b>:<br><b>- Case</b>: You try to import an invoices list from a CSV file but you're getting errors.<br><b>* Solution</b>: You'll need to check if your CSV file data fit exactly with the table fields (you can check that on your phpmyadmin or just google it if you don't know how).<br><b>- Case</b>: You try to import your orders list on a fresh Dolibarr installation without importing products list before or even without third parties list, in this case you'll recieve an error message & the importation will not work.<br><b>* Solution</b>: When you have a fresh installation of Dolibarr & you want to import your data to it, the best way to do this is to use Dolibarr database export/import tool.
+INeedSomeHelp = I need some help...
+INeedSomeHelpDesc = Please contact me on my email (see about page) & I will be happy to help you.

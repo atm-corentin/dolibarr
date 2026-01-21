@@ -1,0 +1,105 @@
+Module933330070Name=Gantt Professionnel Advanced
+Module933330070Desc=Gantt Professionnel Advanced
+ganttproadvanced=Gantt Professionnel Advanced
+ProgressProject=Avancement de projet
+The=Le
+ConfirmDeleteObject=Voulez-vous vraiment supprimer cet objet?
+
+ColorTaskByUserFieldColor=Définir la couleur de la tâche en fonction du champ de couleur de l'utilisateur
+ContactTypeTasksFromWhereWeGetColor=Type de contact (tâche) principal
+ChangeColorTaskByAdmin=Changer la couleur de la tâche uniquement par l'utilisateur admin
+
+UseCtrlWheelInOrderToZoom=Utilisez CTRL + molette de la souris dans GANTT pour zoomer
+ShowUserNameInChart=Afficher le nom d'utilisateur dans le graphique
+AutomaticlyScrollToCurrentDay=Faire défiler automatiquement jusqu'au jour actuel
+DefaultZoomBy=Zoom par défaut
+show_leftmenu=Afficher le menu Gauche
+JalonDate=Date Jalon
+
+
+
+
+#--------------------------------------------------------------------------- 
+viewgantt=Vue Gantt
+viewkanban=Vue Kanban
+hide_leftmenu=Cacher Left menu
+
+alert_depasse_dure=Vous avez dépassé la charge de travail prévue
+ConfirmCloneTask=Êtes-vous sûr de vouloir cloner cette tâche ?
+CloneTaskFiles=Cloner les pièces jointes de la tâche
+minperiodtask=Période d'un mois maxi par tâche
+empechecreatesubtask=Empêcher la création de sous-sous tâche
+
+FinishedTasks=Afficher/cacher tâches écoulés
+HideFinishedTasks=Masquer les tâches écoulés de plus d'un mois
+
+
+SelectByDefaultAProject=Sélectionner par défaut
+SelectAll=Tout sélectionner
+
+totalcoutstemp=Coût temps consommé
+
+TaskDependencyManagement=Gestion des dépendances de tâches
+TypeRelation=Type de relation
+TYPE_NULL=Aucun
+TYPE_END_START=Fin - Début
+TYPE_START_END=Début - Fin
+TYPE_START_START=Début - Début
+TYPE_END_END=Fin - Fin
+confirm=Confirm
+ConfirmCloseProject=Êtes-vous sûr de vouloir clôturer ces projets?
+CloseProject=Clôturer les projets
+ThisProjectisClosed=%s projets clôturés avec succès
+NoProjectToClose=Aucun projet n'a clôturé
+
+ExcludeProjectWithTags=Exclure les projets avec Tags/catégories
+
+ModifyParentTasks=Modifier les tâches parentes
+RelatedToTask=Liée à la tâche
+NumberDaysLate=Nb. jours de retard
+
+FilterBy=Filtrer par
+Projectmanageruser=Utilisateur chef de projet
+
+WillBeDeleted=Sera supprimé
+LinkStart=Début
+LinkEnd=Fin
+ThereIsADependencyOfTaskFor=Il y a une dépendance de tâche pour
+
+setMinMaxTasksDatesToProject=Affecter automatiquement la date Min/Max des tâches aux dates du projet
+budget=Budget
+percentdure=Pourcentage de temps passé
+dureeffectiv=Temps passé
+
+
+
+
+Changingparenttaskprohibited=Changement de la tâche parent interdite
+CheckThisToSearchByAllContactType=Cochez ceci pour obtenir et rechercher par tous les types de contacts
+AffectedTo=Affecté à
+ShowWeekEnd=Afficher les jours du week-end
+
+
+
+------------------------------------------------------------------------------------------------------------------------------------------------------- Not translated
+ShowMarkerBarOnlyAtTop=Afficher la barre de jalon uniquement en haut
+ShowProjectsEvenWithoutDates=Afficher les projets même sans dates
+ViewingTasksByresources=Affichage des tâches par ressource
+GanttByResource=Par ressource
+ColorOfMarkerBar=Couleur de la barre de jalon
+ExcludeWeekendFromDurationCalculGantt=Exclure les week-ends dans le calcul de la durée
+KeepRecentFilter=Conserver le filtre récent
+PerPrincipalContact=Contact principal
+PerPrincipalAndContributeurContact=Contact principal et contributeur
+viewhours=LIVE RESCHEDULED DATA
+liverescheduleddata=LIVE RESCHEDULED DATA
+departement=Département
+
+showhoursingantt=Afficher les tâches par heures sur Gantt
+
+taskworkingtime=Heures de travail de tâche par jour
+exemploftaskworkingtime=Mode 1: (Ex: 09:00 - 17:00) <br> Mode 2: (Ex: 09:00 - 13:00 | 15:00 - 19:00)
+
+livehours=LIVE HOURS
+DefaultOnglet=Onglet afficher par défaut
+ShowGridResourceInTabLivehours=Afficher temps consommés par ressource sur l'onglet LIVE HOURS
