@@ -1,2 +1,0 @@
-include:
-  remote: 'https://git.code42.io/pub/gitlab-ci/raw/master/.gitlab-ci.yml'

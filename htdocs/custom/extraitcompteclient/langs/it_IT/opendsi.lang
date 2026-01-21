@@ -1,7 +1,0 @@
-# Dolibarr language file - en_US - opendsi
-CHARSET=UTF-8
-easyaFamily=Easya Solutions
-opendsiFamily=Opendsi
-OpenDsiAboutDesc=Questo modulo è stato sviluppato da <a href="https://easya.solutions" target="_blank">Easya Solutions</a><br><br>Per qualsiasi domanda o feedback, inoltrare una richiesta di assistenza a <button type="submit" >il nostro portale di assistenza</button> o contattateci su <a href="mailto:support@easya.solutions">support@easya.solutions</a><br><br>Per qualsiasi domanda, contattateci su <a href="mailto:info@easya.solutions">info@easya.solutions</a> o a +33 4 82 53 94 76<br><br>Trovate gli altri moduli su <a href="http://www.dolistore.com/search.php?orderby=position&orderway=desc&search_query=open-dsi&submit_search=Rechercher" target="_blank">Dolistore</a>
-OpenDsiChangeLog=File ChangeLog
-OpenDsiTicketInformation=Informazioni importanti sull'uso del modulo per comunicare al nostro supporto
