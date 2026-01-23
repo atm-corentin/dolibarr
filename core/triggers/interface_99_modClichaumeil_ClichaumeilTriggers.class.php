@@ -101,6 +101,10 @@ class InterfaceClichaumeilTriggers extends DolibarrTriggers
 
 		// Or you can execute some code here
 		switch ($action) {  // @phan-suppress-current-line PhanNoopSwitchCases
+			case 'PROPOSAL_SUPPLIER_SENTBYMAIL':
+				$this->copySupplierProposalMailAttachmentsToAgenda($object, $conf);
+				break;
+
 			case 'LINEORDER_INSERT':
 			case 'LINEORDER_MODIFY':
 			case 'LINEPROPAL_INSERT':
@@ -225,6 +229,73 @@ class InterfaceClichaumeilTriggers extends DolibarrTriggers
 		}
 
 		return 0;
+	}
+
+	/**
+	 * Copy attached files from supplier proposal emails into agenda event folder.
+	 *
+	 * @param CommonObject $object
+	 * @param Conf $conf
+	 * @return void
+	 */
+	private function copySupplierProposalMailAttachmentsToAgenda(CommonObject $object, Conf $conf) : void
+	{
+		if (empty($object->id) || empty($object->element)) {
+			return;
+		}
+
+		if ($object->element !== 'supplier_proposal') {
+			return;
+		}
+
+		if (empty($_SESSION['LAST_ACTION_CREATED'])) {
+			return;
+		}
+
+		if (empty($object->attachedfiles) || !is_array($object->attachedfiles)) {
+			return;
+		}
+
+		$actionId = (int) $_SESSION['LAST_ACTION_CREATED'];
+		if ($actionId <= 0) {
+			return;
+		}
+
+		$paths = $object->attachedfiles['paths'] ?? array();
+		$names = $object->attachedfiles['names'] ?? array();
+		if (empty($paths) || empty($names)) {
+			return;
+		}
+
+		$agendaRoot = $conf->agenda->multidir_output[$conf->entity] ?? '';
+		if (empty($agendaRoot)) {
+			return;
+		}
+
+		$destDir = $agendaRoot . '/' . $actionId;
+		require_once DOL_DOCUMENT_ROOT . '/core/lib/files.lib.php';
+		if (dol_mkdir($destDir) < 0) {
+			return;
+		}
+
+		foreach ($paths as $idx => $srcfile) {
+			if (empty($srcfile) || !is_file($srcfile)) {
+				continue;
+			}
+
+			$filename = $names[$idx] ?? basename($srcfile);
+			$filename = dol_sanitizeFileName($filename);
+			if (empty($filename)) {
+				continue;
+			}
+
+			$destfile = $destDir . '/' . $filename;
+			if (is_file($destfile)) {
+				continue;
+			}
+
+			dol_copy($srcfile, $destfile, 0, 0, 1);
+		}
 	}
 
 	/**

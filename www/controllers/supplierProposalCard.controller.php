@@ -141,7 +141,6 @@ class SupplierProposalCardController extends Controller
 		$thirdparty = new Societe($db);
 		$thirdparty->fetch($object->socid);
 		$documents = $this->service->getProposalDocuments($object, true);
-		$documentsAll = $this->service->getProposalDocuments($object, false);
 		$TMessage = $this->service->fetchProposalActions($object);
 
 		// Currency
@@ -162,7 +161,7 @@ class SupplierProposalCardController extends Controller
 		print $this->view->renderProposalSummary($object, $thirdparty, $documents);
 		print $this->view->renderProposalLines($object, $currencyCode);
 		print $this->view->renderCommentForm($object); // Form first to keep it above discussion history
-		print $this->view->renderTimeline($TMessage, $object, $documents, $documentsAll);
+		print $this->view->renderTimeline($TMessage, $object);
 
 		// Close form
 		print '</form>';
