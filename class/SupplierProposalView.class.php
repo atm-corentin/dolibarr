@@ -360,7 +360,11 @@ class SupplierProposalView
 			}
 			$out .= '</div>';
 		}
-		$out .= dol_string_onlythesehtmltags(dol_htmlentitiesbr($action->note_private));
+		if ($action->code === 'AC_PROPOSAL_SUPPLIER_SENTBYMAIL') {
+			$out .= dol_string_onlythesehtmltags($action->note_private);
+		} else {
+			$out .= dol_string_onlythesehtmltags(dol_htmlentitiesbr($action->note_private));
+		}
 		$out .= '</div>';
 
 		// Files (agenda attachments) or fallback to proposal documents for sent emails
