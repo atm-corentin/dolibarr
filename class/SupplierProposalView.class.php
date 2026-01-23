@@ -276,7 +276,7 @@ class SupplierProposalView
 	 * @param SupplierProposal $object
 	 * @return string HTML
 	 */
-	public function renderTimeline(array $TMessage, SupplierProposal $object) : string
+	public function renderTimeline(array $TMessage, SupplierProposal $object, array $documents = array(), array $documentsAll = array()) : string
 	{
 		if (empty($TMessage)) {
 			return '';
@@ -303,7 +303,7 @@ class SupplierProposalView
 					$datelabel = dol_print_date($actionstatic->datep);
 					$out .= '<li class="time-label"><span class="timeline-badge-date">' . $datelabel . '</span></li>';
 				}
-				$out .= $this->renderTimelineItem($actionstatic, ++$iComment, $numComments, $userGetNomUrlCache);
+				$out .= $this->renderTimelineItem($actionstatic, ++$iComment, $numComments, $userGetNomUrlCache, $object, $documents, $documentsAll);
 			}
 		}
 
@@ -322,7 +322,7 @@ class SupplierProposalView
 	 * @param array $userGetNomUrlCache
 	 * @return string HTML
 	 */
-	private function renderTimelineItem(ActionComm $action, int $iComment, int $numComments, array &$userGetNomUrlCache) : string
+	private function renderTimelineItem(ActionComm $action, int $iComment, int $numComments, array &$userGetNomUrlCache, SupplierProposal $object, array $documents, array $documentsAll) : string
 	{
 		$out = '<li id="comment-message-' . $action->id . '" class="timeline-code-' . strtolower($action->code) . '">';
 		$out .= '<i class="fa fa-comments"></i>';
@@ -349,10 +349,35 @@ class SupplierProposalView
 		$out .= '</h3>';
 
 		// Body
-		$out .= '<div class="timeline-body">' . nl2br($action->note_private) . '</div>';
+		$out .= '<div class="timeline-body">';
+		if ($action->code === 'AC_PROPOSAL_SUPPLIER_SENTBYMAIL' && !empty($action->email_subject)) {
+			$out .= '<div class="timeline-mail-header">';
+			$out .= '<div><strong>' . $this->langs->trans('MailTopic') . '</strong> ' . dol_escape_htmltag($action->email_subject) . '</div>';
+			$out .= '<div><strong>' . $this->langs->trans('MailFrom') . '</strong> ' . dol_escape_htmltag($action->email_from) . '</div>';
+			$out .= '<div><strong>' . $this->langs->trans('MailTo') . '</strong> ' . dol_escape_htmltag($action->email_to) . '</div>';
+			if (!empty($action->email_tocc)) {
+				$out .= '<div><strong>' . $this->langs->trans('MailCC') . '</strong> ' . dol_escape_htmltag($action->email_tocc) . '</div>';
+			}
+			$out .= '</div>';
+		}
+		$out .= dol_string_onlythesehtmltags(dol_htmlentitiesbr($action->note_private));
+		$out .= '</div>';
 
-		// Files
-		$out .= $this->renderTimelineFiles($action);
+		// Files (agenda attachments) or fallback to proposal documents for sent emails
+		$timelineFilesHtml = '';
+		if (in_array($action->code, array('AC_OTH', 'AC_PROPOSAL_SUPPLIER_SENTBYMAIL'), true)) {
+			$timelineFilesHtml = $this->renderTimelineFiles($action);
+		}
+		if (!empty($timelineFilesHtml)) {
+			$out .= $timelineFilesHtml;
+		} elseif ($action->code === 'AC_PROPOSAL_SUPPLIER_SENTBYMAIL') {
+			$attachmentNames = $this->extractMailAttachmentNames($action->note_private);
+			$documentsToShow = $this->filterDocumentsByNames($documents, $attachmentNames);
+			if (empty($documentsToShow)) {
+				$documentsToShow = $this->filterDocumentsByNames($documentsAll, $attachmentNames);
+			}
+			$out .= $this->renderProposalDocumentsTimeline($documentsToShow, $object);
+		}
 
 		$out .= '</div>'; // timeline-item
 		$out .= '</li>';
@@ -411,6 +436,101 @@ class SupplierProposalView
 		$out .= '</div></div>';
 
 		return $out;
+	}
+
+	/**
+	 * Render proposal documents as timeline attachments (fallback when agenda files are missing)
+	 *
+	 * @param array $documents
+	 * @param SupplierProposal $object
+	 * @return string HTML
+	 */
+	private function renderProposalDocumentsTimeline(array $documents, SupplierProposal $object) : string
+	{
+		if (empty($documents)) {
+			return '';
+		}
+
+		$out = '<div class="timeline-footer"><div class="timeline-documents-container">';
+
+		foreach ($documents as $doc) {
+			$filePath = DOL_DATA_ROOT . '/' . $doc->filepath . '/' . $doc->filename;
+			$mime = dol_mimetype($filePath);
+			$class = in_array($mime, array('image/png', 'image/jpeg', 'application/pdf')) ? 'documentpreview' : '';
+			$downloadUrl = $this->context->getControllerUrl('supplier_proposal_card', array(
+				'id' => $object->id,
+				'action' => 'download-proposal-file',
+				'fileid' => $doc->id
+			));
+
+			$out .= '<span class="timeline-documents" mime="' . $mime . '">';
+			$out .= '<a href="' . $downloadUrl . '" class="btn-link ' . $class . '" target="_blank">';
+			$out .= img_mime($filePath) . ' ' . dol_escape_htmltag($doc->filename);
+			$out .= '</a>';
+			$out .= '</span>';
+		}
+
+		$out .= '</div></div>';
+
+		return $out;
+	}
+
+	/**
+	 * Extract attachment names from email body (French label in template)
+	 *
+	 * @param string $note
+	 * @return array
+	 */
+	private function extractMailAttachmentNames(string $note) : array
+	{
+		if (empty($note)) {
+			return array();
+		}
+
+		$text = trim(preg_replace('/\s+/', ' ', strip_tags($note)));
+		if (empty($text)) {
+			return array();
+		}
+
+		$names = array();
+		if (preg_match('/Fichiers et documents joints\s*:\s*(.+)$/i', $text, $matches)) {
+			$raw = trim($matches[1]);
+			if (!empty($raw)) {
+				$parts = preg_split('/\s*,\s*|\s*;\s*/', $raw);
+				foreach ($parts as $part) {
+					$part = trim($part);
+					if ($part !== '') {
+						$names[] = $part;
+					}
+				}
+			}
+		}
+
+		return array_unique($names);
+	}
+
+	/**
+	 * Filter documents by a whitelist of filenames
+	 *
+	 * @param array $documents
+	 * @param array $names
+	 * @return array
+	 */
+	private function filterDocumentsByNames(array $documents, array $names) : array
+	{
+		if (empty($documents) || empty($names)) {
+			return array();
+		}
+
+		$namesLower = array_map('strtolower', $names);
+		$filtered = array();
+		foreach ($documents as $doc) {
+			if (!empty($doc->filename) && in_array(strtolower($doc->filename), $namesLower, true)) {
+				$filtered[] = $doc;
+			}
+		}
+
+		return $filtered;
 	}
 
 	/**

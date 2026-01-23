@@ -239,12 +239,13 @@ class SupplierProposalService
 
 		$TAction = array();
 
-		$sql = "SELECT id, fk_user_author, fk_user_action, datec, datep, label, note, code, percent, fk_element, entity";
+		$sql = "SELECT id, fk_user_author, fk_user_action, datec, datep, label, note, code, percent, fk_element, entity,";
+		$sql .= " email_subject, email_from, email_to, email_tocc";
 		$sql .= ' FROM ' . $this->db->prefix() . 'actioncomm';
 		$sql .= ' WHERE fk_element = ' . intval($object->id);
 		$sql .= ' AND elementtype = "' . $this->db->escape($object->element) . '"';
 		// Only keep discussion-style actions to avoid showing automatic system events
-		$sql .= ' AND code = "' . $this->db->escape('AC_OTH') . '"';
+		$sql .= ' AND code IN ("' . $this->db->escape('AC_OTH') . '", "' . $this->db->escape('AC_PROPOSAL_SUPPLIER_SENTBYMAIL') . '")';
 		$sql .= ' ORDER BY datep ASC';
 
 		$resql = $this->db->query($sql);
@@ -264,6 +265,10 @@ class SupplierProposalService
 				$action->percentage = $obj->percent;
 				$action->elementid = $obj->fk_element;
 				$action->entity = $obj->entity;
+				$action->email_subject = $obj->email_subject ?? '';
+				$action->email_from = $obj->email_from ?? '';
+				$action->email_to = $obj->email_to ?? '';
+				$action->email_tocc = $obj->email_tocc ?? '';
 
 				$TAction[] = $action;
 			}
