@@ -6,7 +6,7 @@ if ($isCli) {
 	exit(1);
 }
 
-require __DIR__ . '/../../..//main.inc.php';
+require __DIR__ . '/../../../main.inc.php';
 
 if (empty($user) || empty($user->id) || empty($user->admin)) {
 	accessforbidden();
@@ -39,12 +39,15 @@ if ($db->num_rows($resCheck) > 0) {
 	exit;
 }
 
+$db->begin();
 $sqlAlter = "ALTER TABLE " . $table . " ADD COLUMN " . $field . " varchar(255) DEFAULT NULL AFTER ref_ext";
 $resAlter = $db->query($sqlAlter);
 
 if ($resAlter) {
+	$db->commit();
 	print '<div class="ok">Column "' . dol_escape_htmltag($field) . '" added to ' . dol_escape_htmltag($table) . '.</div>';
 } else {
+	$db->rollback();
 	print '<div class="error">' . dol_escape_htmltag($db->lasterror()) . '</div>';
 }
 
