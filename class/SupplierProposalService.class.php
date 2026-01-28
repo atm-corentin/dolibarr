@@ -87,7 +87,7 @@ class SupplierProposalService
 	 */
 	private function fetchMainProposalData(int $id)
 	{
-		$sql = 'SELECT sp.rowid, sp.ref, sp.ref_ext, sp.fk_soc, sp.fk_projet, sp.datec, sp.date_valid,';
+		$sql = 'SELECT sp.rowid, sp.ref, sp.ref_ext, sp.ref_fourn as ref_supplier, sp.fk_soc, sp.fk_projet, sp.datec, sp.date_valid,';
 		$sql .= ' sp.date_livraison, sp.total_ht, sp.total_tva, sp.total_ttc, sp.fk_statut,';
 		$sql .= ' sp.note_private, sp.note_public, sp.entity,';
 		$sql .= ' sp.multicurrency_code, sp.multicurrency_tx, sp.multicurrency_total_ht,';
@@ -125,6 +125,7 @@ class SupplierProposalService
 		$object->id = $obj->rowid;
 		$object->ref = $obj->ref;
 		$object->ref_ext = $obj->ref_ext;
+		$object->ref_supplier = $obj->ref_supplier ?? '';
 		$object->socid = $obj->fk_soc;
 		$object->fk_project = $obj->fk_projet;
 		$object->date_creation = $this->db->jdate($obj->datec);
@@ -238,12 +239,13 @@ class SupplierProposalService
 
 		$TAction = array();
 
-		$sql = "SELECT id, fk_user_author, fk_user_action, datec, datep, label, note, code, percent, fk_element, entity";
+		$sql = "SELECT id, fk_user_author, fk_user_action, datec, datep, label, note, code, percent, fk_element, entity,";
+		$sql .= " email_subject, email_from, email_to, email_tocc";
 		$sql .= ' FROM ' . $this->db->prefix() . 'actioncomm';
 		$sql .= ' WHERE fk_element = ' . intval($object->id);
 		$sql .= ' AND elementtype = "' . $this->db->escape($object->element) . '"';
 		// Only keep discussion-style actions to avoid showing automatic system events
-		$sql .= ' AND code = "' . $this->db->escape('AC_OTH') . '"';
+		$sql .= ' AND code IN ("' . $this->db->escape('AC_OTH') . '", "' . $this->db->escape('AC_PROPOSAL_SUPPLIER_SENTBYMAIL') . '")';
 		$sql .= ' ORDER BY datep ASC';
 
 		$resql = $this->db->query($sql);
@@ -263,6 +265,10 @@ class SupplierProposalService
 				$action->percentage = $obj->percent;
 				$action->elementid = $obj->fk_element;
 				$action->entity = $obj->entity;
+				$action->email_subject = $obj->email_subject ?? '';
+				$action->email_from = $obj->email_from ?? '';
+				$action->email_to = $obj->email_to ?? '';
+				$action->email_tocc = $obj->email_tocc ?? '';
 
 				$TAction[] = $action;
 			}
@@ -318,7 +324,7 @@ class SupplierProposalService
 	 */
 	public function getSqlForExternalList(int $socId) : string
 	{
-		$sql = 'SELECT sp.rowid, sp.ref, sp.ref_ext, sp.datec, sp.total_ht, sp.total_tva, sp.fk_statut, sp.entity, sp.date_livraison ';
+		$sql = 'SELECT sp.rowid, sp.ref, sp.ref_ext, sp.ref_fourn as ref_supplier, sp.datec, sp.total_ht, sp.total_tva, sp.fk_statut, sp.entity, sp.date_livraison ';
 		$sql .= ' FROM `'.$this->db->prefix().'supplier_proposal` sp';
 		$sql .= ' WHERE sp.fk_soc = '.intval($socId);
 		$sql .= ' AND sp.fk_statut IN ('.SupplierProposal::STATUS_VALIDATED.', '.SupplierProposal::STATUS_SIGNED.', '.SupplierProposal::STATUS_CLOSE.', '.SupplierProposal::STATUS_NOTSIGNED.')';

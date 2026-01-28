@@ -84,6 +84,7 @@ class SupplierProposalView
 
 		// Main fields
 		$out .= $this->renderField('CLICHAUMEIL_REFNAME', $thirdparty->name ?? '');
+		$out .= $this->renderField('Label', $object->ref_supplier ?? '');
 		$out .= $this->renderField('CLICHAUMEIL_PROJECT', $object->project_ref ?? '' );
 		$out .= $this->renderField('CLICHAUMEIL_STATUS', $this->getSupplierStatusLabel($object));
 		$out .= $this->renderField('CLICHAUMEIL_DATEDELIVERYPLANNED', dol_print_date($object->delivery_date), '' ,' :');
@@ -348,10 +349,32 @@ class SupplierProposalView
 		$out .= '</h3>';
 
 		// Body
-		$out .= '<div class="timeline-body">' . nl2br($action->note_private) . '</div>';
+		$out .= '<div class="timeline-body">';
+		if ($action->code === 'AC_PROPOSAL_SUPPLIER_SENTBYMAIL' && !empty($action->email_subject)) {
+			$out .= '<div class="timeline-mail-header">';
+			$out .= '<div><strong>' . $this->langs->trans('MailTopic') . '</strong> ' . dol_escape_htmltag($action->email_subject) . '</div>';
+			$out .= '<div><strong>' . $this->langs->trans('MailFrom') . '</strong> ' . dol_escape_htmltag($action->email_from) . '</div>';
+			$out .= '<div><strong>' . $this->langs->trans('MailTo') . '</strong> ' . dol_escape_htmltag($action->email_to) . '</div>';
+			if (!empty($action->email_tocc)) {
+				$out .= '<div><strong>' . $this->langs->trans('MailCC') . '</strong> ' . dol_escape_htmltag($action->email_tocc) . '</div>';
+			}
+			$out .= '</div>';
+		}
+		if ($action->code === 'AC_PROPOSAL_SUPPLIER_SENTBYMAIL') {
+			$out .= dol_string_onlythesehtmltags($action->note_private);
+		} else {
+			$out .= dol_string_onlythesehtmltags(dol_htmlentitiesbr($action->note_private));
+		}
+		$out .= '</div>';
 
-		// Files
-		$out .= $this->renderTimelineFiles($action);
+		// Files (agenda attachments) or fallback to proposal documents for sent emails
+		$timelineFilesHtml = '';
+		if (in_array($action->code, array('AC_OTH', 'AC_PROPOSAL_SUPPLIER_SENTBYMAIL'), true)) {
+			$timelineFilesHtml = $this->renderTimelineFiles($action);
+		}
+		if (!empty($timelineFilesHtml)) {
+			$out .= $timelineFilesHtml;
+		}
 
 		$out .= '</div>'; // timeline-item
 		$out .= '</li>';
@@ -411,6 +434,7 @@ class SupplierProposalView
 
 		return $out;
 	}
+
 
 	/**
 	 * Render comment form
