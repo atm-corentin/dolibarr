@@ -1,5 +1,8 @@
 # CHANGELOG MODULE CLICHAUMEIL FOR [DOLIBARR ERP CRM](https://www.dolibarr.org)
 
+## 1.11
+- NEW: Add script to add ref_supplier column on supplier proposals *28/01/2026* - 1.11.0
+
 ## 1.10
 - FIX: Load additional language file and adjust supplier proposal status handling *15/01/2026* - 1.10.0
 - NEW: Add user contact assignment to supplier proposals in triggers *15/01/2026* - 1.10.0
