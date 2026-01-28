@@ -1,6 +1,8 @@
 # CHANGELOG MODULE CLICHAUMEIL FOR [DOLIBARR ERP CRM](https://www.dolibarr.org)
 
+
 ## Unreleased
+- NEW: Add script to add ref_supplier column on supplier proposals *28/01/2026* - 1.12.0
 - NEW : Supplier portal proposal timeline now shows sent-by-mail messages (AC_PROPOSAL_SUPPLIER_SENTBYMAIL) with mail header (subject/from/to/cc) and safe HTML rendering. Email attachments are copied to the agenda event to make them downloadable on the portal. *23/01/2026* - 1.12.0
 - FIX : External supplier proposal list/card now uses ref_supplier alias for label display - *20/01/2026* - 1.11.0
 - NEW : External supplier proposal list/card show supplier label (ref_fourn) and hydration updated *19/01/2026* -1.11.0
