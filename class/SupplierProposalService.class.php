@@ -87,7 +87,7 @@ class SupplierProposalService
 	 */
 	private function fetchMainProposalData(int $id)
 	{
-		$sql = 'SELECT sp.rowid, sp.ref, sp.ref_ext, sp.ref_fourn as ref_supplier, sp.fk_soc, sp.fk_projet, sp.datec, sp.date_valid,';
+		$sql = 'SELECT sp.rowid, sp.ref, sp.ref_ext, sp.ref_supplier as ref_supplier, sp.fk_soc, sp.fk_projet, sp.datec, sp.date_valid,';
 		$sql .= ' sp.date_livraison, sp.total_ht, sp.total_tva, sp.total_ttc, sp.fk_statut,';
 		$sql .= ' sp.note_private, sp.note_public, sp.entity,';
 		$sql .= ' sp.multicurrency_code, sp.multicurrency_tx, sp.multicurrency_total_ht,';
@@ -161,7 +161,7 @@ class SupplierProposalService
 		$sqlLines .= ' spd.total_ht, spd.total_tva, spd.total_localtax1, spd.total_localtax2, spd.total_ttc,';
 		$sqlLines .= ' spd.fk_product, spd.product_type, spd.label, spd.fk_unit, spd.rang, spd.special_code,';
 		$sqlLines .= ' spd.multicurrency_subprice, spd.multicurrency_total_ht, spd.multicurrency_total_tva, spd.multicurrency_total_ttc,';
-		$sqlLines .= ' p.ref as product_ref, p.label as product_label, pfp.ref_fourn as ref_supplier';
+		$sqlLines .= ' p.ref as product_ref, p.label as product_label, pfp.ref_supplier as ref_supplier';
 		$sqlLines .= ' FROM ' . $this->db->prefix() . 'supplier_proposaldet spd';
 		$sqlLines .= ' LEFT JOIN ' . $this->db->prefix() . 'product p ON spd.fk_product = p.rowid';
 		$sqlLines .= ' LEFT JOIN ' . $this->db->prefix() . 'product_fournisseur_price pfp ON pfp.fk_product = spd.fk_product';
@@ -324,7 +324,7 @@ class SupplierProposalService
 	 */
 	public function getSqlForExternalList(int $socId) : string
 	{
-		$sql = 'SELECT sp.rowid, sp.ref, sp.ref_ext, sp.ref_fourn as ref_supplier, sp.datec, sp.total_ht, sp.total_tva, sp.fk_statut, sp.entity, sp.date_livraison ';
+		$sql = 'SELECT sp.rowid, sp.ref, sp.ref_ext, sp.ref_supplier as ref_supplier, sp.datec, sp.total_ht, sp.total_tva, sp.fk_statut, sp.entity, sp.date_livraison ';
 		$sql .= ' FROM `'.$this->db->prefix().'supplier_proposal` sp';
 		$sql .= ' WHERE sp.fk_soc = '.intval($socId);
 		$sql .= ' AND sp.fk_statut IN ('.SupplierProposal::STATUS_VALIDATED.', '.SupplierProposal::STATUS_SIGNED.', '.SupplierProposal::STATUS_CLOSE.', '.SupplierProposal::STATUS_NOTSIGNED.')';
