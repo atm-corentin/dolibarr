@@ -60,6 +60,8 @@ class CliChaumeilProductCostImportService
 			return 0;
 		}
 
+		$this->resolveImportedFgPercent($product, $values);
+
 		$this->db->begin();
 
 		$result = $this->applyImportedCostFields($product, $values, $user);
@@ -110,6 +112,40 @@ class CliChaumeilProductCostImportService
 		$product->fetch_optionals($product->id);
 
 		return $product;
+	}
+
+	/**
+	 * Resolve the FG%% value to use for an import row.
+	 *
+	 * Rules:
+	 * - present and filled in import: keep imported value
+	 * - present and empty in import: inject configured default
+	 * - absent in import and already filled in database: keep database value
+	 * - absent in import and empty in database: inject configured default
+	 *
+	 * @param Product             $product Product loaded from database.
+	 * @param array<string,mixed> $values  Import values.
+	 * @return void
+	 */
+	private function resolveImportedFgPercent(Product $product, array &$values): void
+	{
+		$importKey = 'extra.clichaumeil_fg_percent';
+		if (array_key_exists($importKey, $values)) {
+			$value = $values[$importKey];
+			if (!($value === null || $value === '')) {
+				return;
+			}
+
+			$values[$importKey] = CliChaumeilProductCostCalculator::getDefaultOverheadRate();
+			return;
+		}
+
+		$currentValue = $product->array_options[CliChaumeilProductCostCalculator::EXTRA_PREFIX . CliChaumeilProductCostCalculator::FG_PERCENT_FIELD] ?? null;
+		if ($currentValue !== null && $currentValue !== '') {
+			return;
+		}
+
+		$values[$importKey] = CliChaumeilProductCostCalculator::getDefaultOverheadRate();
 	}
 
 	/**

@@ -573,13 +573,6 @@ class ActionsClichaumeil extends CommonHookActions
 		}
 
 		$values = $this->extractImportValues($parameters);
-		if (!$this->resolveImportFgPercent($values)) {
-			$langs->load('clichaumeil@clichaumeil');
-			dol_syslog(__METHOD__ . ' missing fg_percent in import row for product ' . ($values['p.ref'] ?? ''), LOG_ERR);
-			setEventMessages($langs->trans('CliChaumeilErrorMissingFgPercent', $values['p.ref'] ?? ''), null, 'errors');
-			return -1;
-		}
-
 		$service = new CliChaumeilProductCostImportService($this->db);
 		$result = $service->syncImportedProductCost($values, $user);
 		return ($result < 0) ? -1 : 0;
@@ -602,41 +595,26 @@ class ActionsClichaumeil extends CommonHookActions
 		}
 
 		foreach ($match as $position => $target) {
-			$index = ((int) $position) - 1;
-			if ($index < 0 || !isset($records[$index]['val'])) {
-				continue;
+			$positionInt = (int) $position;
+			$candidateIndexes = array($positionInt, $positionInt - 1);
+			$found = false;
+
+			foreach ($candidateIndexes as $index) {
+				if ($index < 0 || !isset($records[$index]['val'])) {
+					continue;
+				}
+
+				$values[$target] = $records[$index]['val'];
+				$found = true;
+				break;
 			}
 
-			$values[$target] = $records[$index]['val'];
+			if (!$found) {
+				continue;
+			}
 		}
 
 		return $values;
-	}
-	/**
-	 * Ensure the import row has a usable FG%% value.
-	 *
-	 * If the import file omits FG%% or provides it empty, the configured default
-	 * overhead rate is injected when available. Otherwise the row remains invalid.
-	 *
-	 * @param array<string,mixed> $values Import row values.
-	 * @return bool
-	 */
-	private function resolveImportFgPercent(array &$values): bool
-	{
-		if (array_key_exists('extra.clichaumeil_fg_percent', $values)) {
-			$value = $values['extra.clichaumeil_fg_percent'];
-			if (!($value === null || $value === '')) {
-				return true;
-			}
-		}
-
-		$defaultRate = getDolGlobalString('CLICHAUMEIL_DEFAULT_OVERHEAD_RATE', '');
-		if ($defaultRate === '') {
-			return false;
-		}
-
-		$values['extra.clichaumeil_fg_percent'] = $defaultRate;
-		return true;
 	}
 
 	/**
