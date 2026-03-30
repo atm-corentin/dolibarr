@@ -27,7 +27,10 @@
 require_once DOL_DOCUMENT_ROOT . '/core/class/commonhookactions.class.php';
 require_once DOL_DOCUMENT_ROOT . '/product/class/product.class.php';
 require_once DOL_DOCUMENT_ROOT . '/core/class/extrafields.class.php';
+require_once DOL_DOCUMENT_ROOT . '/comm/propal/class/propal.class.php';
+require_once DOL_DOCUMENT_ROOT . '/user/class/user.class.php';
 require_once __DIR__ . '/CliChaumeilProductCost.class.php';
+require_once __DIR__ . '/CliChaumeilProposalMarginGuard.class.php';
 require_once __DIR__ . '/../lib/clichaumeil.lib.php';
 require_once DOL_DOCUMENT_ROOT . '/categories/class/categorie.class.php';
 require_once DOL_DOCUMENT_ROOT . '/product/class/product.class.php';
@@ -73,6 +76,16 @@ class ActionsClichaumeil extends CommonHookActions
 	/** @var bool */
 	private $subcontractorAssetsLoaded = false;
 
+	/** @var bool */
+	private $proposalValidationGuardMarkerPrinted = false;
+
+	private const PROPAL_CARD_CONTEXT = 'propalcard';
+
+	private const PROPAL_LIST_CONTEXT = 'propallist';
+
+	private const VALIDATE_ACTION = 'validate';
+
+	private const VALIDATION_GUARD_DOM_ID = 'clichaumeil-propal-validation-guard';
 
 	private const COST_BREAKDOWN_FIELDS = array(
 		'clichaumeil_pa_support',
@@ -129,24 +142,26 @@ class ActionsClichaumeil extends CommonHookActions
 	 */
 	public function addMoreActionsButtons(array $parameters, CommonObject &$object, string &$action, HookManager $hookmanager)
 	{
-		global $langs, $user, $conf;
+		global $langs, $user;
 		$langs->loadLangs(array('clichaumeil@clichaumeil', 'supplier_proposal', 'companies', 'main'));
 
 		require_once DOL_DOCUMENT_ROOT . '/supplier_proposal/class/supplier_proposal.class.php';
-		require_once DOL_DOCUMENT_ROOT . '/comm/propal/class/propal.class.php';
 		require_once DOL_DOCUMENT_ROOT . '/commande/class/commande.class.php';
 
 		if (!$this->shouldShowSubcontractorPicker($parameters, $object, $user)) {
+			$this->renderProposalValidationGuardMarker($parameters, $object, $langs, $user);
 			return 0;
 		}
 
 		$supplierProposals = SupplierProposalService::loadLinkedSupplierProposals($object, $this->db);
 		$supplierProposals = SupplierProposalService::preloadThirdparties($supplierProposals, $this->db);
 		if (!$this->hasSelectableSupplierProposal($supplierProposals)) {
+			$this->renderProposalValidationGuardMarker($parameters, $object, $langs, $user);
 			return 0;
 		}
 
 		$this->renderSubcontractorPicker($object, $supplierProposals, $langs);
+		$this->renderProposalValidationGuardMarker($parameters, $object, $langs, $user);
 
 		return 0;
 	}
@@ -154,9 +169,9 @@ class ActionsClichaumeil extends CommonHookActions
 	/**
 	 * Check if the subcontractor picker should be displayed in the current context.
 	 *
-	 * @param array<string,mixed> $parameters
-	 * @param CommonObject        $object
-	 * @param User                $user
+	 * @param array<string,mixed> $parameters Hook metadata.
+	 * @param CommonObject        $object     Current business object.
+	 * @param User                $user       Current user.
 	 * @return bool
 	 */
 	private function shouldShowSubcontractorPicker(array $parameters, CommonObject $object, User $user): bool
@@ -185,7 +200,7 @@ class ActionsClichaumeil extends CommonHookActions
 	/**
 	 * Ensure there are selectable supplier proposals and none is already signed.
 	 *
-	 * @param SupplierProposal[] $supplierProposals
+	 * @param SupplierProposal[] $supplierProposals Supplier proposals linked to the current object.
 	 * @return bool
 	 */
 	private function hasSelectableSupplierProposal(array $supplierProposals): bool
@@ -207,9 +222,9 @@ class ActionsClichaumeil extends CommonHookActions
 	/**
 	 * Render button, modal and required assets for subcontractor selection.
 	 *
-	 * @param CommonObject        $object
-	 * @param SupplierProposal[]  $supplierProposals
-	 * @param Translate           $langs
+	 * @param CommonObject        $object            Current business object.
+	 * @param SupplierProposal[]  $supplierProposals Supplier proposals available for selection.
+	 * @param Translate           $langs             Translation handler.
 	 * @return void
 	 */
 	private function renderSubcontractorPicker(CommonObject $object, array $supplierProposals, Translate $langs): void
@@ -241,6 +256,90 @@ class ActionsClichaumeil extends CommonHookActions
 		print '<link rel="stylesheet" type="text/css" href="' . dol_buildpath('/clichaumeil/css/subcontractor.css', 1) . '" />';
 		print '<script src="' . dol_buildpath('/clichaumeil/js/choose_subcontractor.js', 1) . '" defer></script>';
 		$this->subcontractorAssetsLoaded = true;
+	}
+
+	/**
+	 * Inject a DOM marker used to neutralize the validate button on proposal cards.
+	 *
+	 * @param array<string,mixed> $parameters Hook metadata.
+	 * @param CommonObject        $object     Current object.
+	 * @param Translate           $langs      Translation handler.
+	 * @param User                $user       Current user.
+	 * @return void
+	 */
+	private function renderProposalValidationGuardMarker(array $parameters, CommonObject $object, Translate $langs, User $user): void
+	{
+		if (!$this->shouldShowProposalValidationGuard($parameters, $object, $user)) {
+			return;
+		}
+
+		$guard = new CliChaumeilProposalMarginGuard();
+
+		try {
+			if (!$guard->hasBlockingNegativeMargin($object)) {
+				return;
+			}
+		} catch (RuntimeException $exception) {
+			dol_syslog(__METHOD__ . ' - ' . $exception->getMessage(), LOG_ERR);
+			return;
+		}
+
+		$message = $guard->getCardBlockingMessage($langs);
+		print '<span id="' . self::VALIDATION_GUARD_DOM_ID . '" data-message="' . dol_escape_htmltag($message) . '" style="display:none;"></span>';
+		$this->proposalValidationGuardMarkerPrinted = true;
+	}
+
+	/**
+	 * Check whether the proposal card should expose a validation guard marker.
+	 *
+	 * @param array<string,mixed> $parameters Hook metadata.
+	 * @param CommonObject        $object     Current object.
+	 * @param User                $user       Current user.
+	 * @return bool
+	 */
+	private function shouldShowProposalValidationGuard(array $parameters, CommonObject $object, User $user): bool
+	{
+		$context = (string) ($parameters['context'] ?? ($parameters['currentcontext'] ?? ''));
+		if (strpos($context, self::PROPAL_CARD_CONTEXT) === false) {
+			return false;
+		}
+
+		if (!$object instanceof Propal) {
+			return false;
+		}
+
+		if ((int) $object->status !== Propal::STATUS_DRAFT) {
+			return false;
+		}
+
+		if (!$this->userCanValidateProposal($user)) {
+			return false;
+		}
+
+		if (count($object->lines) <= 0) {
+			return false;
+		}
+
+		if ((float) $object->total_ttc < 0 && !getDolGlobalString('PROPAL_ENABLE_NEGATIVE')) {
+			return false;
+		}
+
+		return true;
+	}
+
+	/**
+	 * Check whether current user can validate proposals according to Dolibarr permissions.
+	 *
+	 * @param User $user Current user.
+	 * @return bool
+	 */
+	private function userCanValidateProposal(User $user): bool
+	{
+		if (!getDolGlobalString('MAIN_USE_ADVANCED_PERMS')) {
+			return $user->hasRight('propal', 'creer');
+		}
+
+		return $user->hasRight('propal', 'propal_advance', 'validate');
 	}
 
 
@@ -276,10 +375,10 @@ class ActionsClichaumeil extends CommonHookActions
 	/**
 	 * Pre-fill product extrafields and lock computed fields when applicable.
 	 *
-	 * @param array<string,mixed> $parameters
-	 * @param CommonObject        $object
-	 * @param string              $action
-	 * @param HookManager         $hookmanager
+	 * @param array<string,mixed> $parameters  Hook metadata.
+	 * @param CommonObject        $object      Current object.
+	 * @param string              $action      Current action.
+	 * @param HookManager         $hookmanager Hook manager instance.
 	 * @return int
 	 */
 	public function formObjectOptions($parameters, &$object, &$action, $hookmanager)
@@ -301,17 +400,23 @@ class ActionsClichaumeil extends CommonHookActions
 	/**
 	 * Handle cost breakdown extrafields updates from supplier price tab.
 	 *
-	 * @param array<string,mixed> $parameters
-	 * @param CommonObject        $object
-	 * @param string              $action
-	 * @param HookManager         $hookmanager
+	 * @param array<string,mixed> $parameters  Hook metadata.
+	 * @param CommonObject        $object      Current object.
+	 * @param string              $action      Current action.
+	 * @param HookManager         $hookmanager Hook manager instance.
 	 * @return int
 	 */
-	public function doActions($parameters, &$object, &$action, $hookmanager)
+	public function doActions(array $parameters, CommonObject &$object, string &$action, HookManager $hookmanager): int
 	{
 		global $user, $langs;
+		$langs->load('clichaumeil@clichaumeil');
 
 		$context = (string) ($parameters['context'] ?? ($parameters['currentcontext'] ?? ''));
+
+		if (strpos($context, self::PROPAL_LIST_CONTEXT) !== false) {
+			return $this->handleProposalMassValidationAction($action, $langs);
+		}
+
 		if (strpos($context, 'pricesuppliercard') === false) {
 			return 0;
 		}
@@ -371,15 +476,67 @@ class ActionsClichaumeil extends CommonHookActions
 		return 0;
 	}
 
+	/**
+	 * Block proposal mass validation when one selected proposal contains a negative margin.
+	 *
+	 * @param string    $action Current action by reference.
+	 * @param Translate $langs  Translation handler.
+	 * @return int
+	 */
+	private function handleProposalMassValidationAction(string &$action, Translate $langs): int
+	{
+		if ($action !== self::VALIDATE_ACTION || GETPOST('confirm', 'alpha') !== 'yes') {
+			return 0;
+		}
+
+		$selectedIds = GETPOST('toselect', 'array');
+		if (!is_array($selectedIds) || empty($selectedIds)) {
+			return 0;
+		}
+
+		$guard = new CliChaumeilProposalMarginGuard();
+		$proposal = new Propal($this->db);
+
+		foreach ($selectedIds as $selectedId) {
+			$proposalId = (int) $selectedId;
+			if ($proposalId <= 0) {
+				continue;
+			}
+
+			$fetchResult = $proposal->fetch($proposalId);
+			if ($fetchResult <= 0) {
+				$this->error = $langs->trans('CliChaumeil_PropalMassMarginValidationFetchError');
+				return -1;
+			}
+
+			try {
+				if (!$guard->hasBlockingNegativeMargin($proposal)) {
+					continue;
+				}
+
+				$message = $guard->getMassBlockingMessage($langs);
+				setEventMessages($message, null, 'errors');
+				dol_syslog(__METHOD__ . ' - ' . $message . ' proposal_id=' . $proposalId, LOG_WARNING);
+				$action = 'list';
+				return 0;
+			} catch (RuntimeException $exception) {
+				$this->error = $langs->trans('CliChaumeil_PropalMarginValidationUnexpectedError');
+				return -1;
+			}
+		}
+
+		return 0;
+	}
+
 
 	/**
 	 * Persist extrafields and recompute cost.
 	 *
-	 * @param Product     $product
-	 * @param ExtraFields $extrafields
-	 * @param string      $attr
-	 * @param User        $user
-	 * @param Translate   $langs
+	 * @param Product     $product     Product being updated.
+	 * @param ExtraFields $extrafields Extrafields handler.
+	 * @param string      $attr        Edited extrafield code.
+	 * @param User        $user        Current user.
+	 * @param Translate   $langs       Translation handler.
 	 * @return int
 	 */
 	private function handleCostUpdate(Product $product, ExtraFields $extrafields, string $attr, User $user, Translate $langs): int
@@ -408,7 +565,7 @@ class ActionsClichaumeil extends CommonHookActions
 	/**
 	 * Check CSRF token validity against current and previous token.
 	 *
-	 * @param string $token
+	 * @param string $token Token value to compare against current session tokens.
 	 * @return bool
 	 */
 	private function isCsrfTokenValid(string $token): bool
@@ -427,9 +584,9 @@ class ActionsClichaumeil extends CommonHookActions
 	/**
 	 * Overload the loadDataForCustomReports function : returns data to complete the customreport tool
 	 *
-	 * @param	array<string,mixed>	$parameters		Hook metadata (context, etc...)
-	 * @param	?string				$action 		Current action (if set). Generally create or edit or null
-	 * @param	HookManager			$hookmanager    Hook manager propagated to allow calling another hook
+	 * @param	array<string,mixed>	$parameters		Hook metadata.
+	 * @param	?string				$action 		Current action.
+	 * @param	HookManager			$hookmanager    Hook manager instance.
 	 * @return	int									Return integer < 0 on error, 0 on success, 1 to replace standard code
 	 */
 	public function loadDataForCustomReports($parameters, &$action, $hookmanager)
@@ -470,7 +627,7 @@ class ActionsClichaumeil extends CommonHookActions
 	/**
 	 * Pre-fill FG percent extrafield on new simple product when empty.
 	 *
-	 * @param Product $product
+	 * @param Product $product Product being initialized on creation form.
 	 * @return void
 	 */
 	private function populateDefaultOverheadRateOnCreate(Product $product): void
@@ -496,9 +653,9 @@ class ActionsClichaumeil extends CommonHookActions
 	/**
 	 * Overload the restrictedArea function : check permission on an object
 	 *
-	 * @param	array<string,mixed>	$parameters		Hook metadata (context, etc...)
-	 * @param	string				$action			Current action (if set). Generally create or edit or null
-	 * @param	HookManager			$hookmanager	Hook manager propagated to allow calling another hook
+	 * @param	array<string,mixed>	$parameters		Hook metadata.
+	 * @param	string				$action			Current action.
+	 * @param	HookManager			$hookmanager	Hook manager instance.
 	 * @return	int									Return integer <0 if KO,
 	 *												=0 if OK but we want to process standard actions too,
 	 *												>0 if OK and we want to replace standard actions.
@@ -523,10 +680,10 @@ class ActionsClichaumeil extends CommonHookActions
 	/**
 	 * Apply CliChaumeil price calculation after an import finishes.
 	 *
-	 * @param array<string,mixed> $parameters
-	 * @param CommonObject        $object
-	 * @param string              $action
-	 * @param HookManager         $hookmanager
+	 * @param array<string,mixed> $parameters  Hook metadata.
+	 * @param CommonObject        $object      Current object.
+	 * @param string              $action      Current action.
+	 * @param HookManager         $hookmanager Hook manager instance.
 	 * @return int
 	 */
 	public function afterImportInsert($parameters, &$object, &$action, $hookmanager)
@@ -637,7 +794,9 @@ class ActionsClichaumeil extends CommonHookActions
 	}
 
 	/**
-	 * @param array<string,mixed> $parameters
+	 * Extract import row values indexed by their mapped database target.
+	 *
+	 * @param array<string,mixed> $parameters Hook metadata containing import arrays.
 	 * @return array<string,mixed>
 	 */
 	private function extractImportValues(array $parameters): array
@@ -662,8 +821,12 @@ class ActionsClichaumeil extends CommonHookActions
 		return $values;
 	}
 
-
-
+	/**
+	 * Check whether imported values include the FG percent extrafield.
+	 *
+	 * @param array<string,mixed> $values Imported values indexed by target key.
+	 * @return bool
+	 */
 	private function hasFgPercentValueInRecord(array $values): bool
 	{
 		if (!array_key_exists('extra.clichaumeil_fg_percent', $values)) {
@@ -778,7 +941,7 @@ class ActionsClichaumeil extends CommonHookActions
 	 */
 	public function llxFooter($parameters, &$object, &$action, $hookmanager): int
 	{
-		global $langs, $user;
+		global $langs;
 
 		$langs->load('clichaumeil@clichaumeil');
 
@@ -839,6 +1002,11 @@ class ActionsClichaumeil extends CommonHookActions
 		$jsUrl = dol_buildpath('/clichaumeil/js/margin_check_warning.js', 1);
 		echo '<script src="' . $jsUrl . '" defer></script>';
 
+		if ($this->proposalValidationGuardMarkerPrinted && strpos($context, self::PROPAL_CARD_CONTEXT) !== false) {
+			$guardJsUrl = dol_buildpath('/clichaumeil/js/propal_margin_validation_guard.js', 1);
+			echo '<script src="' . $guardJsUrl . '" defer></script>';
+		}
+
 		self::$lineData = [];
 
 		return 0;
@@ -848,9 +1016,9 @@ class ActionsClichaumeil extends CommonHookActions
 	/**
 	 * Render CliChaumeil cost breakdown fields on supplier price tab.
 	 *
-	 * @param array<string,mixed> $parameters
-	 * @param mixed               $object
-	 * @param string              $action
+	 * @param array<string,mixed> $parameters Hook metadata.
+	 * @param mixed               $object     Current object or product placeholder.
+	 * @param string              $action     Current action.
 	 * @return void
 	 */
 	private function renderSupplierCostBreakdownRows(array $parameters, $object, string $action): void
@@ -942,10 +1110,10 @@ JS;
 	/**
 	 * Build HTML rows for cost breakdown.
 	 *
-	 * @param Product     $product
-	 * @param ExtraFields $extrafields
-	 * @param string      $action
-	 * @param string      $currentAttr
+	 * @param Product     $product     Product being rendered.
+	 * @param ExtraFields $extrafields Extrafields handler.
+	 * @param string      $action      Current action.
+	 * @param string      $currentAttr Currently edited extrafield code.
 	 * @return string
 	 */
 	private function buildSupplierCostRows(Product $product, ExtraFields $extrafields, string $action, string $currentAttr): string
@@ -1009,10 +1177,10 @@ JS;
 	/**
 	 * Render formatted value with currency/percent suffixes.
 	 *
-	 * @param ExtraFields $extrafields
-	 * @param Product     $product
-	 * @param string      $field
-	 * @param mixed       $value
+	 * @param ExtraFields $extrafields Extrafields handler.
+	 * @param Product     $product     Product being rendered.
+	 * @param string      $field       Extrafield code.
+	 * @param mixed       $value       Raw extrafield value.
 	 * @return string
 	 */
 	private function formatCostBreakdownOutput(ExtraFields $extrafields, Product $product, string $field, $value): string
@@ -1042,9 +1210,9 @@ JS;
 	/**
 	 * Return edit link with pencil icon.
 	 *
-	 * @param string $baseUrl
-	 * @param string $field
-	 * @param string $token
+	 * @param string $baseUrl Base URL for the edit action.
+	 * @param string $field   Extrafield code.
+	 * @param string $token   CSRF token.
 	 * @return string
 	 */
 	private function buildCostBreakdownEditLink(string $baseUrl, string $field, string $token): string
@@ -1057,8 +1225,8 @@ JS;
 	/**
 	 * Check extrafield availability.
 	 *
-	 * @param ExtraFields $extrafields
-	 * @param string      $field
+	 * @param ExtraFields $extrafields Extrafields handler.
+	 * @param string      $field       Extrafield code.
 	 * @return bool
 	 */
 	private function extrafieldExists(ExtraFields $extrafields, string $field): bool
@@ -1074,10 +1242,10 @@ JS;
 	 * The data will later be used by the JavaScript file `margin_check_warning.js`
 	 * to check for negative margins and display a warning icon when needed.
 	 *
-	 * @param array         $parameters   Hook metadata (context, current line, etc.)
-	 * @param CommonObject  $object       The business object being processed (proposal, order, invoice...)
-	 * @param string        $action       Current action (e.g., 'create', 'edit', or '')
-	 * @param HookManager   $hookmanager  Hook manager instance
+	 * @param array         $parameters   Hook metadata.
+	 * @param CommonObject  $object       The business object being processed.
+	 * @param string        $action       Current action.
+	 * @param HookManager   $hookmanager  Hook manager instance.
 	 *
 	 * @return int Returns < 0 on error, 0 on success, 1 to bypass standard code
 	 */
@@ -1090,7 +1258,6 @@ JS;
 		$commonContexts = array_intersect($TContexts, $TAllowedContexts);
 
 		if (!empty($commonContexts)) {
-
 			$line = $parameters['line'];
 			$costPrice = 0;
 			if (!empty($line->pa_ht)) {
@@ -1116,6 +1283,15 @@ JS;
 		return 0;
 	}
 
+	/**
+	 * Adjust BOM total cost with general expenses after calculation.
+	 *
+	 * @param array        $parameters  Hook metadata.
+	 * @param CommonObject $object      BOM object.
+	 * @param string       $action      Current action.
+	 * @param HookManager  $hookmanager Hook manager instance.
+	 * @return int
+	 */
 	public function calculateCostsBomAfter($parameters, &$object, &$action, $hookmanager): int
 	{
 		$action = GETPOST('action', 'alphanohtml');
@@ -1132,10 +1308,10 @@ JS;
 	/**
 	 * Hook to add more options to a setup form.
 	 *
-	 * @param   array        $parameters    Hook context parameters
-	 * @param   CommonObject $object        The object hooked (often $this, but context varies)
-	 * @param   string       $action        Current action
-	 * @param   HookManager  $hookmanager   Hook manager
+	 * @param   array        $parameters    Hook context parameters.
+	 * @param   CommonObject $object        The hooked object.
+	 * @param   string       $action        Current action.
+	 * @param   HookManager  $hookmanager   Hook manager instance.
 	 * @return  int                           <0 if KO, 0 if no action, >0 if OK
 	 */
 	public function formMoreOptions($parameters, &$object, &$action, $hookmanager)
@@ -1143,13 +1319,14 @@ JS;
 		return 0;
 	}
 
+	// @codingStandardsIgnoreStart
 	/**
 	 * Hook to add more services to the externalaccess home page.
 	 *
-	 * @param   array        $parameters    Hook context parameters
-	 * @param   CommonObject $object        The object hooked (in this case, the $context from the calling file)
-	 * @param   string       $action        Current action
-	 * @param   HookManager  $hookmanager   Hook manager
+	 * @param   array        $parameters    Hook context parameters.
+	 * @param   CommonObject $object        The hooked object.
+	 * @param   string       $action        Current action.
+	 * @param   HookManager  $hookmanager   Hook manager instance.
 	 * @return  int                           <0 if KO, 0 if no action/no block, >0 if block
 	 */
 	public function PrintServices($parameters, &$object, &$action, $hookmanager)
@@ -1222,14 +1399,16 @@ JS;
 
 		return 0;
 	}
+	// @codingStandardsIgnoreEnd
 
+	// @codingStandardsIgnoreStart
 	/**
 	 * Overloading the PrintPageView function : replacing the parent's function with the one below
 	 *
-	 * @param   array()         $parameters     Hook metadatas (context, etc...)
-	 * @param   CommonObject    &$object        The object to process (an invoice if you are in invoice module, a propale in propale's module, etc...)
-	 * @param   string          &$action        Current action (if set). Generally create or edit or null
-	 * @param   HookManager     $hookmanager    Hook manager propagated to allow calling another hook
+	 * @param   array<string,mixed> $parameters  Hook metadata.
+	 * @param   CommonObject        $object      Current object.
+	 * @param   string              $action      Current action.
+	 * @param   HookManager         $hookmanager Hook manager instance.
 	 * @return  int                             < 0 on error, 0 on success, 1 to replace standard code
 	 */
 	public function PrintPageView($parameters, &$object, &$action, $hookmanager)
@@ -1246,11 +1425,12 @@ JS;
 
 		return 0;
 	}
+	// @codingStandardsIgnoreEnd
 
 	/**
 	 * Return product ids that belong to the target categories.
 	 *
-	 * @param array $targetCatIds
+	 * @param array<int|string> $targetCatIds Target category identifiers.
 	 * @return int[]
 	 */
 	private function getTargetProducts(array $targetCatIds): array
@@ -1272,7 +1452,7 @@ JS;
 	/**
 	 * Build a map productId => array of category ids for all products present in object lines.
 	 *
-	 * @param CommonObject $object
+	 * @param CommonObject $object Business object containing lines.
 	 * @return array<int,int[]>
 	 */
 	private function mapProductCategories(CommonObject $object): array
@@ -1313,11 +1493,11 @@ JS;
 	/**
 	 * Prepare visibility payload for JS.
 	 *
-	 * @param array     $lines
-	 * @param int[]     $targetProducts
-	 * @param array     $targetCatIds
-	 * @param string    $context
-	 * @param array     $productCategories
+	 * @param array     $lines             Object lines to inspect.
+	 * @param int[]     $targetProducts    Product ids explicitly targeted.
+	 * @param array     $targetCatIds      Target category ids.
+	 * @param string    $context           Current element context.
+	 * @param array     $productCategories Product categories indexed by product id.
 	 * @return array<int,array<string,mixed>>
 	 */
 	private function buildLineVisibilities(array $lines, array $targetProducts, array $targetCatIds, string $context, array $productCategories): array
@@ -1349,5 +1529,4 @@ JS;
 
 		return $lineVisibilities;
 	}
-
 }
