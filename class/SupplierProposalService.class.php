@@ -116,7 +116,7 @@ class SupplierProposalService
 	/**
 	 * Populate proposal object from database result
 	 *
-	 * @param SupplierProposal $object
+	 * @param SupplierProposal $object Proposal object to populate
 	 * @param object $obj Database row
 	 * @return void
 	 */
@@ -151,7 +151,7 @@ class SupplierProposalService
 	/**
 	 * Fetch proposal lines
 	 *
-	 * @param SupplierProposal $object
+	 * @param SupplierProposal $object Proposal object receiving loaded lines
 	 * @return void
 	 */
 	private function fetchProposalLines(SupplierProposal $object) : void
@@ -161,7 +161,7 @@ class SupplierProposalService
 		$sqlLines .= ' spd.total_ht, spd.total_tva, spd.total_localtax1, spd.total_localtax2, spd.total_ttc,';
 		$sqlLines .= ' spd.fk_product, spd.product_type, spd.label, spd.fk_unit, spd.rang, spd.special_code,';
 		$sqlLines .= ' spd.multicurrency_subprice, spd.multicurrency_total_ht, spd.multicurrency_total_tva, spd.multicurrency_total_ttc,';
-		$sqlLines .= ' p.ref as product_ref, p.label as product_label, pfp.ref_supplier as ref_supplier';
+		$sqlLines .= ' p.ref as product_ref, p.label as product_label, pfp.ref_fourn as ref_supplier';
 		$sqlLines .= ' FROM ' . $this->db->prefix() . 'supplier_proposaldet spd';
 		$sqlLines .= ' LEFT JOIN ' . $this->db->prefix() . 'product p ON spd.fk_product = p.rowid';
 		$sqlLines .= ' LEFT JOIN ' . $this->db->prefix() . 'product_fournisseur_price pfp ON pfp.fk_product = spd.fk_product';
@@ -230,7 +230,7 @@ class SupplierProposalService
 	/**
 	 * Fetch actions/comments for a proposal
 	 *
-	 * @param SupplierProposal $object
+	 * @param SupplierProposal $object Proposal object
 	 * @return array Array of ActionComm objects
 	 */
 	public function fetchProposalActions(SupplierProposal $object) : array
@@ -281,7 +281,7 @@ class SupplierProposalService
 	/**
 	 * Get ECM file list for proposal
 	 *
-	 * @param SupplierProposal $object
+	 * @param SupplierProposal $object Proposal object
 	 * @param bool $publicOnly Only public files
 	 * @return array
 	 */
@@ -424,8 +424,8 @@ class SupplierProposalService
 	/**
 	 * Load supplier proposals from a commande origin propal (both directions).
 	 *
-	 * @param CommonObject $object
-	 * @param DoliDB       $db
+	 * @param CommonObject $object Object to enrich with linked supplier proposals
+	 * @param DoliDB       $db Database handler
 	 * @return void
 	 */
 	private static function loadSupplierProposalsFromOriginPropal(CommonObject $object, DoliDB $db): void
@@ -459,8 +459,8 @@ class SupplierProposalService
 	/**
 	 * Preload thirdparties for a list of supplier proposals to avoid N+1 queries in views.
 	 *
-	 * @param SupplierProposal[] $supplierProposals
-	 * @param DoliDB             $db
+	 * @param SupplierProposal[] $supplierProposals Supplier proposals to enrich
+	 * @param DoliDB             $db Database handler
 	 * @return SupplierProposal[]
 	 */
 	public static function preloadThirdparties(array $supplierProposals, DoliDB $db): array
