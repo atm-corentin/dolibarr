@@ -496,6 +496,8 @@ class ActionsClichaumeil extends CommonHookActions
 
 		$guard = new CliChaumeilProposalMarginGuard();
 		$proposal = new Propal($this->db);
+		$blockingProposalLinks = array();
+		$blockingProposalIds = array();
 
 		foreach ($selectedIds as $selectedId) {
 			$proposalId = (int) $selectedId;
@@ -514,15 +516,21 @@ class ActionsClichaumeil extends CommonHookActions
 					continue;
 				}
 
-				$message = $guard->getMassBlockingMessage($langs);
-				setEventMessages($message, null, 'errors');
-				dol_syslog(__METHOD__ . ' - ' . $message . ' proposal_id=' . $proposalId, LOG_WARNING);
-				$action = 'list';
-				return 0;
+				$blockingProposalLinks[] = $proposal->getNomUrl(1);
+				$blockingProposalIds[] = $proposalId;
 			} catch (RuntimeException $exception) {
 				$this->error = $langs->trans('CliChaumeil_PropalMarginValidationUnexpectedError');
 				return -1;
 			}
+		}
+
+		if (!empty($blockingProposalLinks)) {
+			$message = $langs->transnoentities('CliChaumeil_PropalMassMarginValidationBlockedList');
+			$message .= '<br>' . implode('<br>', $blockingProposalLinks);
+			setEventMessages($message, null, 'errors');
+			dol_syslog(__METHOD__ . ' - blocking proposal ids=' . implode(',', $blockingProposalIds), LOG_WARNING);
+			$action = 'list';
+			return 0;
 		}
 
 		return 0;
@@ -945,13 +953,13 @@ class ActionsClichaumeil extends CommonHookActions
 
 		$langs->load('clichaumeil@clichaumeil');
 
-		$context = (string) ($parameters['context'] ?? ($parameters['currentcontext'] ?? ''));
-		if (strpos($context, 'pricesuppliercard') !== false) {
+		$pageContext = (string) ($parameters['context'] ?? ($parameters['currentcontext'] ?? ''));
+		if (strpos($pageContext, 'pricesuppliercard') !== false) {
 			$this->renderSupplierCostBreakdownRows($parameters, $object, $action);
 		}
 
 		// Hide moved extrafields on product card to avoid duplicate display
-		if (strpos($context, 'productcard') !== false && strpos($context, 'pricesuppliercard') === false) {
+		if (strpos($pageContext, 'productcard') !== false && strpos($pageContext, 'pricesuppliercard') === false) {
 			$this->hideCostBreakdownOnProductCard();
 		}
 
@@ -970,9 +978,9 @@ class ActionsClichaumeil extends CommonHookActions
 		if (!empty($object) && in_array($object->element, $allowedElements, true) && !empty($targetCatIds)) {
 			$targetProducts = $this->getTargetProducts($targetCatIds);
 			if (!empty($targetProducts)) {
-				$context = $object->element;
+				$lineContext = $object->element;
 				$productCategories = $this->mapProductCategories($object);
-				$lineVisibilities = $this->buildLineVisibilities($object->lines, $targetProducts, $targetCatIds, $context, $productCategories);
+				$lineVisibilities = $this->buildLineVisibilities($object->lines, $targetProducts, $targetCatIds, $lineContext, $productCategories);
 
 				$config = array(
 					'targetProducts' => $targetProducts,
@@ -1002,7 +1010,7 @@ class ActionsClichaumeil extends CommonHookActions
 		$jsUrl = dol_buildpath('/clichaumeil/js/margin_check_warning.js', 1);
 		echo '<script src="' . $jsUrl . '" defer></script>';
 
-		if ($this->proposalValidationGuardMarkerPrinted && strpos($context, self::PROPAL_CARD_CONTEXT) !== false) {
+		if ($this->proposalValidationGuardMarkerPrinted && strpos($pageContext, self::PROPAL_CARD_CONTEXT) !== false) {
 			$guardJsUrl = dol_buildpath('/clichaumeil/js/propal_margin_validation_guard.js', 1);
 			echo '<script src="' . $guardJsUrl . '" defer></script>';
 		}
