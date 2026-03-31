@@ -325,7 +325,7 @@ class ActionsClichaumeil extends CommonHookActions
 		}
 
 		$attr = GETPOST('attr', 'aZ09');
-		$isCostBreakdown = GETPOST('clichaumeil_cost_breakdown', 'int') === 1;
+		$isCostBreakdown = (int) GETPOST('clichaumeil_cost_breakdown', 'int') === 1;
 		if ($action !== 'update_extrafields' || !$isCostBreakdown || !in_array($attr, self::COST_BREAKDOWN_FIELDS, true) || $attr === self::READONLY_FIELD) {
 			return 0;
 		}
