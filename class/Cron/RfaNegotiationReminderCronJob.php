@@ -23,7 +23,7 @@ class RfaNegotiationReminderCronJob
 	/**
 	 * @var string Default relative URL to the RFA supplier list.
 	 */
-	private const DEFAULT_RFA_LIST_URL = '/custom/clichaumeil/chaumeilrfa_list_fourn.php?yearid=__YEAR__';
+	private const DEFAULT_RFA_LIST_URL = '/clichaumeil/chaumeilrfa_list_fourn.php?yearid=__YEAR__';
 
 	/**
 	 * @var DoliDB

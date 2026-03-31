@@ -28,6 +28,7 @@ require_once DOL_DOCUMENT_ROOT . '/core/class/commonhookactions.class.php';
 require_once DOL_DOCUMENT_ROOT . '/product/class/product.class.php';
 require_once DOL_DOCUMENT_ROOT . '/core/class/extrafields.class.php';
 require_once __DIR__ . '/CliChaumeilProductCost.class.php';
+require_once __DIR__ . '/Rfa/RfaSummaryStorageManager.php';
 require_once __DIR__ . '/../lib/clichaumeil.lib.php';
 require_once DOL_DOCUMENT_ROOT . '/categories/class/categorie.class.php';
 require_once DOL_DOCUMENT_ROOT . '/product/class/product.class.php';
@@ -154,9 +155,9 @@ class ActionsClichaumeil extends CommonHookActions
 	/**
 	 * Check if the subcontractor picker should be displayed in the current context.
 	 *
-	 * @param array<string,mixed> $parameters
-	 * @param CommonObject        $object
-	 * @param User                $user
+	 * @param array<string,mixed> $parameters Hook parameters.
+	 * @param CommonObject        $object Current business object.
+	 * @param User                $user Current user.
 	 * @return bool
 	 */
 	private function shouldShowSubcontractorPicker(array $parameters, CommonObject $object, User $user): bool
@@ -185,7 +186,7 @@ class ActionsClichaumeil extends CommonHookActions
 	/**
 	 * Ensure there are selectable supplier proposals and none is already signed.
 	 *
-	 * @param SupplierProposal[] $supplierProposals
+	 * @param SupplierProposal[] $supplierProposals Supplier proposals linked to the source document.
 	 * @return bool
 	 */
 	private function hasSelectableSupplierProposal(array $supplierProposals): bool
@@ -207,9 +208,9 @@ class ActionsClichaumeil extends CommonHookActions
 	/**
 	 * Render button, modal and required assets for subcontractor selection.
 	 *
-	 * @param CommonObject        $object
-	 * @param SupplierProposal[]  $supplierProposals
-	 * @param Translate           $langs
+	 * @param CommonObject        $object Current business object.
+	 * @param SupplierProposal[]  $supplierProposals Supplier proposals linked to the source document.
+	 * @param Translate           $langs Translation handler.
 	 * @return void
 	 */
 	private function renderSubcontractorPicker(CommonObject $object, array $supplierProposals, Translate $langs): void
@@ -276,10 +277,10 @@ class ActionsClichaumeil extends CommonHookActions
 	/**
 	 * Pre-fill product extrafields and lock computed fields when applicable.
 	 *
-	 * @param array<string,mixed> $parameters
-	 * @param CommonObject        $object
-	 * @param string              $action
-	 * @param HookManager         $hookmanager
+	 * @param array<string,mixed> $parameters Hook parameters.
+	 * @param CommonObject        $object Current business object.
+	 * @param string              $action Current action.
+	 * @param HookManager         $hookmanager Hook manager.
 	 * @return int
 	 */
 	public function formObjectOptions($parameters, &$object, &$action, $hookmanager)
@@ -301,10 +302,10 @@ class ActionsClichaumeil extends CommonHookActions
 	/**
 	 * Handle cost breakdown extrafields updates from supplier price tab.
 	 *
-	 * @param array<string,mixed> $parameters
-	 * @param CommonObject        $object
-	 * @param string              $action
-	 * @param HookManager         $hookmanager
+	 * @param array<string,mixed> $parameters Hook parameters.
+	 * @param CommonObject        $object Current business object.
+	 * @param string              $action Current action.
+	 * @param HookManager         $hookmanager Hook manager.
 	 * @return int
 	 */
 	public function doActions($parameters, &$object, &$action, $hookmanager)
@@ -375,11 +376,11 @@ class ActionsClichaumeil extends CommonHookActions
 	/**
 	 * Persist extrafields and recompute cost.
 	 *
-	 * @param Product     $product
-	 * @param ExtraFields $extrafields
-	 * @param string      $attr
-	 * @param User        $user
-	 * @param Translate   $langs
+	 * @param Product     $product Product to update.
+	 * @param ExtraFields $extrafields Extrafields handler.
+	 * @param string      $attr Updated extrafield code.
+	 * @param User        $user Current user.
+	 * @param Translate   $langs Translation handler.
 	 * @return int
 	 */
 	private function handleCostUpdate(Product $product, ExtraFields $extrafields, string $attr, User $user, Translate $langs): int
@@ -408,7 +409,7 @@ class ActionsClichaumeil extends CommonHookActions
 	/**
 	 * Check CSRF token validity against current and previous token.
 	 *
-	 * @param string $token
+	 * @param string $token Submitted CSRF token.
 	 * @return bool
 	 */
 	private function isCsrfTokenValid(string $token): bool
@@ -470,7 +471,7 @@ class ActionsClichaumeil extends CommonHookActions
 	/**
 	 * Pre-fill FG percent extrafield on new simple product when empty.
 	 *
-	 * @param Product $product
+	 * @param Product $product Product being created.
 	 * @return void
 	 */
 	private function populateDefaultOverheadRateOnCreate(Product $product): void
@@ -523,10 +524,10 @@ class ActionsClichaumeil extends CommonHookActions
 	/**
 	 * Apply CliChaumeil price calculation after an import finishes.
 	 *
-	 * @param array<string,mixed> $parameters
-	 * @param CommonObject        $object
-	 * @param string              $action
-	 * @param HookManager         $hookmanager
+	 * @param array<string,mixed> $parameters Hook parameters.
+	 * @param CommonObject        $object Current business object.
+	 * @param string              $action Current action.
+	 * @param HookManager         $hookmanager Hook manager.
 	 * @return int
 	 */
 	public function afterImportInsert($parameters, &$object, &$action, $hookmanager)
@@ -637,7 +638,9 @@ class ActionsClichaumeil extends CommonHookActions
 	}
 
 	/**
-	 * @param array<string,mixed> $parameters
+	 * Extract mapped import values from hook payload.
+	 *
+	 * @param array<string,mixed> $parameters Hook parameters.
 	 * @return array<string,mixed>
 	 */
 	private function extractImportValues(array $parameters): array
@@ -661,9 +664,12 @@ class ActionsClichaumeil extends CommonHookActions
 
 		return $values;
 	}
-
-
-
+	/**
+	 * Check whether the imported row contains the FG percent value.
+	 *
+	 * @param array<string,mixed> $values Imported values indexed by target field.
+	 * @return bool
+	 */
 	private function hasFgPercentValueInRecord(array $values): bool
 	{
 		if (!array_key_exists('extra.clichaumeil_fg_percent', $values)) {
@@ -757,9 +763,47 @@ class ActionsClichaumeil extends CommonHookActions
 	 */
 	public static function replaceThirdparty(DoliDB $dbs, $origin_id, $dest_id)
 	{
-		$tables = array('clichaumeil_chaumeilrfa');
+		global $conf;
 
-		return CommonObject::commonReplaceThirdparty($dbs, $origin_id, $dest_id, $tables);
+		$originId = (int) $origin_id;
+		$destId = (int) $dest_id;
+		if ($originId <= 0 || $destId <= 0) {
+			dol_syslog(__METHOD__.' invalid thirdparty replacement arguments', LOG_ERR);
+			return false;
+		}
+
+		$dbs->begin();
+		$tables = array('clichaumeil_chaumeilrfa');
+		$result = CommonObject::commonReplaceThirdparty($dbs, $originId, $destId, $tables);
+		if (!$result) {
+			$dbs->rollback();
+			dol_syslog(__METHOD__.' failed to replace thirdparty in source tables', LOG_ERR);
+			return false;
+		}
+
+		try {
+			$storageManager = new RfaSummaryStorageManager($dbs);
+			$summaryTableExists = $storageManager->tableExists();
+		} catch (Throwable $exception) {
+			$dbs->rollback();
+			dol_syslog(__METHOD__.' failed to inspect summary table after thirdparty replacement: '.$exception->getMessage(), LOG_ERR);
+			return false;
+		}
+
+		if ($summaryTableExists) {
+			$sql = 'DELETE FROM '.$dbs->prefix().RfaSummaryStorageManager::TABLE_SUMMARY;
+			$sql .= ' WHERE entity = '.((int) $conf->entity);
+			$resql = $dbs->query($sql);
+			if (!$resql) {
+				$dbs->rollback();
+				dol_syslog(__METHOD__.' failed to purge summary cache after thirdparty replacement: '.$dbs->lasterror(), LOG_ERR);
+				return false;
+			}
+		}
+
+		$dbs->commit();
+
+		return true;
 	}
 
 	/**
@@ -848,9 +892,9 @@ class ActionsClichaumeil extends CommonHookActions
 	/**
 	 * Render CliChaumeil cost breakdown fields on supplier price tab.
 	 *
-	 * @param array<string,mixed> $parameters
-	 * @param mixed               $object
-	 * @param string              $action
+	 * @param array<string,mixed> $parameters Hook parameters.
+	 * @param mixed               $object Current business object.
+	 * @param string              $action Current action.
 	 * @return void
 	 */
 	private function renderSupplierCostBreakdownRows(array $parameters, $object, string $action): void
@@ -942,10 +986,10 @@ JS;
 	/**
 	 * Build HTML rows for cost breakdown.
 	 *
-	 * @param Product     $product
-	 * @param ExtraFields $extrafields
-	 * @param string      $action
-	 * @param string      $currentAttr
+	 * @param Product     $product Product being displayed.
+	 * @param ExtraFields $extrafields Extrafields handler.
+	 * @param string      $action Current action.
+	 * @param string      $currentAttr Current edited extrafield code.
 	 * @return string
 	 */
 	private function buildSupplierCostRows(Product $product, ExtraFields $extrafields, string $action, string $currentAttr): string
@@ -1009,10 +1053,10 @@ JS;
 	/**
 	 * Render formatted value with currency/percent suffixes.
 	 *
-	 * @param ExtraFields $extrafields
-	 * @param Product     $product
-	 * @param string      $field
-	 * @param mixed       $value
+	 * @param ExtraFields $extrafields Extrafields handler.
+	 * @param Product     $product Product being displayed.
+	 * @param string      $field Extrafield code.
+	 * @param mixed       $value Raw extrafield value.
 	 * @return string
 	 */
 	private function formatCostBreakdownOutput(ExtraFields $extrafields, Product $product, string $field, $value): string
@@ -1042,9 +1086,9 @@ JS;
 	/**
 	 * Return edit link with pencil icon.
 	 *
-	 * @param string $baseUrl
-	 * @param string $field
-	 * @param string $token
+	 * @param string $baseUrl Base supplier price URL.
+	 * @param string $field Extrafield code.
+	 * @param string $token CSRF token.
 	 * @return string
 	 */
 	private function buildCostBreakdownEditLink(string $baseUrl, string $field, string $token): string
@@ -1057,8 +1101,8 @@ JS;
 	/**
 	 * Check extrafield availability.
 	 *
-	 * @param ExtraFields $extrafields
-	 * @param string      $field
+	 * @param ExtraFields $extrafields Extrafields handler.
+	 * @param string      $field Extrafield code.
 	 * @return bool
 	 */
 	private function extrafieldExists(ExtraFields $extrafields, string $field): bool
@@ -1090,7 +1134,6 @@ JS;
 		$commonContexts = array_intersect($TContexts, $TAllowedContexts);
 
 		if (!empty($commonContexts)) {
-
 			$line = $parameters['line'];
 			$costPrice = 0;
 			if (!empty($line->pa_ht)) {
@@ -1116,6 +1159,15 @@ JS;
 		return 0;
 	}
 
+	/**
+	 * Add general expenses to the calculated BOM total cost.
+	 *
+	 * @param array<string,mixed> $parameters Hook parameters.
+	 * @param CommonObject        $object Current business object.
+	 * @param string              $action Current action.
+	 * @param HookManager         $hookmanager Hook manager.
+	 * @return int
+	 */
 	public function calculateCostsBomAfter($parameters, &$object, &$action, $hookmanager): int
 	{
 		$action = GETPOST('action', 'alphanohtml');
@@ -1151,6 +1203,9 @@ JS;
 	 * @param   string       $action        Current action
 	 * @param   HookManager  $hookmanager   Hook manager
 	 * @return  int                           <0 if KO, 0 if no action/no block, >0 if block
+	 * @phpcsSuppress Generic.NamingConventions.CamelCapsFunctionName.NotCamelCaps
+	 * @phpcsSuppress PEAR.NamingConventions.ValidFunctionName.PublicUnderscore
+	 * @phpcsSuppress Squiz.NamingConventions.ValidFunctionName.PublicUnderscore
 	 */
 	public function PrintServices($parameters, &$object, &$action, $hookmanager)
 	{
@@ -1226,11 +1281,14 @@ JS;
 	/**
 	 * Overloading the PrintPageView function : replacing the parent's function with the one below
 	 *
-	 * @param   array()         $parameters     Hook metadatas (context, etc...)
-	 * @param   CommonObject    &$object        The object to process (an invoice if you are in invoice module, a propale in propale's module, etc...)
-	 * @param   string          &$action        Current action (if set). Generally create or edit or null
-	 * @param   HookManager     $hookmanager    Hook manager propagated to allow calling another hook
+	 * @param   array<string,mixed> $parameters Hook metadatas (context, etc...).
+	 * @param   CommonObject        $object The object to process (an invoice if you are in invoice module, a propale in propale's module, etc...).
+	 * @param   string              $action Current action (if set). Generally create or edit or null.
+	 * @param   HookManager         $hookmanager Hook manager propagated to allow calling another hook.
 	 * @return  int                             < 0 on error, 0 on success, 1 to replace standard code
+	 * @phpcsSuppress Generic.NamingConventions.CamelCapsFunctionName.NotCamelCaps
+	 * @phpcsSuppress PEAR.NamingConventions.ValidFunctionName.PublicUnderscore
+	 * @phpcsSuppress Squiz.NamingConventions.ValidFunctionName.PublicUnderscore
 	 */
 	public function PrintPageView($parameters, &$object, &$action, $hookmanager)
 	{
@@ -1250,7 +1308,7 @@ JS;
 	/**
 	 * Return product ids that belong to the target categories.
 	 *
-	 * @param array $targetCatIds
+	 * @param int[] $targetCatIds Target category ids.
 	 * @return int[]
 	 */
 	private function getTargetProducts(array $targetCatIds): array
@@ -1272,7 +1330,7 @@ JS;
 	/**
 	 * Build a map productId => array of category ids for all products present in object lines.
 	 *
-	 * @param CommonObject $object
+	 * @param CommonObject $object Source object containing lines.
 	 * @return array<int,int[]>
 	 */
 	private function mapProductCategories(CommonObject $object): array
@@ -1313,11 +1371,11 @@ JS;
 	/**
 	 * Prepare visibility payload for JS.
 	 *
-	 * @param array     $lines
-	 * @param int[]     $targetProducts
-	 * @param array     $targetCatIds
-	 * @param string    $context
-	 * @param array     $productCategories
+	 * @param array<int,object> $lines Document lines.
+	 * @param int[]             $targetProducts Target product ids.
+	 * @param int[]             $targetCatIds Target category ids.
+	 * @param string            $context Current context.
+	 * @param array<int,int[]>  $productCategories Product categories indexed by product id.
 	 * @return array<int,array<string,mixed>>
 	 */
 	private function buildLineVisibilities(array $lines, array $targetProducts, array $targetCatIds, string $context, array $productCategories): array
@@ -1349,5 +1407,4 @@ JS;
 
 		return $lineVisibilities;
 	}
-
 }

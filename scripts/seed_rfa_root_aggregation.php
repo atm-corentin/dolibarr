@@ -22,9 +22,10 @@ require_once DOL_DOCUMENT_ROOT.'/user/class/user.class.php';
 require_once DOL_DOCUMENT_ROOT.'/societe/class/societe.class.php';
 require_once DOL_DOCUMENT_ROOT.'/fourn/class/fournisseur.facture.class.php';
 require_once DOL_DOCUMENT_ROOT.'/core/class/html.form.class.php';
-require_once DOL_DOCUMENT_ROOT.'/custom/clichaumeil/class/chaumeilrfa.class.php';
-require_once DOL_DOCUMENT_ROOT.'/custom/clichaumeil/class/Rfa/RfaGlobalListRepository.php';
-require_once DOL_DOCUMENT_ROOT.'/custom/clichaumeil/class/Rfa/RfaGlobalListService.php';
+require_once __DIR__.'/../class/chaumeilrfa.class.php';
+require_once __DIR__.'/../class/Rfa/RfaSummarySourceRepository.php';
+require_once __DIR__.'/../class/Rfa/RfaSummaryBuilder.php';
+require_once __DIR__.'/../class/Rfa/RfaSummaryPersister.php';
 
 /**
  * Return the CLI option value.
@@ -54,7 +55,6 @@ function getCliOption(array $argv, string $name, string $default = ''): string
  */
 function fail(string $message): void
 {
-	dol_syslog(__FILE__.' '.$message, LOG_ERR);
 	throw new RuntimeException($message);
 }
 
@@ -94,6 +94,20 @@ function renderOutput(array $lines): string
 	}
 
 	return implode("\n", $escapedLines);
+}
+
+/**
+ * Check the browser CSRF token.
+ *
+ * @return void
+ * @throws RuntimeException When the token is invalid.
+ */
+function assertValidBrowserToken(): void
+{
+	$submittedToken = GETPOST('token', 'alpha');
+	if ($submittedToken === '' || !hash_equals(currentToken(), $submittedToken)) {
+		throw new RuntimeException('Invalid browser token.');
+	}
 }
 
 /**
@@ -283,9 +297,13 @@ function createClosedSupplierInvoice(DoliDB $db, User $user, int $supplierId, in
  */
 function loadGlobalRfaRowsByName(DoliDB $db, int $year): array
 {
-	$repository = new RfaGlobalListRepository($db);
-	$service = new RfaGlobalListService($repository);
-	$listResult = $service->buildList($year, array(), 'fk_soc', 'ASC', 0, 0);
+	$repository = new RfaSummarySourceRepository($db);
+	$builder = new RfaSummaryBuilder($repository);
+	$persister = new RfaSummaryPersister($db, $builder);
+	$persister->rebuildYear($year);
+	$listResult = array(
+		'rows' => $repository->fetchSummaryRowsForYear($year, array(), 'fk_soc', 'ASC', 0, 0),
+	);
 	$rowsByName = array();
 
 	if (empty($listResult['rows']) || !is_array($listResult['rows'])) {
@@ -320,8 +338,10 @@ function out(string $message): void
 }
 
 try {
+	$langs->loadLangs(array('clichaumeil@clichaumeil', 'main'));
+
 	if (!$isCli) {
-		if (empty($user) || empty($user->id) || empty($user->admin)) {
+		if (empty($user) || empty($user->id) || empty($user->admin) || !$user->hasRight('clichaumeil', 'chaumeilrfa', 'write')) {
 			accessforbidden();
 		}
 	}
@@ -345,27 +365,28 @@ try {
 		fail('Invalid batch code after sanitization.');
 	}
 
-	if (!$isCli && GETPOST('confirm', 'alpha') !== 'yes') {
-		llxHeader('', 'Seed RFA root aggregation');
+	$isConfirmed = (!$isCli && GETPOST('confirm', 'alpha') === 'yes');
+	if (!$isCli && !$isConfirmed) {
+		llxHeader('', $langs->trans('CliChaumeil_RfaSeedTitle'));
 		print renderSeedStyles();
 		print '<div class="clichaumeil-seed">';
 		print '<div class="seed-hero">';
-		print '<h1>Seed RFA root aggregation</h1>';
-		print '<p>Ce script crée un batch de fournisseurs tests, des factures fournisseur closes et des RFA pour valider l’agrégation des filiales vers la maison mère racine.</p>';
+		print '<h1>'.$langs->trans('CliChaumeil_RfaSeedTitle').'</h1>';
+		print '<p>'.$langs->trans('CliChaumeil_RfaSeedIntro').'</p>';
 		print '</div>';
 		print '<div class="seed-grid">';
 		print '<div class="seed-card">';
-		print '<div class="seed-title">Cas couverts</div>';
+		print '<div class="seed-title">'.$langs->trans('CliChaumeil_RfaSeedCoveredCasesTitle').'</div>';
 		print '<ul class="seed-list">';
-		print '<li>Maison mère avec plusieurs filiales</li>';
-		print '<li>Chaîne récursive sur plusieurs niveaux</li>';
-		print '<li>Maison mère seule</li>';
-		print '<li>Filiale avec RFA propre à ignorer</li>';
-		print '<li>Groupe sans RFA racine qui ne doit pas sortir</li>';
+		print '<li>'.$langs->trans('CliChaumeil_RfaSeedCaseRootWithChildren').'</li>';
+		print '<li>'.$langs->trans('CliChaumeil_RfaSeedCaseRecursive').'</li>';
+		print '<li>'.$langs->trans('CliChaumeil_RfaSeedCaseStandalone').'</li>';
+		print '<li>'.$langs->trans('CliChaumeil_RfaSeedCaseChildWithOwnRfa').'</li>';
+		print '<li>'.$langs->trans('CliChaumeil_RfaSeedCaseRootWithoutRfa').'</li>';
 		print '</ul>';
 		print '</div>';
 		print '<div class="seed-card">';
-		print '<div class="seed-title">Année ciblée</div>';
+		print '<div class="seed-title">'.$langs->trans('ByYear').'</div>';
 		print '<span class="seed-pill">'.dol_escape_htmltag((string) $seedYear).'</span>';
 		print '</div>';
 		print '</div>';
@@ -374,19 +395,22 @@ try {
 		print '<input type="hidden" name="confirm" value="yes">';
 		print '<input type="hidden" name="year" value="'.((int) $seedYear).'">';
 		print '<div class="seed-actions">';
-		print '<input class="button button-save" type="submit" value="Lancer le seed">';
+		print '<input class="button button-save" type="submit" value="'.$langs->trans('CliChaumeil_RfaSeedAction').'">';
 		print '</div>';
 		print '</form>';
 		print '</div>';
 		llxFooter();
 		exit;
 	}
+	if ($isConfirmed) {
+		assertValidBrowserToken();
+	}
 
 	$entity = (int) $conf->entity;
 	$seedUser = loadSeedUser($db, $seedUserId);
 	$outputLines = array();
 
-	out('Seed RFA root aggregation');
+	out($langs->trans('CliChaumeil_RfaSeedTitle'));
 	out('Entity: '.$entity);
 	out('Year: '.$seedYear);
 	out('Batch: '.$batchCode);
@@ -435,7 +459,7 @@ try {
 	attachParent($deltaSibling, (int) $deltaRoot->id);
 	createRfa($db, $seedUser, (int) $deltaRoot->id, 'RFA ROOT DELTA 4', $seedYear, 500.0, 4.0);
 	createRfa($db, $seedUser, (int) $deltaRoot->id, 'RFA ROOT DELTA 8', $seedYear, 800.0, 8.0);
-	createRfa($db, $seedUser, (int) $deltaChild->id, 'RFA CHILD DELTA SHOULD BE IGNORED', $seedYear, 100.0, 99.0);
+	createRfa($db, $seedUser, (int) $deltaChild->id, 'RFA CHILD DELTA VISIBLE AND COUNTED IN ROOT', $seedYear, 100.0, 99.0);
 	createClosedSupplierInvoice($db, $seedUser, (int) $deltaChild->id, $seedYear, 600.0, 'Seed Delta Child Invoice');
 	createClosedSupplierInvoice($db, $seedUser, (int) $deltaSibling->id, $seedYear, 300.0, 'Seed Delta Sibling Invoice');
 	$expectedBusinessRows[$deltaRoot->name] = array('ca' => 900.0, 'rate' => 8.0, 'discount' => 72.0);
@@ -468,7 +492,7 @@ try {
 
 	$rowsByName = loadGlobalRfaRowsByName($db, $seedYear);
 
-	out('Expected business rows in global RFA list:');
+	out($langs->trans('CliChaumeil_RfaSeedExpectedRowsTitle'));
 	foreach ($expectedBusinessRows as $supplierName => $expectedRow) {
 		out(
 			'- '.$supplierName
@@ -479,15 +503,15 @@ try {
 	}
 
 	out('');
-	out('Expected hidden suppliers in global RFA list:');
+	out($langs->trans('CliChaumeil_RfaSeedExpectedHiddenTitle'));
 	foreach ($expectedHiddenSuppliers as $hiddenSupplierName) {
 		out('- '.$hiddenSupplierName);
 	}
 
 	out('');
-	out('Current implementation rows returned by the service:');
+	out($langs->trans('CliChaumeil_RfaSeedCurrentRowsTitle'));
 	if (empty($rowsByName)) {
-		out('- No rows returned');
+		out('- '.$langs->trans('CliChaumeil_RfaSeedNoRows'));
 	} else {
 		foreach ($rowsByName as $supplierName => $row) {
 			if (strpos($supplierName, $batchCode) === false) {
@@ -504,39 +528,42 @@ try {
 	}
 
 	out('');
-	out('Check the page: /custom/clichaumeil/chaumeilrfa_list_fourn.php?search_year='.$seedYear);
+	out($langs->trans('CliChaumeil_RfaSeedCheckPage', '/clichaumeil/chaumeilrfa_list_fourn.php?yearid='.$seedYear));
 
 	if (!$isCli) {
-		llxHeader('', 'Seed RFA root aggregation');
+		llxHeader('', $langs->trans('CliChaumeil_RfaSeedTitle'));
 		print renderSeedStyles();
 		print '<div class="clichaumeil-seed">';
 		print '<div class="seed-hero">';
-		print '<h1>Seed RFA root aggregation exécuté</h1>';
-		print '<p>Le batch a été créé. Vous pouvez maintenant contrôler la liste globale RFA et comparer les valeurs attendues ci-dessous.</p>';
+		print '<h1>'.$langs->trans('CliChaumeil_RfaSeedSuccessTitle').'</h1>';
+		print '<p>'.$langs->trans('CliChaumeil_RfaSeedSuccessIntro').'</p>';
 		print '</div>';
 		print '<div class="seed-actions">';
-		print '<a class="button button-save" href="'.dol_buildpath('/custom/clichaumeil/chaumeilrfa_list_fourn.php?search_year='.$seedYear, 1).'">Ouvrir la liste RFA</a>';
-		print '<a class="button button-cancel" href="'.dol_escape_htmltag($_SERVER['PHP_SELF']).'">Relancer un autre batch</a>';
+		print '<a class="button button-save" href="'.dol_buildpath('/clichaumeil/chaumeilrfa_list_fourn.php?yearid='.$seedYear, 1).'">'.$langs->trans('CliChaumeil_RfaSummaryOpenList').'</a>';
+		print '<a class="button button-cancel" href="'.dol_escape_htmltag($_SERVER['PHP_SELF']).'">'.$langs->trans('CliChaumeil_RfaSeedRelaunchAction').'</a>';
 		print '</div>';
 		print '<div class="seed-card" style="margin-top:18px;">';
-		print '<div class="seed-title">Résultat</div>';
+		print '<div class="seed-title">'.$langs->trans('CliChaumeil_RfaSeedResultTitle').'</div>';
 		print '<div class="seed-output">'.renderOutput($outputLines).'</div>';
 		print '</div>';
 		print '</div>';
 		llxFooter();
 	}
 } catch (Throwable $exception) {
+	dol_syslog(__FILE__.' '.$exception->getMessage(), LOG_ERR);
+
 	if ($isCli) {
 		out('ERROR: '.$exception->getMessage());
 		exit(1);
 	}
 
-	llxHeader('', 'Seed RFA root aggregation');
+	setEventMessages($langs->trans('CliChaumeil_RfaSeedError'), null, 'errors');
+	llxHeader('', $langs->trans('CliChaumeil_RfaSeedTitle'));
 	print renderSeedStyles();
 	print '<div class="clichaumeil-seed">';
 	print '<div class="seed-card">';
-	print '<div class="seed-title">Erreur</div>';
-	print '<div class="seed-output">'.dol_escape_htmltag($exception->getMessage()).'</div>';
+	print '<div class="seed-title">'.$langs->trans('Error').'</div>';
+	print '<div class="seed-output">'.dol_escape_htmltag($langs->trans('CliChaumeil_RfaSeedError')).'</div>';
 	print '</div>';
 	print '</div>';
 	llxFooter();

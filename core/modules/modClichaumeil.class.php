@@ -50,12 +50,17 @@ class modClichaumeil extends DolibarrModules
 	/**
 	 * @var string
 	 */
-	private const DEFAULT_RFA_LIST_URL = '/custom/clichaumeil/chaumeilrfa_list_fourn.php?yearid=__YEAR__';
+	private const DEFAULT_RFA_LIST_URL = '/clichaumeil/chaumeilrfa_list_fourn.php?yearid=__YEAR__';
 
 	/**
 	 * @var string
 	 */
 	private const DEFAULT_RFA_CRON_PARAMETERS = ',CLICHAUMEIL_RFA_NEGOTIATION';
+
+	/**
+	 * @var string
+	 */
+	private const DEFAULT_RFA_SUMMARY_CRON_PARAMETERS = '';
 
 	/**
 	 * Constructor. Define names, constants, directories, boxes, permissions
@@ -99,7 +104,7 @@ class modClichaumeil extends DolibarrModules
 		$this->editor_squarred_logo = '';					// Must be image filename into the module/img directory followed with @modulename. Example: 'myimage.png@clichaumeil'
 
 		// Possible values for version are: 'development', 'experimental', 'dolibarr', 'dolibarr_deprecated', 'experimental_deprecated' or a version string like 'x.y.z'
-		$this->version = '1.12.0';
+		$this->version = '1.13.0';
 		// Url to the file with your last numberversion of this module
 		//$this->url_last_version = 'http://www.example.com/versionmodule.txt';
 
@@ -260,6 +265,21 @@ class modClichaumeil extends DolibarrModules
 				'unitfrequency' => 2678400,
 				'datestart' => $rfaCronStart,
 				'datenextrun' => $rfaCronStart,
+				'status' => 0,
+				'priority' => 50,
+			),
+			3 => array(
+				'label' => $langs->trans('CliChaumeil_RfaSummaryCronLabel'),
+				'jobtype' => 'method',
+				'class' => '/clichaumeil/class/Cron/RfaSummaryRebuildCronJob.php',
+				'objectname' => 'RfaSummaryRebuildCronJob',
+				'method' => 'run',
+				'parameters' => self::DEFAULT_RFA_SUMMARY_CRON_PARAMETERS,
+				'comment' => $langs->trans('CliChaumeil_RfaSummaryCronDescription'),
+				'frequency' => 1,
+				'unitfrequency' => 86400,
+				'datestart' => $cronStart,
+				'datenextrun' => $cronStart,
 				'status' => 0,
 				'priority' => 50,
 			)

@@ -13,7 +13,7 @@ declare(strict_types=1);
 /**
  * \file       chaumeilrfa_list_fourn.php
  * \ingroup    clichaumeil
- * \brief      Global supplier RFA list with root parent aggregation.
+ * \brief      Global supplier RFA list backed by the yearly summary table.
  */
 
 $res = 0;
@@ -47,23 +47,13 @@ if (!$res) {
 	die('Include of main fails');
 }
 
+require_once DOL_DOCUMENT_ROOT.'/core/class/html.form.class.php';
 require_once DOL_DOCUMENT_ROOT.'/core/class/html.formcompany.class.php';
 require_once DOL_DOCUMENT_ROOT.'/core/class/html.formother.class.php';
 require_once DOL_DOCUMENT_ROOT.'/fourn/class/fournisseur.facture.class.php';
-require_once DOL_DOCUMENT_ROOT.'/core/lib/date.lib.php';
-require_once DOL_DOCUMENT_ROOT.'/core/lib/company.lib.php';
-require_once DOL_DOCUMENT_ROOT.'/core/lib/functions.lib.php';
 require_once __DIR__.'/class/chaumeilrfa.class.php';
-require_once __DIR__.'/class/Rfa/RfaGlobalListRepository.php';
-require_once __DIR__.'/class/Rfa/RfaGlobalListService.php';
-
-/**
- * @var Conf $conf
- * @var DoliDB $db
- * @var HookManager $hookmanager
- * @var Translate $langs
- * @var User $user
- */
+require_once __DIR__.'/class/Rfa/RfaSummarySourceRepository.php';
+require_once __DIR__.'/class/Rfa/RfaSummaryStorageManager.php';
 
 $langs->loadLangs(array('clichaumeil@clichaumeil', 'other'));
 
@@ -165,6 +155,8 @@ if ($search['fk_soc'] === '-1' || $search['fk_soc'] === '0') {
 }
 
 $permissiontoread = $user->hasRight('clichaumeil', 'chaumeilrfa', 'read');
+$permissiontowrite = $user->hasRight('clichaumeil', 'chaumeilrfa', 'write');
+$canRebuildSummary = $permissiontowrite;
 
 if ($user->socid > 0) {
 	accessforbidden();
@@ -193,45 +185,33 @@ if (empty($reshook) && (GETPOST('button_removefilter_x', 'alpha') || GETPOST('bu
 	}
 }
 
-$repository = new RfaGlobalListRepository($db);
-$service = new RfaGlobalListService($repository);
+$repository = new RfaSummarySourceRepository($db);
 $listRows = array();
 $num = 0;
+$hasSummaryForYear = false;
+$isSummaryStorageReady = true;
 
 if (empty($reshook)) {
-	$datasetParameters = array(
-		'search' => &$search,
-		'sortfield' => &$sortfield,
-		'sortorder' => &$sortorder,
-		'search_year' => &$searchYear,
-		'offset' => &$offset,
-		'limit' => &$limit,
-		'service' => $service,
-	);
-	$hookmanager->executeHooks('printFieldListSelect', $datasetParameters, $object, $action);
-	$hookmanager->executeHooks('printFieldListFrom', $datasetParameters, $object, $action);
-	$hookmanager->executeHooks('printFieldListWhere', $datasetParameters, $object, $action);
-
 	try {
-		$listResult = $service->buildList($searchYear, $search, $sortfield, $sortorder, $offset, $limit);
-		$num = isset($listResult['total_count']) ? (int) $listResult['total_count'] : 0;
-		$listRows = isset($listResult['rows']) && is_array($listResult['rows']) ? $listResult['rows'] : array();
-	} catch (Exception $exception) {
-		dol_syslog(__METHOD__.' '.$exception->getMessage(), LOG_ERR);
+		$isSummaryStorageReady = $repository->isSummaryStorageReady();
+		$num = $repository->countSummaryRowsForYear($searchYear, $search);
+		$listRows = $repository->fetchSummaryRowsForYear($searchYear, $search, $sortfield, $sortorder, $offset, $limit);
+		$hasSummaryForYear = $repository->hasSummaryForYear($searchYear);
+	} catch (Throwable $exception) {
+		dol_syslog(__FILE__.' '.$exception->getMessage(), LOG_ERR);
 		setEventMessages($langs->trans('CliChaumeil_RfaListLoadError'), null, 'errors');
 		$listRows = array();
 		$num = 0;
+		$hasSummaryForYear = false;
+		$isSummaryStorageReady = false;
 	}
 }
 
 $form = new Form($db);
 $formother = new FormOther($db);
 $title = $langs->trans('ChaumeilRfas');
-$help_url = '';
-$morejs = array();
-$morecss = array();
 
-llxHeader('', $title, $help_url, '', 0, 0, $morejs, $morecss, '', 'mod-clichaumeil page-list bodyforlist');
+llxHeader('', $title, '', '', 0, 0, array(), array(), '', 'mod-clichaumeil page-list bodyforlist');
 
 $param = '';
 if ($mode !== '') {
@@ -256,22 +236,41 @@ foreach ($search as $searchKey => $searchValue) {
 }
 $param .= '&yearid='.(int) $searchYear;
 
-print '<form method="POST" id="searchFormList" action="'.$_SERVER['PHP_SELF'].'">'."\n";
+print '<form method="POST" id="searchFormList" action="'.dol_escape_htmltag($_SERVER['PHP_SELF']).'">'."\n";
 if ($optioncss !== '') {
-	print '<input type="hidden" name="optioncss" value="'.$optioncss.'">';
+	print '<input type="hidden" name="optioncss" value="'.dol_escape_htmltag($optioncss).'">';
 }
 print '<input type="hidden" name="token" value="'.newToken().'">';
 print '<input type="hidden" name="formfilteraction" id="formfilteraction" value="list">';
 print '<input type="hidden" name="action" value="list">';
-print '<input type="hidden" name="sortfield" value="'.$sortfield.'">';
-print '<input type="hidden" name="sortorder" value="'.$sortorder.'">';
-print '<input type="hidden" name="page" value="'.$page.'">';
-print '<input type="hidden" name="contextpage" value="'.$contextpage.'">';
+print '<input type="hidden" name="sortfield" value="'.dol_escape_htmltag($sortfield).'">';
+print '<input type="hidden" name="sortorder" value="'.dol_escape_htmltag($sortorder).'">';
+print '<input type="hidden" name="page" value="'.((int) $page).'">';
+print '<input type="hidden" name="contextpage" value="'.dol_escape_htmltag($contextpage).'">';
 print '<input type="hidden" name="page_y" value="">';
-print '<input type="hidden" name="mode" value="'.$mode.'">';
+print '<input type="hidden" name="mode" value="'.dol_escape_htmltag($mode).'">';
 
 $newcardbutton = dolGetButtonTitle($langs->trans('ViewList'), '', 'fa fa-bars imgforviewmode', $_SERVER['PHP_SELF'].'?mode=common'.preg_replace('/(&|\?)*mode=[^&]+/', '', $param), '', (empty($mode) || $mode === 'common') ? 2 : 1, array('morecss' => 'reposition'));
+$rebuildUrl = '';
+if ($canRebuildSummary) {
+	$rebuildUrl = dol_buildpath('/clichaumeil/scripts/rebuild_rfa_summary.php', 1);
+	$rebuildButtonLabel = $langs->transnoentitiesnoconv('CliChaumeil_RfaSummaryRebuildActionForYear', $searchYear);
+	$rebuildLoadingLabel = $langs->transnoentitiesnoconv('CliChaumeil_RfaSummaryRebuildLoadingForYear', $searchYear);
+	$newcardbutton .= '<a id="clichaumeil-rfa-summary-rebuild-button" class="butAction reposition" href="#"';
+	$newcardbutton .= ' data-url="'.dol_escape_htmltag($rebuildUrl).'"';
+	$newcardbutton .= ' data-year="'.((int) $searchYear).'"';
+	$newcardbutton .= ' data-loading-label="'.dol_escape_htmltag($rebuildLoadingLabel).'"';
+	$newcardbutton .= ' data-error-label="'.dol_escape_htmltag($langs->transnoentitiesnoconv('Error')).'"';
+	$newcardbutton .= ' data-reload-delay="700"';
+	$newcardbutton .= '><span class="fas fa-sync"></span> '.dol_escape_htmltag($rebuildButtonLabel).'</a>';
+}
+
 print_barre_liste($title, $page, $_SERVER['PHP_SELF'], $param, $sortfield, $sortorder, '', $num, 0, $object->picto, 0, $newcardbutton, '', $limit, 0, 0, 1);
+
+if ($canRebuildSummary) {
+	print '<div id="clichaumeil-rfa-summary-rebuild-feedback" class="marginbottomonly" style="display:none;"></div>';
+	print '<script src="'.dol_buildpath('/clichaumeil/js/rfa_summary_list.js', 1).'"></script>';
+}
 
 $moreforfilter = '<div class="divsearchfield">'.$langs->trans('ByYear').' : '.$formother->selectyear($searchYear, 'yearid').'</div>';
 $parameters = array();
@@ -286,6 +285,12 @@ if ($moreforfilter !== '') {
 	print '<div class="liste_titre liste_titre_bydiv centpercent">';
 	print $moreforfilter;
 	print '</div>';
+}
+
+if (!$isSummaryStorageReady) {
+	print info_admin($langs->trans('CliChaumeil_RfaSummaryStorageMissing'), 0, 0, 'warning');
+} elseif (!$hasSummaryForYear) {
+	print info_admin($langs->trans('CliChaumeil_RfaSummaryMissingForYear', $searchYear), 0, 0, 'warning');
 }
 
 $varpage = empty($contextpage) ? $_SERVER['PHP_SELF'] : $contextpage;
@@ -315,7 +320,6 @@ foreach ($arrayfields as $key => $val) {
 	}
 
 	print '<td class="liste_titre'.($cssforfield !== '' ? ' '.$cssforfield : '').'">';
-
 	if ($key === 'fk_soc') {
 		print $form->select_company($search['fk_soc'], 'search_fk_soc', '(s.fournisseur:=:1)', 'SelectThirdParty', 0, 0, array(), 0, 'maxwidth250');
 	} elseif ($key === 'status') {
@@ -323,7 +327,6 @@ foreach ($arrayfields as $key => $val) {
 	} else {
 		print '<input type="text" class="flat maxwidth75'.($cssforfield !== '' ? ' right' : '').'" name="search_'.$key.'" value="'.dol_escape_htmltag($search[$key]).'">';
 	}
-
 	print '</td>';
 }
 
@@ -354,8 +357,7 @@ foreach ($arrayfields as $key => $val) {
 		$cssforfield = 'right';
 	}
 
-	$disableSort = ($key === 'fk_soc') ? 0 : 0;
-	print getTitleFieldOfList($val['label'], 0, $_SERVER['PHP_SELF'], $key, '', $param, ($cssforfield !== '' ? 'class="'.$cssforfield.'"' : ''), $sortfield, $sortorder, ($cssforfield !== '' ? $cssforfield.' ' : ''), $disableSort, (isset($val['help']) ? $val['help'] : ''))."\n";
+	print getTitleFieldOfList($val['label'], 0, $_SERVER['PHP_SELF'], $key, '', $param, ($cssforfield !== '' ? 'class="'.$cssforfield.'"' : ''), $sortfield, $sortorder, ($cssforfield !== '' ? $cssforfield.' ' : ''), 0, (isset($val['help']) ? $val['help'] : ''))."\n";
 }
 
 $parameters = array('arrayfields' => $arrayfields, 'param' => $param, 'sortfield' => $sortfield, 'sortorder' => $sortorder);
@@ -394,13 +396,11 @@ foreach ($listRows as $listRow) {
 		print '<td'.($cssforfield !== '' ? ' class="'.$cssforfield.'"' : '').'>';
 
 		if ($key === 'fk_soc') {
-			$thirdpartyLabel = isset($rowObject->soc_name) ? (string) $rowObject->soc_name : '';
 			$thirdpartyUrl = DOL_URL_ROOT.'/societe/card.php?socid='.(int) $rowObject->fk_soc;
-			print '<a href="'.dol_escape_htmltag($thirdpartyUrl).'">'.dol_escape_htmltag($thirdpartyLabel).'</a>';
+			print '<a href="'.dol_escape_htmltag($thirdpartyUrl).'">'.dol_escape_htmltag((string) $rowObject->soc_name).'</a>';
 		} elseif ($key === 'ca_achats') {
 			$totalCaAchats += (float) $rowObject->ca_achats;
-			$isAggregated = !empty($rowObject->is_aggregated);
-			if ($isAggregated) {
+			if (!empty($rowObject->is_aggregated)) {
 				print '<span title="'.dol_escape_htmltag($langs->trans('CliChaumeil_RfaListAggregatedAmountNoLinkHelp')).'">'.price((float) $rowObject->ca_achats).'</span>';
 			} else {
 				$url = sprintf(
@@ -411,7 +411,6 @@ foreach ($listRows as $listRow) {
 					(int) $searchYear,
 					(int) FactureFournisseur::STATUS_CLOSED
 				);
-
 				print '<a href="'.dol_escape_htmltag($url).'">'.price((float) $rowObject->ca_achats).'</a>';
 			}
 		} elseif ($key === 'taux_rfa') {
