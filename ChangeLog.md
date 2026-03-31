@@ -2,6 +2,8 @@
 
 
 ## Unreleased
+- NEW : Aggregate subsidiary supplier turnover into the root parent company on the global RFA list, keep final filters/sorts correct, and disable the CA link on aggregated rows. *31/03/2026* - 1.12.0
+- NEW : Add ACHT-5 scheduled RFA negotiation reminder cron with cloneable parameters and default email template seed. *31/03/2026* - 1.12.0
 
 ## 1.11
 - FIX : Load supplier proposal lines on portal by using `ref_fourn` supplier reference column in SQL join. *30/03/2026* - 1.11.1
