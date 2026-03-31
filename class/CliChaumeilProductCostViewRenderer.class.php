@@ -20,6 +20,13 @@ require_once __DIR__ . '/CliChaumeilProductCost.class.php';
 class CliChaumeilProductCostViewRenderer
 {
 	/**
+	 * Prevent duplicate script inclusion during the same request.
+	 *
+	 * @var bool
+	 */
+	private static $costBreakdownScriptLoaded = false;
+
+	/**
 	 * Cost breakdown separator field.
 	 *
 	 * @var string
@@ -100,18 +107,18 @@ class CliChaumeilProductCostViewRenderer
 		}
 
 		print '<div id="clichaumeil-cost-breakdown" style="display:none;"><table><tbody>' . $rowsHtml . '</tbody></table></div>';
-		print '<script>
-			jQuery(function($){
-				var $holder = $("#clichaumeil-cost-breakdown");
-				var $rows = $holder.find("tr");
-				var $targetTable = $(".fichecenter .tableforfield tbody").first();
-				if ($targetTable.length && $rows.length) {
-					$rows.appendTo($targetTable);
-				}
-				$holder.remove();
-				' . $this->buildSeparatorInitJs($separatorConfig) . '
-			});
-		</script>';
+		print '<script type="application/json" id="clichaumeil-cost-breakdown-data">'
+			. json_encode(
+				array(
+					'separatorId' => (string) $separatorConfig['separatorId'],
+					'collapseClass' => (string) $separatorConfig['collapseClass'],
+					'cookieName' => (string) $separatorConfig['cookieName'],
+					'expanded' => !empty($separatorConfig['expanded']),
+				),
+				JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT
+			)
+			. '</script>';
+		$this->renderCostBreakdownScriptTag();
 	}
 
 	/**
@@ -121,31 +128,28 @@ class CliChaumeilProductCostViewRenderer
 	 */
 	public function hideCostBreakdownOnProductCard(): void
 	{
-		$fields = json_encode($this->fields);
-		$js = <<<JS
-jQuery(function($){
-	var fields = $fields || [];
-	fields.forEach(function(f){
-		var selectors = [
-			'.field_options_'+f,
-			'.product_extras_'+f,
-			'[id^="extrarow-product_'+f+'_"]',
-			'[id^="trextrafieldseparator'+f+'_"]',
-			'[class~="trextrafieldseparator'+f+'"]'
-		].join(',');
-		$(selectors).each(function(){
-			var \$el = $(this);
-			var \$row = \$el.closest('tr');
-			if (\$row.length) {
-				\$row.hide();
-			} else {
-				\$el.hide();
-			}
-		});
-	});
-});
-JS;
-		print '<script>' . $js . '</script>';
+		print '<script type="application/json" id="clichaumeil-cost-breakdown-hide-data">'
+			. json_encode(
+				array('fields' => array_values($this->fields)),
+				JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT
+			)
+			. '</script>';
+		$this->renderCostBreakdownScriptTag();
+	}
+
+	/**
+	 * Load the external JS that manages cost-breakdown DOM behavior.
+	 *
+	 * @return void
+	 */
+	private function renderCostBreakdownScriptTag(): void
+	{
+		if (self::$costBreakdownScriptLoaded) {
+			return;
+		}
+
+		self::$costBreakdownScriptLoaded = true;
+		print '<script src="' . dol_buildpath('/clichaumeil/js/cost_breakdown.js', 1) . '" defer></script>';
 	}
 
 	/**
@@ -388,43 +392,6 @@ JS;
 			'cookieName' => $cookieName,
 			'expanded' => $expanded,
 		);
-	}
-
-	/**
-	 * Build separator initialization JS after rows are moved into the supplier-price tab.
-	 *
-	 * @param array<string,mixed> $config Separator configuration.
-	 * @return string
-	 */
-	private function buildSeparatorInitJs(array $config): string
-	{
-		$separatorId = json_encode((string) $config['separatorId']);
-		$collapseClass = json_encode((string) $config['collapseClass']);
-		$cookieName = json_encode((string) $config['cookieName']);
-		$expanded = !empty($config['expanded']) ? 'true' : 'false';
-
-		return '
-				var separatorId = ' . $separatorId . ';
-				var collapseClass = ' . $collapseClass . ';
-				var cookieName = ' . $cookieName . ';
-				var expanded = ' . $expanded . ';
-				var $separator = $("#" + separatorId);
-				var $groupRows = $("." + collapseClass);
-				if ($separator.length && $groupRows.length) {
-					var $icon = $separator.find("td span, th span").first();
-					$icon.addClass("cursorpointer");
-					var applyState = function(isExpanded) {
-						$groupRows.toggle(isExpanded);
-						$icon.toggleClass("fa-minus-square", isExpanded).toggleClass("fa-plus-square", !isExpanded).removeClass("fa-square opacitymedium");
-						document.cookie = cookieName + "=" + (isExpanded ? "1" : "0") + "; path=' . $_SERVER["PHP_SELF"] . '";
-					};
-					applyState(expanded);
-					$separator.off("click.clichaumeilSeparator").on("click.clichaumeilSeparator", function(){
-						expanded = !expanded;
-						applyState(expanded);
-					});
-				}
-		';
 	}
 
 	/**

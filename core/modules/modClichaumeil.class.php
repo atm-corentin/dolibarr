@@ -380,6 +380,7 @@ class modClichaumeil extends DolibarrModules
 		$permsCostComposition = '$user->hasRight(\'clichaumeil\',\'product\',\'read_cost_composition\') ? 1:0';
 		$permsPaFg = '$user->hasRight(\'clichaumeil\',\'product\',\'read_cost_composition\') ? 5:0';
 
+		$extrafields->fetch_name_optionals_label('product', true);
 		$this->ensureProductExtrafield($extrafields, 'clichaumeil_prc_separator', 'CliChaumeilCostBreakdown', 'separate', 100, '', 0, 0, '', array('options' => array('1' => null)), 1, $permsCostComposition, $permsCostComposition, '', '', 0, 'clichaumeil@clichaumeil', 1, 0, '0', array());
 		$this->ensureProductExtrafield($extrafields, 'clichaumeil_pa_support', 'CliChaumeilPaSupport', 'double', 101, '24,4', 0, 0, '', '', 1, $permsCostComposition, $permsCostComposition, 'CLICHAUMEIL_HELP_PA_SUPPORT', '', 0, 'clichaumeil@clichaumeil', 1, 0, '0', array());
 		$this->ensureProductExtrafield($extrafields, 'clichaumeil_pa_sav', 'CliChaumeilPaSav', 'double', 102, '24,4', 0, 0, '', '', 1, $permsCostComposition, $permsCostComposition, 'CLICHAUMEIL_HELP_PA_SAV', '', 0, 'clichaumeil@clichaumeil', 1, 0, '0', array());
@@ -627,7 +628,6 @@ class modClichaumeil extends DolibarrModules
 		$printable,
 		array $moreParams
 	): void {
-		$extrafields->fetch_name_optionals_label('product', true);
 		$exists = isset($extrafields->attributes['product']['label'][$name]);
 
 		if (!$exists) {
