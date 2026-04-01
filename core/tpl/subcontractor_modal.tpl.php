@@ -26,7 +26,7 @@
 				</tr>
 				</thead>
 				<tbody>
-				<?php foreach ($supplierProposals as $supplierProposal): ?>
+				<?php foreach ($supplierProposals as $supplierProposal) : ?>
 					<?php
 					if (empty($supplierProposal->id)) {
 						continue;
@@ -52,22 +52,12 @@
 						<td class="right"><?php echo price($supplierProposal->total_ht); ?></td>
 						<td class="center nowraponall"><?php echo $statusLabel; ?></td>
 						<td class="center">
-							<?php
-							echo dolGetButtonTitle(
-								$langs->trans('Select'),
-								'',
-								'fa fa-check',
-								'#',
-								'',
-								1,
-								array(
-									'morecss' => 'clichaumeil-select-subcontractor',
-									'attr' => array(
-										'data-supplier-proposal-id' => (int) $supplierProposal->id
-									)
-								)
-							);
-							?>
+							<button
+								type="button"
+								class="button smallpaddingimp clichaumeil-select-subcontractor"
+								title="<?php echo dol_escape_htmltag($langs->trans('CliChaumeilSelectSubcontractor')); ?>"
+								data-supplier-proposal-id="<?php echo (int) $supplierProposal->id; ?>"
+							><?php echo dol_escape_htmltag($langs->trans('Validate')); ?></button>
 						</td>
 					</tr>
 				<?php endforeach; ?>
