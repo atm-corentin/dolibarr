@@ -280,7 +280,7 @@ class SupplierProposalService
 	{
 		$unitIds = array();
 		foreach ($lines as $line) {
-			$fkUnit = isset($line->fk_unit) ? (int) $line->fk_unit : 0;
+			$fkUnit = $this->normalizeLineFkUnit($line);
 			if ($fkUnit > 0) {
 				$unitIds[] = $fkUnit;
 			}
@@ -303,11 +303,22 @@ class SupplierProposalService
 		}
 
 		foreach ($lines as $line) {
-			$fkUnit = isset($line->fk_unit) ? (int) $line->fk_unit : 0;
+			$fkUnit = $this->normalizeLineFkUnit($line);
 			$line->unit_short_label = ($fkUnit > 0 && isset($unitLabels[$fkUnit])) ? (string) $unitLabels[$fkUnit] : '';
 		}
 
 		return $lines;
+	}
+
+	/**
+	 * Normalize a line fk_unit value into an integer.
+	 *
+	 * @param object $line Proposal line object.
+	 * @return int
+	 */
+	private function normalizeLineFkUnit(object $line) : int
+	{
+		return isset($line->fk_unit) ? (int) $line->fk_unit : 0;
 	}
 
 	/**
