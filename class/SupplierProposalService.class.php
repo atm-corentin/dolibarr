@@ -31,6 +31,9 @@ class SupplierProposalService
 	/** @var Conf */
 	private $conf;
 
+	/** @var bool */
+	private $lastUnitPreloadError = false;
+
 	/**
 	 * Constructor
 	 *
@@ -185,6 +188,7 @@ class SupplierProposalService
 			$i++;
 		}
 		$this->db->free($resqlLines);
+		$object->lines = $this->hydrateLineUnitLabels($object->lines, (int) $object->id);
 	}
 
 	/**
@@ -217,6 +221,7 @@ class SupplierProposalService
 		// Use line label if exists, otherwise use product label
 		$line->label = !empty($objLine->label) ? $objLine->label : (!empty($objLine->product_label) ? $objLine->product_label : '');
 		$line->fk_unit = $objLine->fk_unit;
+		$line->unit_short_label = '';
 		$line->rang = $objLine->rang;
 		$line->special_code = $objLine->special_code;
 		$line->multicurrency_subprice = $objLine->multicurrency_subprice;
@@ -225,6 +230,84 @@ class SupplierProposalService
 		$line->multicurrency_total_ttc = $objLine->multicurrency_total_ttc;
 
 		return $line;
+	}
+
+	/**
+	 * Preload unit short labels from dictionary.
+	 *
+	 * @param array $unitIds List of unit ids to resolve.
+	 * @return array<int,string>
+	 */
+	private function preloadUnitShortLabels(array $unitIds) : array
+	{
+		$this->lastUnitPreloadError = false;
+
+		$unitIds = array_values(array_unique(array_filter(array_map('intval', $unitIds), static function ($unitId) {
+			return $unitId > 0;
+		})));
+
+		if (empty($unitIds)) {
+			return array();
+		}
+
+		$sql = 'SELECT rowid, short_label';
+		$sql .= ' FROM ' . $this->db->prefix() . 'c_units';
+		$sql .= ' WHERE rowid IN (' . implode(', ', $unitIds) . ')';
+
+		$resql = $this->db->query($sql);
+		if (!$resql) {
+			$this->lastUnitPreloadError = true;
+			return array();
+		}
+
+		$unitLabels = array();
+		while ($obj = $this->db->fetch_object($resql)) {
+			$unitLabels[(int) $obj->rowid] = (string) $obj->short_label;
+		}
+		$this->db->free($resql);
+
+		return $unitLabels;
+	}
+
+	/**
+	 * Hydrate passive unit labels used by the portal view.
+	 *
+	 * @param array $lines Proposal lines to enrich.
+	 * @param int $proposalId Proposal id used for logging context.
+	 * @return array
+	 */
+	private function hydrateLineUnitLabels(array $lines, int $proposalId = 0) : array
+	{
+		$unitIds = array();
+		foreach ($lines as $line) {
+			$fkUnit = isset($line->fk_unit) ? (int) $line->fk_unit : 0;
+			if ($fkUnit > 0) {
+				$unitIds[] = $fkUnit;
+			}
+		}
+
+		if (empty($unitIds)) {
+			foreach ($lines as $line) {
+				$line->unit_short_label = '';
+			}
+
+			return $lines;
+		}
+
+		$unitLabels = $this->preloadUnitShortLabels($unitIds);
+		if ($this->lastUnitPreloadError) {
+			dol_syslog(
+				__METHOD__ . ': unable to preload unit dictionary for supplier proposal id=' . $proposalId . ' error=' . $this->db->lasterror(),
+				LOG_WARNING
+			);
+		}
+
+		foreach ($lines as $line) {
+			$fkUnit = isset($line->fk_unit) ? (int) $line->fk_unit : 0;
+			$line->unit_short_label = ($fkUnit > 0 && isset($unitLabels[$fkUnit])) ? (string) $unitLabels[$fkUnit] : '';
+		}
+
+		return $lines;
 	}
 
 	/**

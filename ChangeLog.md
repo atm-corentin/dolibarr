@@ -3,6 +3,9 @@
 
 ## Unreleased
 
+## 1.12
+- NEW : Add read-only display of standard line units on the external supplier portal; no change to the standard conversion flow. *01/04/2026* - 1.12.0
+
 ## 1.11
 - FIX : Load supplier proposal lines on portal by using `ref_fourn` supplier reference column in SQL join. *30/03/2026* - 1.11.1
 - NEW: Add script to add ref_supplier column on supplier proposals *28/01/2026* - 1.11.0

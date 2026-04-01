@@ -49,11 +49,11 @@ class SupplierProposalView
 	/**
 	 * Constructor
 	 *
-	 * @param Translate $langs
-	 * @param Conf $conf
-	 * @param DoliDB $db
-	 * @param User $user
-	 * @param Context $context
+	 * @param Translate $langs Translation handler.
+	 * @param Conf $conf Configuration object.
+	 * @param DoliDB $db Database handler.
+	 * @param User $user Current user.
+	 * @param Context $context External access context.
 	 */
 	public function __construct(Translate $langs, Conf $conf, DoliDB $db, User $user, Context $context)
 	{
@@ -67,9 +67,9 @@ class SupplierProposalView
 	/**
 	 * Render proposal summary section
 	 *
-	 * @param SupplierProposal $object
-	 * @param Societe $thirdparty
-	 * @param array $documents
+	 * @param SupplierProposal $object Supplier proposal object.
+	 * @param Societe $thirdparty Supplier thirdparty.
+	 * @param array $documents Documents linked to the proposal.
 	 * @return string HTML
 	 */
 	public function renderProposalSummary(SupplierProposal $object, Societe $thirdparty, array $documents) : string
@@ -85,9 +85,9 @@ class SupplierProposalView
 		// Main fields
 		$out .= $this->renderField('CLICHAUMEIL_REFNAME', $thirdparty->name ?? '');
 		$out .= $this->renderField('Label', $object->ref_supplier ?? '');
-		$out .= $this->renderField('CLICHAUMEIL_PROJECT', $object->project_ref ?? '' );
+		$out .= $this->renderField('CLICHAUMEIL_PROJECT', $object->project_ref ?? '');
 		$out .= $this->renderField('CLICHAUMEIL_STATUS', $this->getSupplierStatusLabel($object));
-		$out .= $this->renderField('CLICHAUMEIL_DATEDELIVERYPLANNED', dol_print_date($object->delivery_date), '' ,' :');
+		$out .= $this->renderField('CLICHAUMEIL_DATEDELIVERYPLANNED', dol_print_date($object->delivery_date), '', ' :');
 		$out .= $this->renderField('CLICHAUMEIL_TOTALHT', price($object->total_ht, 0, $this->langs, 1, 2, -1, $currencyCode), 'object-total-ht');
 		$uploadedAttachments = $this->renderUploadedAttachments($documents, $object);
 		if (!empty($uploadedAttachments)) {
@@ -113,7 +113,7 @@ class SupplierProposalView
 	/**
 	 * Get localized label for supplier status extrafield
 	 *
-	 * @param SupplierProposal $object
+	 * @param SupplierProposal $object Supplier proposal object.
 	 * @return string
 	 */
 	private function getSupplierStatusLabel(SupplierProposal $object) : string
@@ -135,23 +135,26 @@ class SupplierProposalView
 	/**
 	 * Render proposal lines table
 	 *
-	 * @param SupplierProposal $object
-	 * @param string $currencyCode
+	 * @param SupplierProposal $object Supplier proposal object.
+	 * @param string $currencyCode Currency code used for price rendering.
 	 * @return string HTML
 	 */
 	public function renderProposalLines(SupplierProposal $object, string $currencyCode) : string
 	{
+		$this->langs->loadLangs(array('products', 'stocks'));
+
 		$out = '<div class="container px-0">';
 		$out .= '<div class="table-responsive">';
 		$out .= '<table class="table table-striped" id="supplier-propal-lines">';
 		$out .= '<thead>';
 		$out .= '<tr>';
 		$out .= '<th style="width: 10%;">' . $this->langs->trans('Ref') . '</th>';
-		$out .= '<th style="width: 15%;">' . $this->langs->trans('CLICHAUMEIL_REFSUPPLLIER') . '</th>';
-		$out .= '<th style="width: 40%;">' . $this->langs->trans('Description') . '</th>';
+		$out .= '<th style="width: 14%;">' . $this->langs->trans('CLICHAUMEIL_REFSUPPLLIER') . '</th>';
+		$out .= '<th style="width: 34%;">' . $this->langs->trans('Description') . '</th>';
 		$out .= '<th class="text-right" style="width: 10%;">' . $this->langs->trans('Qty') . '</th>';
-		$out .= '<th class="text-right" style="width: 15%;">' . $this->langs->trans('UnitPriceHT') . '</th>';
-		$out .= '<th class="text-right" style="width: 15%;">' . $this->langs->trans('TotalHT') . '</th>';
+		$out .= '<th style="width: 8%;">' . $this->langs->trans('Unit') . '</th>';
+		$out .= '<th class="text-right" style="width: 12%;">' . $this->langs->trans('UnitPriceHT') . '</th>';
+		$out .= '<th class="text-right" style="width: 12%;">' . $this->langs->trans('TotalHT') . '</th>';
 		$out .= '</tr>';
 		$out .= '</thead>';
 		$out .= '<tbody>';
@@ -181,9 +184,9 @@ class SupplierProposalView
 	/**
 	 * Render single line
 	 *
-	 * @param SupplierProposalLine $line
-	 * @param string $currencyCode
-	 * @param SupplierProposal $object
+	 * @param SupplierProposalLine $line Proposal line to render.
+	 * @param string $currencyCode Currency code used for totals.
+	 * @param SupplierProposal $object Parent supplier proposal.
 	 * @return string HTML
 	 */
 	private function renderLine(SupplierProposalLine $line, string $currencyCode, SupplierProposal $object) : string
@@ -212,8 +215,10 @@ class SupplierProposalView
 			$out .= '<td></td>';
 			$out .= '<td></td>';
 			$out .= '<td></td>';
+			$out .= '<td></td>';
 		} else {
 			$out .= '<td class="text-right">' . $line->qty . '</td>';
+			$out .= '<td>' . dol_escape_htmltag((string) ($line->unit_short_label ?? '')) . '</td>';
 			$out .= '<td class="text-right">';
 			$out .= '<input type="text" class="form-control text-right line-price-input"';
 			$out .= ' name="line_prices[' . $line->id . ']"';
@@ -230,9 +235,9 @@ class SupplierProposalView
 	/**
 	 * Render subtotal line
 	 *
-	 * @param SupplierProposalLine $line
-	 * @param string $currencyCode
-	 * @param SupplierProposal $object
+	 * @param SupplierProposalLine $line Subtotal line to render.
+	 * @param string $currencyCode Currency code used for totals.
+	 * @param SupplierProposal $object Parent supplier proposal.
 	 * @return string HTML
 	 */
 	private function renderSubtotalLine(SupplierProposalLine $line, string $currencyCode, SupplierProposal $object) : string
@@ -245,12 +250,13 @@ class SupplierProposalView
 			$out .= '<td>' . $line->desc . '</td>';
 			$out .= '<td class="text-right"></td>';
 			$out .= '<td class="text-right"></td>';
+			$out .= '<td class="text-right"></td>';
 			$out .= '<td class="text-right">' . price($subtotalAmount, 0, $this->langs, 1, 2, -1, $currencyCode) . '</td>';
 		} elseif (TSubtotal::isFreeText($line)) {
-			$out .= '<td colspan="5">' . nl2br($line->desc) . '</td>';
+			$out .= '<td colspan="6">' . nl2br($line->desc) . '</td>';
 			$out .= '<td></td>';
 		} else {
-			$out .= '<td colspan="5">';
+			$out .= '<td colspan="6">';
 			if (!empty($line->label)) {
 				$out .= '<strong>' . nl2br($line->label) . '</strong>';
 			}
@@ -272,8 +278,8 @@ class SupplierProposalView
 	/**
 	 * Render timeline/discussion section
 	 *
-	 * @param array $TMessage Array of ActionComm objects
-	 * @param SupplierProposal $object
+	 * @param array $TMessage Array of ActionComm objects.
+	 * @param SupplierProposal $object Supplier proposal object.
 	 * @return string HTML
 	 */
 	public function renderTimeline(array $TMessage, SupplierProposal $object) : string
@@ -316,10 +322,10 @@ class SupplierProposalView
 	/**
 	 * Render single timeline item
 	 *
-	 * @param ActionComm $action
-	 * @param int $iComment
-	 * @param int $numComments
-	 * @param array $userGetNomUrlCache
+	 * @param ActionComm $action Timeline action to render.
+	 * @param int $iComment Current comment index.
+	 * @param int $numComments Total number of comments.
+	 * @param array $userGetNomUrlCache Cache of rendered user labels.
 	 * @return string HTML
 	 */
 	private function renderTimelineItem(ActionComm $action, int $iComment, int $numComments, array &$userGetNomUrlCache) : string
@@ -385,7 +391,7 @@ class SupplierProposalView
 	/**
 	 * Render timeline files
 	 *
-	 * @param ActionComm $action
+	 * @param ActionComm $action Timeline action carrying attachments.
 	 * @return string HTML
 	 */
 	private function renderTimelineFiles(ActionComm $action) : string
@@ -439,7 +445,7 @@ class SupplierProposalView
 	/**
 	 * Render comment form
 	 *
-	 * @param SupplierProposal $object
+	 * @param SupplierProposal $object Supplier proposal object.
 	 * @return string HTML
 	 */
 	public function renderCommentForm(SupplierProposal $object) : string
@@ -497,7 +503,7 @@ class SupplierProposalView
 	 * @param string $param Optional ID for the value div
 	 * @return string HTML
 	 */
-	private function renderField(string $label = '', string $value = '', string $id = '' , string $param = "") : string
+	private function renderField(string $label = '', string $value = '', string $id = '', string $param = "") : string
 	{
 		$idAttr = $id ? ' id="' . $id . '"' : '';
 		$out = '<div class="row clearfix form-group">';
@@ -510,7 +516,7 @@ class SupplierProposalView
 	/**
 	 * Render extrafields
 	 *
-	 * @param SupplierProposal $object
+	 * @param SupplierProposal $object Supplier proposal object.
 	 * @return string HTML
 	 */
 	private function renderExtrafields(SupplierProposal $object) : string
@@ -551,8 +557,8 @@ class SupplierProposalView
 	/**
 	 * Render documents footer
 	 *
-	 * @param array $documents
-	 * @param SupplierProposal $object
+	 * @param array $documents Documents linked to the proposal.
+	 * @param SupplierProposal $object Supplier proposal object.
 	 * @return string HTML
 	 */
 	private function renderDocumentsFooter(array $documents, SupplierProposal $object) : string
@@ -601,8 +607,8 @@ class SupplierProposalView
 	/**
 	 * Render uploaded attachments list inside summary
 	 *
-	 * @param array $documents
-	 * @param SupplierProposal $object
+	 * @param array $documents Documents linked to the proposal.
+	 * @param SupplierProposal $object Supplier proposal object.
 	 * @return string HTML
 	 */
 	private function renderUploadedAttachments(array $documents, SupplierProposal $object) : string
@@ -634,8 +640,8 @@ class SupplierProposalView
 	/**
 	 * Render a single document link
 	 *
-	 * @param object $doc
-	 * @param SupplierProposal $object
+	 * @param object $doc ECM document row.
+	 * @param SupplierProposal $object Supplier proposal object.
 	 * @return string HTML
 	 */
 	private function renderDocumentLink(object $doc, SupplierProposal $object) : string
