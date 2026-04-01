@@ -503,7 +503,7 @@ class SupplierProposalView
 	 * @param string $param Optional ID for the value div
 	 * @return string HTML
 	 */
-	private function renderField(string $label = '', string $value = '', string $id = '', string $param = "") : string
+	private function renderField(string $label = '', string $value = '', string $id = '', string $param = '') : string
 	{
 		$idAttr = $id ? ' id="' . $id . '"' : '';
 		$out = '<div class="row clearfix form-group">';
