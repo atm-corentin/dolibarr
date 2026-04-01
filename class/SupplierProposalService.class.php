@@ -278,6 +278,10 @@ class SupplierProposalService
 	 */
 	private function hydrateLineUnitLabels(array $lines, int $proposalId = 0) : array
 	{
+		if (empty($lines)) {
+			return $lines;
+		}
+
 		$unitIds = array();
 		foreach ($lines as $line) {
 			$fkUnit = $this->normalizeLineFkUnit($line);
