@@ -15,10 +15,15 @@ class CliChaumeilCommissionConfig
 	public const COEFF_SOUS_TRAITANCE = 'CLICHAUMEIL_COMMISSION_COEFF_SOUS_TRAITANCE';
 	public const COEFF_NOUVEAU = 'CLICHAUMEIL_COMMISSION_COEFF_NOUVEAU';
 	public const COEFF_ANCIEN = 'CLICHAUMEIL_COMMISSION_COEFF_ANCIEN';
+	public const PRINT_MANAGEMENT_COEFF_MARCHE_PUBLIC = 'CLICHAUMEIL_COMMISSION_PRINT_MANAGEMENT_COEFF_MARCHE_PUBLIC';
+	public const PRINT_MANAGEMENT_COEFF_SOUS_TRAITANCE = 'CLICHAUMEIL_COMMISSION_PRINT_MANAGEMENT_COEFF_SOUS_TRAITANCE';
+	public const PRINT_MANAGEMENT_COEFF_NOUVEAU = 'CLICHAUMEIL_COMMISSION_PRINT_MANAGEMENT_COEFF_NOUVEAU';
+	public const PRINT_MANAGEMENT_COEFF_ANCIEN = 'CLICHAUMEIL_COMMISSION_PRINT_MANAGEMENT_COEFF_ANCIEN';
 
 	public const GROUP_COMMERCIAL = 'CLICHAUMEIL_COMMISSION_GROUP_COMMERCIAL';
 	public const GROUP_MANAGER_COMMERCIAL = 'CLICHAUMEIL_COMMISSION_GROUP_MANAGER_COMMERCIAL';
 	public const GROUP_PRINT_MANAGER = 'CLICHAUMEIL_COMMISSION_GROUP_PRINT_MANAGER';
+	public const GROUP_PRINT_MANAGEMENT = 'CLICHAUMEIL_COMMISSION_GROUP_PRINT_MANAGEMENT';
 
 	public const CAT_MARCHE_PUBLIC = 'CLICHAUMEIL_COMMISSION_CAT_MARCHE_PUBLIC';
 	public const CAT_SOUS_TRAITANCE = 'CLICHAUMEIL_COMMISSION_CAT_SOUS_TRAITANCE';
@@ -29,11 +34,15 @@ class CliChaumeilCommissionConfig
 	public const DEFAULT_COEFF_SOUS_TRAITANCE = 1.5;
 	public const DEFAULT_COEFF_NOUVEAU = 3.3;
 	public const DEFAULT_COEFF_ANCIEN = 1.5;
+	public const DEFAULT_PRINT_MANAGEMENT_COEFF_MARCHE_PUBLIC = 0.5;
+	public const DEFAULT_PRINT_MANAGEMENT_COEFF_SOUS_TRAITANCE = 0.5;
+	public const DEFAULT_PRINT_MANAGEMENT_COEFF_NOUVEAU = 0.5;
+	public const DEFAULT_PRINT_MANAGEMENT_COEFF_ANCIEN = 0.5;
 
 	/**
 	 * @return array<string,float>
 	 */
-	public static function getDefaultCoefficients(): array
+	public static function getDefaultCommercialCoefficients(): array
 	{
 		return array(
 			self::COEFF_MARCHE_PUBLIC => self::DEFAULT_COEFF_MARCHE_PUBLIC,
@@ -44,6 +53,28 @@ class CliChaumeilCommissionConfig
 	}
 
 	/**
+	 * @return array<string,float>
+	 */
+	public static function getDefaultPrintManagementCoefficients(): array
+	{
+		return array(
+			self::PRINT_MANAGEMENT_COEFF_MARCHE_PUBLIC => self::DEFAULT_PRINT_MANAGEMENT_COEFF_MARCHE_PUBLIC,
+			self::PRINT_MANAGEMENT_COEFF_SOUS_TRAITANCE => self::DEFAULT_PRINT_MANAGEMENT_COEFF_SOUS_TRAITANCE,
+			self::PRINT_MANAGEMENT_COEFF_NOUVEAU => self::DEFAULT_PRINT_MANAGEMENT_COEFF_NOUVEAU,
+			self::PRINT_MANAGEMENT_COEFF_ANCIEN => self::DEFAULT_PRINT_MANAGEMENT_COEFF_ANCIEN,
+		);
+	}
+
+	/**
+	 * @return array<string,float>
+	 */
+	public static function getDefaultCoefficients(): array
+	{
+		return self::getDefaultCommercialCoefficients() + self::getDefaultPrintManagementCoefficients();
+	}
+
+	/**
+	 * @param Translate $langs Language handler
 	 * @return array<string,string>
 	 */
 	public static function getDefaultCategoryLabels(Translate $langs): array

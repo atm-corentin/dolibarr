@@ -4,7 +4,8 @@
 ## Unreleased
 
 ## 1.12
-- FIX : Replace subcontractor selection tick icon with a `Valider` button in the selection modal. *01/04/2026* - 1.12.1
+- NEW : Add Print Management commission configuration with dedicated coefficients and group on the commissions setup page. *01/04/2026* - 1.12.0
+- FIX : Replace subcontractor selection tick icon with a `Valider` button in the selection modal. *01/04/2026* - 1.12.0
 - NEW : Add read-only display of standard line units on the external supplier portal; no change to the standard conversion flow. *01/04/2026* - 1.12.0
 
 ## 1.11
