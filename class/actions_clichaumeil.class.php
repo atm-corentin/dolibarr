@@ -33,6 +33,7 @@ require_once __DIR__ . '/CliChaumeilProductCost.class.php';
 require_once __DIR__ . '/CliChaumeilProposalMarginGuard.class.php';
 require_once __DIR__ . '/CliChaumeilProductCostImportService.class.php';
 require_once __DIR__ . '/CliChaumeilProductCostViewRenderer.class.php';
+require_once __DIR__ . '/Rfa/RfaSummaryStorageManager.php';
 require_once __DIR__ . '/../lib/clichaumeil.lib.php';
 require_once DOL_DOCUMENT_ROOT . '/categories/class/categorie.class.php';
 require_once __DIR__ . '/SupplierProposalService.class.php';
@@ -856,9 +857,47 @@ class ActionsClichaumeil extends CommonHookActions
 	 */
 	public static function replaceThirdparty(DoliDB $dbs, $origin_id, $dest_id)
 	{
-		$tables = array('clichaumeil_chaumeilrfa');
+		global $conf;
 
-		return CommonObject::commonReplaceThirdparty($dbs, $origin_id, $dest_id, $tables);
+		$originId = (int) $origin_id;
+		$destId = (int) $dest_id;
+		if ($originId <= 0 || $destId <= 0) {
+			dol_syslog(__METHOD__.' invalid thirdparty replacement arguments', LOG_ERR);
+			return false;
+		}
+
+		$dbs->begin();
+		$tables = array('clichaumeil_chaumeilrfa');
+		$result = CommonObject::commonReplaceThirdparty($dbs, $originId, $destId, $tables);
+		if (!$result) {
+			$dbs->rollback();
+			dol_syslog(__METHOD__.' failed to replace thirdparty in source tables', LOG_ERR);
+			return false;
+		}
+
+		try {
+			$storageManager = new RfaSummaryStorageManager($dbs);
+			$summaryTableExists = $storageManager->tableExists();
+		} catch (Throwable $exception) {
+			$dbs->rollback();
+			dol_syslog(__METHOD__.' failed to inspect summary table after thirdparty replacement: '.$exception->getMessage(), LOG_ERR);
+			return false;
+		}
+
+		if ($summaryTableExists) {
+			$sql = 'DELETE FROM '.$dbs->prefix().RfaSummaryStorageManager::TABLE_SUMMARY;
+			$sql .= ' WHERE entity = '.((int) $conf->entity);
+			$resql = $dbs->query($sql);
+			if (!$resql) {
+				$dbs->rollback();
+				dol_syslog(__METHOD__.' failed to purge summary cache after thirdparty replacement: '.$dbs->lasterror(), LOG_ERR);
+				return false;
+			}
+		}
+
+		$dbs->commit();
+
+		return true;
 	}
 
 	/**

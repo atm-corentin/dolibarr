@@ -2,6 +2,9 @@
 
 
 ## Unreleased
+- NEW : Materialize the global supplier RFA list into a yearly summary table with manual rebuild tool, nightly cron, and SQL-native filtering/sorting/pagination. *31/03/2026* - 1.13.0
+- NEW : Aggregate subsidiary supplier turnover into the root parent company on the global RFA list, keep final filters/sorts correct, and disable the CA link on aggregated rows. *31/03/2026* - 1.12.0
+- NEW : Add ACHT-5 scheduled RFA negotiation reminder cron with cloneable parameters and default email template seed. *31/03/2026* - 1.12.0
 
 ## 1.12
 - NEW: Block proposal validation when at least one line has a cost price higher than the sale price, including proposal card UI, mass validation, and PROPAL_VALIDATE trigger guard. *30/03/2026* - 1.12.0
