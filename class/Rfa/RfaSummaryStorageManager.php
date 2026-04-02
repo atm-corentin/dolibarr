@@ -59,15 +59,20 @@ class RfaSummaryStorageManager
 	 */
 	public function tableExists(): bool
 	{
-		$sql = "SHOW TABLES LIKE '".$this->db->escape($this->db->prefix().self::TABLE_SUMMARY)."'";
-		$resql = $this->db->query($sql);
-		if (!$resql) {
-			throw new RuntimeException('Unable to inspect summary table existence: '.$this->db->lasterror());
+		global $conf;
+
+		$tables = $this->db->DDLListTables($conf->db->name, $this->db->prefix().self::TABLE_SUMMARY);
+		if (!is_array($tables)) {
+			throw new RuntimeException('Unable to inspect summary table existence.');
 		}
 
-		$exists = ($this->db->num_rows($resql) > 0);
-		$this->db->free($resql);
+		$expectedTable = $this->db->prefix().self::TABLE_SUMMARY;
+		foreach ($tables as $tableName) {
+			if ((string) $tableName === $expectedTable) {
+				return true;
+			}
+		}
 
-		return $exists;
+		return false;
 	}
 }

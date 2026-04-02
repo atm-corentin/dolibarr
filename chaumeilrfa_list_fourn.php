@@ -190,6 +190,7 @@ $listRows = array();
 $num = 0;
 $hasSummaryForYear = false;
 $isSummaryStorageReady = true;
+$summaryLastCalculatedTimestamp = 0;
 
 if (empty($reshook)) {
 	try {
@@ -197,6 +198,7 @@ if (empty($reshook)) {
 		$num = $repository->countSummaryRowsForYear($searchYear, $search);
 		$listRows = $repository->fetchSummaryRowsForYear($searchYear, $search, $sortfield, $sortorder, $offset, $limit);
 		$hasSummaryForYear = $repository->hasSummaryForYear($searchYear);
+		$summaryLastCalculatedTimestamp = $repository->getSummaryLastCalculatedTimestamp($searchYear);
 	} catch (Throwable $exception) {
 		dol_syslog(__FILE__.' '.$exception->getMessage(), LOG_ERR);
 		setEventMessages($langs->trans('CliChaumeil_RfaListLoadError'), null, 'errors');
@@ -204,6 +206,7 @@ if (empty($reshook)) {
 		$num = 0;
 		$hasSummaryForYear = false;
 		$isSummaryStorageReady = false;
+		$summaryLastCalculatedTimestamp = 0;
 	}
 }
 
@@ -267,6 +270,15 @@ if ($canRebuildSummary) {
 
 print_barre_liste($title, $page, $_SERVER['PHP_SELF'], $param, $sortfield, $sortorder, '', $num, 0, $object->picto, 0, $newcardbutton, '', $limit, 0, 0, 1);
 
+if (!$isSummaryStorageReady) {
+	print info_admin($langs->trans('CliChaumeil_RfaSummaryStorageMissing'), 0, 0, 'warning');
+} elseif (!$hasSummaryForYear) {
+	print info_admin($langs->trans('CliChaumeil_RfaSummaryMissingForYear', $searchYear), 0, 0, 'warning');
+} elseif ($summaryLastCalculatedTimestamp > 0) {
+	$formattedDate = dol_print_date($summaryLastCalculatedTimestamp, 'dayhour', 'tzuser');
+	print info_admin($langs->trans('CliChaumeil_RfaSummaryLastCalculatedAt', $formattedDate), 0, 0, 'info');
+}
+
 if ($canRebuildSummary) {
 	print '<div id="clichaumeil-rfa-summary-rebuild-feedback" class="marginbottomonly" style="display:none;"></div>';
 	print '<script src="'.dol_buildpath('/clichaumeil/js/rfa_summary_list.js', 1).'"></script>';
@@ -285,12 +297,6 @@ if ($moreforfilter !== '') {
 	print '<div class="liste_titre liste_titre_bydiv centpercent">';
 	print $moreforfilter;
 	print '</div>';
-}
-
-if (!$isSummaryStorageReady) {
-	print info_admin($langs->trans('CliChaumeil_RfaSummaryStorageMissing'), 0, 0, 'warning');
-} elseif (!$hasSummaryForYear) {
-	print info_admin($langs->trans('CliChaumeil_RfaSummaryMissingForYear', $searchYear), 0, 0, 'warning');
 }
 
 $varpage = empty($contextpage) ? $_SERVER['PHP_SELF'] : $contextpage;
@@ -473,7 +479,7 @@ if (!empty($listRows)) {
 	print '</tr>'."\n";
 }
 
-if ($num === 0) {
+if ($num === 0 && $isSummaryStorageReady && $hasSummaryForYear) {
 	$colspan = count(array_filter($arrayfields, static function (array $fieldDefinition): bool {
 		return !empty($fieldDefinition['checked']);
 	})) + 1;

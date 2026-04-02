@@ -345,6 +345,39 @@ class RfaSummarySourceRepository
 	}
 
 	/**
+	 * Return the latest calculation timestamp stored for one summary year.
+	 *
+	 * @param int $year Target year.
+	 * @return int Unix timestamp, 0 when unavailable.
+	 * @throws RuntimeException When the SQL query fails.
+	 */
+	public function getSummaryLastCalculatedTimestamp(int $year): int
+	{
+		if (!$this->summaryTableExists()) {
+			return 0;
+		}
+
+		$sql = 'SELECT MAX(rs.date_calculated) AS last_calculated_at';
+		$sql .= ' FROM '.$this->db->prefix().self::TABLE_SUMMARY.' AS rs';
+		$sql .= ' WHERE rs.entity = '.$this->entity;
+		$sql .= ' AND rs.year = '.((int) $year);
+
+		$resql = $this->db->query($sql);
+		if (!$resql) {
+			throw new RuntimeException('Unable to fetch summary latest calculation date: '.$this->db->lasterror());
+		}
+
+		$obj = $this->db->fetch_object($resql);
+		$timestamp = 0;
+		if ($obj && !empty($obj->last_calculated_at)) {
+			$timestamp = (int) $this->db->jdate($obj->last_calculated_at);
+		}
+		$this->db->free($resql);
+
+		return $timestamp;
+	}
+
+	/**
 	 * Check whether the summary storage is available.
 	 *
 	 * @return bool

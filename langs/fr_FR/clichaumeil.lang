@@ -188,6 +188,7 @@ CliChaumeil_RfaListAggregatedAmountNoLinkHelp = Le détail cliquable n'est pas d
 CliChaumeil_RfaListLoadError = Une erreur est survenue lors du chargement de la liste globale des RFA.
 CliChaumeil_RfaSummaryStorageMissing = La structure SQL de la synthèse RFA est absente ou obsolète. Lancez l'upgrade du module avant de recalculer ou d'afficher cette liste.
 CliChaumeil_RfaSummaryMissingForYear = Aucune synthèse RFA n'est disponible pour l'année %s. Lancez un recalcul pour alimenter la liste.
+CliChaumeil_RfaSummaryLastCalculatedAt = Synthèse RFA calculée le %s.
 CliChaumeil_RfaSummaryRebuildTitle = Recalcul de la synthèse RFA
 CliChaumeil_RfaSummaryRebuildIntro = Ce script recalcule les données agrégées de la liste globale RFA pour l'année choisie.
 CliChaumeil_RfaSummaryRebuildAction = Recalculer la synthèse RFA

@@ -511,7 +511,7 @@ class modClichaumeil extends DolibarrModules
 	{
 		$indexName = 'idx_clichaumeil_chaumeilrfa_soc_year_palier';
 		$tableName = $this->db->prefix().'clichaumeil_chaumeilrfa';
-		$sql = 'SHOW INDEX FROM '.$tableName." WHERE Key_name = '".$this->db->escape($indexName)."'";
+		$sql = $this->getIndexExistenceSql($tableName, $indexName);
 		$resql = $this->db->query($sql);
 		if (!$resql) {
 			dol_syslog(__METHOD__.' unable to inspect RFA index: '.$this->db->lasterror(), LOG_ERR);
@@ -526,7 +526,7 @@ class modClichaumeil extends DolibarrModules
 			return 1;
 		}
 
-		$sql = 'ALTER TABLE '.$tableName.' ADD INDEX '.$indexName.' (fk_soc, datestart, dateend, palier)';
+		$sql = 'CREATE INDEX '.$indexName.' ON '.$tableName.' (fk_soc, datestart, dateend, palier)';
 		$resql = $this->db->query($sql);
 		if (!$resql) {
 			dol_syslog(__METHOD__.' unable to create RFA index: '.$this->db->lasterror(), LOG_ERR);
@@ -535,6 +535,34 @@ class modClichaumeil extends DolibarrModules
 		}
 
 		return 1;
+	}
+
+	/**
+	 * Build a DB-specific SQL query to inspect index existence.
+	 *
+	 * @param string $tableName Full SQL table name with prefix.
+	 * @param string $indexName Index name.
+	 * @return string
+	 */
+	private function getIndexExistenceSql(string $tableName, string $indexName): string
+	{
+		if ($this->db->type === 'pgsql') {
+			$sql = "SELECT indexname";
+			$sql .= " FROM pg_indexes";
+			$sql .= " WHERE schemaname = 'public'";
+			$sql .= " AND tablename = '".$this->db->escape($tableName)."'";
+			$sql .= " AND indexname = '".$this->db->escape($indexName)."'";
+
+			return $sql;
+		}
+
+		$sql = 'SELECT index_name';
+		$sql .= ' FROM information_schema.statistics';
+		$sql .= " WHERE table_schema = DATABASE()";
+		$sql .= " AND table_name = '".$this->db->escape($tableName)."'";
+		$sql .= " AND index_name = '".$this->db->escape($indexName)."'";
+
+		return $sql;
 	}
 
 	/**

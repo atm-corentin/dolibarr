@@ -222,6 +222,7 @@ CliChaumeil_RfaListAggregatedAmountNoLinkHelp=The clickable detail is not availa
 CliChaumeil_RfaListLoadError=An error occurred while loading the global RFA list.
 CliChaumeil_RfaSummaryStorageMissing=The SQL structure for the RFA summary is missing or outdated. Run the module upgrade before rebuilding or opening this list.
 CliChaumeil_RfaSummaryMissingForYear=No RFA summary is available for year %s. Run a rebuild to feed the list.
+CliChaumeil_RfaSummaryLastCalculatedAt=RFA summary calculated on %s.
 CliChaumeil_RfaSummaryRebuildTitle=RFA summary rebuild
 CliChaumeil_RfaSummaryRebuildIntro=This tool rebuilds the aggregated data used by the global RFA list for the selected year.
 CliChaumeil_RfaSummaryRebuildAction=Rebuild RFA summary
