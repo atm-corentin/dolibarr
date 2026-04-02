@@ -262,7 +262,7 @@ class ActionsClichaumeil extends CommonHookActions
 	}
 
 	/**
-	 * Inject a DOM marker used to neutralize the validate button on proposal cards.
+	 * Inject a DOM marker used to control the validate button on proposal cards.
 	 *
 	 * @param array<string,mixed> $parameters Hook metadata.
 	 * @param CommonObject        $object     Current object.
@@ -277,16 +277,6 @@ class ActionsClichaumeil extends CommonHookActions
 		}
 
 		$guard = new CliChaumeilProposalMarginGuard();
-
-		try {
-			if (!$guard->hasBlockingNegativeMargin($object)) {
-				return;
-			}
-		} catch (RuntimeException $exception) {
-			dol_syslog(__METHOD__ . ' - ' . $exception->getMessage(), LOG_ERR);
-			return;
-		}
-
 		$message = $guard->getCardBlockingMessage($langs);
 		print '<span id="' . self::VALIDATION_GUARD_DOM_ID . '" data-message="' . dol_escape_htmltag($message) . '" style="display:none;"></span>';
 		$this->proposalValidationGuardMarkerPrinted = true;
