@@ -1243,6 +1243,31 @@ JS;
 	}
 
 	/**
+	 * Compute the net unit sale price for margin checks.
+	 *
+	 * @param CommonObjectLine $line Line to inspect.
+	 * @return float
+	 */
+	private function getNetUnitSalePriceForMargin($line): float
+	{
+		$quantity = isset($line->qty) ? (float) price2num((string) $line->qty) : 0.0;
+		$totalHt = isset($line->total_ht) ? (float) price2num((string) $line->total_ht) : 0.0;
+
+		if (abs($quantity) > 0.0) {
+			return $totalHt / $quantity;
+		}
+
+		$unitPrice = isset($line->subprice) ? (float) price2num((string) $line->subprice) : 0.0;
+		$discountPercent = isset($line->remise_percent) ? (float) price2num((string) $line->remise_percent) : 0.0;
+
+		if ($discountPercent <= 0.0) {
+			return $unitPrice;
+		}
+
+		return $unitPrice * (1 - ($discountPercent / 100));
+	}
+
+	/**
 	 * Overload the printObjectLine method to prepare margin-related data for each line.
 	 *
 	 * This hook collects necessary pricing information (unit price and cost price)
@@ -1272,8 +1297,8 @@ JS;
 				$costPrice = (float) $line->pa_ht;
 			}
 
-			// 💸 Get unit price (PU HT)
-			$pu_ht = (float) $line->subprice;
+			// Use the net unit sale price so warning UI matches the server guard.
+			$netSalePrice = $this->getNetUnitSalePriceForMargin($line);
 
 			// ⚠️ Prepare the warning icon HTML
 			$warningIcon = img_warning(
@@ -1282,7 +1307,7 @@ JS;
 
 			// 📦 Store the data for the JS script
 			self::$lineData[$line->id] = [
-				'pu_ht' => $pu_ht,
+				'net_sale_price' => $netSalePrice,
 				'cost_price' => $costPrice,
 				'warning_icon' => $warningIcon,
 			];

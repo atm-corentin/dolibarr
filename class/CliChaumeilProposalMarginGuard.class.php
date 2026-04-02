@@ -70,7 +70,7 @@ class CliChaumeilProposalMarginGuard
 
 		foreach ($proposal->lines as $line) {
 			$lineId = isset($line->id) ? (int) $line->id : 0;
-			$salePrice = $this->normalizeAmount($line->subprice ?? null);
+			$salePrice = $this->getNetUnitSalePrice($line);
 			$costPrice = $this->normalizeAmount($line->pa_ht ?? null);
 
 			if ($costPrice > $salePrice && $lineId > 0) {
@@ -79,6 +79,35 @@ class CliChaumeilProposalMarginGuard
 		}
 
 		return $blockingLineIds;
+	}
+
+	/**
+	 * Compute the net unit sale price used for margin comparison.
+	 *
+	 * The line total already includes the commercial discount, so it is the
+	 * most reliable source when a quantity is available. Fallback to the unit
+	 * price discounted by the line rate when the total cannot be used.
+	 *
+	 * @param CommonObjectLine $line Proposal line to inspect.
+	 * @return float
+	 */
+	private function getNetUnitSalePrice($line): float
+	{
+		$quantity = $this->normalizeAmount($line->qty ?? null);
+		$totalHt = $this->normalizeAmount($line->total_ht ?? null);
+
+		if (abs($quantity) > 0.0) {
+			return $totalHt / $quantity;
+		}
+
+		$unitPrice = $this->normalizeAmount($line->subprice ?? null);
+		$discountPercent = $this->normalizeAmount($line->remise_percent ?? null);
+
+		if ($discountPercent <= 0.0) {
+			return $unitPrice;
+		}
+
+		return $unitPrice * (1 - ($discountPercent / 100));
 	}
 
 	/**
