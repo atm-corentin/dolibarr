@@ -259,7 +259,7 @@ CLICHAUMEIL_HELP_PA_SUPPORT=Partie achat correspondant au support.
 CLICHAUMEIL_HELP_PA_SAV=Partie achat correspondant au SAV.
 CLICHAUMEIL_HELP_PA_MACHINE=Partie achat correspondant à la machine.
 CLICHAUMEIL_HELP_PA_INK=Partie achat correspondant à l'encre.
-CLICHAUMEIL_HELP_PA_LABOR=Partie achat correspondant à la main d'oeuvre.
+CLICHAUMEIL_HELP_PA_LABOR=Partie achat correspondant à la main-d'oeuvre.
 CLICHAUMEIL_HELP_PACKAGING_PERCENT=Pourcentage appliqué sur la somme des cinq postes d'achat pour calculer le coût de conditionnement. Convention : 10 = 10%%.
 CLICHAUMEIL_HELP_TRANSPORT_PERCENT=Pourcentage appliqué sur la somme des cinq postes d'achat pour calculer le coût de transport. Convention : 10 = 10%%.
 CLICHAUMEIL_HELP_FG_PERCENT=Pourcentage de frais généraux appliqué sur le Total coûts. Convention : 10 = 10%%. Si vide, le calcul final n'écrase pas le PA frais généraux ni le prix de revient.
