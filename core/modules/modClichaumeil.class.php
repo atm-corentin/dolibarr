@@ -29,6 +29,7 @@
 include_once DOL_DOCUMENT_ROOT . '/core/modules/DolibarrModules.class.php';
 include_once __DIR__ . '/../../class/CliChaumeilProductCost.class.php';
 include_once __DIR__ . '/../../class/CliChaumeilCommissionConfig.class.php';
+require_once DOL_DOCUMENT_ROOT . '/user/class/user.class.php';
 
 
 /**
@@ -36,6 +37,31 @@ include_once __DIR__ . '/../../class/CliChaumeilCommissionConfig.class.php';
  */
 class modClichaumeil extends DolibarrModules
 {
+	/**
+	 * @var string
+	 */
+	private const DEFAULT_RFA_TEMPLATE_CODE = 'CLICHAUMEIL_RFA_NEGOTIATION';
+
+	/**
+	 * @var string
+	 */
+	private const DEFAULT_RFA_TEMPLATE_TYPE = 'thirdparty';
+
+	/**
+	 * @var string
+	 */
+	private const DEFAULT_RFA_LIST_URL = '/clichaumeil/chaumeilrfa_list_fourn.php?yearid=__YEAR__';
+
+	/**
+	 * @var string
+	 */
+	private const DEFAULT_RFA_CRON_PARAMETERS = ',CLICHAUMEIL_RFA_NEGOTIATION';
+
+	/**
+	 * @var string
+	 */
+	private const DEFAULT_RFA_SUMMARY_CRON_PARAMETERS = '';
+
 	/**
 	 * Constructor. Define names, constants, directories, boxes, permissions
 	 *
@@ -128,7 +154,10 @@ class modClichaumeil extends DolibarrModules
 				'bomcard',
 				'externalaccesssetup',
 				'externalaccess',
+				'propalcard',
+				'propallist',
 				'productcard',
+				'pricesuppliercard',
 				'imports'
 			),
 			/* END MODULEBUILDER HOOKSCONTEXTS */
@@ -195,6 +224,7 @@ class modClichaumeil extends DolibarrModules
 		if ($cronStart <= $now) {
 			$cronStart = dol_time_plus_duree($cronStart, 1, 'd');
 		}
+		$rfaCronStart = $this->getNextRfaNegotiationStartTimestamp($now);
 
 		$this->cronjobs = array(
 			0 => array(
@@ -224,6 +254,36 @@ class modClichaumeil extends DolibarrModules
 				'datestart' => $cronStart,
 				'datenextrun' => $cronStart,
 				'status' => 0, // 0 for disabled by default, 1 for enabled
+				'priority' => 50,
+			),
+			2 => array(
+				'label' => $langs->trans('CliChaumeil_RfaReminderCronLabel'),
+				'jobtype' => 'method',
+				'class' => '/clichaumeil/class/Cron/RfaNegotiationReminderCronJob.php',
+				'objectname' => 'RfaNegotiationReminderCronJob',
+				'method' => 'run',
+				'parameters' => self::DEFAULT_RFA_CRON_PARAMETERS,
+				'comment' => $langs->trans('CliChaumeil_RfaReminderCronDescription'),
+				'frequency' => 12,
+				'unitfrequency' => 2678400,
+				'datestart' => $rfaCronStart,
+				'datenextrun' => $rfaCronStart,
+				'status' => 0,
+				'priority' => 50,
+			),
+			3 => array(
+				'label' => $langs->trans('CliChaumeil_RfaSummaryCronLabel'),
+				'jobtype' => 'method',
+				'class' => '/clichaumeil/class/Cron/RfaSummaryRebuildCronJob.php',
+				'objectname' => 'RfaSummaryRebuildCronJob',
+				'method' => 'run',
+				'parameters' => self::DEFAULT_RFA_SUMMARY_CRON_PARAMETERS,
+				'comment' => $langs->trans('CliChaumeil_RfaSummaryCronDescription'),
+				'frequency' => 1,
+				'unitfrequency' => 86400,
+				'datestart' => $cronStart,
+				'datenextrun' => $cronStart,
+				'status' => 0,
 				'priority' => 50,
 			)
 		);
@@ -353,6 +413,11 @@ class modClichaumeil extends DolibarrModules
 			return -1; // Do not activate module if error 'not allowed' returned when loading module SQL queries (the _load_table run sql with run_sql with the error allowed parameter set to 'default')
 		}
 
+		$result = $this->ensureRfaRootAggregationIndex();
+		if ($result < 0) {
+			return -1;
+		}
+
 		// Create extrafields during init
 		include_once DOL_DOCUMENT_ROOT . '/core/class/extrafields.class.php';
 		$extrafields = new ExtraFields($this->db);
@@ -379,20 +444,30 @@ class modClichaumeil extends DolibarrModules
 		$permsCostComposition = '$user->hasRight(\'clichaumeil\',\'product\',\'read_cost_composition\') ? 1:0';
 		$permsPaFg = '$user->hasRight(\'clichaumeil\',\'product\',\'read_cost_composition\') ? 5:0';
 
-		$extrafields->addExtraField('clichaumeil_prc_separator', 'CliChaumeilCostBreakdown', 'separate', 100, '', 'product', 0, 0, '', '', 1, $permsCostComposition, $permsCostComposition, '', '', 0, 'clichaumeil@clichaumeil', 1, 0, '0', array());
-		$extrafields->addExtraField('clichaumeil_pa_support', 'CliChaumeilPaSupport', 'double', 101, '24,4', 'product', 0, 0, '', '', 1, $permsCostComposition, $permsCostComposition, '', '', 0, 'clichaumeil@clichaumeil', 1, 0, '0', array());
-		$extrafields->addExtraField('clichaumeil_pa_sav', 'CliChaumeilPaSav', 'double', 102, '24,4', 'product', 0, 0, '', '', 1, $permsCostComposition, $permsCostComposition, '', '', 0, 'clichaumeil@clichaumeil', 1, 0, '0', array());
-		$extrafields->addExtraField('clichaumeil_pa_machine', 'CliChaumeilPaMachine', 'double', 103, '24,4', 'product', 0, 0, '', '', 1, $permsCostComposition, $permsCostComposition, '', '', 0, 'clichaumeil@clichaumeil', 1, 0, '0', array());
-		$extrafields->addExtraField('clichaumeil_pa_encre', 'CliChaumeilPaInk', 'double', 104, '24,4', 'product', 0, 0, '', '', 1, $permsCostComposition, $permsCostComposition, '', '', 0, 'clichaumeil@clichaumeil', 1, 0, '0', array());
-		$extrafields->addExtraField('clichaumeil_pa_mo', 'CliChaumeilPaLabor', 'double', 105, '24,4', 'product', 0, 0, '', '', 1, $permsCostComposition, $permsCostComposition, '', '', 0, 'clichaumeil@clichaumeil', 1, 0, '0', array());
-		$extrafields->addExtraField('clichaumeil_fg_percent', 'CliChaumeilFgPercent', 'double', 106, '24,4', 'product', 0, 0, '', '', 1, $permsCostComposition, $permsCostComposition, '', '', 0, 'clichaumeil@clichaumeil', 1, 0, '0', array());
-		$extrafields->addExtraField('clichaumeil_pa_fg', 'CliChaumeilPaFg', 'double', 107, '24,4', 'product', 0, 0, '', '', 0, $permsPaFg, $permsPaFg, '', '', 0, 'clichaumeil@clichaumeil', 1, 0, '0', array());
+		$extrafields->fetch_name_optionals_label('product', true);
+		$this->ensureProductExtrafield($extrafields, 'clichaumeil_prc_separator', 'CliChaumeilCostBreakdown', 'separate', 100, '', 0, 0, '', array('options' => array('1' => null)), 1, $permsCostComposition, $permsCostComposition, '', '', 0, 'clichaumeil@clichaumeil', 1, 0, '0', array());
+		$this->ensureProductExtrafield($extrafields, 'clichaumeil_pa_support', 'CliChaumeilPaSupport', 'double', 101, '24,4', 0, 0, '', '', 1, $permsCostComposition, $permsCostComposition, 'CLICHAUMEIL_HELP_PA_SUPPORT', '', 0, 'clichaumeil@clichaumeil', 1, 0, '0', array());
+		$this->ensureProductExtrafield($extrafields, 'clichaumeil_pa_sav', 'CliChaumeilPaSav', 'double', 102, '24,4', 0, 0, '', '', 1, $permsCostComposition, $permsCostComposition, 'CLICHAUMEIL_HELP_PA_SAV', '', 0, 'clichaumeil@clichaumeil', 1, 0, '0', array());
+		$this->ensureProductExtrafield($extrafields, 'clichaumeil_pa_machine', 'CliChaumeilPaMachine', 'double', 103, '24,4', 0, 0, '', '', 1, $permsCostComposition, $permsCostComposition, 'CLICHAUMEIL_HELP_PA_MACHINE', '', 0, 'clichaumeil@clichaumeil', 1, 0, '0', array());
+		$this->ensureProductExtrafield($extrafields, 'clichaumeil_pa_encre', 'CliChaumeilPaInk', 'double', 104, '24,4', 0, 0, '', '', 1, $permsCostComposition, $permsCostComposition, 'CLICHAUMEIL_HELP_PA_INK', '', 0, 'clichaumeil@clichaumeil', 1, 0, '0', array());
+		$this->ensureProductExtrafield($extrafields, 'clichaumeil_pa_mo', 'CliChaumeilPaLabor', 'double', 105, '24,4', 0, 0, '', '', 1, $permsCostComposition, $permsCostComposition, 'CLICHAUMEIL_HELP_PA_LABOR', '', 0, 'clichaumeil@clichaumeil', 1, 0, '0', array());
+		$this->ensureProductExtrafield($extrafields, CliChaumeilProductCostCalculator::PACKAGING_PERCENT_FIELD, 'CLICHAUMEIL_CONDITIONNEMENT_PERCENT', 'double', 106, '24,4', 0, 0, '', '', 1, $permsCostComposition, $permsCostComposition, 'CLICHAUMEIL_HELP_PACKAGING_PERCENT', '', 0, 'clichaumeil@clichaumeil', 1, 0, '0', array());
+		$this->ensureProductExtrafield($extrafields, CliChaumeilProductCostCalculator::TRANSPORT_PERCENT_FIELD, 'CLICHAUMEIL_TRANSPORT_PERCENT', 'double', 107, '24,4', 0, 0, '', '', 1, $permsCostComposition, $permsCostComposition, 'CLICHAUMEIL_HELP_TRANSPORT_PERCENT', '', 0, 'clichaumeil@clichaumeil', 1, 0, '0', array());
+		$this->ensureProductExtrafield($extrafields, 'clichaumeil_fg_percent', 'CliChaumeilFgPercent', 'double', 108, '24,4', 0, 0, '', '', 1, $permsCostComposition, $permsCostComposition, 'CLICHAUMEIL_HELP_FG_PERCENT', '', 0, 'clichaumeil@clichaumeil', 1, 0, '0', array());
+		$this->ensureProductExtrafield($extrafields, 'clichaumeil_pa_fg', 'CliChaumeilPaFg', 'double', 109, '24,4', 0, 0, '', '', 0, $permsPaFg, $permsPaFg, 'CLICHAUMEIL_HELP_PA_FG', '', 0, 'clichaumeil@clichaumeil', 1, 0, '0', array());
 
 		if (!getDolGlobalInt('CLICHAUMEIL_DEFAULT_OVERHEAD_RATE')) {
 			dolibarr_set_const($this->db, 'CLICHAUMEIL_DEFAULT_OVERHEAD_RATE', CliChaumeilProductCostCalculator::DEFAULT_RATE_VALUE, 'chaine', 0, '', $conf->entity);
 		}
 
 		$this->initCommissionConfiguration();
+		try {
+			$this->ensureDefaultRfaEmailTemplate();
+		} catch (Throwable $exception) {
+			$this->error = $exception->getMessage();
+			dol_syslog(__METHOD__ . ' failed to initialize default RFA email template: ' . $this->error, LOG_ERR);
+			return -1;
+		}
 
 		// Permissions
 		$this->remove($options);
@@ -431,6 +506,69 @@ class modClichaumeil extends DolibarrModules
 		}
 
 		return $this->_init($sql, $options);
+	}
+
+	/**
+	 * Ensure the index used by the aggregated RFA list exists.
+	 *
+	 * @return int<-1,1> 1 on success, -1 on failure.
+	 */
+	private function ensureRfaRootAggregationIndex(): int
+	{
+		$indexName = 'idx_clichaumeil_chaumeilrfa_soc_year_palier';
+		$tableName = $this->db->prefix().'clichaumeil_chaumeilrfa';
+		$sql = $this->getIndexExistenceSql($tableName, $indexName);
+		$resql = $this->db->query($sql);
+		if (!$resql) {
+			dol_syslog(__METHOD__.' unable to inspect RFA index: '.$this->db->lasterror(), LOG_ERR);
+			$this->error = $this->db->lasterror();
+			return -1;
+		}
+
+		$indexExists = ($this->db->num_rows($resql) > 0);
+		$this->db->free($resql);
+
+		if ($indexExists) {
+			return 1;
+		}
+
+		$sql = 'CREATE INDEX '.$indexName.' ON '.$tableName.' (fk_soc, datestart, dateend, palier)';
+		$resql = $this->db->query($sql);
+		if (!$resql) {
+			dol_syslog(__METHOD__.' unable to create RFA index: '.$this->db->lasterror(), LOG_ERR);
+			$this->error = $this->db->lasterror();
+			return -1;
+		}
+
+		return 1;
+	}
+
+	/**
+	 * Build a DB-specific SQL query to inspect index existence.
+	 *
+	 * @param string $tableName Full SQL table name with prefix.
+	 * @param string $indexName Index name.
+	 * @return string
+	 */
+	private function getIndexExistenceSql(string $tableName, string $indexName): string
+	{
+		if ($this->db->type === 'pgsql') {
+			$sql = "SELECT indexname";
+			$sql .= " FROM pg_indexes";
+			$sql .= " WHERE schemaname = 'public'";
+			$sql .= " AND tablename = '".$this->db->escape($tableName)."'";
+			$sql .= " AND indexname = '".$this->db->escape($indexName)."'";
+
+			return $sql;
+		}
+
+		$sql = 'SELECT index_name';
+		$sql .= ' FROM information_schema.statistics';
+		$sql .= " WHERE table_schema = DATABASE()";
+		$sql .= " AND table_name = '".$this->db->escape($tableName)."'";
+		$sql .= " AND index_name = '".$this->db->escape($indexName)."'";
+
+		return $sql;
 	}
 
 	/**
@@ -488,11 +626,114 @@ class modClichaumeil extends DolibarrModules
 	}
 
 	/**
+	 * Ensure the default RFA email template exists.
+	 *
+	 * @return void
+	 * @throws RuntimeException When the template cannot be created.
+	 */
+	private function ensureDefaultRfaEmailTemplate(): void
+	{
+		global $conf, $langs, $user;
+
+		$langs->loadLangs(array('clichaumeil@clichaumeil'));
+		$existingTemplateId = $this->findEmailTemplateIdByCode(self::DEFAULT_RFA_TEMPLATE_CODE);
+		if ($existingTemplateId > 0) {
+			return;
+		}
+
+		if (empty($user) || empty($user->id)) {
+			$user = new User($this->db);
+			$user->fetch(1);
+		}
+
+		$now = dol_now();
+		$sql = "INSERT INTO " . $this->db->prefix() . "c_email_templates (";
+		$sql .= "entity, module, type_template, lang, private, fk_user, datec, label, position, active, topic, content, enabled, joinfiles, email_from, email_to, email_tocc, email_tobcc, defaultfortype";
+		$sql .= ") VALUES (";
+		$sql .= (int) $conf->entity . ", ";
+		$sql .= "'', ";
+		$sql .= "'" . $this->db->escape(self::DEFAULT_RFA_TEMPLATE_TYPE) . "', ";
+		$sql .= "'', ";
+		$sql .= "0, ";
+		$sql .= "null, ";
+		$sql .= "'" . $this->db->idate($now) . "', ";
+		$sql .= "'" . $this->db->escape(self::DEFAULT_RFA_TEMPLATE_CODE) . "', ";
+		$sql .= "0, ";
+		$sql .= "1, ";
+		$sql .= "'" . $this->db->escape($langs->transnoentitiesnoconv('CliChaumeil_RfaReminderDefaultTemplateSubject')) . "', ";
+		$sql .= "'" . $this->db->escape($langs->transnoentitiesnoconv('CliChaumeil_RfaReminderDefaultTemplateBody')) . "', ";
+		$sql .= "'1', ";
+		$sql .= "'', ";
+		$sql .= "null, ";
+		$sql .= "null, ";
+		$sql .= "null, ";
+		$sql .= "null, ";
+		$sql .= "0";
+		$sql .= ")";
+
+		$result = $this->db->query($sql);
+		if (!$result) {
+			$errorMessage = $this->db->lasterror();
+			dol_syslog(__METHOD__ . ' failed to create default RFA email template: ' . $errorMessage, LOG_ERR);
+			throw new RuntimeException($errorMessage);
+		}
+	}
+
+	/**
+	 * Find an email template id by its code stored in c_email_templates.label.
+	 *
+	 * @param string $templateCode Template code.
+	 * @return int
+	 */
+	private function findEmailTemplateIdByCode(string $templateCode): int
+	{
+		global $conf;
+
+		$sql = "SELECT rowid";
+		$sql .= " FROM " . $this->db->prefix() . "c_email_templates";
+		$sql .= " WHERE entity = " . ((int) $conf->entity);
+		$sql .= " AND type_template = '" . $this->db->escape(self::DEFAULT_RFA_TEMPLATE_TYPE) . "'";
+		$sql .= " AND label = '" . $this->db->escape($templateCode) . "'";
+		$sql .= " ORDER BY rowid ASC";
+
+		$resql = $this->db->query($sql);
+		if (!$resql) {
+			throw new RuntimeException($this->db->lasterror());
+		}
+
+		$rowid = 0;
+		$obj = $this->db->fetch_object($resql);
+		if (!empty($obj->rowid)) {
+			$rowid = (int) $obj->rowid;
+		}
+		$this->db->free($resql);
+
+		return $rowid;
+	}
+
+	/**
+	 * Get the next default execution timestamp for the yearly RFA reminder.
+	 *
+	 * @param int $now Current timestamp.
+	 * @return int
+	 */
+	private function getNextRfaNegotiationStartTimestamp(int $now): int
+	{
+		$currentYear = (int) dol_print_date($now, '%Y');
+		$targetTimestamp = dol_mktime(1, 0, 0, 12, 15, $currentYear);
+		if ($targetTimestamp <= $now) {
+			$targetTimestamp = dol_mktime(1, 0, 0, 12, 15, $currentYear + 1);
+		}
+
+		return $targetTimestamp;
+	}
+
+	/**
 	 * Find a customer category by label, or create it if missing.
 	 *
-	 * @param string $label Category label
-	 * @param User   $user Current user
-	 * @param string $refExt External reference used on category creation
+	 * @param string $label  Category label.
+	 * @param User   $user   User used for create/update operations.
+	 * @param string $refExt External reference used to match or update the category.
 	 * @return int Category id, or 0 on failure
 	 */
 	private function findOrCreateCustomerCategory(string $label, User $user, string $refExt = ''): int
@@ -523,8 +764,11 @@ class modClichaumeil extends DolibarrModules
 					}
 				}
 
+				$this->db->free($resql);
 				return (int) $obj->rowid;
 			}
+
+			$this->db->free($resql);
 		}
 
 		if (!empty($refExt)) {
@@ -545,8 +789,11 @@ class modClichaumeil extends DolibarrModules
 							dol_syslog(__METHOD__ . ' category ref_ext update failed: ' . $category->error, LOG_ERR);
 						}
 					}
+					$this->db->free($resql);
 					return (int) $obj->rowid;
 				}
+
+				$this->db->free($resql);
 			}
 		}
 
@@ -567,5 +814,117 @@ class modClichaumeil extends DolibarrModules
 		}
 
 		return 0;
+	}
+
+	/**
+	 * Create or update a product extrafield definition without destructive recreation.
+	 *
+	 * @param ExtraFields        $extrafields     Extrafields manager.
+	 * @param string             $name            Extrafield name.
+	 * @param string             $label           Translation key.
+	 * @param string             $type            Field type.
+	 * @param int                $position        Sort position.
+	 * @param string             $size            Field size.
+	 * @param int                $unique          Unique flag.
+	 * @param int                $required        Required flag.
+	 * @param string             $defaultValue    Default value.
+	 * @param string|array       $params          Extra params.
+	 * @param int                $alwaysEditable  Always editable flag.
+	 * @param string             $perms           Permission expression.
+	 * @param string|int         $list            Visibility expression.
+	 * @param string             $help            Tooltip key.
+	 * @param string             $computed        Computed expression.
+	 * @param string|int         $entity          Entity.
+	 * @param string             $langfile        Lang file.
+	 * @param string|int         $enabled         Enabled expression.
+	 * @param int                $totalizable     Totalizable flag.
+	 * @param string|int         $printable       Printable flag.
+	 * @param array<string,mixed> $moreParams     Additional parameters.
+	 * @return void
+	 */
+	private function ensureProductExtrafield(
+		ExtraFields $extrafields,
+		string $name,
+		string $label,
+		string $type,
+		int $position,
+		string $size,
+		int $unique,
+		int $required,
+		string $defaultValue,
+		$params,
+		int $alwaysEditable,
+		string $perms,
+		$list,
+		string $help,
+		string $computed,
+		$entity,
+		string $langfile,
+		$enabled,
+		int $totalizable,
+		$printable,
+		array $moreParams
+	): void {
+		$exists = isset($extrafields->attributes['product']['label'][$name]);
+
+		if (!$exists) {
+			$result = $extrafields->addExtraField(
+				$name,
+				$label,
+				$type,
+				$position,
+				$size,
+				'product',
+				$unique,
+				$required,
+				$defaultValue,
+				$params,
+				$alwaysEditable,
+				$perms,
+				$list,
+				$help,
+				$computed,
+				$entity,
+				$langfile,
+				$enabled,
+				$totalizable,
+				$printable,
+				$moreParams
+			);
+
+			if ($result <= 0) {
+				dol_syslog(__METHOD__ . ' failed to create extrafield ' . $name, LOG_ERR);
+			}
+
+			return;
+		}
+
+		$result = $extrafields->updateExtraField(
+			$name,
+			$label,
+			$type,
+			$position,
+			$size,
+			'product',
+			$unique,
+			$required,
+			$defaultValue,
+			$params,
+			$alwaysEditable,
+			$perms,
+			$list,
+			$help,
+			$computed,
+			$entity,
+			$langfile,
+			$enabled,
+			$totalizable,
+			$printable,
+			$moreParams
+		);
+
+		if ($result <= 0) {
+			dol_syslog(__METHOD__ . ' failed to update extrafield ' . $name, LOG_ERR);
+		}
 	}
 }

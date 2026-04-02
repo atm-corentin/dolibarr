@@ -2,6 +2,13 @@
 
 
 ## Unreleased
+- NEW : Materialize the global supplier RFA list into a yearly summary table with manual rebuild tool, nightly cron, and SQL-native filtering/sorting/pagination. *31/03/2026* - 1.13.0
+- NEW : Aggregate subsidiary supplier turnover into the root parent company on the global RFA list, keep final filters/sorts correct, and disable the CA link on aggregated rows. *31/03/2026* - 1.12.0
+- NEW : Add ACHT-5 scheduled RFA negotiation reminder cron with cloneable parameters and default email template seed. *31/03/2026* - 1.12.0
+
+## 1.12
+- NEW: Block proposal validation when at least one line has a cost price higher than the sale price, including proposal card UI, mass validation, and PROPAL_VALIDATE trigger guard. *30/03/2026* - 1.12.0
+- NEW : Add packaging and transport rates to the product cost breakdown, update the R2 formula, display virtual total costs, realign import headers, and keep existing persisted `pa_fg` / `cost_price` values unchanged when overhead rate is empty. No mass recalculation is performed; the new formula applies on the next product change. *30/03/2026* - 1.12.0
 
 ## 1.12
 - NEW : Add read-only display of standard line units on the external supplier portal; no change to the standard conversion flow. *01/04/2026* - 1.12.0

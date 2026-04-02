@@ -29,6 +29,7 @@
 			const row = document.getElementById(`row-${lineId}`);
 			if (row) {
 				row.dataset.costPrice = linesData[lineId].cost_price;
+				row.dataset.netSalePrice = linesData[lineId].net_sale_price;
 				row.dataset.warningIcon = linesData[lineId].warning_icon;
 			}
 		}
@@ -66,6 +67,44 @@
 			return el;
 		};
 
+		const getNetUnitSalePrice = (tr, targetTd) => {
+			const priceInput = tr.querySelector('input[name^="price"], input[name*="subprice"], input[name^="pvp"]');
+			const qtyInput = tr.querySelector('input[name^="qty"]');
+			const discountInput = tr.querySelector('input[name^="remise_percent"]');
+
+			const unitPrice = priceInput ? extractNumber(priceInput.value || priceInput.getAttribute('value') || priceInput.textContent) : NaN;
+			const quantity = qtyInput ? extractNumber(qtyInput.value || qtyInput.getAttribute('value') || qtyInput.textContent) : NaN;
+			const discountPercent = discountInput ? extractNumber(discountInput.value || discountInput.getAttribute('value') || discountInput.textContent) : NaN;
+
+			if (!isNaN(unitPrice)) {
+				if (!isNaN(quantity) && quantity !== 0) {
+					const lineTotalCell = tr.querySelector('[id^="line-total-"]');
+					const lineTotal = lineTotalCell ? extractNumber(lineTotalCell.textContent || lineTotalCell.innerHTML) : NaN;
+					if (!isNaN(lineTotal)) {
+						return lineTotal / quantity;
+					}
+				}
+
+				if (!isNaN(discountPercent)) {
+					return unitPrice * (1 - (discountPercent / 100));
+				}
+
+				return unitPrice;
+			}
+
+			const storedNetSalePrice = extractNumber(tr.dataset.netSalePrice);
+			if (!isNaN(storedNetSalePrice)) {
+				return storedNetSalePrice;
+			}
+
+			const editableAnchor = targetTd.querySelector('a, .edit, .line-edit');
+			if (editableAnchor) {
+				return extractNumber(editableAnchor.innerHTML);
+			}
+
+			return extractNumber(targetTd.innerHTML);
+		};
+
 		/**
 		 * Check a single <tr> and add/remove warning.
 		 * Ensures the warning is inserted AFTER the editable anchor (so Dolibarr doesn't include it in the input value).
@@ -80,27 +119,13 @@
 			targetTd.querySelectorAll('.negative-margin-warning').forEach(n => n.remove());
 
 			// 1) Try to find an input (inline editor). If present, read its value (robustly).
-			const puInput = tr.querySelector('input[name^="price"], input[name*="subprice"], input[name^="pvp"]');
-			let puHt = NaN;
-			if (puInput) {
-				// input.value might contain HTML string if previous code injected badly. Clean it and extract number.
-				puHt = extractNumber(puInput.value || puInput.getAttribute('value') || puInput.textContent);
-			} else {
-				// fallback : take text / HTML content of the cell but strip HTML tags
-				// prefer the editable anchor's text if present
-				const editableAnchor = targetTd.querySelector('a, .edit, .line-edit');
-				if (editableAnchor) {
-					puHt = extractNumber(editableAnchor.innerHTML);
-				} else {
-					puHt = extractNumber(targetTd.innerHTML);
-				}
-			}
+			const netSalePrice = getNetUnitSalePrice(tr, targetTd);
 
 			// 2) cost price is stored in dataset by PHP; but could contain HTML - be robust
 			const costPrice = extractNumber(tr.dataset.costPrice);
 
 			// 3) if negative margin, create warning and insert AFTER the editable anchor (if any), else append to cell
-			if (!isNaN(puHt) && !isNaN(costPrice) && puHt < costPrice) {
+			if (!isNaN(netSalePrice) && !isNaN(costPrice) && netSalePrice < costPrice) {
 				const warningEl = buildWarningElement(tr.dataset.warningIcon);
 				warningEl.title = "⚠️ Attention : le prix de revient est supérieur au prix de vente. Marge négative.";
 
@@ -210,5 +235,3 @@
 		}
 	});
 })();
-
-

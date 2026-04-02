@@ -46,7 +46,7 @@ Settings = Settings
 ClichaumeilSetupPage = CliChaumeil Settings
 
 CLICHAUMEIL_DEFAULT_OVERHEAD_RATE=Default overhead rate (%)
-CLICHAUMEIL_DEFAULT_OVERHEAD_RATETooltip=Default overhead percent applied to new simple products when none is entered (4 decimals).
+CLICHAUMEIL_DEFAULT_OVERHEAD_RATETooltip=Convention: 10 = 10%%. Default overhead percent applied to new simple products and services when none is entered (4 decimals).
 CliChaumeilReviewRate=Review rate (in %%)
 CliChaumeilReviewDate=Review date
 
@@ -218,11 +218,52 @@ ChaumeilRfa=Year-end rebate
 ChaumeilRfas=Year-end rebates
 RateRfa=RFA rate
 ReadSupplierProposal = View supplier proposal on external access
+CliChaumeil_RfaListAggregatedAmountHelp=Purchase turnover excluding tax for the year. For a supplier with subsidiaries, this amount may include the turnover of its subsidiaries. A subsidiary with its own RFA may also appear separately in this list.
+CliChaumeil_RfaListAggregatedAmountNoLinkHelp=The clickable detail is not available on an aggregated row including turnover from other companies in the group.
+CliChaumeil_RfaListLoadError=An error occurred while loading the global RFA list.
+CliChaumeil_RfaSummaryStorageMissing=The SQL structure for the RFA summary is missing or outdated. Run the module upgrade before rebuilding or opening this list.
+CliChaumeil_RfaSummaryMissingForYear=No RFA summary is available for year %s. Run a rebuild to feed the list.
+CliChaumeil_RfaSummaryLastCalculatedAt=RFA summary calculated on %s.
+CliChaumeil_RfaSummaryRebuildTitle=RFA summary rebuild
+CliChaumeil_RfaSummaryRebuildIntro=This tool rebuilds the aggregated data used by the global RFA list for the selected year.
+CliChaumeil_RfaSummaryRebuildAction=Rebuild RFA summary
+CliChaumeil_RfaSummaryRebuildActionForYear=Rebuild RFA %s
+CliChaumeil_RfaSummaryRebuildLoading=Rebuild in progress...
+CliChaumeil_RfaSummaryRebuildLoadingForYear=Rebuild RFA %s in progress...
+CliChaumeil_RfaSummaryRebuildResult=Generated summary row count: %s
+CliChaumeil_RfaSummaryRebuildSuccessMessage=RFA summary %s was rebuilt successfully (%s row(s)).
+CliChaumeil_RfaSummaryOpenList=Open RFA list
+CliChaumeil_RfaSummaryRebuildOutput=Output
+CliChaumeil_RfaSummaryRebuildError=An error occurred while rebuilding the RFA summary.
+CliChaumeil_RfaSummaryCronLabel=RFA summary rebuild
+CliChaumeil_RfaSummaryCronDescription=Rebuilds every night the yearly summary used by the global RFA list.
+CliChaumeil_RfaSummaryCronSuccess=RFA summary %s rebuilt successfully (%s row(s)).
+CliChaumeil_RfaSummaryCronError=Failed to rebuild the RFA summary: %s
+CliChaumeil_RfaSummaryCronNoYear=No RFA year to rebuild.
+CliChaumeil_RfaSeedTitle=RFA group aggregation seed
+CliChaumeil_RfaSeedIntro=This tool creates a batch of test suppliers, closed supplier invoices and RFA rows to validate subsidiary aggregation and RFA summary rendering.
+CliChaumeil_RfaSeedCoveredCasesTitle=Covered cases
+CliChaumeil_RfaSeedCaseRootWithChildren=Parent supplier with multiple subsidiaries
+CliChaumeil_RfaSeedCaseRecursive=Recursive hierarchy over multiple levels
+CliChaumeil_RfaSeedCaseStandalone=Standalone supplier without subsidiaries
+CliChaumeil_RfaSeedCaseChildWithOwnRfa=Subsidiary with its own RFA, visible and still counted in the parent
+CliChaumeil_RfaSeedCaseRootWithoutRfa=Group without root RFA that must stay hidden except for a subsidiary carrying its own RFA
+CliChaumeil_RfaSeedAction=Run seed
+CliChaumeil_RfaSeedExpectedRowsTitle=Expected business rows in the global RFA list:
+CliChaumeil_RfaSeedExpectedHiddenTitle=Suppliers expected to stay hidden in the global RFA list:
+CliChaumeil_RfaSeedCurrentRowsTitle=Rows currently returned by the summary table:
+CliChaumeil_RfaSeedNoRows=No rows returned
+CliChaumeil_RfaSeedCheckPage=Check the page: %s
+CliChaumeil_RfaSeedSuccessTitle=RFA seed executed
+CliChaumeil_RfaSeedSuccessIntro=The batch has been created. You can now check the global RFA list and compare the expected values below.
+CliChaumeil_RfaSeedRelaunchAction=Run another batch
+CliChaumeil_RfaSeedResultTitle=Result
+CliChaumeil_RfaSeedError=An error occurred while generating the RFA test data.
 
 ReadRightsChaumeilRfa=View year-end rebates (RFA)
 CreateUpadteRightsChaumeilRfa=Create/Update year-end rebates (RFA)
 DeleteRightsChaumeilRfa=Delete year-end rebates (RFA)
-ReadProductCostComposition=View cost composition on products
+ReadProductCostComposition=View cost price breakdown on products
 
 #
 # Extrafields
@@ -237,8 +278,24 @@ CliChaumeilPaSav=PA After-sales service
 CliChaumeilPaMachine=PA Machine
 CliChaumeilPaInk=PA Ink
 CliChaumeilPaLabor=PA Labor
+CliChaumeilConditionnementPercent=Packaging rate (%)
+CliChaumeilTransportPercent=Transport rate (%)
+CliChaumeilTotalCosts=Total costs
+CLICHAUMEIL_CONDITIONNEMENT_PERCENT=Packaging rate (%)
+CLICHAUMEIL_TRANSPORT_PERCENT=Transport rate (%)
+CLICHAUMEIL_TOTAL_COSTS=Total costs
+CLICHAUMEIL_TOTAL_COSTS_HELP=Sum of the five purchase components, increased by the packaging and transport rates. This amount is computed on the fly and is not stored.
 CliChaumeilFgPercent=Overhead rate (%)
 CliChaumeilPaFg=Overhead amount
+CLICHAUMEIL_HELP_PA_SUPPORT=Purchase component related to the support.
+CLICHAUMEIL_HELP_PA_SAV=Purchase component related to after-sales service.
+CLICHAUMEIL_HELP_PA_MACHINE=Purchase component related to the machine.
+CLICHAUMEIL_HELP_PA_INK=Purchase component related to ink.
+CLICHAUMEIL_HELP_PA_LABOR=Purchase component related to labor.
+CLICHAUMEIL_HELP_PACKAGING_PERCENT=Percentage applied to the sum of the five purchase components to compute packaging cost. Convention: 10 = 10%%.
+CLICHAUMEIL_HELP_TRANSPORT_PERCENT=Percentage applied to the sum of the five purchase components to compute transport cost. Convention: 10 = 10%%.
+CLICHAUMEIL_HELP_FG_PERCENT=Overhead percentage applied to Total costs. Convention: 10 = 10%%. If empty, the final calculation does not overwrite the overhead amount or the cost price.
+CLICHAUMEIL_HELP_PA_FG=Computed overhead amount: Total costs x overhead rate.
 CliChaumeilSurfaceRecalculated = Recalculated surface (in %s)
 
 #
@@ -252,5 +309,26 @@ RollbackUnitsQtyforProduct=Product unit and quantity reset
 SurfaceRecalculatedInCm2=Surface recalculated (in cm²)
 CliChaumeilGeneralExpenses=General expenses (%)
 WarningNegativeMargin=Warning: the cost price is higher than the selling price. Negative margin.
+CliChaumeil_PropalMarginValidationBlocked=One or more sale prices are lower than the cost price. Please adjust the prices before validating this proposal.
+CliChaumeil_PropalMassMarginValidationBlocked=One or more proposals have sale prices lower than the cost price. Please adjust the prices before validating these proposals.
+CliChaumeil_PropalMassMarginValidationBlockedList=The following proposals have one or more sale prices lower than the cost price. Please adjust the prices before validating these proposals:
+CliChaumeil_PropalMassMarginValidationBlockedForProposal=Proposal %s has one or more sale prices lower than the cost price. Please adjust the prices before validating these proposals.
+CliChaumeil_PropalMarginValidationUnexpectedError=An unexpected error occurred while checking proposal margins.
+CliChaumeil_PropalMassMarginValidationFetchError=An unexpected error occurred while loading a proposal for mass validation.
 CliChaumeilErrorMissingFgPercent=Import failed: Overhead rate (%) is required for product %s.
+CliChaumeilInfoMissingFgPercent=Final calculation skipped: the Overhead rate (%) field is empty.
+CLICHAUMEIL_INFO_MISSING_FG_PERCENT=Final calculation skipped: the Overhead rate (%) field is empty.
 CLICHAUMEIL_PRODUCT_TARGET_CATEGORY=Select the product category for which the Height and Length fields should be displayed.
+CliChaumeil_RfaReminderCronLabel=RFA negotiation to do
+CliChaumeil_RfaReminderCronDescription=Sends a reminder email with the supplier RFA list link filtered on the current year.
+CliChaumeil_RfaReminderErrorRecipientsRequired=The recipients parameter is mandatory and must contain at least one valid email address.
+CliChaumeil_RfaReminderErrorTemplateCodeRequired=The email_template_code parameter is mandatory.
+CliChaumeil_RfaReminderErrorInvalidRecipient=At least one RFA cron recipient email address is invalid.
+CliChaumeil_RfaReminderErrorTemplateNotFound=The email template "%s" was not found or is inactive.
+CliChaumeil_RfaReminderErrorMissingSender=No valid sender email address is available to send the RFA reminder.
+CliChaumeil_RfaReminderErrorExecutionUser=Unable to load the execution user for the RFA cron job.
+CliChaumeil_RfaReminderErrorEmailSendFailed=Failed to send the RFA reminder email: %s
+CliChaumeil_RfaReminderOutputSuccess=RFA reminder sent for year %s to %s recipient(s) with template %s. URL: %s
+CliChaumeil_RfaReminderOutputFailure=RFA reminder failed: %s
+CliChaumeil_RfaReminderDefaultTemplateSubject=RFA negotiation __YEAR__ to do
+CliChaumeil_RfaReminderDefaultTemplateBody=Hello,<br><br>The RFA negotiation for year __YEAR__ must be prepared.<br><br>Link to the list:<br>__RFA_LIST_URL__
