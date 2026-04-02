@@ -91,7 +91,7 @@ class CliChaumeilProposalMarginGuard
 	 * @param CommonObjectLine $line Proposal line to inspect.
 	 * @return float
 	 */
-	private function getNetUnitSalePrice($line): float
+	private function getNetUnitSalePrice(CommonObjectLine $line): float
 	{
 		$quantity = $this->normalizeAmount($line->qty ?? null);
 		$totalHt = $this->normalizeAmount($line->total_ht ?? null);
@@ -176,7 +176,7 @@ class CliChaumeilProposalMarginGuard
 	 * @param mixed $value Raw amount value.
 	 * @return float
 	 */
-	private function normalizeAmount($value): float
+	private function normalizeAmount(mixed $value): float
 	{
 		if ($value === null || $value === '') {
 			return self::ZERO_AMOUNT;
