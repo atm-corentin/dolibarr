@@ -292,8 +292,8 @@ class InterfaceClichaumeilTriggers extends DolibarrTriggers
 	/**
 	 * Copy attached files from supplier proposal emails into agenda event folder.
 	 *
-	 * @param CommonObject $object Source supplier proposal object.
-	 * @param Conf         $conf   Global configuration handler.
+	 * @param CommonObject $object Current supplier proposal object.
+	 * @param Conf         $conf   Global configuration object.
 	 * @return void
 	 */
 	private function copySupplierProposalMailAttachmentsToAgenda(CommonObject $object, Conf $conf) : void
@@ -414,11 +414,11 @@ class InterfaceClichaumeilTriggers extends DolibarrTriggers
 	 * This method checks if the action is a product-related event and if so,
 	 * calculates and updates the cost price from extrafields.
 	 *
-	 * @param string       $action Event action code
-	 * @param CommonObject $object Object being processed
-	 * @param User         $user   User performing the action
-	 * @param Translate    $langs  Translation object
-	 * @param bool         $handled Output parameter set to true if action was handled
+	 * @param string       $action  Event action code.
+	 * @param CommonObject $object  Object being processed.
+	 * @param User         $user    User performing the action.
+	 * @param Translate    $langs   Translation object.
+	 * @param bool         $handled Output parameter set to true if action was handled.
 	 * @return int         Return integer <0 if KO, 0 if OK or not handled
 	 */
 	private function handleProductCostSynchronization($action, $object, User $user, Translate $langs, &$handled = false)
@@ -473,6 +473,9 @@ class InterfaceClichaumeilTriggers extends DolibarrTriggers
 
 		$product->array_options[$key] = CliChaumeilProductCostCalculator::getDefaultOverheadRate();
 		$result = $product->updateExtraField('clichaumeil_fg_percent', 'CLICHAUMEIL_PRODUCT_COST', $user);
+		if ($result < 0) {
+			dol_syslog(__METHOD__ . ' failed to update default overhead rate for product #' . (int) $product->id, LOG_ERR);
+		}
 
 		return ($result < 0) ? -1 : 1;
 	}

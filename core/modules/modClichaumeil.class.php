@@ -131,6 +131,7 @@ class modClichaumeil extends DolibarrModules
 				'propalcard',
 				'propallist',
 				'productcard',
+				'pricesuppliercard',
 				'imports'
 			),
 			/* END MODULEBUILDER HOOKSCONTEXTS */
@@ -381,14 +382,17 @@ class modClichaumeil extends DolibarrModules
 		$permsCostComposition = '$user->hasRight(\'clichaumeil\',\'product\',\'read_cost_composition\') ? 1:0';
 		$permsPaFg = '$user->hasRight(\'clichaumeil\',\'product\',\'read_cost_composition\') ? 5:0';
 
-		$extrafields->addExtraField('clichaumeil_prc_separator', 'CliChaumeilCostBreakdown', 'separate', 100, '', 'product', 0, 0, '', '', 1, $permsCostComposition, $permsCostComposition, '', '', 0, 'clichaumeil@clichaumeil', 1, 0, '0', array());
-		$extrafields->addExtraField('clichaumeil_pa_support', 'CliChaumeilPaSupport', 'double', 101, '24,4', 'product', 0, 0, '', '', 1, $permsCostComposition, $permsCostComposition, '', '', 0, 'clichaumeil@clichaumeil', 1, 0, '0', array());
-		$extrafields->addExtraField('clichaumeil_pa_sav', 'CliChaumeilPaSav', 'double', 102, '24,4', 'product', 0, 0, '', '', 1, $permsCostComposition, $permsCostComposition, '', '', 0, 'clichaumeil@clichaumeil', 1, 0, '0', array());
-		$extrafields->addExtraField('clichaumeil_pa_machine', 'CliChaumeilPaMachine', 'double', 103, '24,4', 'product', 0, 0, '', '', 1, $permsCostComposition, $permsCostComposition, '', '', 0, 'clichaumeil@clichaumeil', 1, 0, '0', array());
-		$extrafields->addExtraField('clichaumeil_pa_encre', 'CliChaumeilPaInk', 'double', 104, '24,4', 'product', 0, 0, '', '', 1, $permsCostComposition, $permsCostComposition, '', '', 0, 'clichaumeil@clichaumeil', 1, 0, '0', array());
-		$extrafields->addExtraField('clichaumeil_pa_mo', 'CliChaumeilPaLabor', 'double', 105, '24,4', 'product', 0, 0, '', '', 1, $permsCostComposition, $permsCostComposition, '', '', 0, 'clichaumeil@clichaumeil', 1, 0, '0', array());
-		$extrafields->addExtraField('clichaumeil_fg_percent', 'CliChaumeilFgPercent', 'double', 106, '24,4', 'product', 0, 0, '', '', 1, $permsCostComposition, $permsCostComposition, '', '', 0, 'clichaumeil@clichaumeil', 1, 0, '0', array());
-		$extrafields->addExtraField('clichaumeil_pa_fg', 'CliChaumeilPaFg', 'double', 107, '24,4', 'product', 0, 0, '', '', 0, $permsPaFg, $permsPaFg, '', '', 0, 'clichaumeil@clichaumeil', 1, 0, '0', array());
+		$extrafields->fetch_name_optionals_label('product', true);
+		$this->ensureProductExtrafield($extrafields, 'clichaumeil_prc_separator', 'CliChaumeilCostBreakdown', 'separate', 100, '', 0, 0, '', array('options' => array('1' => null)), 1, $permsCostComposition, $permsCostComposition, '', '', 0, 'clichaumeil@clichaumeil', 1, 0, '0', array());
+		$this->ensureProductExtrafield($extrafields, 'clichaumeil_pa_support', 'CliChaumeilPaSupport', 'double', 101, '24,4', 0, 0, '', '', 1, $permsCostComposition, $permsCostComposition, 'CLICHAUMEIL_HELP_PA_SUPPORT', '', 0, 'clichaumeil@clichaumeil', 1, 0, '0', array());
+		$this->ensureProductExtrafield($extrafields, 'clichaumeil_pa_sav', 'CliChaumeilPaSav', 'double', 102, '24,4', 0, 0, '', '', 1, $permsCostComposition, $permsCostComposition, 'CLICHAUMEIL_HELP_PA_SAV', '', 0, 'clichaumeil@clichaumeil', 1, 0, '0', array());
+		$this->ensureProductExtrafield($extrafields, 'clichaumeil_pa_machine', 'CliChaumeilPaMachine', 'double', 103, '24,4', 0, 0, '', '', 1, $permsCostComposition, $permsCostComposition, 'CLICHAUMEIL_HELP_PA_MACHINE', '', 0, 'clichaumeil@clichaumeil', 1, 0, '0', array());
+		$this->ensureProductExtrafield($extrafields, 'clichaumeil_pa_encre', 'CliChaumeilPaInk', 'double', 104, '24,4', 0, 0, '', '', 1, $permsCostComposition, $permsCostComposition, 'CLICHAUMEIL_HELP_PA_INK', '', 0, 'clichaumeil@clichaumeil', 1, 0, '0', array());
+		$this->ensureProductExtrafield($extrafields, 'clichaumeil_pa_mo', 'CliChaumeilPaLabor', 'double', 105, '24,4', 0, 0, '', '', 1, $permsCostComposition, $permsCostComposition, 'CLICHAUMEIL_HELP_PA_LABOR', '', 0, 'clichaumeil@clichaumeil', 1, 0, '0', array());
+		$this->ensureProductExtrafield($extrafields, CliChaumeilProductCostCalculator::PACKAGING_PERCENT_FIELD, 'CLICHAUMEIL_CONDITIONNEMENT_PERCENT', 'double', 106, '24,4', 0, 0, '', '', 1, $permsCostComposition, $permsCostComposition, 'CLICHAUMEIL_HELP_PACKAGING_PERCENT', '', 0, 'clichaumeil@clichaumeil', 1, 0, '0', array());
+		$this->ensureProductExtrafield($extrafields, CliChaumeilProductCostCalculator::TRANSPORT_PERCENT_FIELD, 'CLICHAUMEIL_TRANSPORT_PERCENT', 'double', 107, '24,4', 0, 0, '', '', 1, $permsCostComposition, $permsCostComposition, 'CLICHAUMEIL_HELP_TRANSPORT_PERCENT', '', 0, 'clichaumeil@clichaumeil', 1, 0, '0', array());
+		$this->ensureProductExtrafield($extrafields, 'clichaumeil_fg_percent', 'CliChaumeilFgPercent', 'double', 108, '24,4', 0, 0, '', '', 1, $permsCostComposition, $permsCostComposition, 'CLICHAUMEIL_HELP_FG_PERCENT', '', 0, 'clichaumeil@clichaumeil', 1, 0, '0', array());
+		$this->ensureProductExtrafield($extrafields, 'clichaumeil_pa_fg', 'CliChaumeilPaFg', 'double', 109, '24,4', 0, 0, '', '', 0, $permsPaFg, $permsPaFg, 'CLICHAUMEIL_HELP_PA_FG', '', 0, 'clichaumeil@clichaumeil', 1, 0, '0', array());
 
 		if (!getDolGlobalInt('CLICHAUMEIL_DEFAULT_OVERHEAD_RATE')) {
 			dolibarr_set_const($this->db, 'CLICHAUMEIL_DEFAULT_OVERHEAD_RATE', CliChaumeilProductCostCalculator::DEFAULT_RATE_VALUE, 'chaine', 0, '', $conf->entity);
@@ -492,9 +496,9 @@ class modClichaumeil extends DolibarrModules
 	/**
 	 * Find a customer category by label, or create it if missing.
 	 *
-	 * @param string $label  Category label to search or create.
-	 * @param User   $user   Current user.
-	 * @param string $refExt Optional external reference suffix.
+	 * @param string $label  Category label.
+	 * @param User   $user   User used for create/update operations.
+	 * @param string $refExt External reference used to match or update the category.
 	 * @return int Category id, or 0 on failure
 	 */
 	private function findOrCreateCustomerCategory(string $label, User $user, string $refExt = ''): int
@@ -525,8 +529,11 @@ class modClichaumeil extends DolibarrModules
 					}
 				}
 
+				$this->db->free($resql);
 				return (int) $obj->rowid;
 			}
+
+			$this->db->free($resql);
 		}
 
 		if (!empty($refExt)) {
@@ -547,8 +554,11 @@ class modClichaumeil extends DolibarrModules
 							dol_syslog(__METHOD__ . ' category ref_ext update failed: ' . $category->error, LOG_ERR);
 						}
 					}
+					$this->db->free($resql);
 					return (int) $obj->rowid;
 				}
+
+				$this->db->free($resql);
 			}
 		}
 
@@ -569,5 +579,117 @@ class modClichaumeil extends DolibarrModules
 		}
 
 		return 0;
+	}
+
+	/**
+	 * Create or update a product extrafield definition without destructive recreation.
+	 *
+	 * @param ExtraFields        $extrafields     Extrafields manager.
+	 * @param string             $name            Extrafield name.
+	 * @param string             $label           Translation key.
+	 * @param string             $type            Field type.
+	 * @param int                $position        Sort position.
+	 * @param string             $size            Field size.
+	 * @param int                $unique          Unique flag.
+	 * @param int                $required        Required flag.
+	 * @param string             $defaultValue    Default value.
+	 * @param string|array       $params          Extra params.
+	 * @param int                $alwaysEditable  Always editable flag.
+	 * @param string             $perms           Permission expression.
+	 * @param string|int         $list            Visibility expression.
+	 * @param string             $help            Tooltip key.
+	 * @param string             $computed        Computed expression.
+	 * @param string|int         $entity          Entity.
+	 * @param string             $langfile        Lang file.
+	 * @param string|int         $enabled         Enabled expression.
+	 * @param int                $totalizable     Totalizable flag.
+	 * @param string|int         $printable       Printable flag.
+	 * @param array<string,mixed> $moreParams     Additional parameters.
+	 * @return void
+	 */
+	private function ensureProductExtrafield(
+		ExtraFields $extrafields,
+		string $name,
+		string $label,
+		string $type,
+		int $position,
+		string $size,
+		int $unique,
+		int $required,
+		string $defaultValue,
+		$params,
+		int $alwaysEditable,
+		string $perms,
+		$list,
+		string $help,
+		string $computed,
+		$entity,
+		string $langfile,
+		$enabled,
+		int $totalizable,
+		$printable,
+		array $moreParams
+	): void {
+		$exists = isset($extrafields->attributes['product']['label'][$name]);
+
+		if (!$exists) {
+			$result = $extrafields->addExtraField(
+				$name,
+				$label,
+				$type,
+				$position,
+				$size,
+				'product',
+				$unique,
+				$required,
+				$defaultValue,
+				$params,
+				$alwaysEditable,
+				$perms,
+				$list,
+				$help,
+				$computed,
+				$entity,
+				$langfile,
+				$enabled,
+				$totalizable,
+				$printable,
+				$moreParams
+			);
+
+			if ($result <= 0) {
+				dol_syslog(__METHOD__ . ' failed to create extrafield ' . $name, LOG_ERR);
+			}
+
+			return;
+		}
+
+		$result = $extrafields->updateExtraField(
+			$name,
+			$label,
+			$type,
+			$position,
+			$size,
+			'product',
+			$unique,
+			$required,
+			$defaultValue,
+			$params,
+			$alwaysEditable,
+			$perms,
+			$list,
+			$help,
+			$computed,
+			$entity,
+			$langfile,
+			$enabled,
+			$totalizable,
+			$printable,
+			$moreParams
+		);
+
+		if ($result <= 0) {
+			dol_syslog(__METHOD__ . ' failed to update extrafield ' . $name, LOG_ERR);
+		}
 	}
 }
