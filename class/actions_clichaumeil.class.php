@@ -32,7 +32,6 @@ require_once __DIR__ . '/CliChaumeilProductCostImportService.class.php';
 require_once __DIR__ . '/CliChaumeilProductCostViewRenderer.class.php';
 require_once __DIR__ . '/../lib/clichaumeil.lib.php';
 require_once DOL_DOCUMENT_ROOT . '/categories/class/categorie.class.php';
-require_once DOL_DOCUMENT_ROOT . '/product/class/product.class.php';
 require_once __DIR__ . '/SupplierProposalService.class.php';
 
 /**
