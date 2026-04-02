@@ -34,9 +34,11 @@ require_once DOL_DOCUMENT_ROOT . '/core/triggers/dolibarrtriggers.class.php';
 require_once DOL_DOCUMENT_ROOT . '/core/class/cunits.class.php';
 require_once __DIR__ . '/../../class/chaumeilrfa.class.php';
 require_once __DIR__ . '/../../class/CliChaumeilProductCost.class.php';
+require_once __DIR__ . '/../../class/CliChaumeilProposalMarginGuard.class.php';
 require_once __DIR__ . '/../../class/CliChaumeilCommissionConfig.class.php';
 require_once __DIR__ . '/../../lib/clichaumeil.lib.php';
 require_once DOL_DOCUMENT_ROOT . '/categories/class/categorie.class.php';
+require_once DOL_DOCUMENT_ROOT . '/comm/propal/class/propal.class.php';
 require_once DOL_DOCUMENT_ROOT . '/societe/class/societe.class.php';
 require_once DOL_DOCUMENT_ROOT . '/supplier_proposal/class/supplier_proposal.class.php';
 require_once DOL_DOCUMENT_ROOT . '/user/class/user.class.php';
@@ -80,6 +82,8 @@ class InterfaceClichaumeilTriggers extends DolibarrTriggers
 		if (!isModEnabled('clichaumeil')) {
 			return 0; // If module is not enabled, we do nothing
 		}
+
+		$langs->load('clichaumeil@clichaumeil');
 
 		$handled = false;
 		$result = $this->handleProductCostSynchronization($action, $object, $user, $langs, $handled);
@@ -166,20 +170,10 @@ class InterfaceClichaumeilTriggers extends DolibarrTriggers
 
 			break;
 			case 'ORDER_VALIDATE':
+				return $this->handleOrderValidate($object, $langs);
 
-				//Check for massaction
-				if (empty($object->thirdparty)) {
-					$object->fetch_thirdparty();
-				}
-
-				//Check extrafield(Thirdparty) ref_required & field object->ref_client(Commande)
-				$customerRefRequired = $object->thirdparty->array_options['options_clichaumeil_ref_required'];
-				$customerRefCommande = $object->ref_client;
-
-				if ($customerRefRequired == 1 && empty($customerRefCommande)) {
-					setEventMessages($langs->trans('CliChaumeilCustomerRefRequired', $object->getNomUrl()), null, 'errors');
-					return -1;
-				}
+			case 'PROPAL_VALIDATE':
+				return $this->handleProposalValidate($object, $langs);
 
 			case 'externalAccessInitController':
 				externalAccessInitController($object, $user, $langs, $conf);
@@ -228,6 +222,71 @@ class InterfaceClichaumeilTriggers extends DolibarrTriggers
 		}
 
 		return 0;
+	}
+
+	/**
+	 * Validate order-specific thirdparty requirements.
+	 *
+	 * @param CommonObject $object Order-like object.
+	 * @param Translate    $langs  Translation handler.
+	 * @return int
+	 */
+	private function handleOrderValidate(CommonObject $object, Translate $langs): int
+	{
+		if (empty($object->thirdparty)) {
+			$fetchThirdpartyResult = $object->fetch_thirdparty();
+			if ($fetchThirdpartyResult <= 0) {
+				$message = !empty($object->error) ? $object->error : 'Failed to load thirdparty during ORDER_VALIDATE.';
+				dol_syslog(__METHOD__ . ' - ' . $message, LOG_ERR);
+				setEventMessages($langs->trans('Error'), null, 'errors');
+				return -1;
+			}
+		}
+
+		$customerRefRequired = !empty($object->thirdparty->array_options['options_clichaumeil_ref_required']) ? (int) $object->thirdparty->array_options['options_clichaumeil_ref_required'] : 0;
+		$customerRefCommande = isset($object->ref_client) ? (string) $object->ref_client : '';
+
+		if ($customerRefRequired === 1 && $customerRefCommande === '') {
+			$message = $langs->trans('CliChaumeilCustomerRefRequired', $object->getNomUrl());
+			dol_syslog(__METHOD__ . ' - ' . $message . ' order_id=' . ((int) $object->id), LOG_WARNING);
+			setEventMessages($message, null, 'errors');
+			return -1;
+		}
+
+		return 0;
+	}
+
+	/**
+	 * Block proposal validation when at least one line has a negative margin.
+	 *
+	 * @param CommonObject $object Proposal object.
+	 * @param Translate    $langs  Translation handler.
+	 * @return int
+	 */
+	private function handleProposalValidate(CommonObject $object, Translate $langs): int
+	{
+		if (!$object instanceof Propal) {
+			return 0;
+		}
+
+		$guard = new CliChaumeilProposalMarginGuard();
+
+		try {
+			$blockingLineIds = $guard->getBlockingLineIds($object);
+		} catch (RuntimeException $exception) {
+			dol_syslog(__METHOD__ . ' - ' . $exception->getMessage() . ' proposal_id=' . ((int) $object->id), LOG_ERR);
+			setEventMessages($langs->trans('CliChaumeil_PropalMarginValidationUnexpectedError'), null, 'errors');
+			return -1;
+		}
+
+		if (empty($blockingLineIds)) {
+			return 0;
+		}
+
+		$message = $guard->getCardBlockingMessage($langs);
+		dol_syslog(__METHOD__ . ' - ' . $message . ' proposal_id=' . ((int) $object->id) . ' line_ids=' . implode(',', $blockingLineIds), LOG_WARNING);
+		setEventMessages($message, null, 'errors');
+		return -1;
 	}
 
 	/**

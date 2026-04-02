@@ -128,6 +128,8 @@ class modClichaumeil extends DolibarrModules
 				'bomcard',
 				'externalaccesssetup',
 				'externalaccess',
+				'propalcard',
+				'propallist',
 				'productcard',
 				'pricesuppliercard',
 				'imports'

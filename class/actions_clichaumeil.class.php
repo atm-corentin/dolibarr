@@ -27,7 +27,10 @@
 require_once DOL_DOCUMENT_ROOT . '/core/class/commonhookactions.class.php';
 require_once DOL_DOCUMENT_ROOT . '/product/class/product.class.php';
 require_once DOL_DOCUMENT_ROOT . '/core/class/extrafields.class.php';
+require_once DOL_DOCUMENT_ROOT . '/comm/propal/class/propal.class.php';
+require_once DOL_DOCUMENT_ROOT . '/user/class/user.class.php';
 require_once __DIR__ . '/CliChaumeilProductCost.class.php';
+require_once __DIR__ . '/CliChaumeilProposalMarginGuard.class.php';
 require_once __DIR__ . '/CliChaumeilProductCostImportService.class.php';
 require_once __DIR__ . '/CliChaumeilProductCostViewRenderer.class.php';
 require_once __DIR__ . '/../lib/clichaumeil.lib.php';
@@ -74,6 +77,16 @@ class ActionsClichaumeil extends CommonHookActions
 	/** @var bool */
 	private $subcontractorAssetsLoaded = false;
 
+	/** @var bool */
+	private $proposalValidationGuardMarkerPrinted = false;
+
+	private const PROPAL_CARD_CONTEXT = 'propalcard';
+
+	private const PROPAL_LIST_CONTEXT = 'propallist';
+
+	private const VALIDATE_ACTION = 'validate';
+
+	private const VALIDATION_GUARD_DOM_ID = 'clichaumeil-propal-validation-guard';
 
 	private const COST_BREAKDOWN_FIELDS = array(
 		'clichaumeil_prc_separator',
@@ -131,7 +144,7 @@ class ActionsClichaumeil extends CommonHookActions
 	 */
 	public function addMoreActionsButtons(array $parameters, CommonObject &$object, string &$action, HookManager $hookmanager)
 	{
-		global $langs, $user, $conf;
+		global $langs, $user;
 		$langs->loadLangs(array('clichaumeil@clichaumeil', 'supplier_proposal', 'companies', 'main'));
 
 		require_once DOL_DOCUMENT_ROOT . '/supplier_proposal/class/supplier_proposal.class.php';
@@ -139,16 +152,19 @@ class ActionsClichaumeil extends CommonHookActions
 		require_once DOL_DOCUMENT_ROOT . '/commande/class/commande.class.php';
 
 		if (!$this->shouldShowSubcontractorPicker($parameters, $object, $user)) {
+			$this->renderProposalValidationGuardMarker($parameters, $object, $langs, $user);
 			return 0;
 		}
 
 		$supplierProposals = SupplierProposalService::loadLinkedSupplierProposals($object, $this->db);
 		$supplierProposals = SupplierProposalService::preloadThirdparties($supplierProposals, $this->db);
 		if (!$this->hasSelectableSupplierProposal($supplierProposals)) {
+			$this->renderProposalValidationGuardMarker($parameters, $object, $langs, $user);
 			return 0;
 		}
 
 		$this->renderSubcontractorPicker($object, $supplierProposals, $langs);
+		$this->renderProposalValidationGuardMarker($parameters, $object, $langs, $user);
 
 		return 0;
 	}
@@ -245,6 +261,80 @@ class ActionsClichaumeil extends CommonHookActions
 		$this->subcontractorAssetsLoaded = true;
 	}
 
+	/**
+	 * Inject a DOM marker used to control the validate button on proposal cards.
+	 *
+	 * @param array<string,mixed> $parameters Hook metadata.
+	 * @param CommonObject        $object     Current object.
+	 * @param Translate           $langs      Translation handler.
+	 * @param User                $user       Current user.
+	 * @return void
+	 */
+	private function renderProposalValidationGuardMarker(array $parameters, CommonObject $object, Translate $langs, User $user): void
+	{
+		if (!$this->shouldShowProposalValidationGuard($parameters, $object, $user)) {
+			return;
+		}
+
+		$guard = new CliChaumeilProposalMarginGuard();
+		$message = $guard->getCardBlockingMessage($langs);
+		print '<span id="' . self::VALIDATION_GUARD_DOM_ID . '" data-message="' . dol_escape_htmltag($message) . '" style="display:none;"></span>';
+		$this->proposalValidationGuardMarkerPrinted = true;
+	}
+
+	/**
+	 * Check whether the proposal card should expose a validation guard marker.
+	 *
+	 * @param array<string,mixed> $parameters Hook metadata.
+	 * @param CommonObject        $object     Current object.
+	 * @param User                $user       Current user.
+	 * @return bool
+	 */
+	private function shouldShowProposalValidationGuard(array $parameters, CommonObject $object, User $user): bool
+	{
+		$context = (string) ($parameters['context'] ?? ($parameters['currentcontext'] ?? ''));
+		if (strpos($context, self::PROPAL_CARD_CONTEXT) === false) {
+			return false;
+		}
+
+		if (!$object instanceof Propal) {
+			return false;
+		}
+
+		if ((int) $object->status !== Propal::STATUS_DRAFT) {
+			return false;
+		}
+
+		if (!$this->userCanValidateProposal($user)) {
+			return false;
+		}
+
+		if (count($object->lines) <= 0) {
+			return false;
+		}
+
+		if ((float) $object->total_ttc < 0 && !getDolGlobalString('PROPAL_ENABLE_NEGATIVE')) {
+			return false;
+		}
+
+		return true;
+	}
+
+	/**
+	 * Check whether current user can validate proposals according to Dolibarr permissions.
+	 *
+	 * @param User $user Current user.
+	 * @return bool
+	 */
+	private function userCanValidateProposal(User $user): bool
+	{
+		if (!getDolGlobalString('MAIN_USE_ADVANCED_PERMS')) {
+			return $user->hasRight('propal', 'creer');
+		}
+
+		return $user->hasRight('propal', 'propal_advance', 'validate');
+	}
+
 
 	/**
 	 * Overload the addMoreMassActions function : replacing the parent's function with the one below
@@ -312,8 +402,14 @@ class ActionsClichaumeil extends CommonHookActions
 	public function doActions($parameters, &$object, &$action, $hookmanager)
 	{
 		global $user, $langs;
+		$langs->load('clichaumeil@clichaumeil');
 
 		$context = (string) ($parameters['context'] ?? ($parameters['currentcontext'] ?? ''));
+
+		if (strpos($context, self::PROPAL_LIST_CONTEXT) !== false) {
+			return $this->handleProposalMassValidationAction($action, $langs);
+		}
+
 		if (strpos($context, 'pricesuppliercard') === false) {
 			return 0;
 		}
@@ -372,6 +468,66 @@ class ActionsClichaumeil extends CommonHookActions
 		$this->redirectToSupplierPriceTab((int) $product->id);
 
 		return 1;
+	}
+
+	/**
+	 * Block proposal mass validation when one selected proposal contains a negative margin.
+	 *
+	 * @param string    $action Current action by reference.
+	 * @param Translate $langs  Translation handler.
+	 * @return int
+	 */
+	private function handleProposalMassValidationAction(string &$action, Translate $langs): int
+	{
+		if ($action !== self::VALIDATE_ACTION || GETPOST('confirm', 'alpha') !== 'yes') {
+			return 0;
+		}
+
+		$selectedIds = GETPOST('toselect', 'array');
+		if (!is_array($selectedIds) || empty($selectedIds)) {
+			return 0;
+		}
+
+		$guard = new CliChaumeilProposalMarginGuard();
+		$proposal = new Propal($this->db);
+		$blockingProposalLinks = array();
+		$blockingProposalIds = array();
+
+		foreach ($selectedIds as $selectedId) {
+			$proposalId = (int) $selectedId;
+			if ($proposalId <= 0) {
+				continue;
+			}
+
+			$fetchResult = $proposal->fetch($proposalId);
+			if ($fetchResult <= 0) {
+				$this->error = $langs->trans('CliChaumeil_PropalMassMarginValidationFetchError');
+				return -1;
+			}
+
+			try {
+				if (!$guard->hasBlockingNegativeMargin($proposal)) {
+					continue;
+				}
+
+				$blockingProposalLinks[] = $proposal->getNomUrl(1);
+				$blockingProposalIds[] = $proposalId;
+			} catch (RuntimeException $exception) {
+				$this->error = $langs->trans('CliChaumeil_PropalMarginValidationUnexpectedError');
+				return -1;
+			}
+		}
+
+		if (!empty($blockingProposalLinks)) {
+			$message = $langs->transnoentities('CliChaumeil_PropalMassMarginValidationBlockedList');
+			$message .= '<br>' . implode('<br>', $blockingProposalLinks);
+			setEventMessages($message, null, 'errors');
+			dol_syslog(__METHOD__ . ' - blocking proposal ids=' . implode(',', $blockingProposalIds), LOG_WARNING);
+			$action = 'list';
+			return 0;
+		}
+
+		return 0;
 	}
 
 
@@ -721,17 +877,17 @@ class ActionsClichaumeil extends CommonHookActions
 	 */
 	public function llxFooter($parameters, &$object, &$action, $hookmanager): int
 	{
-		global $langs, $user;
+		global $langs;
 
 		$langs->load('clichaumeil@clichaumeil');
 
-		$context = (string) ($parameters['context'] ?? ($parameters['currentcontext'] ?? ''));
-		if (strpos($context, 'pricesuppliercard') !== false) {
+		$pageContext = (string) ($parameters['context'] ?? ($parameters['currentcontext'] ?? ''));
+		if (strpos($pageContext, 'pricesuppliercard') !== false) {
 			$this->renderSupplierCostBreakdownRows($parameters, $object, $action);
 		}
 
 		// Hide moved extrafields on product card to avoid duplicate display
-		if (strpos($context, 'productcard') !== false && strpos($context, 'pricesuppliercard') === false) {
+		if (strpos($pageContext, 'productcard') !== false && strpos($pageContext, 'pricesuppliercard') === false) {
 			$this->hideCostBreakdownOnProductCard();
 		}
 
@@ -750,9 +906,9 @@ class ActionsClichaumeil extends CommonHookActions
 		if (!empty($object) && in_array($object->element, $allowedElements, true) && !empty($targetCatIds)) {
 			$targetProducts = $this->getTargetProducts($targetCatIds);
 			if (!empty($targetProducts)) {
-				$context = $object->element;
+				$lineContext = $object->element;
 				$productCategories = $this->mapProductCategories($object);
-				$lineVisibilities = $this->buildLineVisibilities($object->lines, $targetProducts, $targetCatIds, $context, $productCategories);
+				$lineVisibilities = $this->buildLineVisibilities($object->lines, $targetProducts, $targetCatIds, $lineContext, $productCategories);
 
 				$config = array(
 					'targetProducts' => $targetProducts,
@@ -781,6 +937,11 @@ class ActionsClichaumeil extends CommonHookActions
 
 		$jsUrl = dol_buildpath('/clichaumeil/js/margin_check_warning.js', 1);
 		echo '<script src="' . $jsUrl . '" defer></script>';
+
+		if ($this->proposalValidationGuardMarkerPrinted && strpos($pageContext, self::PROPAL_CARD_CONTEXT) !== false) {
+			$guardJsUrl = dol_buildpath('/clichaumeil/js/propal_margin_validation_guard.js', 1);
+			echo '<script src="' . $guardJsUrl . '" defer></script>';
+		}
 
 		self::$lineData = [];
 
