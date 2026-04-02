@@ -13,7 +13,6 @@ ModuleMyModuleDesc = MyModule description
 # Admin page
 #
 MyModuleSetup = MyModule setup
-Settings = Settings
 MyModuleSetupPage = MyModule setup page
 NewSection=New section
 MYMODULE_MYPARAM1 = My param 1
@@ -84,9 +83,7 @@ CliChaumeilCronNotifNotConfigured=Aucun utilisateur abonné configuré pour la n
 CliChaumeilCronSectionWarnings=AVERTISSEMENTS (non-bloquants)
 CliChaumeilWarningNoEmailTemplate=Aucun modèle d'e-mail n'est configuré, les notifications par e-mail ont été ignorées.
 CliChaumeilWarningSkipLine=La ligne ID %s n'a pas pu être chargée et a été ignorée.
-CliChaumeilWarningEmailFailed=L'envoi de l'e-mail à %s a échoué (Erreur: %s)
 CliChaumeilWarningUserNotFound=L'utilisateur pour notification (ID: %s) est introuvable.
-CliChaumeilWarningAdvancedNotifierMissing=Le module Advanced Notifier est introuvable, les notifications "bulles" ont été ignorées.
 CliChaumeilContractRevisionUpdate=Mise à jour automatique des taux de révision de contrats
 CliChaumeilWarningEmailFailed=Échec de l'envoi de l'e-mail à %s. Erreur : %s
 CliChaumeilWarningUserNotFoundOrNoEmail=Impossible d'envoyer un e-mail à l'utilisateur ID %s : utilisateur introuvable ou sans e-mail.
@@ -254,7 +251,7 @@ CLICHAUMEIL_FILE_ATTACHED_WITHOUT_MESSAGE = Pièce jointe ajoutée
 CLICHAUMEIL_FILEADDED = Fichier envoyé, pensez à ajouter le message.
 CLICHAUMEIL_SUPPLIERPROPOSALVALIDATED = Proposition commerciale fournisseur transmise.
 CLICHAUMEIL_SUPPLIERPROPOSALS = Propositions commerciales fournisseurs
-CLICHAUMEIL_REFSUPPLLIER = Ref. Fournisseur
+CLICHAUMEIL_REFSUPPLIER = Ref. Fournisseur
 CLICHAUMEIL_FILENOTFOUND = Fichier introuvable.
 CLICHAUMEIL_FILE_DEPOSITED_BY = Fichier déposé par %s, %s
 CLICHAUMEIL_FILE_TOO_LARGE = Le fichier est trop volumineux. Taille maximale autorisée : %s
