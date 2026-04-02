@@ -46,6 +46,7 @@
 		const separatorId = String(config.separatorId || '');
 		const collapseClass = String(config.collapseClass || '');
 		const cookieName = String(config.cookieName || '');
+		const cookiePath = String(config.cookiePath || '/');
 		let expanded = Boolean(config.expanded);
 		if (!separatorId || !collapseClass || !cookieName) return;
 
@@ -62,7 +63,7 @@
 				.toggleClass('fa-minus-square', isExpanded)
 				.toggleClass('fa-plus-square', !isExpanded)
 				.removeClass('fa-square opacitymedium');
-			document.cookie = `${cookieName}=${isExpanded ? '1' : '0'}; path=${window.location.pathname}`;
+			document.cookie = `${cookieName}=${isExpanded ? '1' : '0'}; path=${cookiePath}; SameSite=Lax`;
 		};
 
 		applyState(expanded);

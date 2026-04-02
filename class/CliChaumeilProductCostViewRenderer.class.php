@@ -113,6 +113,7 @@ class CliChaumeilProductCostViewRenderer
 					'separatorId' => (string) $separatorConfig['separatorId'],
 					'collapseClass' => (string) $separatorConfig['collapseClass'],
 					'cookieName' => (string) $separatorConfig['cookieName'],
+					'cookiePath' => (string) $separatorConfig['cookiePath'],
 					'expanded' => !empty($separatorConfig['expanded']),
 				),
 				JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT
@@ -246,11 +247,12 @@ class CliChaumeilProductCostViewRenderer
 	{
 		global $langs;
 
+		$currency = $this->getCurrencyCode();
 		$inputField = $extrafields->showInputField($field, $value, '', '', '', '', $product, 'product');
 		if (CliChaumeilProductCostCalculator::isPercentField($field)) {
 			$inputField .= ' %';
 		} else {
-			$inputField .= ' ' . $langs->getCurrencySymbol('EUR');
+			$inputField .= ' ' . $langs->getCurrencySymbol($currency);
 		}
 
 		$row = '<tr class="field_' . $field . ' clichaumeil-cost-row ' . $collapseClass . '">';
@@ -285,6 +287,7 @@ class CliChaumeilProductCostViewRenderer
 	{
 		global $langs;
 
+		$currency = $this->getCurrencyCode();
 		$output = $extrafields->showOutputField($field, $value, '', 'product', $langs, $product);
 		if (CliChaumeilProductCostCalculator::isPercentField($field)) {
 			if ($output === '' && ($value !== '' && $value !== null)) {
@@ -295,14 +298,14 @@ class CliChaumeilProductCostViewRenderer
 		}
 
 		if ($output === '' && ($value !== '' && $value !== null)) {
-			$output = price((float) $value, 0, $langs, 0, 0, -2, 'EUR');
+			$output = price((float) $value, 0, $langs, 0, 0, -2, $currency);
 		}
 
 		if ($output === '') {
 			return '';
 		}
 
-		return $output . ' ' . $langs->getCurrencySymbol('EUR');
+		return $output . ' ' . $langs->getCurrencySymbol($currency);
 	}
 
 	/**
@@ -344,13 +347,26 @@ class CliChaumeilProductCostViewRenderer
 	{
 		global $langs;
 
+		$currency = $this->getCurrencyCode();
 		$value = price($totalCosts, 0, $langs, 0, 0, -2, '');
 		$label = $langs->trans('CLICHAUMEIL_TOTAL_COSTS');
 		$help = $langs->trans('CLICHAUMEIL_TOTAL_COSTS_HELP');
 		$labelHtml = ($help !== 'CLICHAUMEIL_TOTAL_COSTS_HELP' && $help !== '') ? $form->textwithpicto($label, $help) : dol_escape_htmltag($label);
 
 		return '<tr class="field_' . CliChaumeilProductCostCalculator::VIRTUAL_TOTAL_COSTS_FIELD . ' clichaumeil-cost-row ' . $collapseClass . '"><td class="titlefield">'
-			. $labelHtml . '</td><td>' . $value . ' ' . $langs->getCurrencySymbol('EUR') . '</td></tr>';
+			. $labelHtml . '</td><td>' . $value . ' ' . $langs->getCurrencySymbol($currency) . '</td></tr>';
+	}
+
+	/**
+	 * Return the currency code used to render monetary cost fields.
+	 *
+	 * @return string
+	 */
+	private function getCurrencyCode(): string
+	{
+		global $conf;
+
+		return (!empty($conf->currency) ? (string) $conf->currency : 'EUR');
 	}
 
 	/**
@@ -390,8 +406,25 @@ class CliChaumeilProductCostViewRenderer
 			'separatorId' => 'trextrafieldseparator' . self::SEPARATOR_FIELD . (!empty($product->id) ? '_' . ((int) $product->id) : ''),
 			'collapseClass' => $this->buildCollapseClass($product),
 			'cookieName' => $cookieName,
+			'cookiePath' => $this->getCookiePath(),
 			'expanded' => $expanded,
 		);
+	}
+
+	/**
+	 * Return the path scope used when persisting UI cookies.
+	 *
+	 * @return string
+	 */
+	private function getCookiePath(): string
+	{
+		$path = (defined('DOL_URL_ROOT') ? (string) DOL_URL_ROOT : '');
+
+		if ($path === '' || $path === '/') {
+			return '/';
+		}
+
+		return rtrim($path, '/');
 	}
 
 	/**
