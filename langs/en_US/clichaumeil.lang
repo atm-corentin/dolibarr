@@ -46,7 +46,7 @@ Settings = Settings
 ClichaumeilSetupPage = CliChaumeil Settings
 
 CLICHAUMEIL_DEFAULT_OVERHEAD_RATE=Default overhead rate (%)
-CLICHAUMEIL_DEFAULT_OVERHEAD_RATETooltip=Default overhead percent applied to new simple products when none is entered (4 decimals).
+CLICHAUMEIL_DEFAULT_OVERHEAD_RATETooltip=Convention: 10 = 10%%. Default overhead percent applied to new simple products and services when none is entered (4 decimals).
 CliChaumeilReviewRate=Review rate (in %%)
 CliChaumeilReviewDate=Review date
 
@@ -262,7 +262,7 @@ CliChaumeil_RfaSeedError=An error occurred while generating the RFA test data.
 ReadRightsChaumeilRfa=View year-end rebates (RFA)
 CreateUpadteRightsChaumeilRfa=Create/Update year-end rebates (RFA)
 DeleteRightsChaumeilRfa=Delete year-end rebates (RFA)
-ReadProductCostComposition=View cost composition on products
+ReadProductCostComposition=View cost price breakdown on products
 
 #
 # Extrafields
@@ -277,8 +277,24 @@ CliChaumeilPaSav=PA After-sales service
 CliChaumeilPaMachine=PA Machine
 CliChaumeilPaInk=PA Ink
 CliChaumeilPaLabor=PA Labor
+CliChaumeilConditionnementPercent=Packaging rate (%)
+CliChaumeilTransportPercent=Transport rate (%)
+CliChaumeilTotalCosts=Total costs
+CLICHAUMEIL_CONDITIONNEMENT_PERCENT=Packaging rate (%)
+CLICHAUMEIL_TRANSPORT_PERCENT=Transport rate (%)
+CLICHAUMEIL_TOTAL_COSTS=Total costs
+CLICHAUMEIL_TOTAL_COSTS_HELP=Sum of the five purchase components, increased by the packaging and transport rates. This amount is computed on the fly and is not stored.
 CliChaumeilFgPercent=Overhead rate (%)
 CliChaumeilPaFg=Overhead amount
+CLICHAUMEIL_HELP_PA_SUPPORT=Purchase component related to the support.
+CLICHAUMEIL_HELP_PA_SAV=Purchase component related to after-sales service.
+CLICHAUMEIL_HELP_PA_MACHINE=Purchase component related to the machine.
+CLICHAUMEIL_HELP_PA_INK=Purchase component related to ink.
+CLICHAUMEIL_HELP_PA_LABOR=Purchase component related to labor.
+CLICHAUMEIL_HELP_PACKAGING_PERCENT=Percentage applied to the sum of the five purchase components to compute packaging cost. Convention: 10 = 10%%.
+CLICHAUMEIL_HELP_TRANSPORT_PERCENT=Percentage applied to the sum of the five purchase components to compute transport cost. Convention: 10 = 10%%.
+CLICHAUMEIL_HELP_FG_PERCENT=Overhead percentage applied to Total costs. Convention: 10 = 10%%. If empty, the final calculation does not overwrite the overhead amount or the cost price.
+CLICHAUMEIL_HELP_PA_FG=Computed overhead amount: Total costs x overhead rate.
 CliChaumeilSurfaceRecalculated = Recalculated surface (in %s)
 
 #
@@ -292,7 +308,15 @@ RollbackUnitsQtyforProduct=Product unit and quantity reset
 SurfaceRecalculatedInCm2=Surface recalculated (in cm²)
 CliChaumeilGeneralExpenses=General expenses (%)
 WarningNegativeMargin=Warning: the cost price is higher than the selling price. Negative margin.
+CliChaumeil_PropalMarginValidationBlocked=One or more sale prices are lower than the cost price. Please adjust the prices before validating this proposal.
+CliChaumeil_PropalMassMarginValidationBlocked=One or more proposals have sale prices lower than the cost price. Please adjust the prices before validating these proposals.
+CliChaumeil_PropalMassMarginValidationBlockedList=The following proposals have one or more sale prices lower than the cost price. Please adjust the prices before validating these proposals:
+CliChaumeil_PropalMassMarginValidationBlockedForProposal=Proposal %s has one or more sale prices lower than the cost price. Please adjust the prices before validating these proposals.
+CliChaumeil_PropalMarginValidationUnexpectedError=An unexpected error occurred while checking proposal margins.
+CliChaumeil_PropalMassMarginValidationFetchError=An unexpected error occurred while loading a proposal for mass validation.
 CliChaumeilErrorMissingFgPercent=Import failed: Overhead rate (%) is required for product %s.
+CliChaumeilInfoMissingFgPercent=Final calculation skipped: the Overhead rate (%) field is empty.
+CLICHAUMEIL_INFO_MISSING_FG_PERCENT=Final calculation skipped: the Overhead rate (%) field is empty.
 CLICHAUMEIL_PRODUCT_TARGET_CATEGORY=Select the product category for which the Height and Length fields should be displayed.
 CliChaumeil_RfaReminderCronLabel=RFA negotiation to do
 CliChaumeil_RfaReminderCronDescription=Sends a reminder email with the supplier RFA list link filtered on the current year.
