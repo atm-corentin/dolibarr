@@ -406,7 +406,7 @@ class ActionsClichaumeil extends CommonHookActions
 	 * @param HookManager         $hookmanager Hook manager instance.
 	 * @return int
 	 */
-	public function doActions(array $parameters, CommonObject &$object, string &$action, HookManager $hookmanager): int
+	public function doActions($parameters, &$object, &$action, $hookmanager): int
 	{
 		global $user, $langs;
 		$langs->load('clichaumeil@clichaumeil');
