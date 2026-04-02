@@ -63,6 +63,18 @@ class SupplierProposalView
 		$this->db = $db;
 		$this->user = $user;
 		$this->context = $context;
+
+		$this->loadRequiredLangs();
+	}
+
+	/**
+	 * Load translation files required by this view.
+	 *
+	 * @return void
+	 */
+	private function loadRequiredLangs() : void
+	{
+		$this->langs->loadLangs(array('products', 'stocks'));
 	}
 
 	/**
@@ -142,8 +154,6 @@ class SupplierProposalView
 	 */
 	public function renderProposalLines(SupplierProposal $object, string $currencyCode) : string
 	{
-		$this->langs->loadLangs(array('products', 'stocks'));
-
 		$out = '<div class="container px-0">';
 		$out .= '<div class="table-responsive">';
 		$out .= '<table class="table table-striped" id="supplier-propal-lines">';
