@@ -52,7 +52,7 @@ RateRfa=Taux de RFA
 ReadRightsChaumeilRfa=Consulter les remises de fin d'année (RFA)
 CreateUpadteRightsChaumeilRfa=Créer/Modifier les remises de fin d'année (RFA)
 DeleteRightsChaumeilRfa=Supprimer les remises de fin d'année (RFA)
-ReadProductCostComposition=Voir la composition du coût sur les produits
+ReadProductCostComposition=Voir la composition du prix de revient sur les produits
 
 ClichaumeilSetup = Paramètrages CliChaumeil
 Settings = Paramètrages
@@ -62,6 +62,7 @@ CliChaumeilReviewRate=Taux de révision (en %%)
 CliChaumeilReviewDate=Date de révision
 
 CLICHAUMEIL_DEFAULT_OVERHEAD_RATE=Taux de frais généraux par défaut (%)
+CLICHAUMEIL_DEFAULT_OVERHEAD_RATETooltip=Convention : 10 = 10%%. Taux de frais généraux appliqué par défaut aux nouveaux produits et services simples si aucune valeur n'est saisie.
 CLICHAUMEIL_REVIEW_YEAR_DELAY=Décalage de la date de révision après renouvellement (en années)
 CLICHAUMEIL_PRICING_UPDATE_MANAGERS=Responsables de la mise à jour tarifaire
 CLICHAUMEIL_CRON_EMAIL_TEMPLATE=Modèle de mail à utiliser pour l’alerte par mail
@@ -245,8 +246,24 @@ CliChaumeilPaSav=PA SAV
 CliChaumeilPaMachine=PA Machine
 CliChaumeilPaInk=PA Encre
 CliChaumeilPaLabor=PA Main d'oeuvre
+CliChaumeilConditionnementPercent=Taux conditionnement (%)
+CliChaumeilTransportPercent=Taux transport (%)
+CliChaumeilTotalCosts=Total coûts
+CLICHAUMEIL_CONDITIONNEMENT_PERCENT=Taux conditionnement (%)
+CLICHAUMEIL_TRANSPORT_PERCENT=Taux transport (%)
+CLICHAUMEIL_TOTAL_COSTS=Total coûts
+CLICHAUMEIL_TOTAL_COSTS_HELP=Somme des cinq postes d'achat, majorée du taux de conditionnement et du taux de transport. Ce montant est calculé à la volée et n'est pas stocké.
 CliChaumeilFgPercent=Frais généraux (%)
 CliChaumeilPaFg=PA Frais généraux
+CLICHAUMEIL_HELP_PA_SUPPORT=Partie achat correspondant au support.
+CLICHAUMEIL_HELP_PA_SAV=Partie achat correspondant au SAV.
+CLICHAUMEIL_HELP_PA_MACHINE=Partie achat correspondant à la machine.
+CLICHAUMEIL_HELP_PA_INK=Partie achat correspondant à l'encre.
+CLICHAUMEIL_HELP_PA_LABOR=Partie achat correspondant à la main-d'oeuvre.
+CLICHAUMEIL_HELP_PACKAGING_PERCENT=Pourcentage appliqué sur la somme des cinq postes d'achat pour calculer le coût de conditionnement. Convention : 10 = 10%%.
+CLICHAUMEIL_HELP_TRANSPORT_PERCENT=Pourcentage appliqué sur la somme des cinq postes d'achat pour calculer le coût de transport. Convention : 10 = 10%%.
+CLICHAUMEIL_HELP_FG_PERCENT=Pourcentage de frais généraux appliqué sur le Total coûts. Convention : 10 = 10%%. Si vide, le calcul final n'écrase pas le PA frais généraux ni le prix de revient.
+CLICHAUMEIL_HELP_PA_FG=Montant calculé des frais généraux : Total coûts x taux de frais généraux.
 CliChaumeilUnits=Unité Cible
 #
 # ERRORS
@@ -260,4 +277,6 @@ CliChaumeilSurfaceRecalculated=Surface recalculée (en %s)
 CliChaumeilGeneralExpenses=Frais généraux (en %)
 WarningNegativeMargin=Attention : le prix de revient est supérieur au prix de vente. Marge négative
 CliChaumeilErrorMissingFgPercent=Import impossible : le champ Frais généraux (%) est obligatoire pour le produit %s.
+CliChaumeilInfoMissingFgPercent=Calcul final non effectué : le champ Frais généraux (%) est vide.
+CLICHAUMEIL_INFO_MISSING_FG_PERCENT=Calcul final non effectué : le champ Frais généraux (%) est vide.
 CLICHAUMEIL_PRODUCT_TARGET_CATEGORY=Sélectionnez la catégorie de produits pour laquelle les champs Hauteur et Longueur doivent apparaître.
