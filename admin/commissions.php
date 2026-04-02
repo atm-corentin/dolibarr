@@ -83,9 +83,21 @@ if (!class_exists('FormSetup')) {
 $formSetup = new FormSetup($db);
 
 // Coefficients
-$item = $formSetup->newItem('CliChaumeilCommissionsSectionCoefficients')->setAsTitle();
-$coefficients = CliChaumeilCommissionConfig::getDefaultCoefficients();
+$item = $formSetup->newItem('CliChaumeilCommissionsSectionCommercialCoefficients')->setAsTitle();
+$coefficients = CliChaumeilCommissionConfig::getDefaultCommercialCoefficients();
 foreach ($coefficients as $constKey => $defaultValue) {
+	$item = $formSetup->newItem($constKey);
+	$item->fieldAttr = array(
+		'type' => 'number',
+		'min' => 0,
+		'step' => '0.01',
+	);
+	$item->defaultFieldValue = $defaultValue;
+}
+
+$item = $formSetup->newItem('CliChaumeilCommissionsSectionPrintManagementCoefficients')->setAsTitle();
+$printManagementCoefficients = CliChaumeilCommissionConfig::getDefaultPrintManagementCoefficients();
+foreach ($printManagementCoefficients as $constKey => $defaultValue) {
 	$item = $formSetup->newItem($constKey);
 	$item->fieldAttr = array(
 		'type' => 'number',
@@ -129,6 +141,7 @@ $item = $formSetup->newItem('CliChaumeilCommissionsSectionGroups')->setAsTitle()
 $item = $formSetup->newItem(CliChaumeilCommissionConfig::GROUP_COMMERCIAL)->setAsSelect($groupOptions);
 $item = $formSetup->newItem(CliChaumeilCommissionConfig::GROUP_MANAGER_COMMERCIAL)->setAsSelect($groupOptions);
 $item = $formSetup->newItem(CliChaumeilCommissionConfig::GROUP_PRINT_MANAGER)->setAsSelect($groupOptions);
+$item = $formSetup->newItem(CliChaumeilCommissionConfig::GROUP_PRINT_MANAGEMENT)->setAsSelect($groupOptions);
 
 if ($action !== 'update') {
 	$missingCategoryKeys = array();
@@ -138,18 +151,18 @@ if ($action !== 'update') {
 		CliChaumeilCommissionConfig::CAT_NOUVEAU,
 		CliChaumeilCommissionConfig::CAT_ANCIEN,
 	);
-$categoryChecker = new Categorie($db);
-$customerCategoryType = isset($categoryChecker->MAP_ID['customer']) ? (int) $categoryChecker->MAP_ID['customer'] : (int) Categorie::TYPE_CUSTOMER;
-foreach ($categoryConstants as $constKey) {
-	$catId = getDolGlobalInt($constKey);
-	if (empty($catId)) {
-		$missingCategoryKeys[] = $langs->trans($constKey);
-		continue;
+	$categoryChecker = new Categorie($db);
+	$customerCategoryType = isset($categoryChecker->MAP_ID['customer']) ? (int) $categoryChecker->MAP_ID['customer'] : (int) Categorie::TYPE_CUSTOMER;
+	foreach ($categoryConstants as $constKey) {
+		$catId = getDolGlobalInt($constKey);
+		if (empty($catId)) {
+			$missingCategoryKeys[] = $langs->trans($constKey);
+			continue;
+		}
+		if ($categoryChecker->fetch($catId) <= 0 || (int) $categoryChecker->type !== $customerCategoryType) {
+			$missingCategoryKeys[] = $langs->trans($constKey);
+		}
 	}
-	if ($categoryChecker->fetch($catId) <= 0 || (int) $categoryChecker->type !== $customerCategoryType) {
-		$missingCategoryKeys[] = $langs->trans($constKey);
-	}
-}
 
 	if (!empty($missingCategoryKeys)) {
 		setEventMessages($langs->transnoentitiesnoconv('CliChaumeilCommissionsMissingCategoryConfig', implode(', ', $missingCategoryKeys)), null, 'warnings');
@@ -160,6 +173,7 @@ foreach ($categoryConstants as $constKey) {
 		CliChaumeilCommissionConfig::GROUP_COMMERCIAL,
 		CliChaumeilCommissionConfig::GROUP_MANAGER_COMMERCIAL,
 		CliChaumeilCommissionConfig::GROUP_PRINT_MANAGER,
+		CliChaumeilCommissionConfig::GROUP_PRINT_MANAGEMENT,
 	);
 	foreach ($groupConstants as $constKey) {
 		if (empty(getDolGlobalInt($constKey))) {
