@@ -212,6 +212,7 @@ CLICHAUMEIL_FILE_ATTACHED_WITHOUT_MESSAGE = Pièce jointe ajoutée
 CLICHAUMEIL_FILEADDED = Fichier envoyé, pensez à ajouter le message.
 CLICHAUMEIL_SUPPLIERPROPOSALVALIDATED = Proposition commerciale fournisseur transmise.
 CLICHAUMEIL_SUPPLIERPROPOSALS = Propositions commerciales fournisseurs
+CLICHAUMEIL_REFSUPPLIER = Ref. Fournisseur
 CLICHAUMEIL_REFSUPPLLIER = Ref. Fournisseur
 CLICHAUMEIL_FILENOTFOUND = Fichier introuvable.
 CLICHAUMEIL_FILE_DEPOSITED_BY = Fichier déposé par %s, %s

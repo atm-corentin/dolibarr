@@ -16,6 +16,7 @@
  */
 
 require_once DOL_DOCUMENT_ROOT.'/core/class/extrafields.class.php';
+require_once DOL_DOCUMENT_ROOT.'/core/lib/product.lib.php';
 require_once __DIR__.'/../lib/clichaumeil.lib.php';
 dol_include_once('/externalaccess/class/ExternalFormTicket.class.php');
 dol_include_once('/subtotal/class/subtotal.class.php');
@@ -149,7 +150,7 @@ class SupplierProposalView
 		$out .= '<thead>';
 		$out .= '<tr>';
 		$out .= '<th style="width: 10%;">' . $this->langs->trans('Ref') . '</th>';
-		$out .= '<th style="width: 14%;">' . $this->langs->trans('CLICHAUMEIL_REFSUPPLLIER') . '</th>';
+		$out .= '<th style="width: 14%;">' . $this->langs->trans('CLICHAUMEIL_REFSUPPLIER') . '</th>';
 		$out .= '<th style="width: 34%;">' . $this->langs->trans('Description') . '</th>';
 		$out .= '<th class="text-right" style="width: 10%;">' . $this->langs->trans('Qty') . '</th>';
 		$out .= '<th style="width: 8%;">' . $this->langs->trans('Unit') . '</th>';
@@ -191,10 +192,12 @@ class SupplierProposalView
 	 */
 	private function renderLine(SupplierProposalLine $line, string $currencyCode, SupplierProposal $object) : string
 	{
-		// Always detect subtotal lines, even if module flag isn't exposed to external access
-		// Subtotal lines are hidden in this view (see renderProposalLines)
+		// Hide only closing subtotal lines in portal view.
 		if (TSubtotal::isSubtotal($line)) {
 			return '';
+		}
+		if (TSubtotal::isTitle($line) || TSubtotal::isFreeText($line)) {
+			return $this->renderSubtotalLine($line, $currencyCode, $object);
 		}
 
 		$out = '<tr>';
@@ -218,7 +221,7 @@ class SupplierProposalView
 			$out .= '<td></td>';
 		} else {
 			$out .= '<td class="text-right">' . $line->qty . '</td>';
-			$out .= '<td>' . dol_escape_htmltag((string) ($line->unit_short_label ?? '')) . '</td>';
+			$out .= '<td>' . dol_escape_htmltag((string) measuringUnitString((int) $line->fk_unit, '', null, 1, $this->langs)) . '</td>';
 			$out .= '<td class="text-right">';
 			$out .= '<input type="text" class="form-control text-right line-price-input"';
 			$out .= ' name="line_prices[' . $line->id . ']"';
