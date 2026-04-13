@@ -110,6 +110,9 @@ function initPriceUpdater(config) {
 				// Show error feedback
 				console.error("AJAX error response:", response);
 				$input.css("background-color", "#f2dede"); // error red
+				if (response && response.message) {
+					window.alert(response.message);
+				}
 			}
 		})
 		.fail(function(jqXHR, textStatus, errorThrown) {
@@ -121,6 +124,9 @@ function initPriceUpdater(config) {
 				responseText: jqXHR.responseText
 			});
 			$input.css("background-color", "#f2dede"); // error red
+			if (jqXHR.responseJSON && jqXHR.responseJSON.message) {
+				window.alert(jqXHR.responseJSON.message);
+			}
 		})
 		.always(function() {
 			console.log("AJAX always callback - Request completed");
