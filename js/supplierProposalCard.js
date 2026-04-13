@@ -64,6 +64,40 @@ function initSupplierProposalCard(config) {
 }
 
 /**
+ * Display a non-blocking error notification on the portal page.
+ * @param {string} message
+ */
+function showPortalErrorMessage(message) {
+	if (!message) {
+		return;
+	}
+
+	if (typeof $.jnotify === "function") {
+		$.jnotify(message, "error", true);
+		return;
+	}
+
+	var containerId = "supplier-proposal-ajax-errors";
+	var $container = $("#" + containerId);
+	if ($container.length === 0) {
+		$container = $('<div id="' + containerId + '" class="fichecenter"></div>');
+		var $anchor = $("#form-propal-message-container");
+		if ($anchor.length > 0) {
+			$anchor.before($container);
+		} else {
+			$("section#section-supplierProposal .container").first().prepend($container);
+		}
+	}
+
+	$container.html(
+		'<div class="warning">' +
+			'<span class="fas fa-exclamation-triangle paddingright"></span>' +
+			message +
+		'</div>'
+	);
+}
+
+/**
  * Initialize price updater for lines
  * @param {object} config
  */
@@ -111,7 +145,7 @@ function initPriceUpdater(config) {
 				console.error("AJAX error response:", response);
 				$input.css("background-color", "#f2dede"); // error red
 				if (response && response.message) {
-					window.alert(response.message);
+					showPortalErrorMessage(response.message);
 				}
 			}
 		})
@@ -125,7 +159,7 @@ function initPriceUpdater(config) {
 			});
 			$input.css("background-color", "#f2dede"); // error red
 			if (jqXHR.responseJSON && jqXHR.responseJSON.message) {
-				window.alert(jqXHR.responseJSON.message);
+				showPortalErrorMessage(jqXHR.responseJSON.message);
 			}
 		})
 		.always(function() {
