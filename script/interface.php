@@ -40,6 +40,8 @@ global $conf, $langs, $db, $user;
 require_once DOL_DOCUMENT_ROOT.'/supplier_proposal/class/supplier_proposal.class.php';
 require_once __DIR__.'/../class/SupplierProposalService.class.php';
 
+$langs->loadLangs(array('clichaumeil@clichaumeil', 'supplier_proposal'));
+
 $action = GETPOST('action', "alpha");
 $propalId = GETPOST('propalId', 'int');
 $lineId = GETPOST('lineId', 'int');
@@ -51,7 +53,7 @@ $token = GETPOST('token', 'alphanohtml');
 if (empty($token) || (!hash_equals((string) $token, (string) newToken()) && !hash_equals((string) $token, (string) currentToken()))) {
 	header('Content-Type: application/json');
 	http_response_code(403);
-	echo json_encode(array('success' => false, 'message' => 'Invalid security token'));
+	echo json_encode(array('success' => false, 'message' => $langs->trans('CLICHAUMEIL_AJAX_INVALID_SECURITY_TOKEN')));
 	exit;
 }
 
@@ -62,11 +64,11 @@ switch ($action) {
 
 			$response = array('success' => false, 'message' => $langs->trans('CliChaumeilSelectError'), 'debug' => array());
 
-			if (!$user->hasRight('supplier_proposal', 'creer') && !$user->hasRight('supplier_proposal', 'cloturer')) {
-				$response['message'] = $langs->trans('NotEnoughPermissions');
-				echo json_encode($response);
-				exit;
-			}
+		if (!$user->hasRight('supplier_proposal', 'creer') && !$user->hasRight('supplier_proposal', 'cloturer')) {
+			$response['message'] = $langs->trans('NotEnoughPermissions');
+			echo json_encode($response);
+			exit;
+		}
 
 			$token = GETPOST('token', 'alphanohtml');
 			$parentType = GETPOST('parent_type', 'aZ09');
@@ -191,56 +193,56 @@ switch ($action) {
 			exit;
 	case 'update_line_price':
 		header('Content-Type: application/json'); // We will return JSON
-		$response = array('status' => 'error', 'message' => 'Unknown error');
+		$response = array('status' => 'error', 'message' => $langs->trans('CLICHAUMEIL_AJAX_UNKNOWN_ERROR'));
 
 		try {
 			dol_syslog("AJAX update_line_price: propalId=$propalId, lineId=$lineId, newPrice=$newPuHt");
 
-				if (!$propalId || !$lineId) {
-					$response['message'] = 'Missing $propalId or lineId';
-					echo json_encode($response);
-					exit;
-				}
+			if (!$propalId || !$lineId) {
+				$response['message'] = $langs->trans('CLICHAUMEIL_AJAX_MISSING_PROPOSAL_OR_LINE');
+				echo json_encode($response);
+				exit;
+			}
 
 				// Use service to fetch proposal (avoids getEntity() issues)
 				$service = new SupplierProposalService($db, $conf);
 				$object = $service->fetchProposalWithLines($propalId, 0); // 0 = no socid check for AJAX
 
-				if (!$object) {
-					$response['message'] = 'Supplier proposal not found';
-					dol_syslog("AJAX update_line_price: fetch failed for propalId=$propalId", LOG_ERR);
-					echo json_encode($response);
-					exit;
-				}
+			if (!$object) {
+				$response['message'] = $langs->trans('CLICHAUMEIL_AJAX_SUPPLIER_PROPOSAL_NOT_FOUND');
+				dol_syslog("AJAX update_line_price: fetch failed for propalId=$propalId", LOG_ERR);
+				echo json_encode($response);
+				exit;
+			}
 
-				if ($object->socid != $user->socid) {
-					dol_syslog("AJAX update_line_price: Unauthorized access attempt by user " . $user->id . " on propalId=$propalId", LOG_ERR);
-					accessforbidden();
-				}
+			if ($object->socid != $user->socid) {
+				dol_syslog("AJAX update_line_price: Unauthorized access attempt by user " . $user->id . " on propalId=$propalId", LOG_ERR);
+				accessforbidden();
+			}
 
 				$lineToUpdate = null;
 
 				// Find the line to get its properties
-				foreach ($object->lines as $line) {
-					if ($line->id == $lineId) {
-						$lineToUpdate = $line;
-						break;
-					}
+			foreach ($object->lines as $line) {
+				if ($line->id == $lineId) {
+					$lineToUpdate = $line;
+					break;
 				}
+			}
 
-				if (!$lineToUpdate) {
-					$response['message'] = 'Line not found in proposal';
-					dol_syslog("AJAX update_line_price: lineId=$lineId not found", LOG_ERR);
-					echo json_encode($response);
-					exit;
-				}
+			if (!$lineToUpdate) {
+				$response['message'] = $langs->trans('CLICHAUMEIL_AJAX_LINE_NOT_FOUND');
+				dol_syslog("AJAX update_line_price: lineId=$lineId not found", LOG_ERR);
+				echo json_encode($response);
+				exit;
+			}
 
-				if (!method_exists($object, 'updateline')) {
-					$response['message'] = 'Method updateline not found';
-					dol_syslog("AJAX update_line_price: updateline method missing", LOG_ERR);
-					echo json_encode($response);
-					exit;
-				}
+			if (!method_exists($object, 'updateline')) {
+				$response['message'] = $langs->trans('CLICHAUMEIL_AJAX_UPDATE_METHOD_MISSING');
+				dol_syslog("AJAX update_line_price: updateline method missing", LOG_ERR);
+				echo json_encode($response);
+				exit;
+			}
 
 				$previousStatus = $object->status;
 				dol_syslog("AJAX update_line_price: BEFORE setDraft - object->status=" . $object->status . " (0=draft, 1=validated)");
@@ -254,19 +256,19 @@ switch ($action) {
 
 				// Find the line again after re-fetch
 				$lineToUpdate = null;
-				foreach ($object->lines as $line) {
-					if ($line->id == $lineId) {
-						$lineToUpdate = $line;
-						break;
-					}
+			foreach ($object->lines as $line) {
+				if ($line->id == $lineId) {
+					$lineToUpdate = $line;
+					break;
 				}
+			}
 
-				if (!$lineToUpdate) {
-					$response['message'] = 'Line not found after draft re-fetch';
-					dol_syslog("AJAX update_line_price: lineId=$lineId not found after draft re-fetch", LOG_ERR);
-					echo json_encode($response);
-					exit;
-				}
+			if (!$lineToUpdate) {
+				$response['message'] = $langs->trans('CLICHAUMEIL_AJAX_LINE_NOT_FOUND_AFTER_REFETCH');
+				dol_syslog("AJAX update_line_price: lineId=$lineId not found after draft re-fetch", LOG_ERR);
+				echo json_encode($response);
+				exit;
+			}
 
 				// Call the update line method with all necessary parameters
 				dol_syslog("AJAX update_line_price: Calling updateline with lineId=" . $lineToUpdate->id . ", pu=$newPuHt, qty=" . $lineToUpdate->qty . ", type=" . $lineToUpdate->product_type);
@@ -296,29 +298,29 @@ switch ($action) {
 
 				dol_syslog("AJAX update_line_price: updateline result=$res");
 
-				if ($res < 0) {
-					$response['message'] = 'Update failed: ' . $object->error;
-					dol_syslog("AJAX update_line_price: updateline failed: " . $object->error, LOG_ERR);
-					echo json_encode($response);
-					exit;
-				}
+			if ($res < 0) {
+				$response['message'] = $langs->trans('CLICHAUMEIL_AJAX_UPDATE_FAILED', $object->error);
+				dol_syslog("AJAX update_line_price: updateline failed: " . $object->error, LOG_ERR);
+				echo json_encode($response);
+				exit;
+			}
 
 				$validResult = $object->valid($user);
 				dol_syslog("AJAX update_line_price: valid result=$validResult");
 
-				if ($validResult < 0) {
-					// WARNING: manual rollback of status without full transaction/trigger rollback.
-					if ($previousStatus !== null) {
-						$db->query("UPDATE " . $db->prefix() . "supplier_proposal SET fk_statut = " . ((int) $previousStatus) . " WHERE rowid = " . ((int) $object->id));
-						$object->status = $previousStatus;
-						dol_syslog("AJAX update_line_price: restore status to $previousStatus after failed validation");
-					}
-
-					$response['message'] = 'Validation failed: ' . $object->error;
-					dol_syslog("AJAX update_line_price: validation failed: " . $object->error, LOG_ERR);
-					echo json_encode($response);
-					exit;
+			if ($validResult < 0) {
+				// WARNING: manual rollback of status without full transaction/trigger rollback.
+				if ($previousStatus !== null) {
+					$db->query("UPDATE " . $db->prefix() . "supplier_proposal SET fk_statut = " . ((int) $previousStatus) . " WHERE rowid = " . ((int) $object->id));
+					$object->status = $previousStatus;
+					dol_syslog("AJAX update_line_price: restore status to $previousStatus after failed validation");
 				}
+
+				$response['message'] = $langs->trans('CLICHAUMEIL_AJAX_VALIDATION_FAILED', $object->error);
+				dol_syslog("AJAX update_line_price: validation failed: " . $object->error, LOG_ERR);
+				echo json_encode($response);
+				exit;
+			}
 
 				// Re-fetch object to get updated totals using service
 				$object = $service->fetchProposalWithLines($propalId, 0);
@@ -327,21 +329,21 @@ switch ($action) {
 
 				// Find the updated line
 				$updatedLine = null;
-				foreach ($object->lines as $line) {
-					dol_syslog("AJAX update_line_price: Checking line id=" . $line->id . " (looking for " . $lineId . ") - total_ht=" . $line->total_ht);
-					if ($line->id == $lineId) {
-						$updatedLine = $line;
-						dol_syslog("AJAX update_line_price: FOUND matching line! total_ht=" . $line->total_ht);
-						break;
-					}
+			foreach ($object->lines as $line) {
+				dol_syslog("AJAX update_line_price: Checking line id=" . $line->id . " (looking for " . $lineId . ") - total_ht=" . $line->total_ht);
+				if ($line->id == $lineId) {
+					$updatedLine = $line;
+					dol_syslog("AJAX update_line_price: FOUND matching line! total_ht=" . $line->total_ht);
+					break;
 				}
+			}
 
-				if (!$updatedLine) {
-					dol_syslog("AJAX update_line_price: WARNING - Line $lineId NOT FOUND after update!", LOG_WARNING);
-				}
+			if (!$updatedLine) {
+				dol_syslog("AJAX update_line_price: WARNING - Line $lineId NOT FOUND after update!", LOG_WARNING);
+			}
 
 				$response['status'] = 'success';
-				$response['message'] = 'Price updated successfully';
+				$response['message'] = $langs->trans('CLICHAUMEIL_AJAX_PRICE_UPDATED_SUCCESS');
 				$response['lineTotalHtFormatted'] = price($updatedLine ? $updatedLine->total_ht : 0);
 				$response['objectTotalHtFormatted'] = price($object->total_ht);
 				$response['debug'] = array(
@@ -352,15 +354,14 @@ switch ($action) {
 				);
 
 				dol_syslog("AJAX update_line_price: success - Line total HT: " . ($updatedLine ? $updatedLine->total_ht : 'LINE NOT FOUND'));
-
-			} catch (Exception $e) {
-				$response['message'] = 'Exception: ' . $e->getMessage();
-				dol_syslog("AJAX update_line_price exception: " . $e->getMessage(), LOG_ERR);
-			}
+		} catch (Exception $e) {
+			$response['message'] = $langs->trans('CLICHAUMEIL_AJAX_EXCEPTION', $e->getMessage());
+			dol_syslog("AJAX update_line_price exception: " . $e->getMessage(), LOG_ERR);
+		}
 
 			echo json_encode($response);
 			exit;
 
-		default:
+	default:
 			break;
 }

@@ -60,6 +60,7 @@ require_once DOL_DOCUMENT_ROOT . "/core/lib/admin.lib.php";
 require_once DOL_DOCUMENT_ROOT . "/core/class/html.formmail.class.php";
 require_once '../lib/clichaumeil.lib.php';
 require_once __DIR__ . '/../class/CliChaumeilProductCost.class.php';
+require_once __DIR__ . '/../class/CliChaumeilPropalDefaultLineConfig.class.php';
 require_once DOL_DOCUMENT_ROOT . '/categories/class/categorie.class.php';
 require_once DOL_DOCUMENT_ROOT . '/product/class/product.class.php';
 
@@ -82,13 +83,7 @@ $hookmanager->initHooks(array('clichaumeilsetup', 'globalsetup'));
 $action = GETPOST('action', 'aZ09');
 $backtopage = GETPOST('backtopage', 'alpha');
 $modulepart = GETPOST('modulepart', 'aZ09');	// Used by actions_setmoduleoptions.inc.php
-
-$value = GETPOST('value', 'alpha');
-$label = GETPOST('label', 'alpha');
-$scandir = GETPOST('scan_dir', 'alpha');
-$type = 'myobject';
 $form = new Form($db);
-$error = 0;
 $setupnotempty = 0;
 
 // Access control
@@ -115,6 +110,7 @@ const REVIEW_YEAR_DELAY_KEY = 'CLICHAUMEIL_REVIEW_YEAR_DELAY';
 const PRICING_MANAGERS_KEY = 'CLICHAUMEIL_PRICING_UPDATE_MANAGERS';
 const EMAIL_TEMPLATE_KEY = 'CLICHAUMEIL_CRON_EMAIL_TEMPLATE';
 const NOTIF_USERS_KEY = 'CLICHAUMEIL_CRON_NOTIF_USERS';
+const DEFAULT_PROPAL_PRODUCTS_KEY = 'CLICHAUMEIL_DEFAULT_PROPAL_PRODUCT_ID';
 
 // --- 3. Build the form in a clean and readable way ---
 
@@ -153,7 +149,13 @@ $item = $formSetup->newItem(EMAIL_TEMPLATE_KEY)->setAsSelect($templates);
 // --- Field 4: Users to Notify (User Select) ---
 buildUserMultiSelectField($formSetup, $form, NOTIF_USERS_KEY);
 
-//// --- Field 5: Category product ---
+// --- Field 5: Default proposal products/services ---
+$defaultProposalProducts = buildDefaultPropalProductsFieldOptions($db);
+$item = $formSetup->newItem(DEFAULT_PROPAL_PRODUCTS_KEY)->setAsMultiSelect($defaultProposalProducts);
+$item->defaultFieldValue = getDolGlobalString(DEFAULT_PROPAL_PRODUCTS_KEY);
+$item->cssClass = 'minwidth300 widthcentpercentminusxx';
+
+//// --- Field 6: Category product ---
 $categories = new Categorie($db);
 $allCat = $categories->get_full_arbo(Categorie::TYPE_PRODUCT);
 
@@ -170,9 +172,6 @@ $item = $formSetup->newItem('CLICHAUMEIL_PRODUCT_TARGET_CATEGORY')->setAsMultiSe
 
 $setupnotempty += count($formSetup->items);
 
-$dirmodels = array_merge(array('/'), (array) $conf->modules_parts['models']);
-
-$moduledir = 'clichaumeil';
 $myTmpObjects = array();
 // TODO Scan list of objects to fill this array
 $myTmpObjects['myobject'] = array('label' => 'MyObject', 'includerefgeneration' => 0, 'includedocgeneration' => 0, 'class' => 'MyObject');
@@ -274,4 +273,83 @@ function buildUserMultiSelectField(FormSetup $formSetup, Form $form, string $key
 		true,           // Show empty field option
 		0
 	);
+}
+
+/**
+ * Build available product/service options for the default proposal lines setup.
+ *
+ * Active catalog items are listed, while already configured inactive products are
+ * kept available to preserve existing configuration values.
+ *
+ * @param DoliDB $db Database handler.
+ * @return array<int,string>
+ */
+function buildDefaultPropalProductsFieldOptions(DoliDB $db): array
+{
+	$configReader = new CliChaumeilPropalDefaultLineConfig($db);
+	$configuredIds = $configReader->getConfiguredProductIds();
+	$options = array();
+
+	$sql = 'SELECT p.rowid, p.ref, p.label, p.fk_product_type, p.tosell, p.finished';
+	$sql .= ' FROM ' . $db->prefix() . 'product AS p';
+	$sql .= ' WHERE p.entity IN (' . getEntity('product') . ')';
+	$sql .= ' AND p.tosell = 1';
+	$sql .= ' ORDER BY p.ref ASC';
+
+	$resql = $db->query($sql);
+	if ($resql) {
+		while ($obj = $db->fetch_object($resql)) {
+			$options[(int) $obj->rowid] = buildDefaultPropalProductOptionLabel(
+				(string) $obj->ref,
+				(string) $obj->label,
+				(int) $obj->fk_product_type,
+				false
+			);
+		}
+		$db->free($resql);
+	} else {
+		dol_syslog(__FUNCTION__ . ' failed to load active product options: ' . $db->lasterror(), LOG_ERR);
+	}
+
+	foreach ($configuredIds as $configuredId) {
+		if (isset($options[$configuredId])) {
+			continue;
+		}
+
+		$product = $configReader->fetchConfiguredProductById($configuredId);
+		if ($product === null) {
+			continue;
+		}
+
+		$options[$configuredId] = buildDefaultPropalProductOptionLabel(
+			(string) $product->ref,
+			(string) $product->label,
+			(int) $product->type,
+			!(bool) $product->tosell
+		);
+	}
+
+	return $options;
+}
+
+/**
+ * Build one setup option label for a product/service.
+ *
+ * @param string $ref Reference.
+ * @param string $label Label.
+ * @param int    $productType Product type.
+ * @param bool   $isInactive Whether the product is inactive.
+ * @return string
+ */
+function buildDefaultPropalProductOptionLabel(string $ref, string $label, int $productType, bool $isInactive): string
+{
+	global $langs;
+
+	$typeLabel = ($productType === Product::TYPE_SERVICE) ? $langs->trans('Service') : $langs->trans('Product');
+	$optionLabel = trim($ref . ' - ' . $label . ' (' . $typeLabel . ')');
+	if ($isInactive) {
+		$optionLabel .= ' [' . $langs->trans('Disabled') . ']';
+	}
+
+	return $optionLabel;
 }

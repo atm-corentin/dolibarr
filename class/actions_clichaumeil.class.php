@@ -33,6 +33,9 @@ require_once __DIR__ . '/CliChaumeilProductCost.class.php';
 require_once __DIR__ . '/CliChaumeilProposalMarginGuard.class.php';
 require_once __DIR__ . '/CliChaumeilProductCostImportService.class.php';
 require_once __DIR__ . '/CliChaumeilProductCostViewRenderer.class.php';
+require_once __DIR__ . '/CliChaumeilPropalDefaultLineConfig.class.php';
+require_once __DIR__ . '/CliChaumeilPropalDefaultLineService.class.php';
+require_once __DIR__ . '/CliChaumeilPropalDefaultLineViewHelper.class.php';
 require_once __DIR__ . '/Rfa/RfaSummaryStorageManager.php';
 require_once __DIR__ . '/../lib/clichaumeil.lib.php';
 require_once DOL_DOCUMENT_ROOT . '/categories/class/categorie.class.php';
@@ -89,6 +92,8 @@ class ActionsClichaumeil extends CommonHookActions
 
 	private const VALIDATION_GUARD_DOM_ID = 'clichaumeil-propal-validation-guard';
 
+	private const DEFAULT_PROPAL_LINE_GUARD_DOM_ID = 'clichaumeil-default-propal-line-guard';
+
 	private const COST_BREAKDOWN_FIELDS = array(
 		'clichaumeil_prc_separator',
 		'clichaumeil_pa_support',
@@ -103,6 +108,12 @@ class ActionsClichaumeil extends CommonHookActions
 	);
 
 	private const READONLY_FIELD = 'clichaumeil_pa_fg';
+
+	/** @var CliChaumeilPropalDefaultLineService|null */
+	private $propalDefaultLineService;
+
+	/** @var CliChaumeilPropalDefaultLineViewHelper|null */
+	private $propalDefaultLineViewHelper;
 
 	/**
 	 * Constructor
@@ -407,6 +418,11 @@ class ActionsClichaumeil extends CommonHookActions
 
 		$context = (string) ($parameters['context'] ?? ($parameters['currentcontext'] ?? ''));
 
+		$propalDefaultLineResult = $this->handlePropalDefaultLineDoActions($context, $object, $action, $user);
+		if ($propalDefaultLineResult !== null) {
+			return $propalDefaultLineResult;
+		}
+
 		if (strpos($context, self::PROPAL_LIST_CONTEXT) !== false) {
 			return $this->handleProposalMassValidationAction($action, $langs);
 		}
@@ -529,6 +545,53 @@ class ActionsClichaumeil extends CommonHookActions
 		}
 
 		return 0;
+	}
+
+	/**
+	 * Guard protected default proposal line actions on proposal cards.
+	 *
+	 * @param string       $context Current hook context.
+	 * @param CommonObject $object  Current object.
+	 * @param string       $action  Current action.
+	 * @param User         $user    Current user.
+	 * @return int|null
+	 */
+	private function handlePropalDefaultLineDoActions(string $context, CommonObject &$object, string &$action, User $user): ?int
+	{
+		if (strpos($context, self::PROPAL_CARD_CONTEXT) === false || !$object instanceof Propal) {
+			return null;
+		}
+
+		$lineId = GETPOSTINT('lineid');
+		if ($action === 'editline' && $lineId > 0) {
+			if (!$this->getPropalDefaultLineService()->guardEditLine($object, $lineId, $user)) {
+				$action = '';
+				return 1;
+			}
+		}
+
+		if ($action === 'ask_deleteline' && $lineId > 0) {
+			if (!$this->getPropalDefaultLineService()->guardDeleteLine($object, $lineId, $user)) {
+				$action = '';
+				return 1;
+			}
+		}
+
+		if ($action === 'updateline' && GETPOST('save', 'alpha') !== '' && $lineId > 0) {
+			if (!$this->getPropalDefaultLineService()->guardEditLine($object, $lineId, $user)) {
+				$action = '';
+				return 1;
+			}
+		}
+
+		if ($action === 'confirm_deleteline' && GETPOST('confirm', 'alpha') === 'yes' && $lineId > 0) {
+			if (!$this->getPropalDefaultLineService()->guardDeleteLine($object, $lineId, $user)) {
+				$action = '';
+				return 1;
+			}
+		}
+
+		return null;
 	}
 
 
@@ -916,7 +979,7 @@ class ActionsClichaumeil extends CommonHookActions
 	 */
 	public function llxFooter($parameters, &$object, &$action, $hookmanager): int
 	{
-		global $langs;
+		global $langs, $user;
 
 		$langs->load('clichaumeil@clichaumeil');
 
@@ -982,9 +1045,39 @@ class ActionsClichaumeil extends CommonHookActions
 			echo '<script src="' . $guardJsUrl . '" defer></script>';
 		}
 
+		if ($object instanceof Propal && strpos($pageContext, self::PROPAL_CARD_CONTEXT) !== false) {
+			$this->renderPropalDefaultLineGuard($object, $user);
+		}
+
 		self::$lineData = [];
 
 		return 0;
+	}
+
+	/**
+	 * Render frontend payload used to hide edit affordances on protected lines.
+	 *
+	 * @param Propal $object Current proposal.
+	 * @param User   $user   Current user.
+	 * @return void
+	 */
+	private function renderPropalDefaultLineGuard(Propal $object, User $user): void
+	{
+		if ($this->getPropalDefaultLineService()->canManageProtectedLine($user)) {
+			return;
+		}
+
+		$protectedLineIds = $this->getPropalDefaultLineService()->getProtectedLineIds($object);
+		if (empty($protectedLineIds)) {
+			return;
+		}
+
+		$payload = array('lineIds' => $protectedLineIds);
+
+		echo '<script type="application/json" id="' . self::DEFAULT_PROPAL_LINE_GUARD_DOM_ID . '">';
+		echo json_encode($payload, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT);
+		echo '</script>';
+		echo '<script src="' . dol_buildpath('/clichaumeil/js/propal_default_line_guard.js', 1) . '" defer></script>';
 	}
 
 
@@ -1032,7 +1125,7 @@ class ActionsClichaumeil extends CommonHookActions
 	 */
 	public function printObjectLine($parameters, &$object, &$action, $hookmanager): int
 	{
-		global $db, $langs;
+		global $langs, $user, $disableedit, $disableremove;
 
 		$TContexts = explode(':', $parameters['context']);
 		$TAllowedContexts = ['propalcard', 'ordercard', 'invoicecard'];
@@ -1059,7 +1152,38 @@ class ActionsClichaumeil extends CommonHookActions
 				'cost_price' => $costPrice,
 				'warning_icon' => $warningIcon,
 			];
+
+			if ($object instanceof Propal && in_array(self::PROPAL_CARD_CONTEXT, $TContexts, true)) {
+				$disableedit = $this->getPropalDefaultLineViewHelper()->shouldHideEditForLine($line, $user) ? 1 : 0;
+				$disableremove = $this->getPropalDefaultLineViewHelper()->shouldHideDeleteForLine($line, $user) ? 1 : 0;
+			}
 		}
+
+		return 0;
+	}
+
+	/**
+	 * Apply post-clone rules for protected default proposal lines.
+	 *
+	 * @param array<string,mixed> $parameters  Hook parameters.
+	 * @param CommonObject        $object      Current object.
+	 * @param string              $action      Current action.
+	 * @param HookManager         $hookmanager Hook manager.
+	 * @return int
+	 */
+	public function createFrom($parameters, &$object, &$action, $hookmanager): int
+	{
+		global $user;
+
+		if (!$object instanceof Propal) {
+			return 0;
+		}
+
+		if (empty($parameters['objFrom']) || !$parameters['objFrom'] instanceof Propal) {
+			return 0;
+		}
+
+		$this->getPropalDefaultLineService()->markConfiguredCloneLines($parameters['objFrom'], $object, $user);
 
 		return 0;
 	}
@@ -1306,5 +1430,36 @@ class ActionsClichaumeil extends CommonHookActions
 		}
 
 		return $lineVisibilities;
+	}
+
+	/**
+	 * Return the shared protected proposal line service.
+	 *
+	 * @return CliChaumeilPropalDefaultLineService
+	 */
+	private function getPropalDefaultLineService(): CliChaumeilPropalDefaultLineService
+	{
+		if ($this->propalDefaultLineService === null) {
+			$this->propalDefaultLineService = new CliChaumeilPropalDefaultLineService(
+				$this->db,
+				new CliChaumeilPropalDefaultLineConfig($this->db)
+			);
+		}
+
+		return $this->propalDefaultLineService;
+	}
+
+	/**
+	 * Return the shared protected proposal line view helper.
+	 *
+	 * @return CliChaumeilPropalDefaultLineViewHelper
+	 */
+	private function getPropalDefaultLineViewHelper(): CliChaumeilPropalDefaultLineViewHelper
+	{
+		if ($this->propalDefaultLineViewHelper === null) {
+			$this->propalDefaultLineViewHelper = new CliChaumeilPropalDefaultLineViewHelper();
+		}
+
+		return $this->propalDefaultLineViewHelper;
 	}
 }
