@@ -80,6 +80,54 @@ class SupplierProposalService
 	}
 
 	/**
+	 * Check whether a supplier proposal already has at least one attached file
+	 * either in the current upload session or in existing timeline actions.
+	 *
+	 * @param SupplierProposal $object Supplier proposal.
+	 * @return bool
+	 */
+	public function hasAttachedFile(SupplierProposal $object): bool
+	{
+		$keytoavoidconflict = '-' . $object->id;
+		$hasFilesInSession = !empty($_SESSION["listofnames" . $keytoavoidconflict])
+			&& !empty($_SESSION["listofpaths" . $keytoavoidconflict]);
+
+		if ($hasFilesInSession) {
+			return true;
+		}
+
+		$sql = "SELECT id, entity FROM " . $this->db->prefix() . "actioncomm";
+		$sql .= " WHERE fk_element = " . ((int) $object->id);
+		$sql .= " AND elementtype = '" . $this->db->escape($object->element) . "'";
+
+		$resql = $this->db->query($sql);
+		if (!$resql) {
+			return false;
+		}
+
+		while ($action = $this->db->fetch_object($resql)) {
+			$actionEntity = !empty($action->entity) ? $action->entity : $this->conf->entity;
+			if (empty($this->conf->agenda->multidir_output[$actionEntity])) {
+				continue;
+			}
+
+			$actionDir = $this->conf->agenda->multidir_output[$actionEntity] . '/' . $action->id;
+			if (!is_dir($actionDir)) {
+				continue;
+			}
+
+			$files = dol_dir_list($actionDir, 'files');
+			if (!empty($files)) {
+				$this->db->free($resql);
+				return true;
+			}
+		}
+
+		$this->db->free($resql);
+		return false;
+	}
+
+	/**
 	 * Fetch main proposal data
 	 *
 	 * @param int $id Supplier proposal ID
