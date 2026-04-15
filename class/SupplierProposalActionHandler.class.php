@@ -279,9 +279,10 @@ class SupplierProposalActionHandler
 			$supplierName = $this->langs->trans('ThirdParty');
 		}
 
-		$proposalUrl = $this->getSupplierProposalFollowupUrl($object);
+		$proposalUrl = dol_buildpath('/supplier_proposal/card.php', 2) . '?id=' . ((int) $object->id);
 		$subject = $this->langs->transnoentitiesnoconv('CliChaumeilSupplierResponseMailSubject', $supplierName, $object->ref);
-		$body = $this->langs->transnoentitiesnoconv('CliChaumeilSupplierResponseMailBody', $supplierName, $object->ref, $proposalUrl);
+		$proposalLink = '<a href="' . dol_escape_htmltag($proposalUrl) . '">' . dol_escape_htmltag($proposalUrl) . '</a>';
+		$body = $this->langs->transnoentitiesnoconv('CliChaumeilSupplierResponseMailBody', $supplierName, $object->ref, $proposalLink);
 
 		$mail = new CMailFile(
 			$subject,
@@ -331,22 +332,6 @@ class SupplierProposalActionHandler
 		}
 
 		return array_values($emails);
-	}
-
-	/**
-	 * Build absolute follow-up URL for supplier proposal card.
-	 *
-	 * @param SupplierProposal $object Supplier proposal.
-	 * @return string
-	 */
-	private function getSupplierProposalFollowupUrl(SupplierProposal $object): string
-	{
-		$baseUrl = DOL_MAIN_URL_ROOT;
-		if (substr($baseUrl, -1) === '/') {
-			$baseUrl = substr($baseUrl, 0, -1);
-		}
-
-		return $baseUrl . '/supplier_proposal/card.php?id=' . ((int) $object->id);
 	}
 
 	/**
