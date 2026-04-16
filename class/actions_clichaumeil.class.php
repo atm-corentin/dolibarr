@@ -36,6 +36,7 @@ require_once __DIR__ . '/CliChaumeilProductCostViewRenderer.class.php';
 require_once __DIR__ . '/CliChaumeilPropalDefaultLineConfig.class.php';
 require_once __DIR__ . '/CliChaumeilPropalDefaultLineService.class.php';
 require_once __DIR__ . '/CliChaumeilPropalDefaultLineViewHelper.class.php';
+require_once __DIR__ . '/CliChaumeilMassActionPropalGuard.class.php';
 require_once __DIR__ . '/Rfa/RfaSummaryStorageManager.php';
 require_once __DIR__ . '/../lib/clichaumeil.lib.php';
 require_once DOL_DOCUMENT_ROOT . '/categories/class/categorie.class.php';
@@ -114,6 +115,9 @@ class ActionsClichaumeil extends CommonHookActions
 
 	/** @var CliChaumeilPropalDefaultLineViewHelper|null */
 	private $propalDefaultLineViewHelper;
+
+	/** @var CliChaumeilMassActionPropalGuard|null */
+	private $massActionPropalGuard;
 
 	/**
 	 * Constructor
@@ -594,6 +598,81 @@ class ActionsClichaumeil extends CommonHookActions
 		return null;
 	}
 
+	/**
+	 * Filter MassAction selected line ids before rendering the split popup.
+	 *
+	 * @param array<string,mixed> $parameters  Hook parameters.
+	 * @param CommonObject        $object      Current object.
+	 * @param string              $action      Current action.
+	 * @param HookManager         $hookmanager Hook manager.
+	 * @return int
+	 */
+	public function filterMassActionSelectedLineIds(array $parameters, CommonObject &$object, string &$action, HookManager $hookmanager): int
+	{
+		global $langs, $user;
+
+		if (($parameters['currentcontext'] ?? '') !== 'massactionshowlines' || !$object instanceof Propal) {
+			return 0;
+		}
+
+		if ($this->getPropalDefaultLineService()->canManageProtectedLine($user)) {
+			return 0;
+		}
+
+		$selectedLineIds = isset($parameters['selectedLineIds']) && is_array($parameters['selectedLineIds']) ? $parameters['selectedLineIds'] : array();
+		$filteredLineIds = $this->getMassActionPropalGuard()->filterProtectedLineIdsFromSelection($object, $selectedLineIds);
+
+		$this->results = array(
+			'selectedLineIds' => $filteredLineIds,
+			'message' => $langs->trans('CLICHAUMEIL_DEFAULT_PROPAL_LINE_SPLIT_FORBIDDEN'),
+		);
+
+		return 0;
+	}
+
+	/**
+	 * Veto MassAction split/copy/delete attempts targeting protected proposal lines.
+	 *
+	 * @param array<string,mixed> $parameters  Hook parameters.
+	 * @param CommonObject        $object      Current object.
+	 * @param string              $action      Current action.
+	 * @param HookManager         $hookmanager Hook manager.
+	 * @return int
+	 */
+	public function guardMassActionSelectedLineIds(array $parameters, CommonObject &$object, string &$action, HookManager $hookmanager): int
+	{
+		global $langs, $user;
+
+		if (($parameters['currentcontext'] ?? '') !== 'massactionsplitlines' || !$object instanceof Propal) {
+			return 0;
+		}
+
+		if ($this->getPropalDefaultLineService()->canManageProtectedLine($user)) {
+			return 0;
+		}
+
+		$selectedLineIds = isset($parameters['selectedLineIds']) && is_array($parameters['selectedLineIds']) ? $parameters['selectedLineIds'] : array();
+		if (!$this->getMassActionPropalGuard()->selectionContainsProtectedLines($object, $selectedLineIds)) {
+			return 0;
+		}
+
+		$message = ($parameters['massaction_action'] ?? '') === 'delete'
+			? $langs->trans('CLICHAUMEIL_DEFAULT_PROPAL_LINE_MASSACTION_FORBIDDEN')
+			: $langs->trans('CLICHAUMEIL_DEFAULT_PROPAL_LINE_SPLIT_FORBIDDEN');
+
+		dol_syslog(
+			__METHOD__ . ' forbidden massaction action=' . (string) ($parameters['massaction_action'] ?? '') . ' propal_id=' . (int) $object->id . ' user_id=' . (int) $user->id,
+			LOG_WARNING
+		);
+
+		$this->results = array(
+			'blocked' => 1,
+			'message' => $message,
+		);
+
+		return 1;
+	}
+
 
 	/**
 	 * Persist extrafields and recompute cost.
@@ -1072,7 +1151,10 @@ class ActionsClichaumeil extends CommonHookActions
 			return;
 		}
 
-		$payload = array('lineIds' => $protectedLineIds);
+		$payload = array(
+			'lineIds' => $protectedLineIds,
+			'massAction' => $this->getMassActionPropalGuard()->getMassActionGuardPayload($object, $user),
+		);
 
 		echo '<script type="application/json" id="' . self::DEFAULT_PROPAL_LINE_GUARD_DOM_ID . '">';
 		echo json_encode($payload, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT);
@@ -1461,5 +1543,22 @@ class ActionsClichaumeil extends CommonHookActions
 		}
 
 		return $this->propalDefaultLineViewHelper;
+	}
+
+	/**
+	 * Return the shared MassAction bridge for protected proposal lines.
+	 *
+	 * @return CliChaumeilMassActionPropalGuard
+	 */
+	private function getMassActionPropalGuard(): CliChaumeilMassActionPropalGuard
+	{
+		if ($this->massActionPropalGuard === null) {
+			$this->massActionPropalGuard = new CliChaumeilMassActionPropalGuard(
+				$this->db,
+				$this->getPropalDefaultLineService()
+			);
+		}
+
+		return $this->massActionPropalGuard;
 	}
 }

@@ -154,6 +154,7 @@ $defaultProposalProducts = buildDefaultPropalProductsFieldOptions($db);
 $item = $formSetup->newItem(DEFAULT_PROPAL_PRODUCTS_KEY)->setAsMultiSelect($defaultProposalProducts);
 $item->defaultFieldValue = getDolGlobalString(DEFAULT_PROPAL_PRODUCTS_KEY);
 $item->cssClass = 'minwidth300 widthcentpercentminusxx';
+$item->helpText = $langs->transnoentities(DEFAULT_PROPAL_PRODUCTS_KEY . 'Tooltip');
 
 //// --- Field 6: Category product ---
 $categories = new Categorie($db);
