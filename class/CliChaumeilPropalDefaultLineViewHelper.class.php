@@ -78,7 +78,7 @@ class CliChaumeilPropalDefaultLineViewHelper
 	 */
 	private function canManageProtectedLine(User $user): bool
 	{
-		return $user->hasRight(
+		return (bool) $user->hasRight(
 			CliChaumeilPropalDefaultLineService::RIGHT_MODULE,
 			CliChaumeilPropalDefaultLineService::RIGHT_FEATURE,
 			CliChaumeilPropalDefaultLineService::RIGHT_ACTION

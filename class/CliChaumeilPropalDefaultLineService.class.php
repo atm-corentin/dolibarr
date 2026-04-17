@@ -5,6 +5,7 @@ require_once DOL_DOCUMENT_ROOT . '/comm/propal/class/propal.class.php';
 require_once DOL_DOCUMENT_ROOT . '/core/class/commonobjectline.class.php';
 require_once DOL_DOCUMENT_ROOT . '/user/class/user.class.php';
 require_once DOL_DOCUMENT_ROOT . '/product/class/product.class.php';
+require_once DOL_DOCUMENT_ROOT . '/fourn/class/fournisseur.product.class.php';
 require_once __DIR__ . '/CliChaumeilPropalDefaultLineConfig.class.php';
 
 /**
@@ -224,6 +225,9 @@ class CliChaumeilPropalDefaultLineService
 			return 'inject_failed';
 		}
 
+		$buyingPriceData = $this->resolveBuyingPriceData($propal, $product, $user);
+		$lineRank = count((array) $propal->lines) + 1;
+
 		$addLineResult = $propal->addline(
 			(string) $product->description,
 			(float) $product->price,
@@ -236,7 +240,12 @@ class CliChaumeilPropalDefaultLineService
 			'HT',
 			0,
 			0,
-			(int) $product->type
+			(int) $product->type,
+			$lineRank,
+			0,
+			0,
+			(int) $buyingPriceData['fk_fournprice'],
+			$buyingPriceData['pa_ht']
 		);
 
 		if ($addLineResult <= 0) {
@@ -274,6 +283,66 @@ class CliChaumeilPropalDefaultLineService
 		}
 
 		return (int) $insertedLine->id;
+	}
+
+	/**
+	 * Resolve buying price defaults as close as possible to the native manual line creation flow.
+	 *
+	 * @param Propal  $propal  Proposal object.
+	 * @param Product $product Product object.
+	 * @param User    $user    Current user.
+	 * @return array{fk_fournprice:int,pa_ht:float}
+	 */
+	private function resolveBuyingPriceData(Propal $propal, Product $product, User $user): array
+	{
+		$resolvedData = array(
+			'fk_fournprice' => 0,
+			'pa_ht' => 0.0,
+		);
+
+		if (!isModEnabled('margin') || !(bool) $user->hasRight('margins', 'creer')) {
+			return $resolvedData;
+		}
+
+		$buyPrice = $propal->defineBuyPrice((float) $product->price, 0.0, (int) $product->id);
+		if (!is_numeric($buyPrice) || (float) $buyPrice < 0) {
+			dol_syslog(
+				__METHOD__ . ' unable to resolve buy price for product id=' . (int) $product->id . ' propal_id=' . (int) $propal->id,
+				LOG_WARNING
+			);
+			return $resolvedData;
+		}
+
+		$resolvedData['pa_ht'] = (float) price2num((string) $buyPrice, 'MU');
+
+		if (!in_array(getDolGlobalString('MARGIN_TYPE'), array('1', 'pmp', 'costprice'), true)) {
+			return $resolvedData;
+		}
+
+		$productFournisseur = new ProductFournisseur($this->db);
+		$findMinPriceResult = $productFournisseur->find_min_price_product_fournisseur((int) $product->id);
+		if ($findMinPriceResult < 0) {
+			dol_syslog(
+				__METHOD__ . ' unable to resolve supplier price for product id=' . (int) $product->id . ' error=' . $productFournisseur->error,
+				LOG_WARNING
+			);
+			return $resolvedData;
+		}
+
+		if ($findMinPriceResult <= 0) {
+			return $resolvedData;
+		}
+
+		$minSupplierUnitPrice = (float) price2num((string) $productFournisseur->fourn_unitprice, 'MU');
+		$mustLinkSupplierPrice = getDolGlobalString('MARGIN_TYPE') === '1'
+			|| abs($resolvedData['pa_ht'] - $minSupplierUnitPrice) < 0.000001;
+
+		if ($mustLinkSupplierPrice) {
+			$resolvedData['fk_fournprice'] = (int) $productFournisseur->product_fourn_price_id;
+			$resolvedData['pa_ht'] = $minSupplierUnitPrice;
+		}
+
+		return $resolvedData;
 	}
 
 	/**
@@ -381,7 +450,7 @@ class CliChaumeilPropalDefaultLineService
 	 */
 	public function canManageProtectedLine(User $user): bool
 	{
-		return $user->hasRight(self::RIGHT_MODULE, self::RIGHT_FEATURE, self::RIGHT_ACTION);
+		return (bool) $user->hasRight(self::RIGHT_MODULE, self::RIGHT_FEATURE, self::RIGHT_ACTION);
 	}
 
 	/**

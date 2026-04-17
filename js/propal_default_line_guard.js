@@ -51,6 +51,55 @@
 		field.value = normalizeLineIds(lineIds).join(',');
 	}
 
+	function stripQuickPriceControlsForLine(row, lineId) {
+		var quickPriceCells;
+		var extraEditors;
+		var quickPriceAnchors;
+		var quickPriceInputs;
+
+		if (!row) {
+			return;
+		}
+
+		quickPriceCells = row.querySelectorAll(
+			'td.linecoluht, td.linecolqty, td.linecoldiscount, td.linecolmargin1, td.linecolmargin2, td.linecolmark1, td.linecoluht_currency, td.linecolcycleref'
+		);
+		quickPriceCells.forEach(function (cell) {
+			quickPriceAnchors = cell.querySelectorAll('a[col][lineid="' + lineId + '"], a.blue[lineid="' + lineId + '"]');
+			quickPriceAnchors.forEach(function (anchor) {
+				var textNode = document.createTextNode(anchor.textContent || '');
+				anchor.replaceWith(textNode);
+			});
+
+			quickPriceInputs = cell.querySelectorAll('input.qcp');
+			quickPriceInputs.forEach(function (input) {
+				input.remove();
+			});
+
+			cell.style.cursor = 'default';
+		});
+
+		extraEditors = row.querySelectorAll('.quick-edit-extras');
+		extraEditors.forEach(function (editor) {
+			editor.style.display = 'none';
+		});
+	}
+
+	function observeQuickPriceReinjection(row, lineId) {
+		if (!row || row.dataset.clichaumeilQuickObserver === '1' || typeof MutationObserver === 'undefined') {
+			return;
+		}
+
+		row.dataset.clichaumeilQuickObserver = '1';
+
+		new MutationObserver(function () {
+			stripQuickPriceControlsForLine(row, lineId);
+		}).observe(row, {
+			childList: true,
+			subtree: true
+		});
+	}
+
 	function hideEditForLine(lineId) {
 		var row = document.getElementById('row-' + lineId);
 		if (!row) {
@@ -68,28 +117,8 @@
 			).off('click');
 		}
 
-		var quickPriceCells = row.querySelectorAll(
-			'td.linecoluht, td.linecolqty, td.linecoldiscount, td.linecolmargin1, td.linecolmargin2, td.linecolmark1, td.linecoluht_currency, td.linecolcycleref'
-		);
-		quickPriceCells.forEach(function (cell) {
-			var anchors = cell.querySelectorAll('a[col][lineid="' + lineId + '"]');
-			anchors.forEach(function (anchor) {
-				while (anchor.firstChild) {
-					cell.insertBefore(anchor.firstChild, anchor);
-				}
-				anchor.remove();
-			});
-
-			var inputs = cell.querySelectorAll('input.qcp');
-			inputs.forEach(function (input) {
-				input.remove();
-			});
-		});
-
-		var extraEditors = row.querySelectorAll('.quick-edit-extras');
-		extraEditors.forEach(function (editor) {
-			editor.style.display = 'none';
-		});
+		stripQuickPriceControlsForLine(row, lineId);
+		observeQuickPriceReinjection(row, lineId);
 	}
 
 	function disableMassActionForLine(lineId, massActionConfig) {
@@ -111,9 +140,37 @@
 		checkbox.setAttribute('aria-disabled', 'true');
 		checkboxCell = checkbox.closest('td');
 		if (checkboxCell) {
-			checkboxCell.style.display = 'none';
+			checkbox.style.visibility = 'hidden';
+			checkbox.style.display = '';
+			checkboxCell.style.visibility = 'visible';
+			checkboxCell.style.display = '';
 		}
 		row.classList.remove('highlight');
+	}
+
+	function sanitizeProtectedMassActionState(massActionConfig) {
+		if (!massActionConfig || !Array.isArray(massActionConfig.protectedLineIds)) {
+			return;
+		}
+
+		massActionConfig.protectedLineIds.forEach(function (lineId) {
+			var row = document.getElementById('row-' + lineId);
+			var checkbox;
+
+			if (!row) {
+				return;
+			}
+
+			checkbox = row.querySelector(massActionConfig.checkboxSelector);
+			if (checkbox) {
+				checkbox.checked = false;
+				checkbox.disabled = true;
+			}
+
+			row.classList.remove('highlight');
+		});
+
+		filterProtectedLinesFromSelectedField(massActionConfig);
 	}
 
 	function filterProtectedLinesFromSelectedField(massActionConfig) {
@@ -159,6 +216,42 @@
 				window.jQuery.jnotify(massActionConfig.forbiddenMessage, 'warning', {timeout: 4, type: 'warning', css: 'warning'});
 			}
 		});
+
+		document.addEventListener('click', function (event) {
+			var target = event.target;
+			var mustSanitize;
+
+			if (!target) {
+				return;
+			}
+
+			mustSanitize = target.matches('#massaction-checkall, #massaction-checkall-products, #massaction-checkall-services');
+			if (!mustSanitize) {
+				return;
+			}
+
+			window.setTimeout(function () {
+				sanitizeProtectedMassActionState(massActionConfig);
+			}, 0);
+		});
+
+		document.addEventListener('change', function (event) {
+			var target = event.target;
+			var mustSanitize;
+
+			if (!target) {
+				return;
+			}
+
+			mustSanitize = target.matches('#massaction-checkall, #massaction-checkall-products, #massaction-checkall-services');
+			if (!mustSanitize) {
+				return;
+			}
+
+			window.setTimeout(function () {
+				sanitizeProtectedMassActionState(massActionConfig);
+			}, 0);
+		});
 	}
 
 	document.addEventListener('DOMContentLoaded', function () {
@@ -189,13 +282,25 @@
 			disableMassActionForLine(lineId, massActionConfig);
 		});
 		filterProtectedLinesFromSelectedField(massActionConfig);
+		sanitizeProtectedMassActionState(massActionConfig);
 		guardMassActionSelection(massActionConfig);
 
 		window.setTimeout(function () {
+			sanitizeProtectedMassActionState(massActionConfig);
+			lineIds.forEach(function (lineId) {
+				hideEditForLine(lineId);
+			});
 			massActionConfig.protectedLineIds.forEach(function (lineId) {
 				disableMassActionForLine(lineId, massActionConfig);
 			});
 			filterProtectedLinesFromSelectedField(massActionConfig);
 		}, 200);
+
+		window.setTimeout(function () {
+			sanitizeProtectedMassActionState(massActionConfig);
+			lineIds.forEach(function (lineId) {
+				hideEditForLine(lineId);
+			});
+		}, 800);
 	});
 }());

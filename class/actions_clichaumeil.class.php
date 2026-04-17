@@ -345,10 +345,10 @@ class ActionsClichaumeil extends CommonHookActions
 	private function userCanValidateProposal(User $user): bool
 	{
 		if (!getDolGlobalString('MAIN_USE_ADVANCED_PERMS')) {
-			return $user->hasRight('propal', 'creer');
+			return (bool) $user->hasRight('propal', 'creer');
 		}
 
-		return $user->hasRight('propal', 'propal_advance', 'validate');
+		return (bool) $user->hasRight('propal', 'propal_advance', 'validate');
 	}
 
 
@@ -607,7 +607,7 @@ class ActionsClichaumeil extends CommonHookActions
 	 * @param HookManager         $hookmanager Hook manager.
 	 * @return int
 	 */
-	public function filterMassActionSelectedLineIds(array $parameters, CommonObject &$object, string &$action, HookManager $hookmanager): int
+	public function filterMassActionSelection(array $parameters, CommonObject &$object, string &$action, HookManager $hookmanager): int
 	{
 		global $langs, $user;
 
@@ -639,7 +639,7 @@ class ActionsClichaumeil extends CommonHookActions
 	 * @param HookManager         $hookmanager Hook manager.
 	 * @return int
 	 */
-	public function guardMassActionSelectedLineIds(array $parameters, CommonObject &$object, string &$action, HookManager $hookmanager): int
+	public function guardMassActionExecution(array $parameters, CommonObject &$object, string &$action, HookManager $hookmanager): int
 	{
 		global $langs, $user;
 
