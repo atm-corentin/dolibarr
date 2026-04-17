@@ -168,7 +168,7 @@ class SupplierProposalView
 			return '';
 		}
 
-		return dol_print_date($timestamp, 'dayhour');
+		return dol_print_date($timestamp, 'dayhour', 'tzuserrel');
 	}
 
 	/**
