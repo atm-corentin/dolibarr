@@ -351,18 +351,18 @@ switch ($action) {
 				dol_syslog("AJAX update_line_price: WARNING - Line $lineId NOT FOUND after update!", LOG_WARNING);
 			}
 
-				$response['status'] = 'success';
-				$response['message'] = $langs->trans('CLICHAUMEIL_AJAX_PRICE_UPDATED_SUCCESS');
-				$response['lineTotalHtFormatted'] = price($updatedLine ? $updatedLine->total_ht : 0);
-				$response['objectTotalHtFormatted'] = price($object->total_ht);
-				$response['debug'] = array(
-					'lineFound' => ($updatedLine !== null),
-					'lineTotalHt' => $updatedLine ? $updatedLine->total_ht : null,
-					'objectTotalHt' => $object->total_ht,
-					'numberOfLines' => count($object->lines)
-				);
+			$response['status'] = 'success';
+			$response['message'] = $langs->trans('CLICHAUMEIL_AJAX_PRICE_UPDATED_SUCCESS');
+			$response['lineTotalHtFormatted'] = price($updatedLine ? $updatedLine->total_ht : 0);
+			$response['objectTotalHtFormatted'] = price($object->total_ht);
+			$response['debug'] = array(
+				'lineFound' => ($updatedLine !== null),
+				'lineTotalHt' => $updatedLine ? $updatedLine->total_ht : null,
+				'objectTotalHt' => $object->total_ht,
+				'numberOfLines' => count($object->lines)
+			);
 
-				dol_syslog("AJAX update_line_price: success - Line total HT: " . ($updatedLine ? $updatedLine->total_ht : 'LINE NOT FOUND'));
+			dol_syslog("AJAX update_line_price: success - Line total HT: " . ($updatedLine ? $updatedLine->total_ht : 'LINE NOT FOUND'));
 		} catch (Exception $e) {
 			$response['message'] = $langs->trans('CLICHAUMEIL_AJAX_EXCEPTION', $e->getMessage());
 			dol_syslog("AJAX update_line_price exception: " . $e->getMessage(), LOG_ERR);
