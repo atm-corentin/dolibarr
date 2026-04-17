@@ -59,6 +59,7 @@ ClichaumeilSetupPage = Paramètrages CliChaumeil
 
 CliChaumeilReviewRate=Taux de révision (en %%)
 CliChaumeilReviewDate=Date de révision
+CliChaumeilSupplierResponseDate=Date réponse fournisseur
 
 CLICHAUMEIL_DEFAULT_OVERHEAD_RATE=Taux de frais généraux par défaut (%)
 CLICHAUMEIL_DEFAULT_OVERHEAD_RATETooltip=Convention : 10 = 10%%. Taux de frais généraux appliqué par défaut aux nouveaux produits et services simples si aucune valeur n'est saisie.

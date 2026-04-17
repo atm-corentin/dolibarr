@@ -312,21 +312,23 @@ switch ($action) {
 				exit;
 			}
 
-			$validResult = $object->valid($user);
-			dol_syslog("AJAX update_line_price: valid result=$validResult");
+			if ($previousStatus !== null && (int) $previousStatus !== (int) SupplierProposal::STATUS_DRAFT) {
+				$restoreStatusSql = "UPDATE " . $db->prefix() . "supplier_proposal";
+				$restoreStatusSql .= " SET fk_statut = " . ((int) $previousStatus);
+				$restoreStatusSql .= " WHERE rowid = " . ((int) $object->id);
 
-			if ($validResult < 0) {
-				// WARNING: manual rollback of status without full transaction/trigger rollback.
-				if ($previousStatus !== null) {
-					$db->query("UPDATE " . $db->prefix() . "supplier_proposal SET fk_statut = " . ((int) $previousStatus) . " WHERE rowid = " . ((int) $object->id));
-					$object->status = $previousStatus;
-					dol_syslog("AJAX update_line_price: restore status to $previousStatus after failed validation");
+				$restoreStatusResult = $db->query($restoreStatusSql);
+				dol_syslog("AJAX update_line_price: restore status query result=" . ((int) $restoreStatusResult) . " previousStatus=" . ((int) $previousStatus));
+
+				if (!$restoreStatusResult) {
+					$response['message'] = 'Failed to restore supplier proposal status: ' . $db->lasterror();
+					dol_syslog("AJAX update_line_price: failed to restore status to $previousStatus: " . $db->lasterror(), LOG_ERR);
+					echo json_encode($response);
+					exit;
 				}
 
-				$response['message'] = 'Validation failed: ' . $object->error;
-				dol_syslog("AJAX update_line_price: validation failed: " . $object->error, LOG_ERR);
-				echo json_encode($response);
-				exit;
+				$object->status = $previousStatus;
+				$object->statut = $previousStatus;
 			}
 
 			// Re-fetch object to get updated totals using service

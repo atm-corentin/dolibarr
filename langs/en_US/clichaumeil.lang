@@ -48,6 +48,7 @@ CLICHAUMEIL_DEFAULT_OVERHEAD_RATE=Default overhead rate (%)
 CLICHAUMEIL_DEFAULT_OVERHEAD_RATETooltip=Convention: 10 = 10%%. Default overhead percent applied to new simple products and services when none is entered (4 decimals).
 CliChaumeilReviewRate=Review rate (in %%)
 CliChaumeilReviewDate=Review date
+CliChaumeilSupplierResponseDate=Supplier response date
 
 CLICHAUMEIL_REVIEW_YEAR_DELAY=Review date offset after renewal (in years)
 CLICHAUMEIL_PRICING_UPDATE_MANAGERS=Managers for pricing updates

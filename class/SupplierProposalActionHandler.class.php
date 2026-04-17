@@ -111,8 +111,15 @@ class SupplierProposalActionHandler
 		dol_syslog("SupplierProposalActionHandler::validateProposal moveSessionFiles result: success=" . $moveResult['success'], LOG_DEBUG);
 
 		// Update extrafield status to indicate file has been received
+		if (!is_array($object->array_options)) {
+			$object->array_options = array();
+		}
 		$object->array_options["options_clichaumeil_supplierstatut"] = 'CLICHAUMEIL_FILE_RECEIVED';
 		$res = $object->updateExtraField('clichaumeil_supplierstatut');
+		if ($res >= 0 && empty($object->array_options["options_clichaumeil_supplierresponsedate"])) {
+			$object->array_options["options_clichaumeil_supplierresponsedate"] = dol_now();
+			$res = $object->updateExtraField('clichaumeil_supplierresponsedate');
+		}
 
 		if ($res >= 0) {
 			$this->sendSupplierResponseNotification($object);
