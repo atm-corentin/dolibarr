@@ -16,6 +16,7 @@
  */
 
 require_once DOL_DOCUMENT_ROOT.'/comm/action/class/actioncomm.class.php';
+require_once DOL_DOCUMENT_ROOT.'/core/class/CMailFile.class.php';
 require_once DOL_DOCUMENT_ROOT.'/core/lib/files.lib.php';
 require_once DOL_DOCUMENT_ROOT.'/core/class/extrafields.class.php';
 require_once __DIR__ . '/../lib/clichaumeil.lib.php';
@@ -44,11 +45,11 @@ class SupplierProposalActionHandler
 	/**
 	 * Constructor
 	 *
-	 * @param SupplierProposalFileManager $fileManager
-	 * @param Translate $langs
-	 * @param User $user
-	 * @param Conf $conf
-	 * @param DoliDB $db
+	 * @param SupplierProposalFileManager $fileManager File manager service.
+	 * @param Translate                   $langs       Translation handler.
+	 * @param User                        $user        Current user.
+	 * @param Conf                        $conf        Application configuration.
+	 * @param DoliDB                      $db          Database handler.
 	 */
 	public function __construct(SupplierProposalFileManager $fileManager, Translate $langs, User $user, Conf $conf, DoliDB $db)
 	{
@@ -62,7 +63,7 @@ class SupplierProposalActionHandler
 	/**
 	 * Validate proposal with optional file check
 	 *
-	 * @param SupplierProposal $object
+	 * @param SupplierProposal $object Supplier proposal being validated.
 	 * @return array ['success' => bool, 'message' => string, 'type' => 'mesgs'|'errors']
 	 */
 	public function validateProposal(SupplierProposal $object) : array
@@ -114,6 +115,8 @@ class SupplierProposalActionHandler
 		$res = $object->updateExtraField('clichaumeil_supplierstatut');
 
 		if ($res >= 0) {
+			$this->sendSupplierResponseNotification($object);
+
 			return array(
 				'success' => true,
 				'message' => $this->langs->trans('CLICHAUMEIL_SUPPLIERPROPOSALVALIDATED'),
@@ -131,9 +134,9 @@ class SupplierProposalActionHandler
 	/**
 	 * Add comment with optional files
 	 *
-	 * @param SupplierProposal $object
-	 * @param string $comment Comment text
-	 * @param string $title Comment title
+	 * @param SupplierProposal $object Supplier proposal.
+	 * @param string           $comment Comment text.
+	 * @param string           $title   Comment title.
 	 * @return array ['success' => bool, 'message' => string, 'type' => 'mesgs'|'errors']
 	 */
 	public function addComment(SupplierProposal $object, string $comment, string $title = '') : array
@@ -185,9 +188,9 @@ class SupplierProposalActionHandler
 	/**
 	 * Create action in database
 	 *
-	 * @param SupplierProposal $object
-	 * @param string $comment
-	 * @param string $title
+	 * @param SupplierProposal $object Supplier proposal.
+	 * @param string           $comment Comment text.
+	 * @param string           $title   Action title.
 	 * @return int Action ID if OK, <0 if error
 	 */
 	private function createAction(SupplierProposal $object, string $comment, string $title) : int
@@ -243,9 +246,98 @@ class SupplierProposalActionHandler
 	}
 
 	/**
+	 * Send notification email to the internal follow-up manager if configured.
+	 *
+	 * @param SupplierProposal $object Supplier proposal.
+	 * @return void
+	 */
+	private function sendSupplierResponseNotification(SupplierProposal $object): void
+	{
+		$recipients = $this->getSupplierProposalFollowupEmails($object);
+		if (empty($recipients)) {
+			return;
+		}
+
+		$from = getDolGlobalString('MAIN_MAIL_EMAIL_FROM');
+		if (empty($from)) {
+			dol_syslog(__METHOD__ . ' missing MAIN_MAIL_EMAIL_FROM for supplier proposal id=' . ((int) $object->id), LOG_WARNING);
+			return;
+		}
+
+		if (empty($object->thirdparty) || empty($object->thirdparty->id)) {
+			$fetchThirdpartyResult = $object->fetch_thirdparty();
+			if ($fetchThirdpartyResult <= 0) {
+				dol_syslog(__METHOD__ . ' failed to load thirdparty for supplier proposal id=' . ((int) $object->id) . ' error=' . $object->error, LOG_WARNING);
+			}
+		}
+
+		$supplierName = '';
+		if (!empty($object->thirdparty) && !empty($object->thirdparty->name)) {
+			$supplierName = $object->thirdparty->name;
+		}
+		if ($supplierName === '') {
+			$supplierName = $this->langs->trans('ThirdParty');
+		}
+
+		$proposalUrl = dol_buildpath('/supplier_proposal/card.php', 2) . '?id=' . ((int) $object->id);
+		$subject = $this->langs->transnoentitiesnoconv('CliChaumeilSupplierResponseMailSubject', $supplierName, $object->ref);
+		$proposalLink = '<a href="' . dol_escape_htmltag($proposalUrl) . '">' . dol_escape_htmltag($proposalUrl) . '</a>';
+		$body = $this->langs->transnoentitiesnoconv('CliChaumeilSupplierResponseMailBody', $supplierName, $object->ref, $proposalLink);
+
+		$mail = new CMailFile(
+			$subject,
+			implode(',', $recipients),
+			$from,
+			$body,
+			array(),
+			array(),
+			array(),
+			'',
+			'',
+			0,
+			1
+		);
+
+		if (!$mail->sendfile()) {
+			dol_syslog(__METHOD__ . ' failed to send supplier response email for proposal id=' . ((int) $object->id) . ' error=' . $mail->error, LOG_WARNING);
+		}
+	}
+
+	/**
+	 * Return unique email recipients for internal SALESREPFOLL contacts.
+	 *
+	 * @param SupplierProposal $object Supplier proposal.
+	 * @return string[]
+	 */
+	private function getSupplierProposalFollowupEmails(SupplierProposal $object): array
+	{
+		$contacts = $object->liste_contact(-1, 'internal');
+		if (empty($contacts) || !is_array($contacts)) {
+			return array();
+		}
+
+		$emails = array();
+		foreach ($contacts as $contact) {
+			$contactCode = $contact['code'] ?? $contact['code_type_contact'] ?? '';
+			if ($contactCode !== 'SALESREPFOLL') {
+				continue;
+			}
+
+			$email = trim((string) ($contact['email'] ?? ''));
+			if ($email === '') {
+				continue;
+			}
+
+			$emails[$email] = $email;
+		}
+
+		return array_values($emails);
+	}
+
+	/**
 	 * Check if any timeline action already stores files
 	 *
-	 * @param SupplierProposal $object
+	 * @param SupplierProposal $object Supplier proposal.
 	 * @return bool
 	 */
 	private function hasFilesInTimeline(SupplierProposal $object) : bool
@@ -275,5 +367,4 @@ class SupplierProposalActionHandler
 		$this->db->free($resql);
 		return false;
 	}
-
 }

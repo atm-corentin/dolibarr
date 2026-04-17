@@ -360,3 +360,5 @@ CliChaumeil_RfaReminderOutputSuccess=RFA reminder sent for year %s to %s recipie
 CliChaumeil_RfaReminderOutputFailure=RFA reminder failed: %s
 CliChaumeil_RfaReminderDefaultTemplateSubject=RFA negotiation __YEAR__ to do
 CliChaumeil_RfaReminderDefaultTemplateBody=Hello,<br><br>The RFA negotiation for year __YEAR__ must be prepared.<br><br>Link to the list:<br>__RFA_LIST_URL__
+CliChaumeilSupplierResponseMailSubject=Response %s for request for quotation %s
+CliChaumeilSupplierResponseMailBody=Hello,<br><br>A response has been submitted by supplier %s for request for quotation %s.<br>Follow-up link: %s.<br><br>Regards

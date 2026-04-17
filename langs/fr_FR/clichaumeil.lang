@@ -367,3 +367,5 @@ CliChaumeil_RfaReminderOutputSuccess=Rappel RFA envoyé pour l'année %s à %s d
 CliChaumeil_RfaReminderOutputFailure=Échec du rappel RFA : %s
 CliChaumeil_RfaReminderDefaultTemplateSubject=Négociation RFA __YEAR__ à faire
 CliChaumeil_RfaReminderDefaultTemplateBody=Bonjour,<br><br>La négociation RFA pour l'année __YEAR__ est à préparer.<br><br>Lien vers la liste :<br>__RFA_LIST_URL__
+CliChaumeilSupplierResponseMailSubject=Réponse %s pour la demande de prix %s
+CliChaumeilSupplierResponseMailBody=Bonjour,<br><br>Une réponse a été déposée par le fournisseur %s pour la demande de prix %s.<br>Lien de suivi : %s.<br><br>Cordialement
