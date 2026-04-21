@@ -560,7 +560,7 @@ class ActionsClichaumeil extends CommonHookActions
 	 * @param User         $user    Current user.
 	 * @return int|null
 	 */
-	private function handlePropalDefaultLineDoActions(string $context, CommonObject &$object, string &$action, User $user): ?int
+	private function handlePropalDefaultLineDoActions(string $context, &$object, string &$action, User $user): ?int
 	{
 		if (strpos($context, self::PROPAL_CARD_CONTEXT) === false || !$object instanceof Propal) {
 			return null;
