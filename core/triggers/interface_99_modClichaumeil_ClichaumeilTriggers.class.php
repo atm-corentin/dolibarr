@@ -35,6 +35,8 @@ require_once DOL_DOCUMENT_ROOT . '/core/class/cunits.class.php';
 require_once __DIR__ . '/../../class/chaumeilrfa.class.php';
 require_once __DIR__ . '/../../class/CliChaumeilProductCost.class.php';
 require_once __DIR__ . '/../../class/CliChaumeilProposalMarginGuard.class.php';
+require_once __DIR__ . '/../../class/CliChaumeilPropalDefaultLineConfig.class.php';
+require_once __DIR__ . '/../../class/CliChaumeilPropalDefaultLineService.class.php';
 require_once __DIR__ . '/../../class/CliChaumeilCommissionConfig.class.php';
 require_once __DIR__ . '/../../lib/clichaumeil.lib.php';
 require_once DOL_DOCUMENT_ROOT . '/categories/class/categorie.class.php';
@@ -113,6 +115,12 @@ class InterfaceClichaumeilTriggers extends DolibarrTriggers
 			case 'LINEORDER_MODIFY':
 			case 'LINEPROPAL_INSERT':
 			case 'LINEPROPAL_MODIFY':
+				if ($action === 'LINEPROPAL_MODIFY') {
+					$guardResult = $this->guardProtectedPropalLineModification($object, $user, $langs);
+					if ($guardResult < 0) {
+						return -1;
+					}
+				}
 
 				//Clean fields
 				$height = 0;
@@ -169,11 +177,17 @@ class InterfaceClichaumeilTriggers extends DolibarrTriggers
 				}
 
 			break;
+			case 'LINEPROPAL_DELETE':
+				return $this->guardProtectedPropalLineDeletion($object, $user, $langs);
+
 			case 'ORDER_VALIDATE':
 				return $this->handleOrderValidate($object, $langs);
 
 			case 'PROPAL_VALIDATE':
 				return $this->handleProposalValidate($object, $langs);
+
+			case 'PROPAL_CREATE':
+				return $this->handlePropalCreateDefaultLines($object, $user);
 
 			case 'externalAccessInitController':
 				externalAccessInitController($object, $user, $langs, $conf);
@@ -222,6 +236,92 @@ class InterfaceClichaumeilTriggers extends DolibarrTriggers
 		}
 
 		return 0;
+	}
+
+	/**
+	 * Inject configured protected lines on standard proposal creation.
+	 *
+	 * @param CommonObject $object Proposal object.
+	 * @param User         $user   Current user.
+	 * @return int
+	 */
+	private function handlePropalCreateDefaultLines(CommonObject $object, User $user): int
+	{
+		if (!$object instanceof Propal) {
+			return 0;
+		}
+
+		if (!empty($object->context['createfromclone'])) {
+			return 0;
+		}
+
+		$service = new CliChaumeilPropalDefaultLineService(
+			$this->db,
+			new CliChaumeilPropalDefaultLineConfig($this->db)
+		);
+		if (!$service->shouldInjectOnCreate($object)) {
+			return 0;
+		}
+
+		$service->injectConfiguredLines($object, $user);
+
+		return 0;
+	}
+
+	/**
+	 * Block unauthorized modification of protected default proposal lines.
+	 *
+	 * @param CommonObject $object Current trigger line object.
+	 * @param User         $user   Current user.
+	 * @param Translate    $langs  Translation helper.
+	 * @return int
+	 */
+	private function guardProtectedPropalLineModification(CommonObject $object, User $user, Translate $langs): int
+	{
+		if (!$object instanceof PropaleLigne) {
+			return 0;
+		}
+
+		$service = new CliChaumeilPropalDefaultLineService(
+			$this->db,
+			new CliChaumeilPropalDefaultLineConfig($this->db)
+		);
+		if ($service->guardEditLineObject($object, $user, false)) {
+			return 0;
+		}
+
+		$object->error = $langs->trans('CLICHAUMEIL_DEFAULT_PROPAL_LINE_EDIT_FORBIDDEN', (string) $object->id);
+		$object->errors[] = $object->error;
+
+		return -1;
+	}
+
+	/**
+	 * Block unauthorized deletion of protected default proposal lines.
+	 *
+	 * @param CommonObject $object Current trigger line object.
+	 * @param User         $user   Current user.
+	 * @param Translate    $langs  Translation helper.
+	 * @return int
+	 */
+	private function guardProtectedPropalLineDeletion(CommonObject $object, User $user, Translate $langs): int
+	{
+		if (!$object instanceof PropaleLigne) {
+			return 0;
+		}
+
+		$service = new CliChaumeilPropalDefaultLineService(
+			$this->db,
+			new CliChaumeilPropalDefaultLineConfig($this->db)
+		);
+		if ($service->guardDeleteLineObject($object, $user, false)) {
+			return 0;
+		}
+
+		$object->error = $langs->trans('CLICHAUMEIL_DEFAULT_PROPAL_LINE_DELETE_FORBIDDEN', (string) $object->id);
+		$object->errors[] = $object->error;
+
+		return -1;
 	}
 
 	/**

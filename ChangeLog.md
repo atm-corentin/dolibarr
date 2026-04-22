@@ -2,6 +2,8 @@
 
 
 ## Unreleased
+- NEW : Document the extrafield-based protected-line rules in setup, hide protected proposal lines from MassAction UI, and reject MassAction split/copy on protected proposal lines without the dedicated manage right. *16/04/2026* - 1.14.0
+- NEW : Add entity-scoped default proposal products/services with automatic injection on creation/clone, protected proposal lines, dedicated manage right, and backend guards for delete/edit actions. *15/04/2026* - 1.14.0
 - NEW : Send an email to the internal follow-up manager when a supplier submits a response from the external portal, and link the notification directly to the supplier proposal card. *13/04/2026* - 1.13.0
 - NEW : Materialize the global supplier RFA list into a yearly summary table with manual rebuild tool, nightly cron, and SQL-native filtering/sorting/pagination. *31/03/2026* - 1.13.0
 

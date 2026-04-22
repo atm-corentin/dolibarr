@@ -63,6 +63,13 @@ class modClichaumeil extends DolibarrModules
 	private const DEFAULT_RFA_SUMMARY_CRON_PARAMETERS = '';
 
 	/**
+	 * Default proposal line extrafield key.
+	 *
+	 * @var string
+	 */
+	private const DEFAULT_PROPAL_LINE_EXTRAFIELD = 'clichaumeil_default_inserted';
+
+	/**
 	 * Constructor. Define names, constants, directories, boxes, permissions
 	 *
 	 * @param DoliDB $db Database handler
@@ -104,7 +111,7 @@ class modClichaumeil extends DolibarrModules
 		$this->editor_squarred_logo = '';					// Must be image filename into the module/img directory followed with @modulename. Example: 'myimage.png@clichaumeil'
 
 		// Possible values for version are: 'development', 'experimental', 'dolibarr', 'dolibarr_deprecated', 'experimental_deprecated' or a version string like 'x.y.z'
-		$this->version = '1.13.0';
+		$this->version = '1.14.0';
 		// Url to the file with your last numberversion of this module
 		//$this->url_last_version = 'http://www.example.com/versionmodule.txt';
 
@@ -156,6 +163,8 @@ class modClichaumeil extends DolibarrModules
 				'externalaccess',
 				'propalcard',
 				'propallist',
+				'massactionshowlines',
+				'massactionsplitlines',
 				'productcard',
 				'pricesuppliercard',
 				'imports'
@@ -318,6 +327,11 @@ class modClichaumeil extends DolibarrModules
 		$this->rights[$r][4] = 'product';
 		$this->rights[$r][5] = 'read_cost_composition';
 		$r++;
+		$this->rights[$r][0] = $this->numero . sprintf('%02d', (0 * 10) + 4 + 1);
+		$this->rights[$r][1] = 'CLICHAUMEIL_DEFAULT_PROPAL_LINE_MANAGE_RIGHT';
+		$this->rights[$r][4] = 'propal_default_line';
+		$this->rights[$r][5] = 'manage';
+		$r++;
 		/* END MODULEBUILDER PERMISSIONS */
 
 		// Main menu entries to add
@@ -456,6 +470,7 @@ class modClichaumeil extends DolibarrModules
 		$this->ensureProductExtrafield($extrafields, CliChaumeilProductCostCalculator::TRANSPORT_PERCENT_FIELD, 'CLICHAUMEIL_TRANSPORT_PERCENT', 'double', 107, '24,4', 0, 0, '', '', 1, $permsCostComposition, $permsCostComposition, 'CLICHAUMEIL_HELP_TRANSPORT_PERCENT', '', 0, 'clichaumeil@clichaumeil', 1, 0, '0', array());
 		$this->ensureProductExtrafield($extrafields, 'clichaumeil_fg_percent', 'CliChaumeilFgPercent', 'double', 108, '24,4', 0, 0, '', '', 1, $permsCostComposition, $permsCostComposition, 'CLICHAUMEIL_HELP_FG_PERCENT', '', 0, 'clichaumeil@clichaumeil', 1, 0, '0', array());
 		$this->ensureProductExtrafield($extrafields, 'clichaumeil_pa_fg', 'CliChaumeilPaFg', 'double', 109, '24,4', 0, 0, '', '', 0, $permsPaFg, $permsPaFg, 'CLICHAUMEIL_HELP_PA_FG', '', 0, 'clichaumeil@clichaumeil', 1, 0, '0', array());
+		$this->ensurePropalDefaultLineExtrafield($extrafields);
 
 		if (!getDolGlobalInt('CLICHAUMEIL_DEFAULT_OVERHEAD_RATE')) {
 			dolibarr_set_const($this->db, 'CLICHAUMEIL_DEFAULT_OVERHEAD_RATE', CliChaumeilProductCostCalculator::DEFAULT_RATE_VALUE, 'chaine', 0, '', $conf->entity);
@@ -926,6 +941,48 @@ class modClichaumeil extends DolibarrModules
 
 		if ($result <= 0) {
 			dol_syslog(__METHOD__ . ' failed to update extrafield ' . $name, LOG_ERR);
+		}
+	}
+
+	/**
+	 * Ensure the protected default proposal line extrafield exists on proposal lines.
+	 *
+	 * @param ExtraFields $extrafields Extrafields manager.
+	 * @return void
+	 */
+	private function ensurePropalDefaultLineExtrafield(ExtraFields $extrafields): void
+	{
+		$extrafields->fetch_name_optionals_label('propaldet', true);
+		if (isset($extrafields->attributes['propaldet']['label'][self::DEFAULT_PROPAL_LINE_EXTRAFIELD])) {
+			return;
+		}
+
+		$result = $extrafields->addExtraField(
+			self::DEFAULT_PROPAL_LINE_EXTRAFIELD,
+			'CLICHAUMEIL_DEFAULT_PROPAL_LINE_MARKER',
+			'boolean',
+			220,
+			'',
+			'propaldet',
+			0,
+			0,
+			'',
+			array('options' => array('' => null)),
+			1,
+			'',
+			'0',
+			'',
+			'',
+			0,
+			'clichaumeil@clichaumeil',
+			'isModEnabled("clichaumeil")',
+			0,
+			'0',
+			array('css' => '', 'cssview' => '', 'csslist' => '')
+		);
+
+		if ($result <= 0) {
+			dol_syslog(__METHOD__ . ' failed to create propal default line extrafield ' . self::DEFAULT_PROPAL_LINE_EXTRAFIELD, LOG_ERR);
 		}
 	}
 }
