@@ -100,6 +100,10 @@ class SupplierProposalView
 		$out .= $this->renderField('Label', $object->ref_supplier ?? '');
 		$out .= $this->renderField('CLICHAUMEIL_PROJECT', $object->project_ref ?? '');
 		$out .= $this->renderField('CLICHAUMEIL_STATUS', $this->getSupplierStatusLabel($object));
+		$supplierResponseDate = $this->getSupplierResponseDateLabel($object);
+		if ($supplierResponseDate !== '') {
+			$out .= $this->renderField('CliChaumeilSupplierResponseDate', $supplierResponseDate);
+		}
 		$out .= $this->renderField('CLICHAUMEIL_DATEDELIVERYPLANNED', dol_print_date($object->delivery_date), '', ' :');
 		$out .= $this->renderField('CLICHAUMEIL_TOTALHT', price($object->total_ht, 0, $this->langs, 1, 2, -1, $currencyCode), 'object-total-ht');
 		$uploadedAttachments = $this->renderUploadedAttachments($documents, $object);
@@ -143,6 +147,28 @@ class SupplierProposalView
 
 		// If translation exists, return it; otherwise return the raw value
 		return ($translated !== $value) ? $translated : $value;
+	}
+
+	/**
+	 * Get formatted supplier response date extrafield value.
+	 *
+	 * @param SupplierProposal $object Supplier proposal object.
+	 * @return string
+	 */
+	private function getSupplierResponseDateLabel(SupplierProposal $object) : string
+	{
+		if (empty($object->array_options['options_clichaumeil_supplierresponsedate'])) {
+			return '';
+		}
+
+		$dateValue = $object->array_options['options_clichaumeil_supplierresponsedate'];
+		$timestamp = is_numeric($dateValue) ? (int) $dateValue : $this->db->jdate($dateValue);
+
+		if (empty($timestamp)) {
+			return '';
+		}
+
+		return dol_print_date($timestamp, 'dayhour', 'tzuserrel');
 	}
 
 	/**

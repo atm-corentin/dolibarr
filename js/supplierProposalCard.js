@@ -91,7 +91,7 @@ function showPortalErrorMessage(message) {
 
 	$container.html(
 		'<div class="warning">' +
-			'<span class="fas fa-exclamation-triangle paddingright"></span>' +
+			'<span class="fa fa-exclamation-triangle paddingright"></span>' +
 			message +
 		'</div>'
 	);

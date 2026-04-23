@@ -2,6 +2,7 @@
 
 
 ## Unreleased
+- NEW : Add a supplier response date extrafield on supplier proposals and populate it when a supplier submits a response from the portal. *23/04/2026* - 1.14.0
 - FIX : Sort supplier portal request-for-quotation list by reference in descending order by default. *17/04/2026* - 1.14.0
 - FIX : Reverse supplier portal discussion history order on supplier proposals so the most recent event is always displayed first, like a chat conversation. *17/04/2026* - 1.14.0
 - NEW : Document the extrafield-based protected-line rules in setup, hide protected proposal lines from MassAction UI, and reject MassAction split/copy on protected proposal lines without the dedicated manage right. *16/04/2026* - 1.14.0

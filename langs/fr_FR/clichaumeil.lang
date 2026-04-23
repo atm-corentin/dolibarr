@@ -60,6 +60,7 @@ ClichaumeilSetupPage = Paramètrages CliChaumeil
 
 CliChaumeilReviewRate=Taux de révision (en %%)
 CliChaumeilReviewDate=Date de révision
+CliChaumeilSupplierResponseDate=Date réponse fournisseur
 
 CLICHAUMEIL_DEFAULT_OVERHEAD_RATE=Taux de frais généraux par défaut (%)
 CLICHAUMEIL_DEFAULT_OVERHEAD_RATETooltip=Convention : 10 = 10%%. Taux de frais généraux appliqué par défaut aux nouveaux produits et services simples si aucune valeur n'est saisie.
@@ -88,6 +89,7 @@ CLICHAUMEIL_AJAX_UPDATE_METHOD_MISSING=Méthode de mise à jour introuvable.
 CLICHAUMEIL_AJAX_LINE_NOT_FOUND_AFTER_REFETCH=Ligne introuvable après rechargement du devis.
 CLICHAUMEIL_AJAX_UPDATE_FAILED=Échec de la mise à jour : %s
 CLICHAUMEIL_AJAX_VALIDATION_FAILED=Échec de la validation : %s
+CLICHAUMEIL_AJAX_RESTORE_STATUS_FAILED=Échec de la restauration du statut du devis fournisseur : %s
 CLICHAUMEIL_AJAX_PRICE_UPDATED_SUCCESS=Prix mis à jour avec succès.
 CLICHAUMEIL_AJAX_EXCEPTION=Exception : %s
 CliChaumeilAutomaticRenewalContract=Mise à jour automatique des révisions de contrats

@@ -314,21 +314,16 @@ switch ($action) {
 				exit;
 			}
 
-			$validResult = $object->valid($user);
-			dol_syslog("AJAX update_line_price: valid result=$validResult");
+			if ($previousStatus !== null && (int) $previousStatus !== (int) SupplierProposal::STATUS_DRAFT) {
+				$restoreStatusResult = $object->setStatut((int) $previousStatus);
+				dol_syslog("AJAX update_line_price: restore status query result=" . ((int) $restoreStatusResult) . " previousStatus=" . ((int) $previousStatus));
 
-			if ($validResult < 0) {
-				// WARNING: manual rollback of status without full transaction/trigger rollback.
-				if ($previousStatus !== null) {
-					$db->query("UPDATE " . $db->prefix() . "supplier_proposal SET fk_statut = " . ((int) $previousStatus) . " WHERE rowid = " . ((int) $object->id));
-					$object->status = $previousStatus;
-					dol_syslog("AJAX update_line_price: restore status to $previousStatus after failed validation");
+				if ($restoreStatusResult < 0) {
+					$response['message'] = $langs->trans('CLICHAUMEIL_AJAX_RESTORE_STATUS_FAILED', $object->error ?: $db->lasterror());
+					dol_syslog("AJAX update_line_price: failed to restore status to $previousStatus: " . ($object->error ?: $db->lasterror()), LOG_ERR);
+					echo json_encode($response);
+					exit;
 				}
-
-				$response['message'] = $langs->trans('CLICHAUMEIL_AJAX_VALIDATION_FAILED', $object->error);
-				dol_syslog("AJAX update_line_price: validation failed: " . $object->error, LOG_ERR);
-				echo json_encode($response);
-				exit;
 			}
 
 			// Re-fetch object to get updated totals using service

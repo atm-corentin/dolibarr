@@ -65,6 +65,7 @@ CLICHAUMEIL_AJAX_UPDATE_METHOD_MISSING=Update method not found.
 CLICHAUMEIL_AJAX_LINE_NOT_FOUND_AFTER_REFETCH=Line not found after proposal reload.
 CLICHAUMEIL_AJAX_UPDATE_FAILED=Update failed: %s
 CLICHAUMEIL_AJAX_VALIDATION_FAILED=Validation failed: %s
+CLICHAUMEIL_AJAX_RESTORE_STATUS_FAILED=Failed to restore supplier proposal status: %s
 CLICHAUMEIL_AJAX_PRICE_UPDATED_SUCCESS=Price updated successfully.
 CLICHAUMEIL_AJAX_EXCEPTION=Exception: %s
 
@@ -72,6 +73,7 @@ CLICHAUMEIL_DEFAULT_OVERHEAD_RATE=Default overhead rate (%)
 CLICHAUMEIL_DEFAULT_OVERHEAD_RATETooltip=Convention: 10 = 10%%. Default overhead percent applied to new simple products and services when none is entered (4 decimals).
 CliChaumeilReviewRate=Review rate (in %%)
 CliChaumeilReviewDate=Review date
+CliChaumeilSupplierResponseDate=Supplier response date
 
 CLICHAUMEIL_REVIEW_YEAR_DELAY=Review date offset after renewal (in years)
 CLICHAUMEIL_PRICING_UPDATE_MANAGERS=Managers for pricing updates
