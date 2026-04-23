@@ -65,6 +65,7 @@ CLICHAUMEIL_AJAX_UPDATE_METHOD_MISSING=Update method not found.
 CLICHAUMEIL_AJAX_LINE_NOT_FOUND_AFTER_REFETCH=Line not found after proposal reload.
 CLICHAUMEIL_AJAX_UPDATE_FAILED=Update failed: %s
 CLICHAUMEIL_AJAX_VALIDATION_FAILED=Validation failed: %s
+CLICHAUMEIL_AJAX_RESTORE_STATUS_FAILED=Failed to restore supplier proposal status: %s
 CLICHAUMEIL_AJAX_PRICE_UPDATED_SUCCESS=Price updated successfully.
 CLICHAUMEIL_AJAX_EXCEPTION=Exception: %s
 

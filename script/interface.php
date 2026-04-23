@@ -323,7 +323,7 @@ switch ($action) {
 				dol_syslog("AJAX update_line_price: restore status query result=" . ((int) $restoreStatusResult) . " previousStatus=" . ((int) $previousStatus));
 
 				if (!$restoreStatusResult) {
-					$response['message'] = 'Failed to restore supplier proposal status: ' . $db->lasterror();
+					$response['message'] = $langs->trans('CLICHAUMEIL_AJAX_RESTORE_STATUS_FAILED', $db->lasterror());
 					dol_syslog("AJAX update_line_price: failed to restore status to $previousStatus: " . $db->lasterror(), LOG_ERR);
 					echo json_encode($response);
 					exit;
