@@ -116,9 +116,15 @@ class SupplierProposalActionHandler
 		}
 		$object->array_options["options_clichaumeil_supplierstatut"] = 'CLICHAUMEIL_FILE_RECEIVED';
 		$res = $object->updateExtraField('clichaumeil_supplierstatut');
-		if ($res >= 0 && empty($object->array_options["options_clichaumeil_supplierresponsedate"])) {
+		if ($res < 0) {
+			$errorMessage = $object->error ?: $this->db->lasterror();
+			dol_syslog(__METHOD__ . ' failed to update supplier status for proposal id=' . ((int) $object->id) . ' error=' . $errorMessage, LOG_WARNING);
+		} elseif (empty($object->array_options["options_clichaumeil_supplierresponsedate"])) {
 			$object->array_options["options_clichaumeil_supplierresponsedate"] = dol_now();
-			$res = $object->updateExtraField('clichaumeil_supplierresponsedate');
+			$responseDateResult = $object->updateExtraField('clichaumeil_supplierresponsedate');
+			if ($responseDateResult < 0) {
+				dol_syslog(__METHOD__ . ' failed to update supplier response date for proposal id=' . ((int) $object->id) . ' error=' . ($object->error ?: $this->db->lasterror()), LOG_WARNING);
+			}
 		}
 
 		if ($res >= 0) {
