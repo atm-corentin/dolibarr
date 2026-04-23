@@ -315,22 +315,15 @@ switch ($action) {
 			}
 
 			if ($previousStatus !== null && (int) $previousStatus !== (int) SupplierProposal::STATUS_DRAFT) {
-				$restoreStatusSql = "UPDATE " . $db->prefix() . "supplier_proposal";
-				$restoreStatusSql .= " SET fk_statut = " . ((int) $previousStatus);
-				$restoreStatusSql .= " WHERE rowid = " . ((int) $object->id);
-
-				$restoreStatusResult = $db->query($restoreStatusSql);
+				$restoreStatusResult = $object->setStatut((int) $previousStatus);
 				dol_syslog("AJAX update_line_price: restore status query result=" . ((int) $restoreStatusResult) . " previousStatus=" . ((int) $previousStatus));
 
-				if (!$restoreStatusResult) {
-					$response['message'] = $langs->trans('CLICHAUMEIL_AJAX_RESTORE_STATUS_FAILED', $db->lasterror());
-					dol_syslog("AJAX update_line_price: failed to restore status to $previousStatus: " . $db->lasterror(), LOG_ERR);
+				if ($restoreStatusResult < 0) {
+					$response['message'] = $langs->trans('CLICHAUMEIL_AJAX_RESTORE_STATUS_FAILED', $object->error ?: $db->lasterror());
+					dol_syslog("AJAX update_line_price: failed to restore status to $previousStatus: " . ($object->error ?: $db->lasterror()), LOG_ERR);
 					echo json_encode($response);
 					exit;
 				}
-
-				$object->status = $previousStatus;
-				$object->statut = $previousStatus;
 			}
 
 			// Re-fetch object to get updated totals using service
