@@ -835,6 +835,17 @@ class ActionsClichaumeil extends CommonHookActions
 	{
 		global $user;
 
+		$features = (string) ($parameters['features'] ?? '');
+		$feature2 = (string) ($parameters['feature2'] ?? '');
+		$objecttable = (string) ($parameters['objecttable'] ?? '');
+
+		if (in_array($features, array('clichaumeil', 'chaumeilrfa', 'clichaumeil_chaumeilrfa'), true)
+			|| $feature2 === 'chaumeilrfa'
+			|| $objecttable === 'clichaumeil_chaumeilrfa') {
+			$this->results['result'] = (int) $user->hasRight('clichaumeil', 'chaumeilrfa', 'read');
+			return 1;
+		}
+
 		if ($parameters['features'] == 'myobject') {
 			if ($user->hasRight('clichaumeil', 'myobject', 'read')) {
 				$this->results['result'] = 1;

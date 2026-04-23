@@ -328,6 +328,7 @@ class ChaumeilRfa extends CommonObject
 		global $langs;
 
 		$datas = [];
+		$langs->load("clichaumeil@clichaumeil");
 
 		if (getDolGlobalInt('MAIN_OPTIMIZEFORTEXTBROWSER')) {
 			return ['optimize' => $langs->trans("ShowChaumeilRfa")];
@@ -340,7 +341,7 @@ class ChaumeilRfa extends CommonObject
 			$datas['ref'] = '<br><b>'.$langs->trans('Ref').':</b> '.$this->ref;
 		}
 		if (property_exists($this, 'label')) {
-			$datas['ref'] = '<br>'.$langs->trans('Label').':</b> '.$this->label;
+			$datas['label'] = '<br><b>'.$langs->trans('Label').':</b> '.$this->label;
 		}
 
 		return $datas;
@@ -373,6 +374,11 @@ class ChaumeilRfa extends CommonObject
 		$classfortooltip = 'classfortooltip';
 		$dataparams = '';
 		$label = implode($this->getTooltipContentArray($params));
+		if (getDolGlobalInt('MAIN_ENABLE_AJAX_TOOLTIP')) {
+			$classfortooltip = 'classforajaxtooltip';
+			$dataparams = ' data-params="'.dol_escape_htmltag(json_encode($params)).'"';
+			$label = '';
+		}
 		global $user;
 		if ($user->hasRight('clichaumeil', 'chaumeilrfa', 'write')) {
 			$url = dol_buildpath('/clichaumeil/chaumeilrfa_card.php', 1).'?id='.$this->id.'&action=edit&socid='.$this->fk_soc;

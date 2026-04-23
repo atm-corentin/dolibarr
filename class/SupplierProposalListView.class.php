@@ -43,10 +43,12 @@ class SupplierProposalListView
 	private $service;
 
 	/**
-	 * @param Translate $langs
-	 * @param Conf      $conf
-	 * @param DoliDB    $db
-	 * @param Context   $context
+	 * Constructor.
+	 *
+	 * @param Translate $langs   Translation handler.
+	 * @param Conf      $conf    Configuration object.
+	 * @param DoliDB    $db      Database handler.
+	 * @param Context   $context External access context.
 	 */
 	public function __construct(Translate $langs, Conf $conf, DoliDB $db, Context $context)
 	{
@@ -61,9 +63,9 @@ class SupplierProposalListView
 	/**
 	 * Render the supplier proposal table
 	 *
-	 * @param array $tableItems Raw rows fetched from database
-	 * @param array $extraFields List of configured extra fields
-	 * @param string $tableId Table DOM id
+	 * @param array  $tableItems  Raw rows fetched from database.
+	 * @param array  $extraFields List of configured extra fields.
+	 * @param string $tableId     Table DOM id.
 	 * @return string
 	 */
 	public function renderTable(array $tableItems, array $extraFields = array(), string $tableId = 'supplier-propal-list') : string
@@ -101,8 +103,8 @@ class SupplierProposalListView
 	/**
 	 * Build table header
 	 *
-	 * @param array $extraFields
-	 * @param ExtraFields|null $manager
+	 * @param array            $extraFields Configured extra fields.
+	 * @param ExtraFields|null $manager     Extrafields manager.
 	 * @return string
 	 */
 	private function renderTableHeader(array $extraFields, ?ExtraFields $manager) : string
@@ -138,9 +140,9 @@ class SupplierProposalListView
 	/**
 	 * Build a row for a supplier proposal
 	 *
-	 * @param SupplierProposal $object
-	 * @param array $extraFields
-	 * @param ExtraFields|null $manager
+	 * @param SupplierProposal $object      Supplier proposal to render.
+	 * @param array            $extraFields Configured extra fields.
+	 * @param ExtraFields|null $manager     Extrafields manager.
 	 * @return string
 	 */
 	private function renderTableRow(SupplierProposal $object, array $extraFields, ?ExtraFields $manager) : string
@@ -194,14 +196,14 @@ class SupplierProposalListView
 	/**
 	 * Render the DataTables initialization script
 	 *
-	 * @param string $tableId
+	 * @param string $tableId Table DOM id.
 	 * @return string
 	 */
 	private function renderDataTableInitScript(string $tableId) : string
 	{
 		$languageUrl = $this->context->getControllerUrl() . 'vendor/data-tables/french.json';
 		$out = '<script type="text/javascript">';
-		$out .= 'initSupplierProposalDataTable("' . dol_escape_js($tableId) . '", "' . dol_escape_js($languageUrl) . '", 2);';
+		$out .= 'initSupplierProposalDataTable("' . dol_escape_js($tableId) . '", "' . dol_escape_js($languageUrl) . '", 0);';
 		$out .= '</script>';
 
 		return $out;

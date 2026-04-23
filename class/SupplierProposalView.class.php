@@ -327,7 +327,7 @@ class SupplierProposalView
 			return '';
 		}
 
-		$sortMsg = !empty($this->user->conf->EA_SPROPAL_MSG_SORT_ORDER) ? $this->user->conf->EA_SPROPAL_MSG_SORT_ORDER : 'asc';
+			$sortMsg = !empty($this->user->conf->EA_SPROPAL_MSG_SORT_ORDER) ? $this->user->conf->EA_SPROPAL_MSG_SORT_ORDER : 'desc';
 
 		$out = '<div class="container px-0" style="margin-top: 20px;">';
 		$out .= '<h5>' . $this->langs->trans('Discussion') . '</h5>';
