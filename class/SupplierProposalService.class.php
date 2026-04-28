@@ -65,8 +65,12 @@ class SupplierProposalService
 
 		$resql = $this->db->query($sql);
 		if (!$resql || $this->db->num_rows($resql) == 0) {
+			if ($resql) {
+				$this->db->free($resql);
+			}
 			return false;
 		}
+		$this->db->free($resql);
 
 		$object = $this->fetchMainProposalData($id);
 		if (!$object) {
@@ -152,11 +156,13 @@ class SupplierProposalService
 
 		$obj = $this->db->fetch_object($resql);
 		if (!$obj) {
+			$this->db->free($resql);
 			return false;
 		}
 
 		$object = new SupplierProposal($this->db);
 		$this->populateProposalFromDbResult($object, $obj);
+		$this->db->free($resql);
 
 		return $object;
 	}
@@ -359,6 +365,7 @@ class SupplierProposalService
 					$documents[$obj->id] = $obj;
 				}
 			}
+			$this->db->free($resql);
 		}
 
 		return $documents;
@@ -556,6 +563,7 @@ class SupplierProposalService
 					$proposal->fetch_thirdparty();
 				}
 			}
+			$db->free($resql);
 		}
 
 		return $supplierProposals;

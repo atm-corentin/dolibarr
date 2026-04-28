@@ -2,6 +2,10 @@
 
 
 ## Unreleased
+- FIX : Correct the ST-8 CLI non-regression script so it loads real user rights before execution and asserts the persisted supplier-proposal/order link instead of transient in-memory origin fields. *27/04/2026* - 1.15.3
+- FIX : Reuse the standard supplier-order PDF model fallback (`COMMANDE_SUPPLIER_ADDON_PDF`) in the ST-8 workflow so automatic PDF generation no longer fails when `model_pdf` is empty on the newly created order. *27/04/2026* - 1.15.2
+- FIX : Harden the ST-8 supplier-order mail workflow and replace the initial CLI checker with a real case-based non-regression script featuring dry-run SQL rollback, branch assertions, and agenda verification. *27/04/2026* - 1.15.1
+- NEW : Extend subcontractor selection to convert the chosen supplier proposal into a validated supplier order, generate its PDF, send it by email with a dedicated configurable template, and trace the successful send in the agenda. *27/04/2026* - 1.15.0
 - NEW : Add a supplier response date extrafield on supplier proposals and populate it when a supplier submits a response from the portal. *23/04/2026* - 1.14.0
 - FIX : Sort supplier portal request-for-quotation list by reference in descending order by default. *17/04/2026* - 1.14.0
 - FIX : Reverse supplier portal discussion history order on supplier proposals so the most recent event is always displayed first, like a chat conversation. *17/04/2026* - 1.14.0
