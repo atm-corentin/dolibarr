@@ -221,9 +221,7 @@ switch ($action) {
 				accessforbidden();
 			}
 
-			if (method_exists($object, 'fetch_thirdparty') && (empty($object->thirdparty) || empty($object->thirdparty->id))) {
-				$object->fetch_thirdparty();
-			}
+			SupplierProposalService::ensureThirdpartyLoaded($object);
 
 			if (getDolGlobalInt('CLICHAUMEIL_MANDATORY_ATTACHED_FILES_SUPPLIER_PROPOSAL')
 				&& !$service->hasAttachedFile($object)) {
@@ -265,9 +263,7 @@ switch ($action) {
 
 			// Re-fetch to ensure status is updated in object
 			$object = $service->fetchProposalWithLines($propalId, 0);
-			if (method_exists($object, 'fetch_thirdparty') && (empty($object->thirdparty) || empty($object->thirdparty->id))) {
-				$object->fetch_thirdparty();
-			}
+			SupplierProposalService::ensureThirdpartyLoaded($object);
 			dol_syslog("AJAX update_line_price: After re-fetch for draft, object->status=" . $object->status);
 
 			// Find the line again after re-fetch
@@ -302,7 +298,7 @@ switch ($action) {
 				$lineToUpdate->info_bits,              // info_bits
 				$lineToUpdate->special_code,           // special_code
 				$lineToUpdate->fk_parent_line,         // fk_parent_line
-				0,                                     // skip_update_total
+				SupplierProposalService::UPDATE_LINE_RECOMPUTE_TOTALS, // skip_update_total
 				$lineToUpdate->fk_fournprice,          // fk_fournprice
 				$lineToUpdate->pa_ht,                  // pa_ht
 				$lineToUpdate->label,                  // label

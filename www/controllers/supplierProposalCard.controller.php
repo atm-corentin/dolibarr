@@ -402,7 +402,7 @@ class SupplierProposalCardController extends Controller
 			return;
 		}
 
-		$result = $this->actionHandler->submitResponse($object, $comment, $title, $this->getPostedLinePrices());
+		$result = $this->actionHandler->submitResponse($object, $comment, $title, GETPOST('line_prices', 'array'));
 
 		$context->setEventMessages($result['message'], $result['type']);
 	}
@@ -439,20 +439,6 @@ class SupplierProposalCardController extends Controller
 			'success' => false,
 			'message' => $this->getUploadErrorTranslation($result['error_code'], $conf)
 		);
-	}
-
-	/**
-	 * Return posted line prices from the response form.
-	 *
-	 * @return array
-	 */
-	private function getPostedLinePrices() : array
-	{
-		if (empty($_POST['line_prices']) || !is_array($_POST['line_prices'])) {
-			return array();
-		}
-
-		return $_POST['line_prices'];
 	}
 
 	/**

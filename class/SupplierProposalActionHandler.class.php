@@ -19,6 +19,7 @@ require_once DOL_DOCUMENT_ROOT.'/comm/action/class/actioncomm.class.php';
 require_once DOL_DOCUMENT_ROOT.'/core/class/CMailFile.class.php';
 require_once DOL_DOCUMENT_ROOT.'/core/lib/files.lib.php';
 require_once DOL_DOCUMENT_ROOT.'/core/class/extrafields.class.php';
+require_once __DIR__ . '/SupplierProposalService.class.php';
 require_once __DIR__ . '/../lib/clichaumeil.lib.php';
 
 /**
@@ -135,9 +136,7 @@ class SupplierProposalActionHandler
 			);
 		}
 
-		if (method_exists($object, 'fetch_thirdparty') && (empty($object->thirdparty) || empty($object->thirdparty->id))) {
-			$object->fetch_thirdparty();
-		}
+		SupplierProposalService::ensureThirdpartyLoaded($object);
 
 		$linesById = array();
 		if (!empty($object->lines) && is_array($object->lines)) {
@@ -191,7 +190,7 @@ class SupplierProposalActionHandler
 				isset($lineToUpdate->info_bits) ? $lineToUpdate->info_bits : 0,
 				isset($lineToUpdate->special_code) ? $lineToUpdate->special_code : 0,
 				isset($lineToUpdate->fk_parent_line) ? $lineToUpdate->fk_parent_line : 0,
-				0,
+				SupplierProposalService::UPDATE_LINE_RECOMPUTE_TOTALS,
 				isset($lineToUpdate->fk_fournprice) ? $lineToUpdate->fk_fournprice : 0,
 				isset($lineToUpdate->pa_ht) ? $lineToUpdate->pa_ht : 0,
 				isset($lineToUpdate->label) ? $lineToUpdate->label : '',

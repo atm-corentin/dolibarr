@@ -25,6 +25,11 @@ require_once DOL_DOCUMENT_ROOT . '/societe/class/societe.class.php';
  */
 class SupplierProposalService
 {
+	/**
+	 * updateline() flag: recompute line/object totals normally.
+	 */
+	public const UPDATE_LINE_RECOMPUTE_TOTALS = 0;
+
 	/** @var DoliDB */
 	private $db;
 
@@ -77,6 +82,19 @@ class SupplierProposalService
 		$object->fetch_optionals();
 
 		return $object;
+	}
+
+	/**
+	 * Ensure the supplier proposal thirdparty is loaded when the caller needs it for price calculations.
+	 *
+	 * @param SupplierProposal $object Supplier proposal.
+	 * @return void
+	 */
+	public static function ensureThirdpartyLoaded(SupplierProposal $object): void
+	{
+		if (method_exists($object, 'fetch_thirdparty') && (empty($object->thirdparty) || empty($object->thirdparty->id))) {
+			$object->fetch_thirdparty();
+		}
 	}
 
 	/**
