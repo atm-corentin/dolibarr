@@ -2,12 +2,16 @@
 
 
 ## Unreleased
+
+## 1.14
 - FIX : Prevent supplier portal line prices from being saved when mandatory attachment validation fails, both on AJAX price updates and final response submission. *28/04/2026* - 1.14.1
 - NEW : Add a supplier response date extrafield on supplier proposals and populate it when a supplier submits a response from the portal. *23/04/2026* - 1.14.0
 - FIX : Sort supplier portal request-for-quotation list by reference in descending order by default. *17/04/2026* - 1.14.0
 - FIX : Reverse supplier portal discussion history order on supplier proposals so the most recent event is always displayed first, like a chat conversation. *17/04/2026* - 1.14.0
 - NEW : Document the extrafield-based protected-line rules in setup, hide protected proposal lines from MassAction UI, and reject MassAction split/copy on protected proposal lines without the dedicated manage right. *16/04/2026* - 1.14.0
 - NEW : Add entity-scoped default proposal products/services with automatic injection on creation/clone, protected proposal lines, dedicated manage right, and backend guards for delete/edit actions. *15/04/2026* - 1.14.0
+
+## 1.13
 - NEW : Send an email to the internal follow-up manager when a supplier submits a response from the external portal, and link the notification directly to the supplier proposal card. *13/04/2026* - 1.13.0
 - NEW : Materialize the global supplier RFA list into a yearly summary table with manual rebuild tool, nightly cron, and SQL-native filtering/sorting/pagination. *31/03/2026* - 1.13.0
 
@@ -16,8 +20,6 @@
 - NEW : Add ACHT-5 scheduled RFA negotiation reminder cron with cloneable parameters and default email template seed. *31/03/2026* - 1.12.0
 - NEW: Block proposal validation when at least one line has a cost price higher than the sale price, including proposal card UI, mass validation, and PROPAL_VALIDATE trigger guard. *30/03/2026* - 1.12.0
 - NEW : Add packaging and transport rates to the product cost breakdown, update the R2 formula, display virtual total costs, realign import headers, and keep existing persisted `pa_fg` / `cost_price` values unchanged when overhead rate is empty. No mass recalculation is performed; the new formula applies on the next product change. *30/03/2026* - 1.12.0
-
-## 1.12
 - NEW : Add Print Management commission configuration with dedicated coefficients and group on the commissions setup page. *01/04/2026* - 1.12.0
 - FIX : Replace subcontractor selection tick icon with a `Valider` button in the selection modal. *01/04/2026* - 1.12.0
 - NEW : Add read-only display of standard line units on the external supplier portal; no change to the standard conversion flow. *01/04/2026* - 1.12.0
