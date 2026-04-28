@@ -128,16 +128,6 @@ class SupplierProposalActionHandler
 			return array('success' => true, 'message' => '', 'type' => 'mesgs');
 		}
 
-		if (!method_exists($object, 'updateline')) {
-			return array(
-				'success' => false,
-				'message' => $this->langs->trans('CLICHAUMEIL_AJAX_UPDATE_METHOD_MISSING'),
-				'type' => 'errors'
-			);
-		}
-
-		SupplierProposalService::ensureThirdpartyLoaded($object);
-
 		$linesById = array();
 		if (!empty($object->lines) && is_array($object->lines)) {
 			foreach ($object->lines as $line) {
@@ -147,8 +137,7 @@ class SupplierProposalActionHandler
 			}
 		}
 
-		$previousStatus = isset($object->status) ? (int) $object->status : null;
-		$draftWasRequested = false;
+		$service = new SupplierProposalService($this->db, $this->conf);
 		$updatedCount = 0;
 
 		foreach ($linePrices as $lineId => $submittedPrice) {
@@ -165,61 +154,13 @@ class SupplierProposalActionHandler
 				continue;
 			}
 
-			if (!$draftWasRequested && $previousStatus !== null && $previousStatus !== (int) SupplierProposal::STATUS_DRAFT) {
-				$draftResult = $object->setDraft($this->user);
-				if ($draftResult < 0) {
-					return array(
-						'success' => false,
-						'message' => $object->error ?: $this->db->lasterror(),
-						'type' => 'errors'
-					);
-				}
-				$draftWasRequested = true;
-			}
-
-			$res = $object->updateline(
-				$lineToUpdate->id,
-				$newPuHt,
-				$lineToUpdate->qty,
-				isset($lineToUpdate->remise_percent) ? $lineToUpdate->remise_percent : 0,
-				$lineToUpdate->tva_tx,
-				isset($lineToUpdate->localtax1_tx) ? $lineToUpdate->localtax1_tx : 0,
-				isset($lineToUpdate->localtax2_tx) ? $lineToUpdate->localtax2_tx : 0,
-				$lineToUpdate->desc,
-				'HT',
-				isset($lineToUpdate->info_bits) ? $lineToUpdate->info_bits : 0,
-				isset($lineToUpdate->special_code) ? $lineToUpdate->special_code : 0,
-				isset($lineToUpdate->fk_parent_line) ? $lineToUpdate->fk_parent_line : 0,
-				SupplierProposalService::UPDATE_LINE_RECOMPUTE_TOTALS,
-				isset($lineToUpdate->fk_fournprice) ? $lineToUpdate->fk_fournprice : 0,
-				isset($lineToUpdate->pa_ht) ? $lineToUpdate->pa_ht : 0,
-				isset($lineToUpdate->label) ? $lineToUpdate->label : '',
-				isset($lineToUpdate->product_type) ? $lineToUpdate->product_type : 0,
-				isset($lineToUpdate->array_options) && is_array($lineToUpdate->array_options) ? $lineToUpdate->array_options : array(),
-				$this->getLineSupplierReference($lineToUpdate),
-				isset($lineToUpdate->fk_unit) ? $lineToUpdate->fk_unit : 0
-			);
-
-			if ($res < 0) {
-				$this->restorePreviousStatusAfterLineUpdate($object, $previousStatus);
-				return array(
-					'success' => false,
-					'message' => $this->langs->trans('CLICHAUMEIL_AJAX_UPDATE_FAILED', $object->error ?: $this->db->lasterror()),
-					'type' => 'errors'
-				);
+			$updateResult = $service->updateLinePricePreservingStatus($object, $lineToUpdate, $newPuHt, $this->user);
+			if (!$updateResult['success']) {
+				return $this->formatLinePriceUpdateError($updateResult);
 			}
 
 			$lineToUpdate->subprice = $newPuHt;
 			$updatedCount++;
-		}
-
-		$restoreResult = $this->restorePreviousStatusAfterLineUpdate($object, $previousStatus);
-		if ($restoreResult < 0) {
-			return array(
-				'success' => false,
-				'message' => $this->langs->trans('CLICHAUMEIL_AJAX_RESTORE_STATUS_FAILED', $object->error ?: $this->db->lasterror()),
-				'type' => 'errors'
-			);
 		}
 
 		dol_syslog(__METHOD__ . ' updated ' . $updatedCount . ' line price(s) for proposal id=' . ((int) $object->id), LOG_DEBUG);
@@ -228,43 +169,29 @@ class SupplierProposalActionHandler
 	}
 
 	/**
-	 * Restore the previous supplier proposal status after temporary draft line updates.
+	 * Format a line price update service error for portal messages.
 	 *
-	 * @param SupplierProposal $object Supplier proposal.
-	 * @param int|null         $previousStatus Previous status.
-	 * @return int 1 if no restore needed or restore OK, <0 on error.
+	 * @param array $updateResult Result returned by SupplierProposalService::updateLinePricePreservingStatus().
+	 * @return array ['success' => false, 'message' => string, 'type' => 'errors']
 	 */
-	private function restorePreviousStatusAfterLineUpdate(SupplierProposal $object, ?int $previousStatus) : int
+	private function formatLinePriceUpdateError(array $updateResult) : array
 	{
-		if ($previousStatus === null || $previousStatus === (int) SupplierProposal::STATUS_DRAFT) {
-			return 1;
+		$errorCode = $updateResult['error_code'] ?? 'UPDATE_FAILED';
+		$message = $updateResult['message'] ?? '';
+
+		if ($errorCode === 'UPDATE_METHOD_MISSING') {
+			$translatedMessage = $this->langs->trans('CLICHAUMEIL_AJAX_UPDATE_METHOD_MISSING');
+		} elseif ($errorCode === 'RESTORE_STATUS_FAILED') {
+			$translatedMessage = $this->langs->trans('CLICHAUMEIL_AJAX_RESTORE_STATUS_FAILED', $message);
+		} else {
+			$translatedMessage = $this->langs->trans('CLICHAUMEIL_AJAX_UPDATE_FAILED', $message);
 		}
 
-		$currentStatus = isset($object->status) ? (int) $object->status : (int) SupplierProposal::STATUS_DRAFT;
-		if ($currentStatus === $previousStatus) {
-			return 1;
-		}
-
-		return $object->setStatut($previousStatus);
-	}
-
-	/**
-	 * Get the supplier reference carried by the proposal line itself.
-	 *
-	 * @param SupplierProposalLine $line Supplier proposal line.
-	 * @return string
-	 */
-	private function getLineSupplierReference(SupplierProposalLine $line) : string
-	{
-		if (isset($line->ref_fourn) && $line->ref_fourn !== '') {
-			return (string) $line->ref_fourn;
-		}
-
-		if (isset($line->ref_supplier) && $line->ref_supplier !== '') {
-			return (string) $line->ref_supplier;
-		}
-
-		return '';
+		return array(
+			'success' => false,
+			'message' => $translatedMessage,
+			'type' => 'errors'
+		);
 	}
 
 	/**
