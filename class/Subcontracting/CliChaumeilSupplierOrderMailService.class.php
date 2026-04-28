@@ -134,9 +134,7 @@ class CliChaumeilSupplierOrderMailService
 		$substitutionarray = is_array($formMail->substit) ? $formMail->substit : array();
 		$substitutionarray['__SENDEREMAIL_SIGNATURE__'] = (string) $user->signature;
 		$substitutionarray['__EMAIL__'] = $recipientList;
-		$substitutionarray['__CHECK_READ__'] = (!empty($supplierOrder->thirdparty) && !empty($supplierOrder->thirdparty->id))
-			? '<img src="'.DOL_MAIN_URL_ROOT.'/public/emailing/mailing-read.php?tag=undefined&securitykey='.dol_hash(getDolGlobalString('MAILING_EMAIL_UNSUBSCRIBE_KEY').'-undefined', 'md5').'" width="1" height="1" style="width:1px;height:1px" border="0"/>'
-			: '';
+		$substitutionarray['__CHECK_READ__'] = '';
 		$substitutionarray['__LINES__'] = $this->buildLinesSubstitutionPayload(
 			(string) $template->content_lines,
 			is_array($formMail->substit_lines) ? $formMail->substit_lines : array(),
