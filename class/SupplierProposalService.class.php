@@ -205,9 +205,10 @@ class SupplierProposalService
 	private function fetchProposalLines(SupplierProposal $object) : void
 	{
 		$sqlLines = 'SELECT spd.rowid, spd.fk_supplier_proposal, spd.fk_parent_line, spd.description, spd.qty,';
-		$sqlLines .= ' spd.subprice, spd.tva_tx, spd.localtax1_tx, spd.localtax2_tx,';
+		$sqlLines .= ' spd.subprice, spd.remise_percent, spd.tva_tx, spd.localtax1_tx, spd.localtax2_tx,';
 		$sqlLines .= ' spd.total_ht, spd.total_tva, spd.total_localtax1, spd.total_localtax2, spd.total_ttc,';
-		$sqlLines .= ' spd.fk_product, spd.product_type, spd.label, spd.fk_unit, spd.rang, spd.special_code,';
+		$sqlLines .= ' spd.fk_product, spd.product_type, spd.label, spd.fk_unit, spd.rang, spd.special_code, spd.info_bits,';
+		$sqlLines .= ' spd.fk_product_fournisseur_price as fk_fournprice, spd.buy_price_ht as pa_ht, spd.ref_fourn as line_ref_supplier,';
 		$sqlLines .= ' spd.multicurrency_subprice, spd.multicurrency_total_ht, spd.multicurrency_total_tva, spd.multicurrency_total_ttc,';
 		$sqlLines .= ' p.ref as product_ref, p.label as product_label, pfp.ref_fourn as ref_supplier';
 		$sqlLines .= ' FROM ' . $this->db->prefix() . 'supplier_proposaldet spd';
@@ -250,6 +251,7 @@ class SupplierProposalService
 		$line->desc = $objLine->description;
 		$line->qty = $objLine->qty;
 		$line->subprice = $objLine->subprice;
+		$line->remise_percent = $objLine->remise_percent;
 		$line->tva_tx = $objLine->tva_tx;
 		$line->localtax1_tx = $objLine->localtax1_tx;
 		$line->localtax2_tx = $objLine->localtax2_tx;
@@ -261,12 +263,16 @@ class SupplierProposalService
 		$line->fk_product = $objLine->fk_product;
 		$line->product_type = $objLine->product_type;
 		$line->ref_supplier = $objLine->ref_supplier;
+		$line->ref_fourn = $objLine->line_ref_supplier;
 		$line->product_ref = $objLine->product_ref;
 		// Use line label if exists, otherwise use product label
 		$line->label = !empty($objLine->label) ? $objLine->label : (!empty($objLine->product_label) ? $objLine->product_label : '');
 		$line->fk_unit = $objLine->fk_unit;
 		$line->rang = $objLine->rang;
 		$line->special_code = $objLine->special_code;
+		$line->info_bits = $objLine->info_bits;
+		$line->fk_fournprice = $objLine->fk_fournprice;
+		$line->pa_ht = $objLine->pa_ht;
 		$line->multicurrency_subprice = $objLine->multicurrency_subprice;
 		$line->multicurrency_total_ht = $objLine->multicurrency_total_ht;
 		$line->multicurrency_total_tva = $objLine->multicurrency_total_tva;

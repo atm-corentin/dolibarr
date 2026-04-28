@@ -221,6 +221,10 @@ switch ($action) {
 				accessforbidden();
 			}
 
+			if (method_exists($object, 'fetch_thirdparty') && (empty($object->thirdparty) || empty($object->thirdparty->id))) {
+				$object->fetch_thirdparty();
+			}
+
 			if (getDolGlobalInt('CLICHAUMEIL_MANDATORY_ATTACHED_FILES_SUPPLIER_PROPOSAL')
 				&& !$service->hasAttachedFile($object)) {
 				$response['message'] = $langs->trans('CLICHAUMEIL_ERROR_NO_PDF_ATTACHED');
@@ -261,6 +265,9 @@ switch ($action) {
 
 			// Re-fetch to ensure status is updated in object
 			$object = $service->fetchProposalWithLines($propalId, 0);
+			if (method_exists($object, 'fetch_thirdparty') && (empty($object->thirdparty) || empty($object->thirdparty->id))) {
+				$object->fetch_thirdparty();
+			}
 			dol_syslog("AJAX update_line_price: After re-fetch for draft, object->status=" . $object->status);
 
 			// Find the line again after re-fetch
@@ -288,20 +295,20 @@ switch ($action) {
 				$lineToUpdate->qty,                    // qty
 				$lineToUpdate->remise_percent,         // remise_percent
 				$lineToUpdate->tva_tx,                 // txtva
-				0,                                     // txlocaltax1
-				0,                                     // txlocaltax2
+				$lineToUpdate->localtax1_tx,           // txlocaltax1
+				$lineToUpdate->localtax2_tx,           // txlocaltax2
 				$lineToUpdate->desc,                   // desc
 				'HT',                                  // price_base_type
 				$lineToUpdate->info_bits,              // info_bits
 				$lineToUpdate->special_code,           // special_code
 				$lineToUpdate->fk_parent_line,         // fk_parent_line
 				0,                                     // skip_update_total
-				0,                                     // fk_fournprice
-				0,                                     // pa_ht
+				$lineToUpdate->fk_fournprice,          // fk_fournprice
+				$lineToUpdate->pa_ht,                  // pa_ht
 				$lineToUpdate->label,                  // label
 				$lineToUpdate->product_type,           // type (0=product, 1=service)
 				$lineToUpdate->array_options,          // array_options (extrafields)
-				$lineToUpdate->ref_supplier,           // ref_supplier
+				!empty($lineToUpdate->ref_fourn) ? $lineToUpdate->ref_fourn : $lineToUpdate->ref_supplier, // ref_supplier
 				$lineToUpdate->fk_unit                 // fk_unit
 			);
 

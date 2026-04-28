@@ -221,10 +221,7 @@ class SupplierProposalCardController extends Controller
 				return false; // Stop execution after redirect
 
 			case 'validate_proposal':
-				$this->handleValidateProposal($object);
-				$this->redirectToProposal($supplierPropalId);
-				return false; // Stop execution after redirect
-
+				// Legacy action name now follows the same single response-submit path.
 			case 'new-comment':
 				$this->handleNewComment($object);
 				// Scroll back to the comment form after posting
@@ -388,20 +385,6 @@ class SupplierProposalCardController extends Controller
 	}
 
 	/**
-	 * Handle proposal validation
-	 *
-	 * @param SupplierProposal $object
-	 * @return void
-	 */
-	private function handleValidateProposal(SupplierProposal $object) : void
-	{
-		$context = Context::getInstance();
-		$result = $this->actionHandler->validateProposal($object);
-
-		$context->setEventMessages($result['message'], $result['type']);
-	}
-
-	/**
 	 * Handle new comment
 	 *
 	 * @param SupplierProposal $object
@@ -413,9 +396,63 @@ class SupplierProposalCardController extends Controller
 		$title = GETPOST('propal-title', 'aZ09');
 
 		$context = Context::getInstance();
-		$result = $this->actionHandler->addComment($object, $comment, $title);
+		$uploadResult = $this->uploadPostedFileToSessionIfNeeded($object);
+		if (!$uploadResult['success']) {
+			$context->setEventMessages($uploadResult['message'], 'errors');
+			return;
+		}
+
+		$result = $this->actionHandler->submitResponse($object, $comment, $title, $this->getPostedLinePrices());
 
 		$context->setEventMessages($result['message'], $result['type']);
+	}
+
+	/**
+	 * Upload a directly posted attachment when JavaScript did not already put it in session.
+	 *
+	 * @param SupplierProposal $object Supplier proposal.
+	 * @return array ['success' => bool, 'message' => string]
+	 */
+	private function uploadPostedFileToSessionIfNeeded(SupplierProposal $object) : array
+	{
+		global $conf;
+
+		$keytoavoidconflict = '-' . $object->id;
+		$hasFilesInSession = !empty($_SESSION["listofnames" . $keytoavoidconflict])
+			&& !empty($_SESSION["listofpaths" . $keytoavoidconflict]);
+
+		if ($hasFilesInSession || empty($_FILES['addedfile'])) {
+			return array('success' => true, 'message' => '');
+		}
+
+		$errorCode = isset($_FILES['addedfile']['error']) ? (int) $_FILES['addedfile']['error'] : UPLOAD_ERR_NO_FILE;
+		if ($errorCode === UPLOAD_ERR_NO_FILE && empty($_FILES['addedfile']['name'])) {
+			return array('success' => true, 'message' => '');
+		}
+
+		$result = $this->fileManager->uploadFileToSession($object->id);
+		if ($result['success']) {
+			return array('success' => true, 'message' => '');
+		}
+
+		return array(
+			'success' => false,
+			'message' => $this->getUploadErrorTranslation($result['error_code'], $conf)
+		);
+	}
+
+	/**
+	 * Return posted line prices from the response form.
+	 *
+	 * @return array
+	 */
+	private function getPostedLinePrices() : array
+	{
+		if (empty($_POST['line_prices']) || !is_array($_POST['line_prices'])) {
+			return array();
+		}
+
+		return $_POST['line_prices'];
 	}
 
 	/**
