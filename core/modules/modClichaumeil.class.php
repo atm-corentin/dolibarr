@@ -111,8 +111,7 @@ class modClichaumeil extends DolibarrModules
 		$this->editor_squarred_logo = '';					// Must be image filename into the module/img directory followed with @modulename. Example: 'myimage.png@clichaumeil'
 
 		// Possible values for version are: 'development', 'experimental', 'dolibarr', 'dolibarr_deprecated', 'experimental_deprecated' or a version string like 'x.y.z'
-		$this->version = '1.14.0';
-		// Url to the file with your last numberversion of this module
+		$this->version = '1.15.0';		// Url to the file with your last numberversion of this module
 		//$this->url_last_version = 'http://www.example.com/versionmodule.txt';
 
 		// Key used in llx_const table to save module status enabled/disabled (where CLICHAUMEIL is value of property name of module in uppercase)
@@ -468,10 +467,11 @@ class modClichaumeil extends DolibarrModules
 		$this->ensureProductExtrafield($extrafields, 'clichaumeil_pa_mo', 'CliChaumeilPaLabor', 'double', 105, '24,4', 0, 0, '', '', 1, $permsCostComposition, $permsCostComposition, 'CLICHAUMEIL_HELP_PA_LABOR', '', 0, 'clichaumeil@clichaumeil', 1, 0, '0', array());
 		$this->ensureProductExtrafield($extrafields, CliChaumeilProductCostCalculator::PACKAGING_PERCENT_FIELD, 'CLICHAUMEIL_CONDITIONNEMENT_PERCENT', 'double', 106, '24,4', 0, 0, '', '', 1, $permsCostComposition, $permsCostComposition, 'CLICHAUMEIL_HELP_PACKAGING_PERCENT', '', 0, 'clichaumeil@clichaumeil', 1, 0, '0', array());
 		$this->ensureProductExtrafield($extrafields, CliChaumeilProductCostCalculator::TRANSPORT_PERCENT_FIELD, 'CLICHAUMEIL_TRANSPORT_PERCENT', 'double', 107, '24,4', 0, 0, '', '', 1, $permsCostComposition, $permsCostComposition, 'CLICHAUMEIL_HELP_TRANSPORT_PERCENT', '', 0, 'clichaumeil@clichaumeil', 1, 0, '0', array());
-		$this->ensureProductExtrafield($extrafields, 'clichaumeil_fg_percent', 'CliChaumeilFgPercent', 'double', 108, '24,4', 0, 0, '', '', 1, $permsCostComposition, $permsCostComposition, 'CLICHAUMEIL_HELP_FG_PERCENT', '', 0, 'clichaumeil@clichaumeil', 1, 0, '0', array());
-		$this->ensureProductExtrafield($extrafields, 'clichaumeil_pa_fg', 'CliChaumeilPaFg', 'double', 109, '24,4', 0, 0, '', '', 0, $permsPaFg, $permsPaFg, 'CLICHAUMEIL_HELP_PA_FG', '', 0, 'clichaumeil@clichaumeil', 1, 0, '0', array());
+		$this->ensureProductExtrafield($extrafields, CliChaumeilProductCostCalculator::FILE_FEE_PERCENT_FIELD, 'CLICHAUMEIL_TAUX_FRAIS_DOSSIER', 'double', 108, '24,4', 0, 0, '', '', 1, $permsCostComposition, $permsCostComposition, 'CLICHAUMEIL_HELP_TAUX_FRAIS_DOSSIER', '', 0, 'clichaumeil@clichaumeil', 1, 0, '0', array());
+		$this->ensureProductExtrafield($extrafields, CliChaumeilProductCostCalculator::FILE_FEE_AMOUNT_FIELD, 'CLICHAUMEIL_MT_FRAIS_DOSSIER', 'double', 109, '24,4', 0, 0, '', '', 0, $permsCostComposition, $permsCostComposition, 'CLICHAUMEIL_HELP_MT_FRAIS_DOSSIER', '', 0, 'clichaumeil@clichaumeil', 1, 0, '0', array());
+		$this->ensureProductExtrafield($extrafields, 'clichaumeil_fg_percent', 'CliChaumeilFgPercent', 'double', 110, '24,4', 0, 0, '', '', 1, $permsCostComposition, $permsCostComposition, 'CLICHAUMEIL_HELP_FG_PERCENT', '', 0, 'clichaumeil@clichaumeil', 1, 0, '0', array());
+		$this->ensureProductExtrafield($extrafields, 'clichaumeil_pa_fg', 'CliChaumeilPaFg', 'double', 111, '24,4', 0, 0, '', '', 0, $permsPaFg, $permsPaFg, 'CLICHAUMEIL_HELP_PA_FG', '', 0, 'clichaumeil@clichaumeil', 1, 0, '0', array());
 		$this->ensurePropalDefaultLineExtrafield($extrafields);
-
 		if (!getDolGlobalInt('CLICHAUMEIL_DEFAULT_OVERHEAD_RATE')) {
 			dolibarr_set_const($this->db, 'CLICHAUMEIL_DEFAULT_OVERHEAD_RATE', CliChaumeilProductCostCalculator::DEFAULT_RATE_VALUE, 'chaine', 0, '', $conf->entity);
 		}

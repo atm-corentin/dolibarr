@@ -23,16 +23,16 @@ class CliChaumeilProductCostImportService
 	 * @var array<string,string>
 	 */
 	public const IMPORT_FIELD_MAP = array(
-		'extra.clichaumeil_pa_support' => 'clichaumeil_pa_support',
-		'extra.clichaumeil_pa_sav' => 'clichaumeil_pa_sav',
-		'extra.clichaumeil_pa_machine' => 'clichaumeil_pa_machine',
-		'extra.clichaumeil_pa_encre' => 'clichaumeil_pa_encre',
-		'extra.clichaumeil_pa_mo' => 'clichaumeil_pa_mo',
-		'extra.clichaumeil_conditionnement_percent' => 'clichaumeil_conditionnement_percent',
-		'extra.clichaumeil_transport_percent' => 'clichaumeil_transport_percent',
-		'extra.clichaumeil_fg_percent' => 'clichaumeil_fg_percent',
+			'extra.clichaumeil_pa_support' => 'clichaumeil_pa_support',
+			'extra.clichaumeil_pa_sav' => 'clichaumeil_pa_sav',
+			'extra.clichaumeil_pa_machine' => 'clichaumeil_pa_machine',
+			'extra.clichaumeil_pa_encre' => 'clichaumeil_pa_encre',
+			'extra.clichaumeil_pa_mo' => 'clichaumeil_pa_mo',
+			'extra.clichaumeil_conditionnement_percent' => 'clichaumeil_conditionnement_percent',
+			'extra.clichaumeil_transport_percent' => 'clichaumeil_transport_percent',
+			'extra.clichaumeil_taux_frais_dossier' => 'clichaumeil_taux_frais_dossier',
+			'extra.clichaumeil_fg_percent' => 'clichaumeil_fg_percent',
 	);
-
 	/**
 	 * @var DoliDB
 	 */

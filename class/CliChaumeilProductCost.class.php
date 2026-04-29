@@ -67,6 +67,20 @@ class CliChaumeilProductCostCalculator
 	public const TRANSPORT_PERCENT_FIELD = 'clichaumeil_transport_percent';
 
 	/**
+	 * File fee percent extrafield.
+	 *
+	 * @var string
+	 */
+	public const FILE_FEE_PERCENT_FIELD = 'clichaumeil_taux_frais_dossier';
+
+	/**
+	 * File fee amount extrafield.
+	 *
+	 * @var string
+	 */
+	public const FILE_FEE_AMOUNT_FIELD = 'clichaumeil_mt_frais_dossier';
+
+	/**
 	 * Overhead percent extrafield.
 	 *
 	 * @var string
@@ -204,6 +218,7 @@ class CliChaumeilProductCostCalculator
 			self::normalizeAmount(self::getExtrafieldValue($product, self::COST_FIELDS[4])),
 			self::normalizePercent(self::getExtrafieldValue($product, self::PACKAGING_PERCENT_FIELD)) ?? 0.0,
 			self::normalizePercent(self::getExtrafieldValue($product, self::TRANSPORT_PERCENT_FIELD)) ?? 0.0,
+			self::normalizePercent(self::getExtrafieldValue($product, self::FILE_FEE_PERCENT_FIELD)) ?? 0.0,
 			self::normalizePercent(self::getExtrafieldValue($product, self::FG_PERCENT_FIELD))
 		);
 	}
@@ -226,13 +241,15 @@ class CliChaumeilProductCostCalculator
 
 		$packagingAmount = self::roundAmount($baseCost * $input->packagingPercent / 100);
 		$transportAmount = self::roundAmount($baseCost * $input->transportPercent / 100);
-		$totalCosts = self::roundAmount($baseCost + $packagingAmount + $transportAmount);
+		$mtFraisDossier = self::roundAmount($baseCost * $input->tauxFraisDossier / 100);
+		$totalCosts = self::roundAmount($baseCost + $packagingAmount + $transportAmount + $mtFraisDossier);
 
 		if ($input->fgPercent === null) {
 			return new CostBreakdownResult(
 				$baseCost,
 				$packagingAmount,
 				$transportAmount,
+				$mtFraisDossier,
 				$totalCosts,
 				null,
 				null,
@@ -248,6 +265,7 @@ class CliChaumeilProductCostCalculator
 			$baseCost,
 			$packagingAmount,
 			$transportAmount,
+			$mtFraisDossier,
 			$totalCosts,
 			$paFg,
 			$costPrice,
@@ -269,6 +287,8 @@ class CliChaumeilProductCostCalculator
 			array(
 				self::PACKAGING_PERCENT_FIELD,
 				self::TRANSPORT_PERCENT_FIELD,
+				self::FILE_FEE_PERCENT_FIELD,
+				self::FILE_FEE_AMOUNT_FIELD,
 				self::FG_PERCENT_FIELD,
 				self::FG_AMOUNT_FIELD,
 			)
@@ -306,11 +326,13 @@ class CliChaumeilProductCostCalculator
 	{
 		self::ensureExtrafieldsLoaded($product);
 
+		$changes = 0;
+		$changes += self::syncExtraFieldAmount($product, self::FILE_FEE_AMOUNT_FIELD, $result->mtFraisDossier, $user);
+
 		if (!$result->isFinalComputable) {
-			return 0;
+			return $changes;
 		}
 
-		$changes = 0;
 		$changes += self::syncExtraFieldAmount($product, self::FG_AMOUNT_FIELD, $result->paFg, $user);
 		$changes += self::syncProductFieldAmount($product, 'cost_price', $result->costPrice, $user);
 
@@ -389,7 +411,12 @@ class CliChaumeilProductCostCalculator
 	{
 		return in_array(
 			$field,
-			array(self::PACKAGING_PERCENT_FIELD, self::TRANSPORT_PERCENT_FIELD, self::FG_PERCENT_FIELD),
+			array(
+				self::PACKAGING_PERCENT_FIELD,
+				self::TRANSPORT_PERCENT_FIELD,
+				self::FILE_FEE_PERCENT_FIELD,
+				self::FG_PERCENT_FIELD
+			),
 			true
 		);
 	}

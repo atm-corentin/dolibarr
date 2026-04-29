@@ -311,11 +311,15 @@ CliChaumeilPaInk=PA Ink
 CliChaumeilPaLabor=PA Labor
 CliChaumeilConditionnementPercent=Packaging rate (%)
 CliChaumeilTransportPercent=Transport rate (%)
+CliChaumeilTauxFraisDossier=File fee rate (%)
+CliChaumeilMtFraisDossier=File fee amount
 CliChaumeilTotalCosts=Total costs
 CLICHAUMEIL_CONDITIONNEMENT_PERCENT=Packaging rate (%)
 CLICHAUMEIL_TRANSPORT_PERCENT=Transport rate (%)
+CLICHAUMEIL_TAUX_FRAIS_DOSSIER=File fee rate (%)
+CLICHAUMEIL_MT_FRAIS_DOSSIER=File fee amount
 CLICHAUMEIL_TOTAL_COSTS=Total costs
-CLICHAUMEIL_TOTAL_COSTS_HELP=Sum of the five purchase components, increased by the packaging and transport rates. This amount is computed on the fly and is not stored.
+CLICHAUMEIL_TOTAL_COSTS_HELP=Sum of the five purchase components, increased by the packaging, transport and file fee rates. This amount is computed on the fly and is not stored.
 CliChaumeilFgPercent=Overhead rate (%)
 CliChaumeilPaFg=Overhead amount
 CLICHAUMEIL_HELP_PA_SUPPORT=Purchase component related to the support.
@@ -324,8 +328,10 @@ CLICHAUMEIL_HELP_PA_MACHINE=Purchase component related to the machine.
 CLICHAUMEIL_HELP_PA_INK=Purchase component related to ink.
 CLICHAUMEIL_HELP_PA_LABOR=Purchase component related to labor.
 CLICHAUMEIL_HELP_PACKAGING_PERCENT=Percentage applied to the sum of the five purchase components to compute packaging cost. Convention: 10 = 10%%.
-CLICHAUMEIL_HELP_TRANSPORT_PERCENT=Percentage applied to the sum of the five purchase components to compute transport cost. Convention: 10 = 10%%.
-CLICHAUMEIL_HELP_FG_PERCENT=Overhead percentage applied to Total costs. Convention: 10 = 10%%. If empty, the final calculation does not overwrite the overhead amount or the cost price.
+CLICHAUMEIL_HELP_TRANSPORT_PERCENT=Percentage applied on the sum of the five purchase items to calculate the transport cost. Convention: 10 = 10%%.
+CLICHAUMEIL_HELP_TAUX_FRAIS_DOSSIER=Percentage applied on the sum of the five purchase items to calculate the file fee amount. Convention: 10 = 10%%.
+CLICHAUMEIL_HELP_MT_FRAIS_DOSSIER=Calculated file fee amount: Sum of the 5 purchase items x file fee rate.
+CLICHAUMEIL_HELP_FG_PERCENT=Overhead percentage applied on the Total costs. Convention: 10 = 10%%. If empty, the final calculation does not overwrite the overhead amount nor the cost price.
 CLICHAUMEIL_HELP_PA_FG=Computed overhead amount: Total costs x overhead rate.
 CliChaumeilSurfaceRecalculated = Recalculated surface (in %s)
 
