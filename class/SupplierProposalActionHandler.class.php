@@ -19,6 +19,7 @@ require_once DOL_DOCUMENT_ROOT.'/comm/action/class/actioncomm.class.php';
 require_once DOL_DOCUMENT_ROOT.'/core/class/CMailFile.class.php';
 require_once DOL_DOCUMENT_ROOT.'/core/lib/files.lib.php';
 require_once DOL_DOCUMENT_ROOT.'/core/class/extrafields.class.php';
+require_once __DIR__ . '/SupplierProposalService.class.php';
 require_once __DIR__ . '/../lib/clichaumeil.lib.php';
 
 /**
@@ -70,47 +71,177 @@ class SupplierProposalActionHandler
 	{
 		dol_syslog("SupplierProposalActionHandler::validateProposal START for proposal ID=" . $object->id, LOG_DEBUG);
 
-		// Check if file attachment is mandatory BEFORE moving files
-		$mandatoryConfig = getDolGlobalInt('CLICHAUMEIL_MANDATORY_ATTACHED_FILES_SUPPLIER_PROPOSAL');
-		dol_syslog("SupplierProposalActionHandler::validateProposal CLICHAUMEIL_MANDATORY_ATTACHED_FILES_SUPPLIER_PROPOSAL=" . $mandatoryConfig, LOG_DEBUG);
-
-		if ($mandatoryConfig) {
-			// Check if user uploaded a file in this validation (file in session)
-			$keytoavoidconflict = '-' . $object->id;
-			$hasFilesInSession = !empty($_SESSION["listofnames" . $keytoavoidconflict])
-				&& !empty($_SESSION["listofpaths" . $keytoavoidconflict]);
-
-			// Check if there is already a file attached through a previous timeline action
-			$hasFilesInTimeline = $this->hasFilesInTimeline($object);
-
-			$hasFileInSession = $hasFilesInSession || $hasFilesInTimeline;
-
-			dol_syslog(
-				"SupplierProposalActionHandler::validateProposal hasFilesInSession=" . ($hasFilesInSession ? 'YES' : 'NO') .
-				" hasFilesInTimeline=" . ($hasFilesInTimeline ? 'YES' : 'NO'),
-				LOG_DEBUG
-			);
-
-			if ($hasFilesInSession) {
-				$listofnames = explode(';', $_SESSION["listofnames" . $keytoavoidconflict]);
-				dol_syslog("SupplierProposalActionHandler::validateProposal Files in session: " . print_r($listofnames, true), LOG_DEBUG);
-			}
-
-			if (!$hasFileInSession) {
-				dol_syslog("SupplierProposalActionHandler::validateProposal BLOCKING validation - no file uploaded for this validation", LOG_WARNING);
-				return array(
-					'success' => false,
-					'message' => $this->langs->trans('CLICHAUMEIL_ERROR_NO_PDF_ATTACHED'),
-					'type' => 'errors'
-				);
-			}
+		$attachmentCheck = $this->checkMandatoryAttachment($object, 'SupplierProposalActionHandler::validateProposal');
+		if (!$attachmentCheck['success']) {
+			return $attachmentCheck;
 		}
 
 		// Move session files to proposal directory
 		$moveResult = $this->fileManager->moveSessionFilesToProposal($object);
 		dol_syslog("SupplierProposalActionHandler::validateProposal moveSessionFiles result: success=" . $moveResult['success'], LOG_DEBUG);
 
-		// Update extrafield status to indicate file has been received
+		return $this->markSupplierResponseReceived($object);
+	}
+
+	/**
+	 * Submit the supplier response from the external portal.
+	 *
+	 * This is the single business action behind the "Reply" button: persist posted prices,
+	 * create the agenda event/comment with optional files, then mark the supplier response as received.
+	 *
+	 * @param SupplierProposal $object     Supplier proposal.
+	 * @param string           $comment    Supplier comment.
+	 * @param string           $title      Optional agenda title.
+	 * @param array            $linePrices Posted line prices indexed by supplier_proposaldet rowid.
+	 * @return array ['success' => bool, 'message' => string, 'type' => 'mesgs'|'errors']
+	 */
+	public function submitResponse(SupplierProposal $object, string $comment, string $title = '', array $linePrices = array()) : array
+	{
+		$attachmentCheck = $this->checkMandatoryAttachment($object, 'SupplierProposalActionHandler::submitResponse');
+		if (!$attachmentCheck['success']) {
+			return $attachmentCheck;
+		}
+
+		$priceResult = $this->updateLinePrices($object, $linePrices);
+		if (!$priceResult['success']) {
+			return $priceResult;
+		}
+
+		$commentResult = $this->addComment($object, $comment, $title, true);
+		if (!$commentResult['success']) {
+			return $commentResult;
+		}
+
+		return $this->markSupplierResponseReceived($object);
+	}
+
+	/**
+	 * Update proposal line prices from the submitted form values.
+	 *
+	 * @param SupplierProposal $object     Supplier proposal.
+	 * @param array            $linePrices Posted line prices indexed by line id.
+	 * @return array ['success' => bool, 'message' => string, 'type' => 'mesgs'|'errors']
+	 */
+	private function updateLinePrices(SupplierProposal $object, array $linePrices) : array
+	{
+		if (empty($linePrices)) {
+			return array('success' => true, 'message' => '', 'type' => 'mesgs');
+		}
+
+		$linesById = array();
+		if (!empty($object->lines) && is_array($object->lines)) {
+			foreach ($object->lines as $line) {
+				if (!empty($line->id)) {
+					$linesById[(int) $line->id] = $line;
+				}
+			}
+		}
+
+		$service = new SupplierProposalService($this->db, $this->conf);
+		$updatedCount = 0;
+
+		foreach ($linePrices as $lineId => $submittedPrice) {
+			$lineId = (int) $lineId;
+			if (empty($lineId) || empty($linesById[$lineId]) || is_array($submittedPrice)) {
+				continue;
+			}
+
+			$lineToUpdate = $linesById[$lineId];
+			$newPuHt = price2num($submittedPrice);
+			$currentPuHt = price2num($lineToUpdate->subprice);
+
+			if (abs((float) $newPuHt - (float) $currentPuHt) < 0.000001) {
+				continue;
+			}
+
+			$updateResult = $service->updateLinePricePreservingStatus($object, $lineToUpdate, $newPuHt, $this->user);
+			if (!$updateResult['success']) {
+				return $this->formatLinePriceUpdateError($updateResult);
+			}
+
+			$lineToUpdate->subprice = $newPuHt;
+			$updatedCount++;
+		}
+
+		dol_syslog(__METHOD__ . ' updated ' . $updatedCount . ' line price(s) for proposal id=' . ((int) $object->id), LOG_DEBUG);
+
+		return array('success' => true, 'message' => '', 'type' => 'mesgs');
+	}
+
+	/**
+	 * Format a line price update service error for portal messages.
+	 *
+	 * @param array $updateResult Result returned by SupplierProposalService::updateLinePricePreservingStatus().
+	 * @return array ['success' => false, 'message' => string, 'type' => 'errors']
+	 */
+	private function formatLinePriceUpdateError(array $updateResult) : array
+	{
+		$errorCode = $updateResult['error_code'] ?? 'UPDATE_FAILED';
+		$message = $updateResult['message'] ?? '';
+
+		if ($errorCode === 'UPDATE_METHOD_MISSING') {
+			$translatedMessage = $this->langs->trans('CLICHAUMEIL_AJAX_UPDATE_METHOD_MISSING');
+		} elseif ($errorCode === 'RESTORE_STATUS_FAILED') {
+			$translatedMessage = $this->langs->trans('CLICHAUMEIL_AJAX_RESTORE_STATUS_FAILED', $message);
+		} else {
+			$translatedMessage = $this->langs->trans('CLICHAUMEIL_AJAX_UPDATE_FAILED', $message);
+		}
+
+		return array(
+			'success' => false,
+			'message' => $translatedMessage,
+			'type' => 'errors'
+		);
+	}
+
+	/**
+	 * Check the mandatory attachment rule before a supplier response is accepted.
+	 *
+	 * @param SupplierProposal $object Supplier proposal.
+	 * @param string           $logPrefix Log prefix.
+	 * @return array ['success' => bool, 'message' => string, 'type' => 'mesgs'|'errors']
+	 */
+	private function checkMandatoryAttachment(SupplierProposal $object, string $logPrefix) : array
+	{
+		$mandatoryConfig = getDolGlobalInt('CLICHAUMEIL_MANDATORY_ATTACHED_FILES_SUPPLIER_PROPOSAL');
+		dol_syslog($logPrefix . " CLICHAUMEIL_MANDATORY_ATTACHED_FILES_SUPPLIER_PROPOSAL=" . $mandatoryConfig, LOG_DEBUG);
+
+		if (!$mandatoryConfig) {
+			return array('success' => true, 'message' => '', 'type' => 'mesgs');
+		}
+
+		$keytoavoidconflict = '-' . $object->id;
+		$hasFilesInSession = !empty($_SESSION["listofnames" . $keytoavoidconflict])
+			&& !empty($_SESSION["listofpaths" . $keytoavoidconflict]);
+		$hasFilesInTimeline = $this->hasFilesInTimeline($object);
+		$hasFile = $hasFilesInSession || $hasFilesInTimeline;
+
+		dol_syslog(
+			$logPrefix . " hasFilesInSession=" . ($hasFilesInSession ? 'YES' : 'NO') .
+			" hasFilesInTimeline=" . ($hasFilesInTimeline ? 'YES' : 'NO'),
+			LOG_DEBUG
+		);
+
+		if (!$hasFile) {
+			dol_syslog($logPrefix . " blocking response - no attached file", LOG_WARNING);
+			return array(
+				'success' => false,
+				'message' => $this->langs->trans('CLICHAUMEIL_ERROR_NO_PDF_ATTACHED'),
+				'type' => 'errors'
+			);
+		}
+
+		return array('success' => true, 'message' => '', 'type' => 'mesgs');
+	}
+
+	/**
+	 * Mark supplier response as received and notify the internal follow-up manager.
+	 *
+	 * @param SupplierProposal $object Supplier proposal.
+	 * @return array ['success' => bool, 'message' => string, 'type' => 'mesgs'|'errors']
+	 */
+	private function markSupplierResponseReceived(SupplierProposal $object) : array
+	{
 		if (!is_array($object->array_options)) {
 			$object->array_options = array();
 		}
@@ -150,20 +281,25 @@ class SupplierProposalActionHandler
 	 * @param SupplierProposal $object Supplier proposal.
 	 * @param string           $comment Comment text.
 	 * @param string           $title   Comment title.
+	 * @param bool             $allowEmpty Whether a response event may be created without text/files.
 	 * @return array ['success' => bool, 'message' => string, 'type' => 'mesgs'|'errors']
 	 */
-	public function addComment(SupplierProposal $object, string $comment, string $title = '') : array
+	public function addComment(SupplierProposal $object, string $comment, string $title = '', bool $allowEmpty = false) : array
 	{
 		$keytoavoidconflict = '-' . $object->id;
 		$hasFiles = !empty($_SESSION["listofpaths" . $keytoavoidconflict]);
 
 		// Require either comment or files
-		if (empty($comment) && !$hasFiles) {
+		if (empty($comment) && !$hasFiles && !$allowEmpty) {
 			return array(
 				'success' => false,
 				'message' => $this->langs->trans('CommentError'),
 				'type' => 'errors'
 			);
+		}
+
+		if (empty($comment) && !$hasFiles && $allowEmpty) {
+			$comment = $this->langs->trans('CLICHAUMEIL_SUPPLIER_RESPONSE_SUBMITTED');
 		}
 
 		// Create action/comment

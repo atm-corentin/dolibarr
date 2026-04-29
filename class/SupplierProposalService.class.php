@@ -25,6 +25,11 @@ require_once DOL_DOCUMENT_ROOT . '/societe/class/societe.class.php';
  */
 class SupplierProposalService
 {
+	/**
+	 * updateline() flag: recompute line/object totals normally.
+	 */
+	public const UPDATE_LINE_RECOMPUTE_TOTALS = 0;
+
 	/** @var DoliDB */
 	private $db;
 
@@ -77,6 +82,142 @@ class SupplierProposalService
 		$object->fetch_optionals();
 
 		return $object;
+	}
+
+	/**
+	 * Ensure the supplier proposal thirdparty is loaded when the caller needs it for price calculations.
+	 *
+	 * @param SupplierProposal $object Supplier proposal.
+	 * @return void
+	 */
+	public static function ensureThirdpartyLoaded(SupplierProposal $object): void
+	{
+		if (method_exists($object, 'fetch_thirdparty') && (empty($object->thirdparty) || empty($object->thirdparty->id))) {
+			$object->fetch_thirdparty();
+		}
+	}
+
+	/**
+	 * Update one supplier proposal line while preserving the proposal status.
+	 *
+	 * SupplierProposal::updateline() only accepts draft proposals. This method contains the
+	 * temporary draft switch and status restore required by both portal update paths.
+	 *
+	 * @param SupplierProposal     $object Supplier proposal to update.
+	 * @param SupplierProposalLine $lineToUpdate Line to update.
+	 * @param float|string         $newPuHt New unit price excluding tax.
+	 * @param User                 $user User performing the update.
+	 * @return array{success:bool,error_code?:string,message?:string,result?:int}
+	 */
+	public function updateLinePricePreservingStatus(SupplierProposal $object, SupplierProposalLine $lineToUpdate, $newPuHt, User $user): array
+	{
+		if (!method_exists($object, 'updateline')) {
+			return array(
+				'success' => false,
+				'error_code' => 'UPDATE_METHOD_MISSING',
+				'message' => ''
+			);
+		}
+
+		self::ensureThirdpartyLoaded($object);
+
+		$previousStatus = isset($object->status) ? (int) $object->status : null;
+		if ($previousStatus !== null && $previousStatus !== (int) SupplierProposal::STATUS_DRAFT) {
+			$draftResult = $object->setDraft($user);
+			if ($draftResult < 0) {
+				return array(
+					'success' => false,
+					'error_code' => 'SET_DRAFT_FAILED',
+					'message' => $object->error ?: $this->db->lasterror()
+				);
+			}
+		}
+
+		$result = $object->updateline(
+			$lineToUpdate->id,
+			$newPuHt,
+			$lineToUpdate->qty,
+			isset($lineToUpdate->remise_percent) ? $lineToUpdate->remise_percent : 0,
+			$lineToUpdate->tva_tx,
+			isset($lineToUpdate->localtax1_tx) ? $lineToUpdate->localtax1_tx : 0,
+			isset($lineToUpdate->localtax2_tx) ? $lineToUpdate->localtax2_tx : 0,
+			$lineToUpdate->desc,
+			'HT',
+			isset($lineToUpdate->info_bits) ? $lineToUpdate->info_bits : 0,
+			isset($lineToUpdate->special_code) ? $lineToUpdate->special_code : 0,
+			isset($lineToUpdate->fk_parent_line) ? $lineToUpdate->fk_parent_line : 0,
+			self::UPDATE_LINE_RECOMPUTE_TOTALS,
+			isset($lineToUpdate->fk_fournprice) ? $lineToUpdate->fk_fournprice : 0,
+			isset($lineToUpdate->pa_ht) ? $lineToUpdate->pa_ht : 0,
+			isset($lineToUpdate->label) ? $lineToUpdate->label : '',
+			isset($lineToUpdate->product_type) ? $lineToUpdate->product_type : 0,
+			isset($lineToUpdate->array_options) && is_array($lineToUpdate->array_options) ? $lineToUpdate->array_options : array(),
+			$this->getLineSupplierReference($lineToUpdate),
+			isset($lineToUpdate->fk_unit) ? $lineToUpdate->fk_unit : 0
+		);
+
+		if ($result < 0) {
+			$this->restorePreviousStatusAfterLineUpdate($object, $previousStatus);
+			return array(
+				'success' => false,
+				'error_code' => 'UPDATE_FAILED',
+				'message' => $object->error ?: $this->db->lasterror()
+			);
+		}
+
+		$restoreResult = $this->restorePreviousStatusAfterLineUpdate($object, $previousStatus);
+		if ($restoreResult < 0) {
+			return array(
+				'success' => false,
+				'error_code' => 'RESTORE_STATUS_FAILED',
+				'message' => $object->error ?: $this->db->lasterror()
+			);
+		}
+
+		return array(
+			'success' => true,
+			'result' => $result
+		);
+	}
+
+	/**
+	 * Restore the previous supplier proposal status after a temporary draft line update.
+	 *
+	 * @param SupplierProposal $object Supplier proposal.
+	 * @param int|null         $previousStatus Previous status.
+	 * @return int 1 if no restore needed or restore OK, <0 on error.
+	 */
+	private function restorePreviousStatusAfterLineUpdate(SupplierProposal $object, ?int $previousStatus): int
+	{
+		if ($previousStatus === null || $previousStatus === (int) SupplierProposal::STATUS_DRAFT) {
+			return 1;
+		}
+
+		$currentStatus = isset($object->status) ? (int) $object->status : (int) SupplierProposal::STATUS_DRAFT;
+		if ($currentStatus === $previousStatus) {
+			return 1;
+		}
+
+		return $object->setStatut($previousStatus);
+	}
+
+	/**
+	 * Get the supplier reference carried by the proposal line itself.
+	 *
+	 * @param SupplierProposalLine $line Supplier proposal line.
+	 * @return string
+	 */
+	private function getLineSupplierReference(SupplierProposalLine $line): string
+	{
+		if (isset($line->ref_fourn) && $line->ref_fourn !== '') {
+			return (string) $line->ref_fourn;
+		}
+
+		if (isset($line->ref_supplier) && $line->ref_supplier !== '') {
+			return (string) $line->ref_supplier;
+		}
+
+		return '';
 	}
 
 	/**
@@ -205,9 +346,10 @@ class SupplierProposalService
 	private function fetchProposalLines(SupplierProposal $object) : void
 	{
 		$sqlLines = 'SELECT spd.rowid, spd.fk_supplier_proposal, spd.fk_parent_line, spd.description, spd.qty,';
-		$sqlLines .= ' spd.subprice, spd.tva_tx, spd.localtax1_tx, spd.localtax2_tx,';
+		$sqlLines .= ' spd.subprice, spd.remise_percent, spd.tva_tx, spd.localtax1_tx, spd.localtax2_tx,';
 		$sqlLines .= ' spd.total_ht, spd.total_tva, spd.total_localtax1, spd.total_localtax2, spd.total_ttc,';
-		$sqlLines .= ' spd.fk_product, spd.product_type, spd.label, spd.fk_unit, spd.rang, spd.special_code,';
+		$sqlLines .= ' spd.fk_product, spd.product_type, spd.label, spd.fk_unit, spd.rang, spd.special_code, spd.info_bits,';
+		$sqlLines .= ' spd.fk_product_fournisseur_price as fk_fournprice, spd.buy_price_ht as pa_ht, spd.ref_fourn as line_ref_supplier,';
 		$sqlLines .= ' spd.multicurrency_subprice, spd.multicurrency_total_ht, spd.multicurrency_total_tva, spd.multicurrency_total_ttc,';
 		$sqlLines .= ' p.ref as product_ref, p.label as product_label, pfp.ref_fourn as ref_supplier';
 		$sqlLines .= ' FROM ' . $this->db->prefix() . 'supplier_proposaldet spd';
@@ -250,6 +392,7 @@ class SupplierProposalService
 		$line->desc = $objLine->description;
 		$line->qty = $objLine->qty;
 		$line->subprice = $objLine->subprice;
+		$line->remise_percent = $objLine->remise_percent;
 		$line->tva_tx = $objLine->tva_tx;
 		$line->localtax1_tx = $objLine->localtax1_tx;
 		$line->localtax2_tx = $objLine->localtax2_tx;
@@ -261,12 +404,16 @@ class SupplierProposalService
 		$line->fk_product = $objLine->fk_product;
 		$line->product_type = $objLine->product_type;
 		$line->ref_supplier = $objLine->ref_supplier;
+		$line->ref_fourn = $objLine->line_ref_supplier;
 		$line->product_ref = $objLine->product_ref;
 		// Use line label if exists, otherwise use product label
 		$line->label = !empty($objLine->label) ? $objLine->label : (!empty($objLine->product_label) ? $objLine->product_label : '');
 		$line->fk_unit = $objLine->fk_unit;
 		$line->rang = $objLine->rang;
 		$line->special_code = $objLine->special_code;
+		$line->info_bits = $objLine->info_bits;
+		$line->fk_fournprice = $objLine->fk_fournprice;
+		$line->pa_ht = $objLine->pa_ht;
 		$line->multicurrency_subprice = $objLine->multicurrency_subprice;
 		$line->multicurrency_total_ht = $objLine->multicurrency_total_ht;
 		$line->multicurrency_total_tva = $objLine->multicurrency_total_tva;

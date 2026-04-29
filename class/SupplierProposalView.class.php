@@ -206,13 +206,6 @@ class SupplierProposalView
 		$out .= '</table>';
 		$out .= '</div>';
 
-		// Validation button
-		$out .= '<div class="text-right" style="margin-top: 20px;">';
-		$out .= '<button type="submit" class="btn btn-success" id="btn-validate-proposal" name="action" value="validate_proposal">';
-		$out .= '<i class="fa fa-check"></i> ' . $this->langs->trans('CLICHAUMEIL_SAVEANDVALIDATE');
-		$out .= '</button>';
-		$out .= '</div>';
-
 		$out .= '</div>'; // container
 
 		return $out;
@@ -522,7 +515,7 @@ class SupplierProposalView
 		$out .= '</div>'; // timeline-body
 		$out .= '<div class="timeline-footer text-right">';
 		$out .= '<div class="btn-group">';
-		$out .= '<button type="submit" class="btn btn-success" id="btn-send-comment" name="action" value="new-comment" data-toggle="tooltip" title="' . dol_htmlentities($this->langs->transnoentities('CLICHAUMEIL_SENDMESSAGEHELP'), ENT_QUOTES) . '">' . $this->langs->transnoentities('CLICHAUMEIL_ADDMESSAGE') . '</button>';
+		$out .= '<button type="submit" class="btn btn-success" id="btn-send-comment" name="action" value="new-comment" data-toggle="tooltip" title="' . dol_htmlentities($this->langs->transnoentities('CLICHAUMEIL_SENDRESPONSEHELP'), ENT_QUOTES) . '">' . $this->langs->transnoentities('CLICHAUMEIL_REPLY') . '</button>';
 		$out .= '</div>';
 		$out .= '</div>';
 		$out .= '</div>'; // timeline-item

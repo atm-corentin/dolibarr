@@ -47,18 +47,10 @@ function initSupplierProposalCard(config) {
 		// Initialize price updater
 		initPriceUpdater(config);
 
-		// Initialize validation handler if files are mandatory
-		if (config.mandatoryFiles) {
-			console.log("Initializing validation handler (mandatory files)");
-			initValidationHandler(config);
-		} else {
-			console.log("Validation handler NOT initialized (files not mandatory)");
-		}
-
 		// Keep focus near the message form after redirects that add files
 		scrollToMessageFormIfNeeded();
 
-		// Enhance comment submission: upload file then send message in one click
+		// Enhance response submission: upload file then submit the full response in one click
 		initCommentSubmission(config);
 	});
 }
@@ -169,73 +161,6 @@ function initPriceUpdater(config) {
 }
 
 /**
- * Initialize validation handler with mandatory file check
- * @param {object} config
- */
-function initValidationHandler(config) {
-	$("#btn-validate-proposal").on("click", function(e) {
-		e.preventDefault();
-		console.log("=== Validate button clicked ===");
-
-		var form = $(this).closest("form");
-		var fileInput = getFileInput();
-
-		// Check if there are files to upload in the file input
-		if (fileInput.length > 0 && fileInput[0].files.length > 0) {
-			console.log("Files found in input, uploading first...");
-
-			// Validate file size BEFORE upload
-			var file = fileInput[0].files[0];
-			if (!validateFileSize(file, config)) {
-				return; // Stop if file is too large
-			}
-
-			// Create FormData to upload file via AJAX
-			var formData = new FormData();
-			formData.append("action", "add-comment-file");
-			formData.append("id", config.propalId);
-			formData.append("token", config.token);
-			formData.append("addedfile", file);
-
-			// Upload file via AJAX
-			$.ajax({
-				type: "POST",
-				url: window.location.href,
-				data: formData,
-				processData: false,
-				contentType: false,
-				success: function(response) {
-					console.log("File uploaded, now submitting validation");
-					// After upload, submit the validation
-					form.find("input[name=action]").remove();
-					form.append('<input type="hidden" name="action" value="validate_proposal" />');
-					form.submit();
-				},
-				error: function(jqXHR, textStatus, errorThrown) {
-					console.error("Error uploading file:", textStatus, errorThrown);
-
-					// Handle specific HTTP errors
-					if (jqXHR.status === 413) {
-						// Request Entity Too Large - reload page with error message
-						sendErrorToServer(config, 'FILE_TOO_LARGE');
-					} else {
-						// Other upload error - reload page with error message
-						sendErrorToServer(config, 'UPLOAD_ERROR');
-					}
-				}
-			});
-		} else {
-			console.log("No file in input, submitting validation directly");
-			// No file to upload, submit validation directly
-			// Server-side will handle file check and show proper error message if needed
-			form.find("input[name=action]").remove();
-			form.append('<input type="hidden" name="action" value="validate_proposal" />');
-			form.submit();
-		}
-	});
-}
-
-/**
  * Block form submission when Enter key is pressed in input fields
  * This prevents accidental form submission when users are entering data
  */
@@ -334,7 +259,7 @@ function sendErrorToServer(config, errorCode) {
 }
 
 /**
- * Submit comment + optional file in one click
+ * Submit response + optional file in one click
  * @param {object} config
  */
 function initCommentSubmission(config) {
@@ -352,6 +277,7 @@ function initCommentSubmission(config) {
 		if (hasFile) {
 			var file = fileInput[0].files[0];
 			if (!validateFileSize(file, config)) {
+				sendErrorToServer(config, 'FILE_TOO_LARGE');
 				return; // too large, message already handled
 			}
 
@@ -368,7 +294,8 @@ function initCommentSubmission(config) {
 				processData: false,
 				contentType: false,
 				success: function() {
-					// After upload, submit the actual comment
+					fileInput.val('');
+					// After upload, submit the actual response
 					submitCommentForm(form);
 				},
 				error: function(jqXHR, textStatus, errorThrown) {
