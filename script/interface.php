@@ -154,6 +154,8 @@ switch ($action) {
 				accessforbidden();
 			}
 
+			SupplierProposalService::ensureThirdpartyLoaded($object);
+
 			if (getDolGlobalInt('CLICHAUMEIL_MANDATORY_ATTACHED_FILES_SUPPLIER_PROPOSAL')
 				&& !$service->hasAttachedFile($object)) {
 				$response['message'] = $langs->trans('CLICHAUMEIL_ERROR_NO_PDF_ATTACHED');
@@ -179,84 +181,24 @@ switch ($action) {
 				exit;
 			}
 
-			if (!method_exists($object, 'updateline')) {
-				$response['message'] = $langs->trans('CLICHAUMEIL_AJAX_UPDATE_METHOD_MISSING');
-				dol_syslog("AJAX update_line_price: updateline method missing", LOG_ERR);
-				echo json_encode($response);
-				exit;
-			}
-
-			$previousStatus = $object->status;
-			dol_syslog("AJAX update_line_price: BEFORE setDraft - object->status=" . $object->status . " (0=draft, 1=validated)");
-
-			$draftResult = $object->setDraft($user);
-			dol_syslog("AJAX update_line_price: setDraft result=$draftResult, object->status=" . $object->status);
-
-			// Re-fetch to ensure status is updated in object
-			$object = $service->fetchProposalWithLines($propalId, 0);
-			dol_syslog("AJAX update_line_price: After re-fetch for draft, object->status=" . $object->status);
-
-			// Find the line again after re-fetch
-			$lineToUpdate = null;
-			foreach ($object->lines as $line) {
-				if ($line->id == $lineId) {
-					$lineToUpdate = $line;
-					break;
-				}
-			}
-
-			if (!$lineToUpdate) {
-				$response['message'] = $langs->trans('CLICHAUMEIL_AJAX_LINE_NOT_FOUND_AFTER_REFETCH');
-				dol_syslog("AJAX update_line_price: lineId=$lineId not found after draft re-fetch", LOG_ERR);
-				echo json_encode($response);
-				exit;
-			}
-
-			// Call the update line method with all necessary parameters
 			dol_syslog("AJAX update_line_price: Calling updateline with lineId=" . $lineToUpdate->id . ", pu=$newPuHt, qty=" . $lineToUpdate->qty . ", type=" . $lineToUpdate->product_type);
 
-			$res = $object->updateline(
-				$lineToUpdate->id,                    // rowid
-				$newPuHt,                              // pu (unit price)
-				$lineToUpdate->qty,                    // qty
-				$lineToUpdate->remise_percent,         // remise_percent
-				$lineToUpdate->tva_tx,                 // txtva
-				0,                                     // txlocaltax1
-				0,                                     // txlocaltax2
-				$lineToUpdate->desc,                   // desc
-				'HT',                                  // price_base_type
-				$lineToUpdate->info_bits,              // info_bits
-				$lineToUpdate->special_code,           // special_code
-				$lineToUpdate->fk_parent_line,         // fk_parent_line
-				0,                                     // skip_update_total
-				0,                                     // fk_fournprice
-				0,                                     // pa_ht
-				$lineToUpdate->label,                  // label
-				$lineToUpdate->product_type,           // type (0=product, 1=service)
-				$lineToUpdate->array_options,          // array_options (extrafields)
-				$lineToUpdate->ref_supplier,           // ref_supplier
-				$lineToUpdate->fk_unit                 // fk_unit
-			);
+			$updateResult = $service->updateLinePricePreservingStatus($object, $lineToUpdate, $newPuHt, $user);
+			dol_syslog("AJAX update_line_price: service update result=" . (empty($updateResult['success']) ? 'KO' : 'OK'));
 
-			dol_syslog("AJAX update_line_price: updateline result=$res");
-
-			if ($res < 0) {
-				$response['message'] = $langs->trans('CLICHAUMEIL_AJAX_UPDATE_FAILED', $object->error);
-				dol_syslog("AJAX update_line_price: updateline failed: " . $object->error, LOG_ERR);
+			if (empty($updateResult['success'])) {
+				$errorCode = $updateResult['error_code'] ?? 'UPDATE_FAILED';
+				$errorMessage = $updateResult['message'] ?? '';
+				if ($errorCode === 'UPDATE_METHOD_MISSING') {
+					$response['message'] = $langs->trans('CLICHAUMEIL_AJAX_UPDATE_METHOD_MISSING');
+				} elseif ($errorCode === 'RESTORE_STATUS_FAILED') {
+					$response['message'] = $langs->trans('CLICHAUMEIL_AJAX_RESTORE_STATUS_FAILED', $errorMessage);
+				} else {
+					$response['message'] = $langs->trans('CLICHAUMEIL_AJAX_UPDATE_FAILED', $errorMessage);
+				}
+				dol_syslog("AJAX update_line_price: service update failed: " . $errorMessage, LOG_ERR);
 				echo json_encode($response);
 				exit;
-			}
-
-			if ($previousStatus !== null && (int) $previousStatus !== (int) SupplierProposal::STATUS_DRAFT) {
-				$restoreStatusResult = $object->setStatut((int) $previousStatus);
-				dol_syslog("AJAX update_line_price: restore status query result=" . ((int) $restoreStatusResult) . " previousStatus=" . ((int) $previousStatus));
-
-				if ($restoreStatusResult < 0) {
-					$response['message'] = $langs->trans('CLICHAUMEIL_AJAX_RESTORE_STATUS_FAILED', $object->error ?: $db->lasterror());
-					dol_syslog("AJAX update_line_price: failed to restore status to $previousStatus: " . ($object->error ?: $db->lasterror()), LOG_ERR);
-					echo json_encode($response);
-					exit;
-				}
 			}
 
 			// Re-fetch object to get updated totals using service
