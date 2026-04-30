@@ -51,7 +51,7 @@ class CostBreakdownInput
 	/**
 	 * @var float
 	 */
-	public $tauxFraisDossier;
+	public $fileFeePercent;
 
 	/**
 	 * @var float|null
@@ -68,7 +68,7 @@ class CostBreakdownInput
 	 * @param float      $paMo              Labor amount.
 	 * @param float      $packagingPercent  Packaging percent.
 	 * @param float      $transportPercent  Transport percent.
-	 * @param float      $tauxFraisDossier  File fee percent.
+	 * @param float      $fileFeePercent    File fee percent.
 	 * @param float|null $fgPercent         Overhead percent.
 	 */
 	public function __construct(
@@ -79,7 +79,7 @@ class CostBreakdownInput
 		float $paMo,
 		float $packagingPercent,
 		float $transportPercent,
-		float $tauxFraisDossier,
+		float $fileFeePercent,
 		?float $fgPercent
 	) {
 		$this->paSupport = $paSupport;
@@ -89,7 +89,7 @@ class CostBreakdownInput
 		$this->paMo = $paMo;
 		$this->packagingPercent = $packagingPercent;
 		$this->transportPercent = $transportPercent;
-		$this->tauxFraisDossier = $tauxFraisDossier;
+		$this->fileFeePercent = $fileFeePercent;
 		$this->fgPercent = $fgPercent;
 	}
 }

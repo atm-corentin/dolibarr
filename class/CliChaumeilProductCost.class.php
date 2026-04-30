@@ -241,15 +241,15 @@ class CliChaumeilProductCostCalculator
 
 		$packagingAmount = self::roundAmount($baseCost * $input->packagingPercent / 100);
 		$transportAmount = self::roundAmount($baseCost * $input->transportPercent / 100);
-		$mtFraisDossier = self::roundAmount($baseCost * $input->tauxFraisDossier / 100);
-		$totalCosts = self::roundAmount($baseCost + $packagingAmount + $transportAmount + $mtFraisDossier);
+		$fileFeeAmount = self::roundAmount($baseCost * $input->fileFeePercent / 100);
+		$totalCosts = self::roundAmount($baseCost + $packagingAmount + $transportAmount + $fileFeeAmount);
 
 		if ($input->fgPercent === null) {
 			return new CostBreakdownResult(
 				$baseCost,
 				$packagingAmount,
 				$transportAmount,
-				$mtFraisDossier,
+				$fileFeeAmount,
 				$totalCosts,
 				null,
 				null,
@@ -265,7 +265,7 @@ class CliChaumeilProductCostCalculator
 			$baseCost,
 			$packagingAmount,
 			$transportAmount,
-			$mtFraisDossier,
+			$fileFeeAmount,
 			$totalCosts,
 			$paFg,
 			$costPrice,
@@ -327,7 +327,7 @@ class CliChaumeilProductCostCalculator
 		self::ensureExtrafieldsLoaded($product);
 
 		$changes = 0;
-		$changes += self::syncExtraFieldAmount($product, self::FILE_FEE_AMOUNT_FIELD, $result->mtFraisDossier, $user);
+		$changes += self::syncExtraFieldAmount($product, self::FILE_FEE_AMOUNT_FIELD, $result->fileFeeAmount, $user);
 
 		if (!$result->isFinalComputable) {
 			return $changes;

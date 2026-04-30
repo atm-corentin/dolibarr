@@ -195,10 +195,6 @@ class CliChaumeilProductCostViewRenderer
 
 			if ($editMode && $currentAttr === $field && !$isReadonly) {
 				$rows .= $this->buildEditableRow($product, $extrafields, $field, $labelHtml, $value, $baseUrl, $token, $collapseClass);
-				if ($field === CliChaumeilProductCostCalculator::TRANSPORT_PERCENT_FIELD || $field === CliChaumeilProductCostCalculator::FILE_FEE_PERCENT_FIELD) {
-					// Virtual row can appear after transport or file fee if we want a subtotal.
-					// But spec says total costs includes both.
-				}
 				continue;
 			}
 
@@ -300,6 +296,10 @@ class CliChaumeilProductCostViewRenderer
 			return ($output === '' ? '' : $output . ' %');
 		}
 
+		if ($output === '' && ($value !== '' && $value !== null)) {
+			$output = price((float) $value, 0, $langs, 0, 0, -2, $currency);
+		}
+
 		return ($output === '' ? '' : $output . ' ' . $langs->getCurrencySymbol($currency));
 	}
 
@@ -314,12 +314,19 @@ class CliChaumeilProductCostViewRenderer
 	 */
 	private function buildFieldLabelHtml(Form $form, ExtraFields $extrafields, string $field, string $label): string
 	{
+		global $langs;
+
 		$helpKey = (string) ($extrafields->attributes['product']['help'][$field] ?? '');
 		if ($helpKey === '') {
 			return dol_escape_htmltag($label);
 		}
 
-		return $form->textwithpicto($label, $helpKey);
+		$help = $langs->trans($helpKey);
+		if ($help === '' || $help === $helpKey) {
+			return dol_escape_htmltag($label);
+		}
+
+		return $form->textwithpicto($label, $help);
 	}
 
 	/**
