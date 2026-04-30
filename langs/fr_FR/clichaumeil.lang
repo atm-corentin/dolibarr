@@ -67,6 +67,7 @@ CLICHAUMEIL_DEFAULT_OVERHEAD_RATETooltip=Convention : 10 = 10%%. Taux de frais g
 CLICHAUMEIL_REVIEW_YEAR_DELAY=Décalage de la date de révision après renouvellement (en années)
 CLICHAUMEIL_PRICING_UPDATE_MANAGERS=Responsables de la mise à jour tarifaire
 CLICHAUMEIL_CRON_EMAIL_TEMPLATE=Modèle de mail à utiliser pour l’alerte par mail
+CLICHAUMEIL_SUPPLIER_ORDER_EMAIL_TEMPLATE=Modèle de mail à utiliser pour l’envoi des commandes de sous-traitance
 CLICHAUMEIL_CRON_NOTIF_USERS= Abonnés aux notifications de renouvellement
 CLICHAUMEIL_DEFAULT_PROPAL_PRODUCT_ID=Produits/services par défaut des devis
 CLICHAUMEIL_DEFAULT_PROPAL_PRODUCT_IDTooltip=Sélectionnez les produits et services à injecter automatiquement sur les nouveaux devis et lors du clonage.<br><br>Règles de fonctionnement :<br>- la configuration est propre à l'entité courante ;<br>- la protection repose sur un extrafield technique de ligne ;<br>- une ligne injectée reste protégée même si la configuration change plus tard ;<br>- les devis déjà créés ne sont pas mis à jour rétroactivement ;<br>- une ligne ajoutée manuellement avec le même produit n'est pas protégée automatiquement.
@@ -302,6 +303,25 @@ CliChaumeilNoSupplierProposal=Aucune demande de prix fournisseur liée
 CliChaumeilProposalNotLinked=Demande de prix fournisseur non liée à ce document
 CliChaumeilSubcontractorChosen=Sous-traitant sélectionné
 CliChaumeilSubcontractorModalIntro=Sélectionnez la demande de prix fournisseur à retenir comme sous-traitant.
+CliChaumeil_St8SupplierProposalPermissionsMissing=Vous n'avez pas les droits nécessaires pour sélectionner un sous-traitant.
+CliChaumeil_St8SupplierOrderPermissionsMissing=Vous n'avez pas les droits nécessaires pour créer ou valider la commande fournisseur issue de cette demande de prix.
+CliChaumeil_St8ParentAccessForbidden=Vous n'avez pas accès au document d'origine ciblé par cette action.
+CliChaumeil_St8NoAccessibleSupplierProposal=Aucune demande de prix fournisseur accessible pour cette action.
+CliChaumeil_St8SelectedProposalAccessForbidden=Vous n'avez pas accès à la demande de prix fournisseur sélectionnée.
+CliChaumeil_St8AlreadyProcessed=Cette consultation a déjà été traitée. La conversion en commande fournisseur ne peut pas être rejouée.
+CliChaumeil_St8SelectedProposalStatusInvalid=La demande de prix fournisseur sélectionnée n'est plus dans un état compatible avec cette conversion.
+CliChaumeil_St8WorkflowSuccess=Commande fournisseur créée, validée et envoyée au fournisseur.
+CliChaumeil_St8WorkflowWarning=Commande fournisseur créée et validée, avec avertissement : %s
+CliChaumeil_St8NoEmailRecipient=Le mail n'a pas pu être envoyé car aucune adresse mail n'est disponible.
+CliChaumeil_St8SenderEmailMissing=Le mail n'a pas pu être envoyé car l'utilisateur connecté n'a pas d'adresse mail valide.
+CliChaumeil_St8MailTemplateMissingConfig=Le mail n'a pas pu être envoyé car aucun modèle de mail ST-8 n'est configuré.
+CliChaumeil_St8MailTemplateNotFound=Le mail n'a pas pu être envoyé car le modèle de mail configuré est introuvable ou inactif.
+CliChaumeil_St8MailSendFailed=Le mail n'a pas pu être envoyé : %s
+CliChaumeil_St8MailSendFailedGeneric=Le mail n'a pas pu être envoyé suite à une erreur technique.
+CliChaumeil_St8PdfGenerationFailed=Le PDF de la commande fournisseur n'a pas pu être généré.
+CliChaumeil_St8AgendaCreationFailed=Le mail a été envoyé mais l'événement d'agenda n'a pas pu être créé automatiquement.
+CliChaumeil_St8ProposalStatusUpdateFailed=Impossible de mettre à jour le statut des demandes de prix fournisseur.
+CliChaumeil_St8UnexpectedError=Une erreur inattendue est survenue pendant la sélection du sous-traitant.
 
 #
 # Extrafields

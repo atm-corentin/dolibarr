@@ -41,6 +41,7 @@ require_once __DIR__ . '/Rfa/RfaSummaryStorageManager.php';
 require_once __DIR__ . '/../lib/clichaumeil.lib.php';
 require_once DOL_DOCUMENT_ROOT . '/categories/class/categorie.class.php';
 require_once __DIR__ . '/SupplierProposalService.class.php';
+require_once __DIR__ . '/Subcontracting/CliChaumeilSupplierProposalGuard.class.php';
 
 /**
  * Class ActionsClichaumeil
@@ -119,6 +120,9 @@ class ActionsClichaumeil extends CommonHookActions
 	/** @var CliChaumeilMassActionPropalGuard|null */
 	private $massActionPropalGuard;
 
+	/** @var CliChaumeilSupplierProposalGuard|null */
+	private $supplierProposalGuard;
+
 	/**
 	 * Constructor
 	 *
@@ -172,14 +176,20 @@ class ActionsClichaumeil extends CommonHookActions
 			return 0;
 		}
 
-		$supplierProposals = SupplierProposalService::loadLinkedSupplierProposals($object, $this->db);
-		$supplierProposals = SupplierProposalService::preloadThirdparties($supplierProposals, $this->db);
-		if (!$this->hasSelectableSupplierProposal($supplierProposals)) {
+		$allSupplierProposals = SupplierProposalService::loadLinkedSupplierProposals($object, $this->db);
+		$allSupplierProposals = SupplierProposalService::preloadThirdparties($allSupplierProposals, $this->db);
+		if ($this->getSupplierProposalGuard()->hasProcessedSupplierProposal($allSupplierProposals)) {
 			$this->renderProposalValidationGuardMarker($parameters, $object, $langs, $user);
 			return 0;
 		}
 
-		$this->renderSubcontractorPicker($object, $supplierProposals, $langs);
+		$visibleSupplierProposals = $this->getSupplierProposalGuard()->filterAccessibleSupplierProposals($allSupplierProposals, $user);
+		if (!$this->hasSelectableSupplierProposal($visibleSupplierProposals)) {
+			$this->renderProposalValidationGuardMarker($parameters, $object, $langs, $user);
+			return 0;
+		}
+
+		$this->renderSubcontractorPicker($object, $visibleSupplierProposals, $langs);
 		$this->renderProposalValidationGuardMarker($parameters, $object, $langs, $user);
 
 		return 0;
@@ -201,7 +211,7 @@ class ActionsClichaumeil extends CommonHookActions
 			return false;
 		}
 
-		if (empty($object->id) || !$user->hasRight('supplier_proposal', 'creer')) {
+		if (empty($object->id) || !$this->hasSupplierProposalSelectionRight($user)) {
 			return false;
 		}
 
@@ -217,25 +227,39 @@ class ActionsClichaumeil extends CommonHookActions
 	}
 
 	/**
-	 * Ensure there are selectable supplier proposals and none is already signed.
+	 * Ensure there are visible supplier proposals to expose in the picker.
 	 *
 	 * @param SupplierProposal[] $supplierProposals Supplier proposals linked to the source object.
 	 * @return bool
 	 */
 	private function hasSelectableSupplierProposal(array $supplierProposals): bool
 	{
-		if (empty($supplierProposals)) {
-			return false;
+		return !empty($supplierProposals);
+	}
+
+	/**
+	 * Return the supplier proposal guard singleton for the current request.
+	 *
+	 * @return CliChaumeilSupplierProposalGuard
+	 */
+	private function getSupplierProposalGuard(): CliChaumeilSupplierProposalGuard
+	{
+		if (!$this->supplierProposalGuard instanceof CliChaumeilSupplierProposalGuard) {
+			$this->supplierProposalGuard = new CliChaumeilSupplierProposalGuard();
 		}
 
-		foreach ($supplierProposals as $supplierProposal) {
-			$currentStatus = isset($supplierProposal->status) ? (int) $supplierProposal->status : (int) $supplierProposal->statut;
-			if ($currentStatus === SupplierProposal::STATUS_SIGNED) {
-				return false;
-			}
-		}
+		return $this->supplierProposalGuard;
+	}
 
-		return true;
+	/**
+	 * Tell whether the current user can use the subcontractor selection flow.
+	 *
+	 * @param User $user Current user.
+	 * @return bool
+	 */
+	private function hasSupplierProposalSelectionRight(User $user): bool
+	{
+		return $user->hasRight('supplier_proposal', 'creer') || $user->hasRight('supplier_proposal', 'cloturer');
 	}
 
 	/**

@@ -61,6 +61,7 @@ require_once DOL_DOCUMENT_ROOT . "/core/class/html.formmail.class.php";
 require_once '../lib/clichaumeil.lib.php';
 require_once __DIR__ . '/../class/CliChaumeilProductCost.class.php';
 require_once __DIR__ . '/../class/CliChaumeilPropalDefaultLineConfig.class.php';
+require_once __DIR__ . '/../class/Subcontracting/CliChaumeilSupplierOrderConfig.class.php';
 require_once DOL_DOCUMENT_ROOT . '/categories/class/categorie.class.php';
 require_once DOL_DOCUMENT_ROOT . '/product/class/product.class.php';
 
@@ -146,17 +147,23 @@ $templates = !empty($formmail->lines_model) ? array_column($formmail->lines_mode
 
 $item = $formSetup->newItem(EMAIL_TEMPLATE_KEY)->setAsSelect($templates);
 
-// --- Field 4: Users to Notify (User Select) ---
+// --- Field 4: Supplier order email template (Dropdown) ---
+$supplierOrderFormMail = new FormMail($db);
+$supplierOrderFormMail->fetchAllEMailTemplate(CliChaumeilSupplierOrderConfig::MAIL_TEMPLATE_TYPE, $user, $langs);
+$supplierOrderTemplates = !empty($supplierOrderFormMail->lines_model) ? array_column($supplierOrderFormMail->lines_model, 'label', 'id') : [];
+$item = $formSetup->newItem(CliChaumeilSupplierOrderConfig::SUPPLIER_ORDER_EMAIL_TEMPLATE_KEY)->setAsSelect($supplierOrderTemplates);
+
+// --- Field 5: Users to Notify (User Select) ---
 buildUserMultiSelectField($formSetup, $form, NOTIF_USERS_KEY);
 
-// --- Field 5: Default proposal products/services ---
+// --- Field 6: Default proposal products/services ---
 $defaultProposalProducts = buildDefaultPropalProductsFieldOptions($db);
 $item = $formSetup->newItem(DEFAULT_PROPAL_PRODUCTS_KEY)->setAsMultiSelect($defaultProposalProducts);
 $item->defaultFieldValue = getDolGlobalString(DEFAULT_PROPAL_PRODUCTS_KEY);
 $item->cssClass = 'minwidth300 widthcentpercentminusxx';
 $item->helpText = $langs->transnoentities(DEFAULT_PROPAL_PRODUCTS_KEY . 'Tooltip');
 
-//// --- Field 6: Category product ---
+//// --- Field 7: Category product ---
 $categories = new Categorie($db);
 $allCat = $categories->get_full_arbo(Categorie::TYPE_PRODUCT);
 
