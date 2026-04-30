@@ -78,6 +78,7 @@ CliChaumeilSupplierResponseDate=Supplier response date
 CLICHAUMEIL_REVIEW_YEAR_DELAY=Review date offset after renewal (in years)
 CLICHAUMEIL_PRICING_UPDATE_MANAGERS=Managers for pricing updates
 CLICHAUMEIL_CRON_EMAIL_TEMPLATE=Email template to use for email alerts
+CLICHAUMEIL_SUPPLIER_ORDER_EMAIL_TEMPLATE=Email template to use when sending subcontractor supplier orders
 CLICHAUMEIL_CRON_NOTIF_USERS=Subscribers to renewal notifications
 CliChaumeilAutomaticRenewalContract=Automatic update of contract revisions
 CliChaumeilApplyRenewalRate=Applies the review rate to expired contract lines
@@ -240,6 +241,25 @@ CliChaumeilNoSupplierProposal=No linked supplier proposal
 CliChaumeilProposalNotLinked=Supplier proposal not linked to this document
 CliChaumeilSubcontractorChosen=Subcontractor selected
 CliChaumeilSubcontractorModalIntro=Select the supplier proposal you want to keep as subcontractor.
+CliChaumeil_St8SupplierProposalPermissionsMissing=You do not have the required rights to select a subcontractor.
+CliChaumeil_St8SupplierOrderPermissionsMissing=You do not have the required rights to create or validate the supplier order generated from this request for quotation.
+CliChaumeil_St8ParentAccessForbidden=You do not have access to the source document targeted by this action.
+CliChaumeil_St8NoAccessibleSupplierProposal=No accessible supplier proposal is available for this action.
+CliChaumeil_St8SelectedProposalAccessForbidden=You do not have access to the selected supplier proposal.
+CliChaumeil_St8AlreadyProcessed=This consultation has already been processed. The supplier order conversion cannot be replayed.
+CliChaumeil_St8SelectedProposalStatusInvalid=The selected supplier request for quotation is no longer in a state compatible with this conversion.
+CliChaumeil_St8WorkflowSuccess=Supplier order created, validated and sent to the supplier.
+CliChaumeil_St8WorkflowWarning=Supplier order created and validated, with warning: %s
+CliChaumeil_St8NoEmailRecipient=The email could not be sent because no email address is available.
+CliChaumeil_St8SenderEmailMissing=The email could not be sent because the logged-in user has no valid email address.
+CliChaumeil_St8MailTemplateMissingConfig=The email could not be sent because no ST-8 email template is configured.
+CliChaumeil_St8MailTemplateNotFound=The email could not be sent because the configured email template was not found or is inactive.
+CliChaumeil_St8MailSendFailed=The email could not be sent: %s
+CliChaumeil_St8MailSendFailedGeneric=The email could not be sent due to a technical error.
+CliChaumeil_St8PdfGenerationFailed=The supplier order PDF could not be generated.
+CliChaumeil_St8AgendaCreationFailed=The email was sent but the agenda event could not be created automatically.
+CliChaumeil_St8ProposalStatusUpdateFailed=Unable to update supplier proposal statuses.
+CliChaumeil_St8UnexpectedError=An unexpected error occurred while selecting the subcontractor.
 
 
 

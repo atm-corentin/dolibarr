@@ -11,9 +11,10 @@
  * - $langs
  */
 ?>
-<div id="<?php echo dol_escape_htmltag($modalId); ?>" class="clichaumeil-subcontractor-modal" data-ajax-url="<?php echo dol_escape_htmltag($ajaxUrl); ?>" data-token="<?php echo dol_escape_htmltag($token); ?>" data-parent-type="<?php echo dol_escape_htmltag($object->element); ?>" data-parent-id="<?php echo (int) $object->id; ?>">
+<div id="<?php echo dol_escape_htmltag($modalId); ?>" class="clichaumeil-subcontractor-modal" data-ajax-url="<?php echo dol_escape_htmltag($ajaxUrl); ?>" data-token="<?php echo dol_escape_htmltag($token); ?>" data-parent-type="<?php echo dol_escape_htmltag($object->element); ?>" data-parent-id="<?php echo (int) $object->id; ?>" data-error-message="<?php echo dol_escape_htmltag($langs->trans('CliChaumeilSelectError')); ?>">
 	<div class="clichaumeil-subcontractor-modal__body">
 		<p class="clichaumeil-subcontractor-modal__intro"><?php echo $langs->trans('CliChaumeilSubcontractorModalIntro'); ?></p>
+		<div class="clichaumeil-subcontractor-modal__message" aria-live="polite"></div>
 		<div class="scrolling-table-container">
 			<table class="noborder centpercent">
 				<thead>
