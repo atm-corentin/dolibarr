@@ -79,18 +79,12 @@ const CliChaumeilSubcontractor = {
 					response && response.message ? response.message : defaultErrorMessage,
 					response && response.status === 'completed_with_warning' ? 'warning' : 'error'
 				);
-				if (window.console && console.log) {
-					console.log('CliChaumeil choose_subcontractor response', response);
-				}
 			}).fail(function (jqXHR, textStatus, errorThrown) {
 				var message = defaultErrorMessage;
 				if (jqXHR && jqXHR.responseJSON && jqXHR.responseJSON.message) {
 					message = jqXHR.responseJSON.message;
 				}
 				CliChaumeilSubcontractor.showInlineMessage($container, message, 'error');
-				if (window.console && console.error) {
-					console.error('CliChaumeil choose_subcontractor ajax error', textStatus, errorThrown, jqXHR);
-				}
 			}).always(function () {
 				$button.prop('disabled', false);
 			});
