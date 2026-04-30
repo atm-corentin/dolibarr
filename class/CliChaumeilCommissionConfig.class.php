@@ -11,6 +11,17 @@
  */
 class CliChaumeilCommissionConfig
 {
+	public const DICTIONARY_TABLE = 'c_clichaumeil_commission_coeff';
+
+	public const LEGACY_COEFF_MARCHE_PUBLIC = 'CLICHAUMEIL_COMMISSION_COEFF_MARCHE_PUBLIC';
+	public const LEGACY_COEFF_SOUS_TRAITANCE = 'CLICHAUMEIL_COMMISSION_COEFF_SOUS_TRAITANCE';
+	public const LEGACY_COEFF_NOUVEAU = 'CLICHAUMEIL_COMMISSION_COEFF_NOUVEAU';
+	public const LEGACY_COEFF_ANCIEN = 'CLICHAUMEIL_COMMISSION_COEFF_ANCIEN';
+	public const LEGACY_PRINT_MANAGEMENT_COEFF_MARCHE_PUBLIC = 'CLICHAUMEIL_COMMISSION_PRINT_MANAGEMENT_COEFF_MARCHE_PUBLIC';
+	public const LEGACY_PRINT_MANAGEMENT_COEFF_SOUS_TRAITANCE = 'CLICHAUMEIL_COMMISSION_PRINT_MANAGEMENT_COEFF_SOUS_TRAITANCE';
+	public const LEGACY_PRINT_MANAGEMENT_COEFF_NOUVEAU = 'CLICHAUMEIL_COMMISSION_PRINT_MANAGEMENT_COEFF_NOUVEAU';
+	public const LEGACY_PRINT_MANAGEMENT_COEFF_ANCIEN = 'CLICHAUMEIL_COMMISSION_PRINT_MANAGEMENT_COEFF_ANCIEN';
+
 	public const COEFF_MARCHE_PUBLIC = 'CLICHAUMEIL_COMMISSION_COEFF_MARCHE_PUBLIC';
 	public const COEFF_SOUS_TRAITANCE = 'CLICHAUMEIL_COMMISSION_COEFF_SOUS_TRAITANCE';
 	public const COEFF_NOUVEAU = 'CLICHAUMEIL_COMMISSION_COEFF_NOUVEAU';
@@ -71,6 +82,96 @@ class CliChaumeilCommissionConfig
 	public static function getDefaultCoefficients(): array
 	{
 		return self::getDefaultCommercialCoefficients() + self::getDefaultPrintManagementCoefficients();
+	}
+
+	/**
+	 * @return array<string,string>
+	 */
+	public static function getLegacyCoefficientConstantMap(): array
+	{
+		return array(
+			'commercial_marche_public' => self::LEGACY_COEFF_MARCHE_PUBLIC,
+			'commercial_sous_traitance' => self::LEGACY_COEFF_SOUS_TRAITANCE,
+			'commercial_nouveau' => self::LEGACY_COEFF_NOUVEAU,
+			'commercial_ancien' => self::LEGACY_COEFF_ANCIEN,
+			'print_management_marche_public' => self::LEGACY_PRINT_MANAGEMENT_COEFF_MARCHE_PUBLIC,
+			'print_management_sous_traitance' => self::LEGACY_PRINT_MANAGEMENT_COEFF_SOUS_TRAITANCE,
+			'print_management_nouveau' => self::LEGACY_PRINT_MANAGEMENT_COEFF_NOUVEAU,
+			'print_management_ancien' => self::LEGACY_PRINT_MANAGEMENT_COEFF_ANCIEN,
+		);
+	}
+
+	/**
+	 * @return array<int,array<string,mixed>>
+	 */
+	public static function getDefaultCoefficientDictionaryRows(): array
+	{
+		return array(
+			array(
+				'code' => 'COMMERCIAL_MARCHE_PUBLIC',
+				'role_code' => 'commercial',
+				'customer_tag' => 'marche_public',
+				'label' => 'Commerciaux / Marché public',
+				'coefficient' => self::DEFAULT_COEFF_MARCHE_PUBLIC,
+				'legacy_const' => self::LEGACY_COEFF_MARCHE_PUBLIC,
+			),
+			array(
+				'code' => 'COMMERCIAL_SOUS_TRAITANCE',
+				'role_code' => 'commercial',
+				'customer_tag' => 'sous_traitance',
+				'label' => 'Commerciaux / Sous-traitance',
+				'coefficient' => self::DEFAULT_COEFF_SOUS_TRAITANCE,
+				'legacy_const' => self::LEGACY_COEFF_SOUS_TRAITANCE,
+			),
+			array(
+				'code' => 'COMMERCIAL_NOUVEAU',
+				'role_code' => 'commercial',
+				'customer_tag' => 'nouveau',
+				'label' => 'Commerciaux / Nouveau',
+				'coefficient' => self::DEFAULT_COEFF_NOUVEAU,
+				'legacy_const' => self::LEGACY_COEFF_NOUVEAU,
+			),
+			array(
+				'code' => 'COMMERCIAL_ANCIEN',
+				'role_code' => 'commercial',
+				'customer_tag' => 'ancien',
+				'label' => 'Commerciaux / Ancien',
+				'coefficient' => self::DEFAULT_COEFF_ANCIEN,
+				'legacy_const' => self::LEGACY_COEFF_ANCIEN,
+			),
+			array(
+				'code' => 'PRINT_MANAGEMENT_MARCHE_PUBLIC',
+				'role_code' => 'print_management',
+				'customer_tag' => 'marche_public',
+				'label' => 'Prints-management / Marché public',
+				'coefficient' => self::DEFAULT_PRINT_MANAGEMENT_COEFF_MARCHE_PUBLIC,
+				'legacy_const' => self::LEGACY_PRINT_MANAGEMENT_COEFF_MARCHE_PUBLIC,
+			),
+			array(
+				'code' => 'PRINT_MANAGEMENT_SOUS_TRAITANCE',
+				'role_code' => 'print_management',
+				'customer_tag' => 'sous_traitance',
+				'label' => 'Prints-management / Sous-traitance',
+				'coefficient' => self::DEFAULT_PRINT_MANAGEMENT_COEFF_SOUS_TRAITANCE,
+				'legacy_const' => self::LEGACY_PRINT_MANAGEMENT_COEFF_SOUS_TRAITANCE,
+			),
+			array(
+				'code' => 'PRINT_MANAGEMENT_NOUVEAU',
+				'role_code' => 'print_management',
+				'customer_tag' => 'nouveau',
+				'label' => 'Prints-management / Nouveau',
+				'coefficient' => self::DEFAULT_PRINT_MANAGEMENT_COEFF_NOUVEAU,
+				'legacy_const' => self::LEGACY_PRINT_MANAGEMENT_COEFF_NOUVEAU,
+			),
+			array(
+				'code' => 'PRINT_MANAGEMENT_ANCIEN',
+				'role_code' => 'print_management',
+				'customer_tag' => 'ancien',
+				'label' => 'Prints-management / Ancien',
+				'coefficient' => self::DEFAULT_PRINT_MANAGEMENT_COEFF_ANCIEN,
+				'legacy_const' => self::LEGACY_PRINT_MANAGEMENT_COEFF_ANCIEN,
+			),
+		);
 	}
 
 	/**

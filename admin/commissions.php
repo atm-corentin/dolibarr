@@ -82,31 +82,6 @@ if (!class_exists('FormSetup')) {
 }
 $formSetup = new FormSetup($db);
 
-// Coefficients
-$item = $formSetup->newItem('CliChaumeilCommissionsSectionCommercialCoefficients')->setAsTitle();
-$coefficients = CliChaumeilCommissionConfig::getDefaultCommercialCoefficients();
-foreach ($coefficients as $constKey => $defaultValue) {
-	$item = $formSetup->newItem($constKey);
-	$item->fieldAttr = array(
-		'type' => 'number',
-		'min' => 0,
-		'step' => '0.01',
-	);
-	$item->defaultFieldValue = $defaultValue;
-}
-
-$item = $formSetup->newItem('CliChaumeilCommissionsSectionPrintManagementCoefficients')->setAsTitle();
-$printManagementCoefficients = CliChaumeilCommissionConfig::getDefaultPrintManagementCoefficients();
-foreach ($printManagementCoefficients as $constKey => $defaultValue) {
-	$item = $formSetup->newItem($constKey);
-	$item->fieldAttr = array(
-		'type' => 'number',
-		'min' => 0,
-		'step' => '0.01',
-	);
-	$item->defaultFieldValue = $defaultValue;
-}
-
 // Categories (customer/prospect)
 $categories = new Categorie($db);
 $allCategories = $categories->get_full_arbo(Categorie::TYPE_CUSTOMER);
@@ -209,6 +184,7 @@ print dol_get_fiche_head($head, 'commissions', $langs->trans($title), -1, "clich
 
 echo '<span class="opacitymedium">' . $langs->trans("CliChaumeilCommissionsSetupPage") . '</span><br>';
 echo '<span class="opacitymedium">' . $langs->trans("CliChaumeilCommissionsCronIntro") . '</span><br><br>';
+echo '<span class="opacitymedium">' . $langs->trans("CliChaumeilCommissionsDictionaryIntro") . ' <a href="' . DOL_URL_ROOT . '/admin/dict.php">' . $langs->trans("CliChaumeilCommissionsDictionaryLink") . '</a> (' . $langs->trans("CliChaumeilCommissionDictionary") . ').</span><br><br>';
 
 if (!empty($formSetup->items)) {
 	print $formSetup->generateOutput(true);

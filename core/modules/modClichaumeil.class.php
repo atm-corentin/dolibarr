@@ -111,7 +111,7 @@ class modClichaumeil extends DolibarrModules
 		$this->editor_squarred_logo = '';					// Must be image filename into the module/img directory followed with @modulename. Example: 'myimage.png@clichaumeil'
 
 		// Possible values for version are: 'development', 'experimental', 'dolibarr', 'dolibarr_deprecated', 'experimental_deprecated' or a version string like 'x.y.z'
-		$this->version = '1.14.1';
+		$this->version = '1.15.0';
 		// Url to the file with your last numberversion of this module
 		//$this->url_last_version = 'http://www.example.com/versionmodule.txt';
 
@@ -216,7 +216,22 @@ class modClichaumeil extends DolibarrModules
 		/* BEGIN MODULEBUILDER TABS */
 		$this->tabs = array();
 		/* BEGIN MODULEBUILDER DICTIONARIES */
-		$this->dictionaries = array();
+		$this->dictionaries = array(
+			'langs' => 'clichaumeil@clichaumeil',
+			'tabname' => array(CliChaumeilCommissionConfig::DICTIONARY_TABLE),
+			'tablib' => array('CliChaumeilCommissionDictionary'),
+			'tabsql' => array('SELECT f.rowid as rowid, f.code, f.role_code, f.customer_tag, f.label, f.coefficient, f.active, f.entity FROM '.$this->db->prefix().'c_clichaumeil_commission_coeff as f WHERE f.entity = '.((int) $conf->entity)),
+			'tabsqlsort' => array('role_code ASC, customer_tag ASC'),
+			'tabfield' => array('code,role_code,customer_tag,label,coefficient'),
+			'tabfieldvalue' => array('code,role_code,customer_tag,label,coefficient'),
+			'tabfieldinsert' => array('code,role_code,customer_tag,label,coefficient,entity'),
+			'tabrowid' => array('rowid'),
+			'tabcond' => array($conf->clichaumeil->enabled),
+			'tabhelp' => array(array(
+				'role_code' => $langs->trans('CliChaumeilCommissionDictionaryRoleCodeHelp'),
+				'customer_tag' => $langs->trans('CliChaumeilCommissionDictionaryCustomerTagHelp'),
+			)),
+		);
 		/* END MODULEBUILDER DICTIONARIES */
 
 		// Boxes/Widgets
@@ -611,11 +626,9 @@ class modClichaumeil extends DolibarrModules
 		global $conf, $langs, $user;
 
 		$langs->loadLangs(array('clichaumeil@clichaumeil'));
-
-		foreach (CliChaumeilCommissionConfig::getDefaultCoefficients() as $constKey => $defaultValue) {
-			if (getDolGlobalString($constKey) === '') {
-				dolibarr_set_const($this->db, $constKey, $defaultValue, 'chaine', 0, '', $conf->entity);
-			}
+		$this->seedCommissionCoefficientDictionary();
+		if ($this->hasCompleteCommissionCoefficientDictionary()) {
+			$this->cleanupLegacyCommissionCoefficientConstants();
 		}
 
 		require_once DOL_DOCUMENT_ROOT . '/categories/class/categorie.class.php';
@@ -639,6 +652,99 @@ class modClichaumeil extends DolibarrModules
 				dolibarr_set_const($this->db, $constKey, $categoryId, 'integer', 0, '', $conf->entity);
 			}
 		}
+	}
+
+	/**
+	 * Create default commission coefficient dictionary rows if missing.
+	 *
+	 * @return void
+	 */
+	private function seedCommissionCoefficientDictionary(): void
+	{
+		global $conf;
+
+		foreach (CliChaumeilCommissionConfig::getDefaultCoefficientDictionaryRows() as $row) {
+			$sql = 'SELECT rowid';
+			$sql .= ' FROM '.$this->db->prefix().CliChaumeilCommissionConfig::DICTIONARY_TABLE;
+			$sql .= " WHERE entity = ".((int) $conf->entity);
+			$sql .= " AND code = '".$this->db->escape($row['code'])."'";
+
+			$resql = $this->db->query($sql);
+			if ($resql) {
+				$exists = ($this->db->num_rows($resql) > 0);
+				$this->db->free($resql);
+				if ($exists) {
+					continue;
+				}
+			} else {
+				dol_syslog(__METHOD__.' unable to inspect commission dictionary row '.$row['code'].': '.$this->db->lasterror(), LOG_ERR);
+				continue;
+			}
+
+			$coefficient = (float) $row['coefficient'];
+			if (!empty($row['legacy_const'])) {
+				$legacyValue = getDolGlobalString($row['legacy_const']);
+				if ($legacyValue !== '') {
+					$coefficient = (float) price2num($legacyValue);
+				}
+			}
+
+			$sql = 'INSERT INTO '.$this->db->prefix().CliChaumeilCommissionConfig::DICTIONARY_TABLE.' (';
+			$sql .= 'entity, code, role_code, customer_tag, label, coefficient, active';
+			$sql .= ') VALUES (';
+			$sql .= ((int) $conf->entity).", ";
+			$sql .= "'".$this->db->escape($row['code'])."', ";
+			$sql .= "'".$this->db->escape($row['role_code'])."', ";
+			$sql .= "'".$this->db->escape($row['customer_tag'])."', ";
+			$sql .= "'".$this->db->escape($row['label'])."', ";
+			$sql .= "'".$this->db->escape((string) $coefficient)."', ";
+			$sql .= '1';
+			$sql .= ')';
+
+			$resql = $this->db->query($sql);
+			if (!$resql) {
+				dol_syslog(__METHOD__.' unable to insert commission dictionary row '.$row['code'].': '.$this->db->lasterror(), LOG_ERR);
+			}
+		}
+	}
+
+	/**
+	 * Remove legacy commission coefficient constants now replaced by the dictionary.
+	 *
+	 * @return void
+	 */
+	private function cleanupLegacyCommissionCoefficientConstants(): void
+	{
+		global $conf;
+
+		foreach (CliChaumeilCommissionConfig::getLegacyCoefficientConstantMap() as $legacyConst) {
+			dolibarr_del_const($this->db, $legacyConst, $conf->entity);
+		}
+	}
+
+	/**
+	 * Check that all default commission rows exist in the dictionary.
+	 *
+	 * @return bool
+	 */
+	private function hasCompleteCommissionCoefficientDictionary(): bool
+	{
+		global $conf;
+
+		$sql = 'SELECT COUNT(rowid) as nb';
+		$sql .= ' FROM '.$this->db->prefix().CliChaumeilCommissionConfig::DICTIONARY_TABLE;
+		$sql .= " WHERE entity = ".((int) $conf->entity);
+
+		$resql = $this->db->query($sql);
+		if (!$resql) {
+			dol_syslog(__METHOD__.' unable to count commission dictionary rows: '.$this->db->lasterror(), LOG_ERR);
+			return false;
+		}
+
+		$obj = $this->db->fetch_object($resql);
+		$this->db->free($resql);
+
+		return ((int) ($obj->nb ?? 0)) >= count(CliChaumeilCommissionConfig::getDefaultCoefficientDictionaryRows());
 	}
 
 	/**

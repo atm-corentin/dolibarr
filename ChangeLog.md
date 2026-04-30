@@ -3,6 +3,9 @@
 
 ## Unreleased
 
+## 1.15
+- NEW : Replace the eight commission coefficient setup constants with a dedicated Dolibarr dictionary, seed the default rows on module activation without duplicates on reactivation, migrate legacy values when available, and keep categories/groups on the commissions setup page. *30/04/2026* - 1.15.0
+
 ## 1.14
 - FIX : Prevent supplier portal line prices from being saved when mandatory attachment validation fails, both on AJAX price updates and final response submission. *28/04/2026* - 1.14.1
 - NEW : Add a supplier response date extrafield on supplier proposals and populate it when a supplier submits a response from the portal. *23/04/2026* - 1.14.0
