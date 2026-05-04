@@ -29,6 +29,7 @@
 include_once DOL_DOCUMENT_ROOT . '/core/modules/DolibarrModules.class.php';
 include_once __DIR__ . '/../../class/CliChaumeilProductCost.class.php';
 include_once __DIR__ . '/../../class/CliChaumeilCommissionConfig.class.php';
+include_once __DIR__ . '/../../class/Service/CliChaumeilCommissionDictionarySeeder.class.php';
 require_once DOL_DOCUMENT_ROOT . '/user/class/user.class.php';
 
 
@@ -491,7 +492,9 @@ class modClichaumeil extends DolibarrModules
 			dolibarr_set_const($this->db, 'CLICHAUMEIL_DEFAULT_OVERHEAD_RATE', CliChaumeilProductCostCalculator::DEFAULT_RATE_VALUE, 'chaine', 0, '', $conf->entity);
 		}
 
-		$this->initCommissionConfiguration();
+		if ($this->initCommissionConfiguration() < 0) {
+			return -1;
+		}
 		try {
 			$this->ensureDefaultRfaEmailTemplate();
 		} catch (Throwable $exception) {
@@ -619,16 +622,17 @@ class modClichaumeil extends DolibarrModules
 	/**
 	 * Initialize commission configuration (constants and categories) during module activation.
 	 *
-	 * @return void
+	 * @return int<-1,1> 1 on success, -1 on failure.
 	 */
-	private function initCommissionConfiguration(): void
+	private function initCommissionConfiguration(): int
 	{
 		global $conf, $langs, $user;
 
 		$langs->loadLangs(array('clichaumeil@clichaumeil'));
-		$this->seedCommissionCoefficientDictionary();
-		if ($this->hasCompleteCommissionCoefficientDictionary()) {
-			$this->cleanupLegacyCommissionCoefficientConstants();
+		$commissionDictionaryMigration = new CliChaumeilCommissionDictionarySeeder($this->db, (int) $conf->entity);
+		if ($commissionDictionaryMigration->migrate() < 0) {
+			$this->error = $commissionDictionaryMigration->getError();
+			return -1;
 		}
 
 		require_once DOL_DOCUMENT_ROOT . '/categories/class/categorie.class.php';
@@ -639,7 +643,9 @@ class modClichaumeil extends DolibarrModules
 			$user->fetch(1);
 		}
 
+		/** @var array<string,string> $labels */
 		$labels = CliChaumeilCommissionConfig::getDefaultCategoryLabels($langs);
+		/** @var array<string,string> $refExts */
 		$refExts = CliChaumeilCommissionConfig::getDefaultCategoryRefExt();
 		foreach ($labels as $constKey => $label) {
 			if (getDolGlobalInt($constKey)) {
@@ -652,99 +658,8 @@ class modClichaumeil extends DolibarrModules
 				dolibarr_set_const($this->db, $constKey, $categoryId, 'integer', 0, '', $conf->entity);
 			}
 		}
-	}
 
-	/**
-	 * Create default commission coefficient dictionary rows if missing.
-	 *
-	 * @return void
-	 */
-	private function seedCommissionCoefficientDictionary(): void
-	{
-		global $conf;
-
-		foreach (CliChaumeilCommissionConfig::getDefaultCoefficientDictionaryRows() as $row) {
-			$sql = 'SELECT rowid';
-			$sql .= ' FROM '.$this->db->prefix().CliChaumeilCommissionConfig::DICTIONARY_TABLE;
-			$sql .= " WHERE entity = ".((int) $conf->entity);
-			$sql .= " AND code = '".$this->db->escape($row['code'])."'";
-
-			$resql = $this->db->query($sql);
-			if ($resql) {
-				$exists = ($this->db->num_rows($resql) > 0);
-				$this->db->free($resql);
-				if ($exists) {
-					continue;
-				}
-			} else {
-				dol_syslog(__METHOD__.' unable to inspect commission dictionary row '.$row['code'].': '.$this->db->lasterror(), LOG_ERR);
-				continue;
-			}
-
-			$coefficient = (float) $row['coefficient'];
-			if (!empty($row['legacy_const'])) {
-				$legacyValue = getDolGlobalString($row['legacy_const']);
-				if ($legacyValue !== '') {
-					$coefficient = (float) price2num($legacyValue);
-				}
-			}
-
-			$sql = 'INSERT INTO '.$this->db->prefix().CliChaumeilCommissionConfig::DICTIONARY_TABLE.' (';
-			$sql .= 'entity, code, role_code, customer_tag, label, coefficient, active';
-			$sql .= ') VALUES (';
-			$sql .= ((int) $conf->entity).", ";
-			$sql .= "'".$this->db->escape($row['code'])."', ";
-			$sql .= "'".$this->db->escape($row['role_code'])."', ";
-			$sql .= "'".$this->db->escape($row['customer_tag'])."', ";
-			$sql .= "'".$this->db->escape($row['label'])."', ";
-			$sql .= "'".$this->db->escape((string) $coefficient)."', ";
-			$sql .= '1';
-			$sql .= ')';
-
-			$resql = $this->db->query($sql);
-			if (!$resql) {
-				dol_syslog(__METHOD__.' unable to insert commission dictionary row '.$row['code'].': '.$this->db->lasterror(), LOG_ERR);
-			}
-		}
-	}
-
-	/**
-	 * Remove legacy commission coefficient constants now replaced by the dictionary.
-	 *
-	 * @return void
-	 */
-	private function cleanupLegacyCommissionCoefficientConstants(): void
-	{
-		global $conf;
-
-		foreach (CliChaumeilCommissionConfig::getLegacyCoefficientConstantMap() as $legacyConst) {
-			dolibarr_del_const($this->db, $legacyConst, $conf->entity);
-		}
-	}
-
-	/**
-	 * Check that all default commission rows exist in the dictionary.
-	 *
-	 * @return bool
-	 */
-	private function hasCompleteCommissionCoefficientDictionary(): bool
-	{
-		global $conf;
-
-		$sql = 'SELECT COUNT(rowid) as nb';
-		$sql .= ' FROM '.$this->db->prefix().CliChaumeilCommissionConfig::DICTIONARY_TABLE;
-		$sql .= " WHERE entity = ".((int) $conf->entity);
-
-		$resql = $this->db->query($sql);
-		if (!$resql) {
-			dol_syslog(__METHOD__.' unable to count commission dictionary rows: '.$this->db->lasterror(), LOG_ERR);
-			return false;
-		}
-
-		$obj = $this->db->fetch_object($resql);
-		$this->db->free($resql);
-
-		return ((int) ($obj->nb ?? 0)) >= count(CliChaumeilCommissionConfig::getDefaultCoefficientDictionaryRows());
+		return 1;
 	}
 
 	/**

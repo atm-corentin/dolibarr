@@ -6,12 +6,12 @@
 -- (at your option) any later version.
 
 CREATE TABLE llx_c_clichaumeil_commission_coeff(
-	`rowid` INTEGER AUTO_INCREMENT PRIMARY KEY NOT NULL,
-	`entity` integer NOT NULL DEFAULT 1,
+	`rowid` integer AUTO_INCREMENT PRIMARY KEY NOT NULL,
+	entity integer NOT NULL DEFAULT 1,
 	`code` varchar(64) NOT NULL,
-	`role_code` varchar(64) NOT NULL,
-	`customer_tag` varchar(64) NOT NULL,
-	`label` varchar(255) NOT NULL,
-	`coefficient` double NOT NULL DEFAULT 0,
+	role_code varchar(64) NOT NULL,
+	customer_tag varchar(64) NOT NULL,
+	label varchar(255) NOT NULL,
+	coefficient double NOT NULL DEFAULT 0,
 	`active` smallint NOT NULL DEFAULT 1
-) ENGINE=INNODB;
+) ENGINE=innodb;
