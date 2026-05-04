@@ -13,15 +13,6 @@ class CliChaumeilCommissionConfig
 {
 	public const DICTIONARY_TABLE = 'c_clichaumeil_commission_coeff';
 
-	public const LEGACY_COEFF_MARCHE_PUBLIC = 'CLICHAUMEIL_COMMISSION_COEFF_MARCHE_PUBLIC';
-	public const LEGACY_COEFF_SOUS_TRAITANCE = 'CLICHAUMEIL_COMMISSION_COEFF_SOUS_TRAITANCE';
-	public const LEGACY_COEFF_NOUVEAU = 'CLICHAUMEIL_COMMISSION_COEFF_NOUVEAU';
-	public const LEGACY_COEFF_ANCIEN = 'CLICHAUMEIL_COMMISSION_COEFF_ANCIEN';
-	public const LEGACY_PRINT_MANAGEMENT_COEFF_MARCHE_PUBLIC = 'CLICHAUMEIL_COMMISSION_PRINT_MANAGEMENT_COEFF_MARCHE_PUBLIC';
-	public const LEGACY_PRINT_MANAGEMENT_COEFF_SOUS_TRAITANCE = 'CLICHAUMEIL_COMMISSION_PRINT_MANAGEMENT_COEFF_SOUS_TRAITANCE';
-	public const LEGACY_PRINT_MANAGEMENT_COEFF_NOUVEAU = 'CLICHAUMEIL_COMMISSION_PRINT_MANAGEMENT_COEFF_NOUVEAU';
-	public const LEGACY_PRINT_MANAGEMENT_COEFF_ANCIEN = 'CLICHAUMEIL_COMMISSION_PRINT_MANAGEMENT_COEFF_ANCIEN';
-
 	public const COEFF_MARCHE_PUBLIC = 'CLICHAUMEIL_COMMISSION_COEFF_MARCHE_PUBLIC';
 	public const COEFF_SOUS_TRAITANCE = 'CLICHAUMEIL_COMMISSION_COEFF_SOUS_TRAITANCE';
 	public const COEFF_NOUVEAU = 'CLICHAUMEIL_COMMISSION_COEFF_NOUVEAU';
@@ -51,37 +42,55 @@ class CliChaumeilCommissionConfig
 	public const DEFAULT_PRINT_MANAGEMENT_COEFF_ANCIEN = 0.5;
 
 	/**
-	 * @return array<string,float>
+	 * Static cache for dictionary coefficients.
+	 *
+	 * @var array<int,array<string,float>>
 	 */
-	public static function getDefaultCommercialCoefficients(): array
-	{
-		return array(
-			self::COEFF_MARCHE_PUBLIC => self::DEFAULT_COEFF_MARCHE_PUBLIC,
-			self::COEFF_SOUS_TRAITANCE => self::DEFAULT_COEFF_SOUS_TRAITANCE,
-			self::COEFF_NOUVEAU => self::DEFAULT_COEFF_NOUVEAU,
-			self::COEFF_ANCIEN => self::DEFAULT_COEFF_ANCIEN,
-		);
-	}
+	private static array $coeffCache = array();
 
 	/**
-	 * @return array<string,float>
+	 * Get a commission coefficient from the dictionary.
+	 *
+	 * @param DoliDB $db           Database handler.
+	 * @param int    $entity       Entity id.
+	 * @param string $roleCode     Role code (e.g. 'commercial', 'print_management').
+	 * @param string $customerTag  Customer tag (e.g. 'marche_public', 'nouveau').
+	 * @return float
 	 */
-	public static function getDefaultPrintManagementCoefficients(): array
+	public static function getCoeff(DoliDB $db, int $entity, string $roleCode, string $customerTag): float
 	{
-		return array(
-			self::PRINT_MANAGEMENT_COEFF_MARCHE_PUBLIC => self::DEFAULT_PRINT_MANAGEMENT_COEFF_MARCHE_PUBLIC,
-			self::PRINT_MANAGEMENT_COEFF_SOUS_TRAITANCE => self::DEFAULT_PRINT_MANAGEMENT_COEFF_SOUS_TRAITANCE,
-			self::PRINT_MANAGEMENT_COEFF_NOUVEAU => self::DEFAULT_PRINT_MANAGEMENT_COEFF_NOUVEAU,
-			self::PRINT_MANAGEMENT_COEFF_ANCIEN => self::DEFAULT_PRINT_MANAGEMENT_COEFF_ANCIEN,
-		);
-	}
+		$cacheKey = $roleCode . '|' . $customerTag;
 
-	/**
-	 * @return array<string,float>
-	 */
-	public static function getDefaultCoefficients(): array
-	{
-		return self::getDefaultCommercialCoefficients() + self::getDefaultPrintManagementCoefficients();
+		if (isset(self::$coeffCache[$entity][$cacheKey])) {
+			return self::$coeffCache[$entity][$cacheKey];
+		}
+
+		$sql = 'SELECT coefficient';
+		$sql .= ' FROM ' . $db->prefix() . self::DICTIONARY_TABLE;
+		$sql .= ' WHERE entity = ' . ((int) $entity);
+		$sql .= " AND role_code = '" . $db->escape($roleCode) . "'";
+		$sql .= " AND customer_tag = '" . $db->escape($customerTag) . "'";
+		$sql .= ' AND active = 1';
+
+		$resql = $db->query($sql);
+		if ($resql) {
+			$obj = $db->fetch_object($resql);
+			if ($obj) {
+				self::$coeffCache[$entity][$cacheKey] = (float) $obj->coefficient;
+			}
+			$db->free($resql);
+		}
+
+		if (!isset(self::$coeffCache[$entity][$cacheKey])) {
+			// Fallback to defaults if not found in dictionary.
+			$defaults = array();
+			foreach (self::getDefaultCoefficientDictionaryRows() as $row) {
+				$defaults[$row['role_code'] . '|' . $row['customer_tag']] = (float) $row['coefficient'];
+			}
+			self::$coeffCache[$entity][$cacheKey] = $defaults[$cacheKey] ?? 0.0;
+		}
+
+		return self::$coeffCache[$entity][$cacheKey];
 	}
 
 	/**
@@ -90,14 +99,14 @@ class CliChaumeilCommissionConfig
 	public static function getLegacyCoefficientConstantMap(): array
 	{
 		return array(
-			'commercial_marche_public' => self::LEGACY_COEFF_MARCHE_PUBLIC,
-			'commercial_sous_traitance' => self::LEGACY_COEFF_SOUS_TRAITANCE,
-			'commercial_nouveau' => self::LEGACY_COEFF_NOUVEAU,
-			'commercial_ancien' => self::LEGACY_COEFF_ANCIEN,
-			'print_management_marche_public' => self::LEGACY_PRINT_MANAGEMENT_COEFF_MARCHE_PUBLIC,
-			'print_management_sous_traitance' => self::LEGACY_PRINT_MANAGEMENT_COEFF_SOUS_TRAITANCE,
-			'print_management_nouveau' => self::LEGACY_PRINT_MANAGEMENT_COEFF_NOUVEAU,
-			'print_management_ancien' => self::LEGACY_PRINT_MANAGEMENT_COEFF_ANCIEN,
+			'commercial_marche_public' => self::COEFF_MARCHE_PUBLIC,
+			'commercial_sous_traitance' => self::COEFF_SOUS_TRAITANCE,
+			'commercial_nouveau' => self::COEFF_NOUVEAU,
+			'commercial_ancien' => self::COEFF_ANCIEN,
+			'print_management_marche_public' => self::PRINT_MANAGEMENT_COEFF_MARCHE_PUBLIC,
+			'print_management_sous_traitance' => self::PRINT_MANAGEMENT_COEFF_SOUS_TRAITANCE,
+			'print_management_nouveau' => self::PRINT_MANAGEMENT_COEFF_NOUVEAU,
+			'print_management_ancien' => self::PRINT_MANAGEMENT_COEFF_ANCIEN,
 		);
 	}
 
@@ -113,7 +122,7 @@ class CliChaumeilCommissionConfig
 				'customer_tag' => 'marche_public',
 				'label_key' => 'CliChaumeilCommissionLabelCommercialMarchePublic',
 				'coefficient' => self::DEFAULT_COEFF_MARCHE_PUBLIC,
-				'legacy_const' => self::LEGACY_COEFF_MARCHE_PUBLIC,
+				'legacy_const' => self::COEFF_MARCHE_PUBLIC,
 			),
 			array(
 				'code' => 'COMMERCIAL_SOUS_TRAITANCE',
@@ -121,7 +130,7 @@ class CliChaumeilCommissionConfig
 				'customer_tag' => 'sous_traitance',
 				'label_key' => 'CliChaumeilCommissionLabelCommercialSousTraitance',
 				'coefficient' => self::DEFAULT_COEFF_SOUS_TRAITANCE,
-				'legacy_const' => self::LEGACY_COEFF_SOUS_TRAITANCE,
+				'legacy_const' => self::COEFF_SOUS_TRAITANCE,
 			),
 			array(
 				'code' => 'COMMERCIAL_NOUVEAU',
@@ -129,7 +138,7 @@ class CliChaumeilCommissionConfig
 				'customer_tag' => 'nouveau',
 				'label_key' => 'CliChaumeilCommissionLabelCommercialNouveau',
 				'coefficient' => self::DEFAULT_COEFF_NOUVEAU,
-				'legacy_const' => self::LEGACY_COEFF_NOUVEAU,
+				'legacy_const' => self::COEFF_NOUVEAU,
 			),
 			array(
 				'code' => 'COMMERCIAL_ANCIEN',
@@ -137,7 +146,7 @@ class CliChaumeilCommissionConfig
 				'customer_tag' => 'ancien',
 				'label_key' => 'CliChaumeilCommissionLabelCommercialAncien',
 				'coefficient' => self::DEFAULT_COEFF_ANCIEN,
-				'legacy_const' => self::LEGACY_COEFF_ANCIEN,
+				'legacy_const' => self::COEFF_ANCIEN,
 			),
 			array(
 				'code' => 'PRINT_MANAGEMENT_MARCHE_PUBLIC',
@@ -145,7 +154,7 @@ class CliChaumeilCommissionConfig
 				'customer_tag' => 'marche_public',
 				'label_key' => 'CliChaumeilCommissionLabelPrintManagementMarchePublic',
 				'coefficient' => self::DEFAULT_PRINT_MANAGEMENT_COEFF_MARCHE_PUBLIC,
-				'legacy_const' => self::LEGACY_PRINT_MANAGEMENT_COEFF_MARCHE_PUBLIC,
+				'legacy_const' => self::PRINT_MANAGEMENT_COEFF_MARCHE_PUBLIC,
 			),
 			array(
 				'code' => 'PRINT_MANAGEMENT_SOUS_TRAITANCE',
@@ -153,7 +162,7 @@ class CliChaumeilCommissionConfig
 				'customer_tag' => 'sous_traitance',
 				'label_key' => 'CliChaumeilCommissionLabelPrintManagementSousTraitance',
 				'coefficient' => self::DEFAULT_PRINT_MANAGEMENT_COEFF_SOUS_TRAITANCE,
-				'legacy_const' => self::LEGACY_PRINT_MANAGEMENT_COEFF_SOUS_TRAITANCE,
+				'legacy_const' => self::PRINT_MANAGEMENT_COEFF_SOUS_TRAITANCE,
 			),
 			array(
 				'code' => 'PRINT_MANAGEMENT_NOUVEAU',
@@ -161,7 +170,7 @@ class CliChaumeilCommissionConfig
 				'customer_tag' => 'nouveau',
 				'label_key' => 'CliChaumeilCommissionLabelPrintManagementNouveau',
 				'coefficient' => self::DEFAULT_PRINT_MANAGEMENT_COEFF_NOUVEAU,
-				'legacy_const' => self::LEGACY_PRINT_MANAGEMENT_COEFF_NOUVEAU,
+				'legacy_const' => self::PRINT_MANAGEMENT_COEFF_NOUVEAU,
 			),
 			array(
 				'code' => 'PRINT_MANAGEMENT_ANCIEN',
@@ -169,7 +178,7 @@ class CliChaumeilCommissionConfig
 				'customer_tag' => 'ancien',
 				'label_key' => 'CliChaumeilCommissionLabelPrintManagementAncien',
 				'coefficient' => self::DEFAULT_PRINT_MANAGEMENT_COEFF_ANCIEN,
-				'legacy_const' => self::LEGACY_PRINT_MANAGEMENT_COEFF_ANCIEN,
+				'legacy_const' => self::PRINT_MANAGEMENT_COEFF_ANCIEN,
 			),
 		);
 	}
