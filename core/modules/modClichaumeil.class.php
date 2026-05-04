@@ -29,6 +29,7 @@
 include_once DOL_DOCUMENT_ROOT . '/core/modules/DolibarrModules.class.php';
 include_once __DIR__ . '/../../class/CliChaumeilProductCost.class.php';
 include_once __DIR__ . '/../../class/CliChaumeilCommissionConfig.class.php';
+include_once __DIR__ . '/../../class/Service/CliChaumeilCommissionDictionarySeeder.class.php';
 require_once DOL_DOCUMENT_ROOT . '/user/class/user.class.php';
 
 
@@ -216,7 +217,22 @@ class modClichaumeil extends DolibarrModules
 		/* BEGIN MODULEBUILDER TABS */
 		$this->tabs = array();
 		/* BEGIN MODULEBUILDER DICTIONARIES */
-		$this->dictionaries = array();
+		$this->dictionaries = array(
+			'langs' => 'clichaumeil@clichaumeil',
+			'tabname' => array(CliChaumeilCommissionConfig::DICTIONARY_TABLE),
+			'tablib' => array('CliChaumeilCommissionDictionary'),
+			'tabsql' => array('SELECT f.rowid as rowid, f.code, f.role_code, f.customer_tag, f.label, f.coefficient, f.active, f.entity FROM '.$this->db->prefix().'c_clichaumeil_commission_coeff as f WHERE f.entity = '.((int) $conf->entity)),
+			'tabsqlsort' => array('role_code ASC, customer_tag ASC'),
+			'tabfield' => array('code,role_code,customer_tag,label,coefficient'),
+			'tabfieldvalue' => array('code,role_code,customer_tag,label,coefficient'),
+			'tabfieldinsert' => array('code,role_code,customer_tag,label,coefficient,entity'),
+			'tabrowid' => array('rowid'),
+			'tabcond' => array($conf->clichaumeil->enabled),
+			'tabhelp' => array(array(
+				'role_code' => $langs->trans('CliChaumeilCommissionDictionaryRoleCodeHelp'),
+				'customer_tag' => $langs->trans('CliChaumeilCommissionDictionaryCustomerTagHelp'),
+			)),
+		);
 		/* END MODULEBUILDER DICTIONARIES */
 
 		// Boxes/Widgets
@@ -476,7 +492,9 @@ class modClichaumeil extends DolibarrModules
 			dolibarr_set_const($this->db, 'CLICHAUMEIL_DEFAULT_OVERHEAD_RATE', CliChaumeilProductCostCalculator::DEFAULT_RATE_VALUE, 'chaine', 0, '', $conf->entity);
 		}
 
-		$this->initCommissionConfiguration();
+		if ($this->initCommissionConfiguration() < 0) {
+			return -1;
+		}
 		try {
 			$this->ensureDefaultRfaEmailTemplate();
 		} catch (Throwable $exception) {
@@ -604,18 +622,17 @@ class modClichaumeil extends DolibarrModules
 	/**
 	 * Initialize commission configuration (constants and categories) during module activation.
 	 *
-	 * @return void
+	 * @return int<-1,1> 1 on success, -1 on failure.
 	 */
-	private function initCommissionConfiguration(): void
+	private function initCommissionConfiguration(): int
 	{
 		global $conf, $langs, $user;
 
 		$langs->loadLangs(array('clichaumeil@clichaumeil'));
-
-		foreach (CliChaumeilCommissionConfig::getDefaultCoefficients() as $constKey => $defaultValue) {
-			if (getDolGlobalString($constKey) === '') {
-				dolibarr_set_const($this->db, $constKey, $defaultValue, 'chaine', 0, '', $conf->entity);
-			}
+		$commissionDictionaryMigration = new CliChaumeilCommissionDictionarySeeder($this->db, (int) $conf->entity);
+		if ($commissionDictionaryMigration->migrate() < 0) {
+			$this->error = $commissionDictionaryMigration->getError();
+			return -1;
 		}
 
 		require_once DOL_DOCUMENT_ROOT . '/categories/class/categorie.class.php';
@@ -626,7 +643,9 @@ class modClichaumeil extends DolibarrModules
 			$user->fetch(1);
 		}
 
+		/** @var array<string,string> $labels */
 		$labels = CliChaumeilCommissionConfig::getDefaultCategoryLabels($langs);
+		/** @var array<string,string> $refExts */
 		$refExts = CliChaumeilCommissionConfig::getDefaultCategoryRefExt();
 		foreach ($labels as $constKey => $label) {
 			if (getDolGlobalInt($constKey)) {
@@ -639,6 +658,8 @@ class modClichaumeil extends DolibarrModules
 				dolibarr_set_const($this->db, $constKey, $categoryId, 'integer', 0, '', $conf->entity);
 			}
 		}
+
+		return 1;
 	}
 
 	/**
