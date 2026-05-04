@@ -39,6 +39,8 @@ global $conf, $langs, $db, $user;
 // Include necessary files
 require_once DOL_DOCUMENT_ROOT.'/supplier_proposal/class/supplier_proposal.class.php';
 require_once __DIR__.'/../class/SupplierProposalService.class.php';
+require_once __DIR__.'/../class/Subcontracting/CliChaumeilSupplierOrderConfig.class.php';
+require_once __DIR__.'/../class/Subcontracting/CliChaumeilSubcontractorSelectionWorkflow.class.php';
 
 $langs->loadLangs(array('clichaumeil@clichaumeil', 'supplier_proposal'));
 
@@ -61,27 +63,23 @@ switch ($action) {
 	case 'choose_subcontractor':
 		header('Content-Type: application/json');
 		$langs->loadLangs(array('clichaumeil@clichaumeil', 'supplier_proposal'));
-
-		$response = array('success' => false, 'message' => $langs->trans('CliChaumeilSelectError'), 'debug' => array());
-
-		if (!$user->hasRight('supplier_proposal', 'creer') && !$user->hasRight('supplier_proposal', 'cloturer')) {
-			$response['message'] = $langs->trans('NotEnoughPermissions');
-			echo json_encode($response);
-			exit;
-		}
-
-		$token = GETPOST('token', 'alphanohtml');
 		$parentType = GETPOST('parent_type', 'aZ09');
 		$parentId = GETPOST('parent_id', 'int');
 		$supplierProposalId = GETPOST('supplier_proposal_id', 'int');
-
-		$response['debug']['received'] = array(
-			'parent_type' => $parentType,
-			'parent_id' => $parentId,
-			'supplier_proposal_id' => $supplierProposalId
+		$response = CliChaumeilSupplierOrderConfig::buildAjaxResponse(
+			CliChaumeilSupplierOrderConfig::RESULT_ERROR,
+			$langs->trans('CliChaumeilSelectError'),
+			false,
+			false,
+			array(
+				'parent_type' => $parentType,
+				'parent_id' => $parentId,
+				'supplier_proposal_id' => $supplierProposalId,
+			)
 		);
 
-		if ($action !== 'choose_subcontractor' || empty($parentType) || empty($parentId) || empty($supplierProposalId)) {
+		if ($parentType === '' || $parentId <= 0 || $supplierProposalId <= 0) {
+			dol_syslog(__METHOD__.' invalid ST-8 AJAX parameters parent_type='.$parentType.' parent_id='.$parentId.' supplier_proposal_id='.$supplierProposalId, LOG_WARNING);
 			$response['message'] = $langs->trans('ErrorBadParameter');
 			echo json_encode($response);
 			exit;
@@ -93,6 +91,7 @@ switch ($action) {
 		);
 
 		if (!isset($parentMap[$parentType])) {
+			dol_syslog(__METHOD__.' unsupported ST-8 parent type '.$parentType, LOG_WARNING);
 			$response['message'] = $langs->trans('ErrorBadParameter');
 			echo json_encode($response);
 			exit;
@@ -102,95 +101,29 @@ switch ($action) {
 		require_once DOL_DOCUMENT_ROOT.'/comm/propal/class/propal.class.php';
 		require_once DOL_DOCUMENT_ROOT.'/commande/class/commande.class.php';
 
-		$parent = new $parentClass($db);
+			$parent = new $parentClass($db);
 		if ($parent->fetch($parentId) <= 0) {
+			dol_syslog(__METHOD__.' unable to fetch ST-8 parent object type='.$parentType.' id='.$parentId, LOG_WARNING);
 			$response['message'] = $langs->trans('ErrorRecordNotFound');
-			$response['debug']['parent_fetch'] = 'ko';
 			echo json_encode($response);
 			exit;
-		} else {
-			$response['debug']['parent_fetch'] = 'ok';
 		}
-
-		$supplierProposals = SupplierProposalService::loadLinkedSupplierProposals($parent, $db);
-		$supplierProposals = SupplierProposalService::preloadThirdparties($supplierProposals, $db);
-
-		if (empty($supplierProposals)) {
-			$response['message'] = $langs->trans('CliChaumeilNoSupplierProposal');
-			$response['debug']['linked'] = 'empty';
-			echo json_encode($response);
-			exit;
-		} else {
-			$response['debug']['linked_count'] = count($supplierProposals);
-		}
-
-		$linkedIds = array();
-		foreach ($supplierProposals as $proposal) {
-			if (!empty($proposal->id)) {
-				$linkedIds[] = (int) $proposal->id;
-			}
-		}
-		$response['debug']['linked_ids'] = $linkedIds;
-
-		if (!in_array((int) $supplierProposalId, $linkedIds, true)) {
-			$response['message'] = $langs->trans('CliChaumeilProposalNotLinked');
+			$restrictedAreaModule = $parentType === 'propal' ? 'propal' : 'commande';
+		if (!restrictedArea($user, $restrictedAreaModule, $parent->id, '', '', 'fk_soc', 'rowid', 0, 1)) {
+			dol_syslog(__METHOD__.' forbidden ST-8 parent access type='.$parentType.' id='.$parentId.' user='.$user->id, LOG_WARNING);
+			$response['message'] = $langs->trans('CliChaumeil_St8ParentAccessForbidden');
 			echo json_encode($response);
 			exit;
 		}
 
-		$db->begin();
-		$errorMessage = '';
-
-		foreach ($supplierProposals as $proposal) {
-			if (empty($proposal->id)) {
-				continue;
-			}
-
-			$targetStatus = ((int) $proposal->id === (int) $supplierProposalId) ? SupplierProposal::STATUS_SIGNED : SupplierProposal::STATUS_NOTSIGNED;
-			$currentStatus = isset($proposal->status) ? (int) $proposal->status : (int) $proposal->statut;
-
-			if ($currentStatus === $targetStatus) {
-				continue;
-			}
-
-			$supplierProposal = new SupplierProposal($db);
-			if ($supplierProposal->fetch((int) $proposal->id) <= 0) {
-				$errorMessage = $langs->trans('ErrorRecordNotFound');
-				$response['debug']['fetch_fail'] = $proposal->id;
-				break;
-			}
-
-			if (method_exists($supplierProposal, 'fetch_thirdparty')) {
-				$supplierProposal->fetch_thirdparty();
-			}
-
-			$result = $supplierProposal->cloture($user, $targetStatus, '');
-			if ($result > 0) {
-				$response['debug']['updated'][] = array('id' => $supplierProposal->id, 'status' => $targetStatus);
-				continue;
-			}
-
-			$errorMessage = 'Update failed for proposal '.$supplierProposal->id.' : '.($db->lasterror() ? $db->lasterror() : $langs->trans('CliChaumeilSelectError'));
-			$response['debug']['updated'][] = array('id' => $supplierProposal->id, 'status' => $targetStatus, 'error' => $errorMessage);
-			dol_syslog('CliChaumeil choose_subcontractor update failed for proposal '.$supplierProposal->id.' : '.$errorMessage, LOG_ERR);
-			break;
+			$workflow = new CliChaumeilSubcontractorSelectionWorkflow($db, $conf, $langs);
+			$response = $workflow->execute($parent, $supplierProposalId, $user);
+		if (!empty($response['success']) && !empty($response['should_reload']) && !empty($response['message'])) {
+			$messageStyle = ((string) ($response['status'] ?? '') === CliChaumeilSupplierOrderConfig::RESULT_WARNING) ? 'warnings' : 'mesgs';
+			setEventMessages((string) $response['message'], null, $messageStyle);
 		}
-
-		if (!empty($errorMessage)) {
-			$db->rollback();
-			$response['message'] = $errorMessage;
-			$response['debug']['rollback'] = true;
 			echo json_encode($response);
 			exit;
-		}
-
-		$db->commit();
-		setEventMessages($langs->trans('CliChaumeilSubcontractorChosen'), null, 'mesgs');
-		$response['success'] = true;
-		$response['message'] = '';
-		$response['debug']['status'] = 'ok';
-		echo json_encode($response);
-		exit;
 
 	case 'update_line_price':
 		header('Content-Type: application/json'); // We will return JSON
