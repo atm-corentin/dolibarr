@@ -2,6 +2,8 @@
 
 
 ## Unreleased
+
+- NEW : ACHT-7: Add file fee rate and amount to product cost breakdown calculation. *28/04/2026* - 1.15.0
 - NEW : Replace the eight commission coefficient setup constants with a dedicated Dolibarr dictionary, seed the default rows on module activation without duplicates on reactivation, migrate legacy values when available, and keep categories/groups on the commissions setup page. *30/04/2026* - 1.15.0
 - FIX : Stop injecting the generic `__CHECK_READ__` mass-mail tracking pixel into ST-8 transactional supplier-order emails, leaving the placeholder empty instead of calling `public/emailing/mailing-read.php` with an undefined tag. *28/04/2026* - 1.15.0
 - FIX : Correct the ST-8 CLI non-regression script so it loads real user rights before execution and asserts the persisted supplier-proposal/order link instead of transient in-memory origin fields. *27/04/2026* - 1.15.0

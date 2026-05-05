@@ -44,20 +44,20 @@ class CliChaumeilProductCostViewRenderer
 	private $fields;
 
 	/**
-	 * @var string
+	 * @var string[]
 	 */
-	private $readonlyField;
+	private $readonlyFields;
 
 	/**
-	 * @param DoliDB   $db            Database handler.
-	 * @param string[] $fields        Breakdown field names.
-	 * @param string   $readonlyField Read-only field name.
+	 * @param DoliDB   $db             Database handler.
+	 * @param string[] $fields         Breakdown field names.
+	 * @param string[] $readonlyFields Read-only field names.
 	 */
-	public function __construct(DoliDB $db, array $fields, string $readonlyField)
+	public function __construct(DoliDB $db, array $fields, array $readonlyFields)
 	{
 		$this->db = $db;
 		$this->fields = $fields;
-		$this->readonlyField = $readonlyField;
+		$this->readonlyFields = $readonlyFields;
 	}
 
 	/**
@@ -150,7 +150,9 @@ class CliChaumeilProductCostViewRenderer
 		}
 
 		self::$costBreakdownScriptLoaded = true;
-		print '<script src="' . dol_buildpath('/clichaumeil/js/cost_breakdown.js', 1) . '" defer></script>';
+		$scriptFile = __DIR__ . '/../js/cost_breakdown.js';
+		$version = is_readable($scriptFile) ? '?v=' . filemtime($scriptFile) : '';
+		print '<script src="' . dol_buildpath('/clichaumeil/js/cost_breakdown.js', 1) . $version . '" defer></script>';
 	}
 
 	/**
@@ -189,13 +191,10 @@ class CliChaumeilProductCostViewRenderer
 			}
 
 			$value = $product->array_options[CliChaumeilProductCostCalculator::EXTRA_PREFIX . $field] ?? '';
-			$isReadonly = ($field === $this->readonlyField);
+			$isReadonly = in_array($field, $this->readonlyFields, true);
 
 			if ($editMode && $currentAttr === $field && !$isReadonly) {
 				$rows .= $this->buildEditableRow($product, $extrafields, $field, $labelHtml, $value, $baseUrl, $token, $collapseClass);
-				if ($field === CliChaumeilProductCostCalculator::TRANSPORT_PERCENT_FIELD) {
-					$rows .= $this->buildVirtualTotalCostsRow($form, $breakdown->totalCosts, $collapseClass);
-				}
 				continue;
 			}
 
@@ -208,7 +207,7 @@ class CliChaumeilProductCostViewRenderer
 			$rows .= '</td>';
 			$rows .= '<td>' . $outputValue . '</td></tr>';
 
-			if ($field === CliChaumeilProductCostCalculator::TRANSPORT_PERCENT_FIELD) {
+			if ($field === CliChaumeilProductCostCalculator::FILE_FEE_AMOUNT_FIELD) {
 				$rows .= $this->buildVirtualTotalCostsRow($form, $breakdown->totalCosts, $collapseClass);
 			}
 		}
@@ -301,15 +300,37 @@ class CliChaumeilProductCostViewRenderer
 			$output = price((float) $value, 0, $langs, 0, 0, -2, $currency);
 		}
 
-		if ($output === '') {
-			return '';
-		}
-
-		return $output . ' ' . $langs->getCurrencySymbol($currency);
+		return ($output === '' ? '' : $output . ' ' . $langs->getCurrencySymbol($currency));
 	}
 
 	/**
-	 * Return edit link with pencil icon.
+	 * Build the label cell HTML with optional tooltip.
+	 *
+	 * @param Form        $form        Dolibarr Form helper.
+	 * @param ExtraFields $extrafields Extrafields handler.
+	 * @param string      $field       Field name.
+	 * @param string      $label       Translated label.
+	 * @return string
+	 */
+	private function buildFieldLabelHtml(Form $form, ExtraFields $extrafields, string $field, string $label): string
+	{
+		global $langs;
+
+		$helpKey = (string) ($extrafields->attributes['product']['help'][$field] ?? '');
+		if ($helpKey === '') {
+			return dol_escape_htmltag($label);
+		}
+
+		$help = $langs->trans($helpKey);
+		if ($help === '' || $help === $helpKey) {
+			return dol_escape_htmltag($label);
+		}
+
+		return $form->textwithpicto($label, $help);
+	}
+
+	/**
+	 * Build the edit link icon for a breakdown row.
 	 *
 	 * @param string $baseUrl Base URL.
 	 * @param string $field   Field name.
@@ -320,26 +341,14 @@ class CliChaumeilProductCostViewRenderer
 	{
 		$url = $baseUrl . '&action=edit_extrafields&attr=' . $field . '&token=' . $token;
 
-		return ' <a class="editfielda" href="' . dol_escape_htmltag($url) . '">' . img_edit() . '</a>';
+		return '<a class="editfielda" href="' . dol_escape_htmltag($url) . '">' . img_edit() . '</a>';
 	}
 
 	/**
-	 * Check extrafield availability.
+	 * Build the virtual "Total Costs" row.
 	 *
-	 * @param ExtraFields $extrafields Extrafields handler.
-	 * @param string      $field       Field name.
-	 * @return bool
-	 */
-	private function extrafieldExists(ExtraFields $extrafields, string $field): bool
-	{
-		return isset($extrafields->attributes['product']['label'][$field]);
-	}
-
-	/**
-	 * Build the virtual row used to display total costs.
-	 *
-	 * @param Form   $form          Form helper used to render the tooltip.
-	 * @param float  $totalCosts    Computed total costs.
+	 * @param Form  $form       Dolibarr Form helper.
+	 * @param float $totalCosts Computed total costs.
 	 * @param string $collapseClass Native Dolibarr collapse-group class.
 	 * @return string
 	 */
@@ -377,11 +386,11 @@ class CliChaumeilProductCostViewRenderer
 	 */
 	private function buildCollapseClass(Product $product): string
 	{
-		return 'trextrafields_collapse' . self::SEPARATOR_FIELD . (!empty($product->id) ? '_' . ((int) $product->id) : '');
+		return 'trextrafieldseparator' . self::SEPARATOR_FIELD . '_' . (int) $product->id;
 	}
 
 	/**
-	 * Build client-side configuration for the native separator behavior.
+	 * Build the cookie and CSS configuration for the collapsible separator.
 	 *
 	 * @param ExtraFields $extrafields Extrafields handler.
 	 * @param Product     $product     Product object.
@@ -389,21 +398,12 @@ class CliChaumeilProductCostViewRenderer
 	 */
 	private function buildSeparatorConfig(ExtraFields $extrafields, Product $product): array
 	{
-		$params = $extrafields->attributes['product']['param'][self::SEPARATOR_FIELD] ?? array();
-		$collapseDisplayValue = 1;
-		if (is_array($params) && !empty($params['options']) && is_array($params['options'])) {
-			$paramKeys = array_keys($params['options']);
-			if (!empty($paramKeys)) {
-				$collapseDisplayValue = (int) $paramKeys[0];
-			}
-		}
-
-		$cookieName = 'DOLUSER_COLLAPSE_product_extrafields_' . self::SEPARATOR_FIELD;
-		$cookieValue = $_COOKIE[$cookieName] ?? null;
-		$expanded = isset($_COOKIE[$cookieName]) ? !empty($cookieValue) : ($collapseDisplayValue !== 2);
+		$separatorId = 'trextrafieldseparator' . self::SEPARATOR_FIELD . '_' . (int) $product->id;
+		$cookieName = 'dol_extrafieldseparator' . self::SEPARATOR_FIELD;
+		$expanded = (!isset($_COOKIE[$cookieName]) || $_COOKIE[$cookieName] === '1');
 
 		return array(
-			'separatorId' => 'trextrafieldseparator' . self::SEPARATOR_FIELD . (!empty($product->id) ? '_' . ((int) $product->id) : ''),
+			'separatorId' => $separatorId,
 			'collapseClass' => $this->buildCollapseClass($product),
 			'cookieName' => $cookieName,
 			'cookiePath' => $this->getCookiePath(),
@@ -412,44 +412,26 @@ class CliChaumeilProductCostViewRenderer
 	}
 
 	/**
-	 * Return the path scope used when persisting UI cookies.
+	 * Return the cookie path used by the cost breakdown UI state.
 	 *
 	 * @return string
 	 */
 	private function getCookiePath(): string
 	{
-		$path = (defined('DOL_URL_ROOT') ? (string) DOL_URL_ROOT : '');
+		$root = trim((string) DOL_URL_ROOT);
 
-		if ($path === '' || $path === '/') {
-			return '/';
-		}
-
-		return rtrim($path, '/');
+		return ($root !== '' ? $root : '/');
 	}
 
 	/**
-	 * Build a field label with native Dolibarr tooltip rendering when help exists.
+	 * Tell if an extrafield exists in the current Dolibarr environment.
 	 *
-	 * @param Form        $form        Form helper.
 	 * @param ExtraFields $extrafields Extrafields handler.
 	 * @param string      $field       Field name.
-	 * @param string      $label       Translated label.
-	 * @return string
+	 * @return bool
 	 */
-	private function buildFieldLabelHtml(Form $form, ExtraFields $extrafields, string $field, string $label): string
+	private function extrafieldExists(ExtraFields $extrafields, string $field): bool
 	{
-		global $langs;
-
-		$helpKey = (string) ($extrafields->attributes['product']['help'][$field] ?? '');
-		if ($helpKey === '') {
-			return dol_escape_htmltag($label);
-		}
-
-		$help = $langs->trans($helpKey);
-		if ($help === '' || $help === $helpKey) {
-			return dol_escape_htmltag($label);
-		}
-
-		return $form->textwithpicto($label, $help);
+		return isset($extrafields->attributes['product']['label'][$field]);
 	}
 }

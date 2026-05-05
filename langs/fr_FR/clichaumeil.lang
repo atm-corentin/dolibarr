@@ -355,11 +355,15 @@ CliChaumeilPaInk=PA Encre
 CliChaumeilPaLabor=PA Main d'oeuvre
 CliChaumeilConditionnementPercent=Taux conditionnement (%)
 CliChaumeilTransportPercent=Taux transport (%)
+CliChaumeilTauxFraisDossier=Taux frais de dossier (%)
+CliChaumeilMtFraisDossier=Montant frais de dossier
 CliChaumeilTotalCosts=Total coûts
 CLICHAUMEIL_CONDITIONNEMENT_PERCENT=Taux conditionnement (%)
 CLICHAUMEIL_TRANSPORT_PERCENT=Taux transport (%)
+CLICHAUMEIL_TAUX_FRAIS_DOSSIER=Taux frais de dossier (%)
+CLICHAUMEIL_MT_FRAIS_DOSSIER=Montant frais de dossier
 CLICHAUMEIL_TOTAL_COSTS=Total coûts
-CLICHAUMEIL_TOTAL_COSTS_HELP=Somme des cinq postes d'achat, majorée du taux de conditionnement et du taux de transport. Ce montant est calculé à la volée et n'est pas stocké.
+CLICHAUMEIL_TOTAL_COSTS_HELP=Somme des cinq postes d'achat, majorée du taux de conditionnement, du taux de transport et des frais de dossier. Ce montant est calculé à la volée et n'est pas stocké.
 CliChaumeilFgPercent=Frais généraux (%)
 CliChaumeilPaFg=PA Frais généraux
 CLICHAUMEIL_HELP_PA_SUPPORT=Partie achat correspondant au support.
@@ -369,6 +373,8 @@ CLICHAUMEIL_HELP_PA_INK=Partie achat correspondant à l'encre.
 CLICHAUMEIL_HELP_PA_LABOR=Partie achat correspondant à la main-d'oeuvre.
 CLICHAUMEIL_HELP_PACKAGING_PERCENT=Pourcentage appliqué sur la somme des cinq postes d'achat pour calculer le coût de conditionnement. Convention : 10 = 10%%.
 CLICHAUMEIL_HELP_TRANSPORT_PERCENT=Pourcentage appliqué sur la somme des cinq postes d'achat pour calculer le coût de transport. Convention : 10 = 10%%.
+CLICHAUMEIL_HELP_TAUX_FRAIS_DOSSIER=Pourcentage appliqué sur la somme des cinq postes d'achat pour calculer le montant des frais de dossier. Convention : 10 = 10%%.
+CLICHAUMEIL_HELP_MT_FRAIS_DOSSIER=Montant calculé des frais de dossier : Somme des 5 postes d'achat x taux frais de dossier.
 CLICHAUMEIL_HELP_FG_PERCENT=Pourcentage de frais généraux appliqué sur le Total coûts. Convention : 10 = 10%%. Si vide, le calcul final n'écrase pas le PA frais généraux ni le prix de revient.
 CLICHAUMEIL_HELP_PA_FG=Montant calculé des frais généraux : Total coûts x taux de frais généraux.
 CliChaumeilUnits=Unité Cible

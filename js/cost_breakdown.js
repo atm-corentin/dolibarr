@@ -51,7 +51,7 @@
 		if (!separatorId || !collapseClass || !cookieName) return;
 
 		const $separator = $('#' + separatorId);
-		const $groupRows = $('.' + collapseClass);
+		const $groupRows = $('.' + collapseClass).not($separator);
 		if (!$separator.length || !$groupRows.length) return;
 
 		const $icon = $separator.find('td span, th span').first();

@@ -31,6 +31,11 @@ class CostBreakdownResult
 	/**
 	 * @var float
 	 */
+	public $fileFeeAmount;
+
+	/**
+	 * @var float
+	 */
 	public $totalCosts;
 
 	/**
@@ -59,6 +64,7 @@ class CostBreakdownResult
 	 * @param float       $baseCost          Base cost.
 	 * @param float       $packagingAmount   Packaging amount.
 	 * @param float       $transportAmount   Transport amount.
+	 * @param float       $fileFeeAmount      File fee amount.
 	 * @param float       $totalCosts        Total costs.
 	 * @param float|null  $paFg              Overhead amount.
 	 * @param float|null  $costPrice         Final cost price.
@@ -69,6 +75,7 @@ class CostBreakdownResult
 		float $baseCost,
 		float $packagingAmount,
 		float $transportAmount,
+		float $fileFeeAmount,
 		float $totalCosts,
 		?float $paFg,
 		?float $costPrice,
@@ -78,6 +85,7 @@ class CostBreakdownResult
 		$this->baseCost = $baseCost;
 		$this->packagingAmount = $packagingAmount;
 		$this->transportAmount = $transportAmount;
+		$this->fileFeeAmount = $fileFeeAmount;
 		$this->totalCosts = $totalCosts;
 		$this->paFg = $paFg;
 		$this->costPrice = $costPrice;

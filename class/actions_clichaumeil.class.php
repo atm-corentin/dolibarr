@@ -97,20 +97,21 @@ class ActionsClichaumeil extends CommonHookActions
 	private const DEFAULT_PROPAL_LINE_GUARD_DOM_ID = 'clichaumeil-default-propal-line-guard';
 
 	private const COST_BREAKDOWN_FIELDS = array(
-		'clichaumeil_prc_separator',
-		'clichaumeil_pa_support',
-		'clichaumeil_pa_sav',
-		'clichaumeil_pa_machine',
-		'clichaumeil_pa_encre',
-		'clichaumeil_pa_mo',
-		'clichaumeil_conditionnement_percent',
-		'clichaumeil_transport_percent',
-		'clichaumeil_fg_percent',
-		'clichaumeil_pa_fg',
+			'clichaumeil_prc_separator',
+			'clichaumeil_pa_support',
+			'clichaumeil_pa_sav',
+			'clichaumeil_pa_machine',
+			'clichaumeil_pa_encre',
+			'clichaumeil_pa_mo',
+			'clichaumeil_conditionnement_percent',
+			'clichaumeil_transport_percent',
+			'clichaumeil_taux_frais_dossier',
+			'clichaumeil_mt_frais_dossier',
+			'clichaumeil_fg_percent',
+			'clichaumeil_pa_fg',
 	);
 
-	private const READONLY_FIELD = 'clichaumeil_pa_fg';
-
+	private const READONLY_FIELDS = array('clichaumeil_mt_frais_dossier', 'clichaumeil_pa_fg');
 	/** @var CliChaumeilPropalDefaultLineService|null */
 	private $propalDefaultLineService;
 
@@ -466,7 +467,7 @@ class ActionsClichaumeil extends CommonHookActions
 
 		$attr = GETPOST('attr', 'aZ09');
 		$isCostBreakdown = (int) GETPOST('clichaumeil_cost_breakdown', 'int') === 1;
-		if ($action !== 'update_extrafields' || !$isCostBreakdown || !in_array($attr, self::COST_BREAKDOWN_FIELDS, true) || $attr === self::READONLY_FIELD) {
+		if ($action !== 'update_extrafields' || !$isCostBreakdown || !in_array($attr, self::COST_BREAKDOWN_FIELDS, true) || in_array($attr, self::READONLY_FIELDS, true)) {
 			return 0;
 		}
 
@@ -1210,7 +1211,7 @@ class ActionsClichaumeil extends CommonHookActions
 	{
 		global $user;
 
-		$renderer = new CliChaumeilProductCostViewRenderer($this->db, self::COST_BREAKDOWN_FIELDS, self::READONLY_FIELD);
+		$renderer = new CliChaumeilProductCostViewRenderer($this->db, self::COST_BREAKDOWN_FIELDS, self::READONLY_FIELDS);
 		$renderer->renderSupplierCostBreakdownRows($parameters, $object, $action, $user);
 	}
 
@@ -1221,7 +1222,7 @@ class ActionsClichaumeil extends CommonHookActions
 	 */
 	private function hideCostBreakdownOnProductCard(): void
 	{
-		$renderer = new CliChaumeilProductCostViewRenderer($this->db, self::COST_BREAKDOWN_FIELDS, self::READONLY_FIELD);
+		$renderer = new CliChaumeilProductCostViewRenderer($this->db, self::COST_BREAKDOWN_FIELDS, self::READONLY_FIELDS);
 		$renderer->hideCostBreakdownOnProductCard();
 	}
 
