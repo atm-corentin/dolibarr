@@ -398,8 +398,6 @@ class CliChaumeilProductCostViewRenderer
 	 */
 	private function buildSeparatorConfig(ExtraFields $extrafields, Product $product): array
 	{
-		global $conf;
-
 		$separatorId = 'trextrafieldseparator' . self::SEPARATOR_FIELD . '_' . (int) $product->id;
 		$cookieName = 'dol_extrafieldseparator' . self::SEPARATOR_FIELD;
 		$expanded = (!isset($_COOKIE[$cookieName]) || $_COOKIE[$cookieName] === '1');
@@ -408,9 +406,21 @@ class CliChaumeilProductCostViewRenderer
 			'separatorId' => $separatorId,
 			'collapseClass' => $this->buildCollapseClass($product),
 			'cookieName' => $cookieName,
-			'cookiePath' => (string) ($conf->entity > 1 ? dol_buildpath('/' . $conf->entity, 1) : '/'),
+			'cookiePath' => $this->getCookiePath(),
 			'expanded' => $expanded,
 		);
+	}
+
+	/**
+	 * Return the cookie path used by the cost breakdown UI state.
+	 *
+	 * @return string
+	 */
+	private function getCookiePath(): string
+	{
+		$root = trim((string) DOL_URL_ROOT);
+
+		return ($root !== '' ? $root : '/');
 	}
 
 	/**
