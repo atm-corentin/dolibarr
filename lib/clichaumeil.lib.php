@@ -39,8 +39,23 @@ function clichaumeilAdminPrepareHead()
 	$head = array();
 
 	$head[$h][0] = dol_buildpath("/clichaumeil/admin/setup.php", 1);
-	$head[$h][1] = $langs->trans("Contract");
+	$head[$h][1] = $langs->trans("CliChaumeilTabGeneral");
 	$head[$h][2] = 'settings';
+	$h++;
+
+	$head[$h][0] = dol_buildpath("/clichaumeil/admin/setup_products.php", 1);
+	$head[$h][1] = $langs->trans("CliChaumeilTabProducts");
+	$head[$h][2] = 'products';
+	$h++;
+
+	$head[$h][0] = dol_buildpath("/clichaumeil/admin/setup_contracts.php", 1);
+	$head[$h][1] = $langs->trans("CliChaumeilTabContracts");
+	$head[$h][2] = 'contracts';
+	$h++;
+
+	$head[$h][0] = dol_buildpath("/clichaumeil/admin/setup_subcontracting.php", 1);
+	$head[$h][1] = $langs->trans("CliChaumeilTabSubcontracting");
+	$head[$h][2] = 'subcontracting';
 	$h++;
 
 	$head[$h][0] = dol_buildpath("/clichaumeil/admin/commissions.php", 1);

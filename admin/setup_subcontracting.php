@@ -1,7 +1,5 @@
 <?php
-/* Copyright (C) 2004-2017  Laurent Destailleur     <eldy@users.sourceforge.net>
- * Copyright (C) 2024       Frédéric France         <frederic.france@free.fr>
- * Copyright (C) 2025		Grégory Maza             <gregory.maza@atm-consulting.fr>
+/* Copyright (C) 2025		Grégory Maza             <gregory.maza@atm-consulting.fr>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,18 +16,16 @@
  */
 
 /**
- * \file    clichaumeil/admin/setup.php
+ * \file    clichaumeil/admin/setup_subcontracting.php
  * \ingroup clichaumeil
- * \brief   Clichaumeil setup page.
+ * \brief   Clichaumeil subcontracting settings page.
  */
 
 // Load Dolibarr environment
 $res = 0;
-// Try main.inc.php into web root known defined into CONTEXT_DOCUMENT_ROOT (not always defined)
 if (!$res && !empty($_SERVER["CONTEXT_DOCUMENT_ROOT"])) {
 	$res = @include $_SERVER["CONTEXT_DOCUMENT_ROOT"] . "/main.inc.php";
 }
-// Try main.inc.php into web root detected using web root calculated from SCRIPT_FILENAME
 $tmp = empty($_SERVER['SCRIPT_FILENAME']) ? '' : $_SERVER['SCRIPT_FILENAME'];
 $tmp2 = realpath(__FILE__);
 $i = strlen($tmp) - 1;
@@ -44,7 +40,6 @@ if (!$res && $i > 0 && file_exists(substr($tmp, 0, ($i + 1)) . "/main.inc.php"))
 if (!$res && $i > 0 && file_exists(dirname(substr($tmp, 0, ($i + 1))) . "/main.inc.php")) {
 	$res = @include dirname(substr($tmp, 0, ($i + 1))) . "/main.inc.php";
 }
-// Try main.inc.php using relative path
 if (!$res && file_exists("../../main.inc.php")) {
 	$res = @include "../../main.inc.php";
 }
@@ -57,7 +52,9 @@ if (!$res) {
 
 // Libraries
 require_once DOL_DOCUMENT_ROOT . "/core/lib/admin.lib.php";
+require_once DOL_DOCUMENT_ROOT . "/core/class/html.formmail.class.php";
 require_once '../lib/clichaumeil.lib.php';
+require_once __DIR__ . '/../class/Subcontracting/CliChaumeilSupplierOrderConfig.class.php';
 
 /**
  * @var Conf $conf
@@ -70,24 +67,47 @@ require_once '../lib/clichaumeil.lib.php';
 // Translations
 $langs->loadLangs(array("admin", "clichaumeil@clichaumeil"));
 
-// Initialize a technical object to manage hooks of page. Note that conf->hooks_modules contains an array of hook context
-/** @var HookManager $hookmanager */
 $hookmanager->initHooks(array('clichaumeilsetup', 'globalsetup'));
 
 // Parameters
 $action = GETPOST('action', 'aZ09');
 $backtopage = GETPOST('backtopage', 'alpha');
-$modulepart = GETPOST('modulepart', 'aZ09');	// Used by actions_setmoduleoptions.inc.php
-$form = new Form($db);
+$modulepart = GETPOST('modulepart', 'aZ09');
 
 // Access control
 if (!$user->admin) {
 	accessforbidden();
 }
 
+$useFormSetup = 1;
+
+if (!class_exists('FormSetup')) {
+	require_once DOL_DOCUMENT_ROOT . '/core/class/html.formsetup.class.php';
+}
+$formSetup = new FormSetup($db);
+
+// --- Field: Supplier order email template (Dropdown) ---
+$formmail = new FormMail($db);
+$formmail->fetchAllEMailTemplate(CliChaumeilSupplierOrderConfig::MAIL_TEMPLATE_TYPE, $user, $langs);
+$supplierOrderTemplates = !empty($formmail->lines_model) ? array_column($formmail->lines_model, 'label', 'id') : [];
+$formSetup->newItem(CliChaumeilSupplierOrderConfig::SUPPLIER_ORDER_EMAIL_TEMPLATE_KEY)->setAsSelect($supplierOrderTemplates);
+
+/*
+ * Actions
+ */
+
+if ($action == 'update' && !empty($user->admin)) {
+	$formSetup->saveConfFromPost();
+
+	header('Location: ' . $_SERVER["PHP_SELF"]);
+	exit;
+}
+
 /*
  * View
  */
+
+include DOL_DOCUMENT_ROOT . '/core/actions_setmoduleoptions.inc.php';
 
 $help_url = '';
 $title = "ClichaumeilSetup";
@@ -99,10 +119,12 @@ $linkback = '<a href="' . ($backtopage ? dol_escape_htmltag($backtopage) : DOL_U
 print load_fiche_titre($langs->trans($title), $linkback, 'title_setup');
 
 $head = clichaumeilAdminPrepareHead();
-print dol_get_fiche_head($head, 'settings', $langs->trans($title), -1, "clichaumeil@clichaumeil");
+print dol_get_fiche_head($head, 'subcontracting', $langs->trans($title), -1, "clichaumeil@clichaumeil");
 
-echo '<span class="opacitymedium">' . $langs->trans("CliChaumeilGeneralSetupPage") . '</span><br><br>';
-print '<br>' . $langs->trans("NothingToSetup");
+echo '<span class="opacitymedium">' . $langs->trans("CliChaumeilSubcontractingSetupPage") . '</span><br><br>';
+
+print $formSetup->generateOutput(true);
+print '<br>';
 
 print dol_get_fiche_end();
 

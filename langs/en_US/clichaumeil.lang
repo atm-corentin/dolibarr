@@ -43,6 +43,16 @@ MyWidgetDescription = My widget description
 ClichaumeilSetup = CliChaumeil Settings
 Settings = Settings
 ClichaumeilSetupPage = CliChaumeil Settings
+
+CliChaumeilTabGeneral=General
+CliChaumeilTabProducts=Products
+CliChaumeilTabContracts=Contracts
+CliChaumeilTabSubcontracting=Subcontracting
+
+CliChaumeilGeneralSetupPage=General settings for the CliChaumeil module.
+CliChaumeilProductsSetupPage=Configuration of product and service related settings.
+CliChaumeilContractsSetupPage=Configuration of automatic contract revision settings.
+CliChaumeilSubcontractingSetupPage=Configuration of subcontracting related settings.
 CLICHAUMEIL_DEFAULT_PROPAL_LINE_MANAGE_RIGHT=Manage default proposal products/services
 CLICHAUMEIL_DEFAULT_PROPAL_PRODUCT_ID=Default proposal products/services
 CLICHAUMEIL_DEFAULT_PROPAL_PRODUCT_IDTooltip=Select the products and services to inject automatically on new proposals and cloned proposals.<br><br>Rules:<br>- the configuration is scoped to the current entity;<br>- protection relies on a technical line extrafield;<br>- an injected line stays protected even if the configuration changes later;<br>- existing proposals are not updated retroactively;<br>- a line manually added with the same product is not automatically protected.
@@ -76,10 +86,15 @@ CliChaumeilReviewDate=Review date
 CliChaumeilSupplierResponseDate=Supplier response date
 
 CLICHAUMEIL_REVIEW_YEAR_DELAY=Review date offset after renewal (in years)
-CLICHAUMEIL_PRICING_UPDATE_MANAGERS=Managers for pricing updates
-CLICHAUMEIL_CRON_EMAIL_TEMPLATE=Email template to use for email alerts
+CLICHAUMEIL_REVIEW_YEAR_DELAYTooltip=After a contract is renewed, the next review date is automatically shifted by this number of years. Example: enter 1 to postpone the next revision by one year after renewal.
+CLICHAUMEIL_PRICING_UPDATE_MANAGERS=Users responsible for pricing revisions
+CLICHAUMEIL_PRICING_UPDATE_MANAGERSTooltip=These users receive an automatic summary email each time the scheduled task applies pricing revisions to contracts. Set up the users in charge of managing contract prices here.
+CLICHAUMEIL_CRON_EMAIL_TEMPLATE=Email template for renewal alerts
+CLICHAUMEIL_CRON_EMAIL_TEMPLATETooltip=Email template used by the scheduled task to send a summary of applied pricing revisions to responsible users. The template must be of type "Contract" and must be active.
 CLICHAUMEIL_SUPPLIER_ORDER_EMAIL_TEMPLATE=Email template to use when sending subcontractor supplier orders
-CLICHAUMEIL_CRON_NOTIF_USERS=Subscribers to renewal notifications
+CLICHAUMEIL_SUPPLIER_ORDER_EMAIL_TEMPLATETooltip=Email template used when automatically sending the supplier order to the selected subcontractor. The template must be of type "Supplier order (send)" and must be active.
+CLICHAUMEIL_CRON_NOTIF_USERS=Recipients of renewal notifications
+CLICHAUMEIL_CRON_NOTIF_USERSTooltip=These users receive a bubble notification in Dolibarr each time an automatic pricing revision is applied. Requires the Advanced Notifier module.
 CliChaumeilAutomaticRenewalContract=Automatic update of contract revisions
 CliChaumeilApplyRenewalRate=Applies the review rate to expired contract lines
 CliChaumeilCronNoLinesToUpdate=No contract lines needed an update.
