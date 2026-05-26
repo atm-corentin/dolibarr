@@ -124,6 +124,11 @@ class ActionsClichaumeil extends CommonHookActions
 	/** @var CliChaumeilSupplierProposalGuard|null */
 	private $supplierProposalGuard;
 
+	/** @var bool|null Native propal.creer captured in restrictedArea (clichaumeil priority 40) before MC (priority 50) zeroes it. Null until the hook fires. */
+	private $nativePropalCreer = null;
+
+
+
 	/**
 	 * Constructor
 	 *
@@ -132,6 +137,7 @@ class ActionsClichaumeil extends CommonHookActions
 	public function __construct($db)
 	{
 		$this->db = $db;
+		$this->priority = 40;
 	}
 
 	public $rfa_tab_added = false;
@@ -165,12 +171,14 @@ class ActionsClichaumeil extends CommonHookActions
 	 */
 	public function addMoreActionsButtons(array $parameters, CommonObject &$object, string &$action, HookManager $hookmanager)
 	{
-		global $langs, $user;
-		$langs->loadLangs(array('clichaumeil@clichaumeil', 'supplier_proposal', 'companies', 'main'));
+		global $langs, $user, $conf, $usercancreate;
+		$langs->loadLangs(array('clichaumeil@clichaumeil', 'supplier_proposal', 'companies', 'main', 'propal'));
 
 		require_once DOL_DOCUMENT_ROOT . '/supplier_proposal/class/supplier_proposal.class.php';
 		require_once DOL_DOCUMENT_ROOT . '/comm/propal/class/propal.class.php';
 		require_once DOL_DOCUMENT_ROOT . '/commande/class/commande.class.php';
+
+		$this->renderSharedPropalCloneButton($parameters, $object, $user, $conf, (bool) $usercancreate);
 
 		if (!$this->shouldShowSubcontractorPicker($parameters, $object, $user)) {
 			$this->renderProposalValidationGuardMarker($parameters, $object, $langs, $user);
@@ -261,6 +269,232 @@ class ActionsClichaumeil extends CommonHookActions
 	private function hasSupplierProposalSelectionRight(User $user): bool
 	{
 		return $user->hasRight('supplier_proposal', 'creer') || $user->hasRight('supplier_proposal', 'cloturer');
+	}
+
+	/**
+	 * Check whether the shared-proposal cross-entity clone is allowed for the current request.
+	 *
+	 * Conditions: propalcard context, proposal belongs to a foreign entity, and the user holds
+	 * the native propal.creer right (regardless of multicompany write overrides).
+	 *
+	 * @param string  $context  Current hook context string (colon-separated).
+	 * @param mixed   $object   Current object.
+	 * @param User    $user     Current user.
+	 * @param Conf    $conf     Global configuration object.
+	 * @return bool
+	 *
+	 * @note The right check uses $nativePropalCreer cached in restrictedArea() before multicompany
+	 *       zeroes $user->rights->propal->creer at priority 50. Requires clichaumeil registered for
+	 *       the 'main' hook context (priority 40). If restrictedArea() never fired (edge case outside
+	 *       propalcard), the fallback calls hasRight() which may already return the post-MC value.
+	 */
+	private function isSharedPropalCloneEligible(string $context, $object, User $user, Conf $conf): bool
+	{
+		if (!isModEnabled('propal')) {
+			return false;
+		}
+
+		if (strpos($context, self::PROPAL_CARD_CONTEXT) === false) {
+			return false;
+		}
+
+		if (!$object instanceof Propal || empty($object->id)) {
+			return false;
+		}
+
+		if ((int) $object->entity === (int) $conf->entity) {
+			return false;
+		}
+
+		// $nativePropalCreer is set in restrictedArea (priority 40) before MC (priority 50) zeroes
+		// $user->rights->propal->creer. Requires clichaumeil registered for 'main' context.
+		return $this->nativePropalCreer ?? (bool) $user->hasRight('propal', 'creer');
+	}
+
+	/**
+	 * Print a "Clone" action button for shared proposals when multicompany has blocked write access.
+	 *
+	 * The button is only shown when: the proposal belongs to a foreign entity, the user has the
+	 * native propal.creer right, and multicompany has overridden $usercancreate to false.
+	 *
+	 * @param array<string,mixed> $parameters    Hook parameters.
+	 * @param mixed               $object        Current object.
+	 * @param User                $user          Current user.
+	 * @param Conf                $conf          Global configuration object.
+	 * @param bool                $usercancreate Value of the global $usercancreate flag (may be overridden by MC).
+	 * @return void
+	 */
+	private function renderSharedPropalCloneButton(array $parameters, $object, User $user, Conf $conf, bool $usercancreate): void
+	{
+		global $langs;
+
+		$context = (string) ($parameters['context'] ?? ($parameters['currentcontext'] ?? ''));
+
+		if (!$this->isSharedPropalCloneEligible($context, $object, $user, $conf)) {
+			return;
+		}
+
+		if ($usercancreate) {
+			return;
+		}
+
+		$url = dol_escape_htmltag($_SERVER['PHP_SELF'])
+			. '?id=' . (int) $object->id
+			. '&socid=' . (int) $object->socid
+			. '&action=clone&token=' . newToken()
+			. '&object=' . dol_escape_htmltag($object->element);
+
+		print '<a class="butAction" href="' . $url . '">' . $langs->trans('ToClone') . '</a>';
+	}
+
+	/**
+	 * Render the clone confirmation form for shared proposals when $action has been cleared by multicompany.
+	 *
+	 * Uses GETPOST instead of $action because multicompany's doActions runs after this hook
+	 * (priority 40 < 50) and clears $action for cross-entity write operations; the display
+	 * phase therefore always receives $action = ''.
+	 *
+	 * @param array<string,mixed> $parameters  Hook parameters.
+	 * @param CommonObject        $object      Current object.
+	 * @param string              $action      Current action (may already be empty due to MC override).
+	 * @param HookManager         $hookmanager Hook manager.
+	 * @return int
+	 */
+	public function formConfirm(array $parameters, CommonObject &$object, string &$action, HookManager $hookmanager): int
+	{
+		global $conf, $langs, $form, $user, $usercancreate;
+
+		$context = (string) ($parameters['context'] ?? ($parameters['currentcontext'] ?? ''));
+
+		if (GETPOST('action', 'aZ09') !== 'clone') {
+			return 0;
+		}
+
+		if (!$this->isSharedPropalCloneEligible($context, $object, $user, $conf)) {
+			return 0;
+		}
+
+		if ($usercancreate) {
+			return 0;
+		}
+
+		$langs->loadLangs(array('propal', 'main'));
+
+		$filter = '(s.client:IN:1,2,3)';
+		$formquestion = array(
+			array(
+				'type' => 'other',
+				'name' => 'socid',
+				'label' => $langs->trans('SelectThirdParty'),
+				'value' => $form->select_company(
+					GETPOSTINT('socid') > 0 ? GETPOSTINT('socid') : (int) $object->socid,
+					'socid',
+					$filter,
+					'',
+					0,
+					0,
+					array(),
+					0,
+					'maxwidth300'
+				),
+			),
+			array('type' => 'checkbox', 'name' => 'update_prices', 'label' => $langs->trans('PuttingPricesUpToDate'), 'value' => 0),
+			array('type' => 'checkbox', 'name' => 'update_desc', 'label' => $langs->trans('PuttingDescUpToDate'), 'value' => 0),
+		);
+
+		$this->resprints = $form->formconfirm(
+			dol_escape_htmltag($_SERVER['PHP_SELF']) . '?id=' . (int) $object->id,
+			$langs->trans('ToClone'),
+			$langs->trans('ConfirmClonePropal', dol_escape_htmltag($object->ref)),
+			'confirm_clone',
+			$formquestion,
+			'yes',
+			1,
+			250,
+			600
+		);
+
+		return 1;
+	}
+
+	/**
+	 * Handle clone/confirm_clone actions for shared proposals (cross-entity clone).
+	 *
+	 * Runs at priority 40 (before MC at 50) within the same context.
+	 * For action=clone: clears $action so MC does not add a "no permissions" error; formConfirm
+	 * uses GETPOST() and still renders the popup.
+	 * For action=confirm_clone: executes createFromClone and redirects on success.
+	 *
+	 * @param string  $context Current hook context string.
+	 * @param mixed   $object  Current object.
+	 * @param string  $action  Current action by reference.
+	 * @param User    $user    Current user.
+	 * @param Conf    $conf    Global configuration object.
+	 * @return int|null null when not applicable, 1 when handled (success or failure).
+	 */
+	private function handleSharedPropalCloneDoActions(string $context, &$object, string &$action, User $user, Conf $conf): ?int
+	{
+		global $langs, $usercancreate;
+
+		// Only intercept when MC has blocked write access. If $usercancreate is true, let the native
+		// clone handler run — our button was not shown in that case anyway (see renderSharedPropalCloneButton).
+		if ((bool) $usercancreate) {
+			return null;
+		}
+
+		// Display phase: user clicked Clone. Clear $action so MC does not add a "no permissions"
+		// error for this write action. formConfirm uses GETPOST() directly, so the popup still renders.
+		if ($action === 'clone' && $this->isSharedPropalCloneEligible($context, $object, $user, $conf)) {
+			$action = '';
+			return 0;
+		}
+
+		if ($action !== 'confirm_clone' || GETPOST('confirm', 'alpha') !== 'yes') {
+			return null;
+		}
+
+		if (!$this->isSharedPropalCloneEligible($context, $object, $user, $conf)) {
+			return null;
+		}
+
+		$socid = GETPOSTINT('socid');
+		if ($socid <= 0) {
+			$socid = (int) $object->socid;
+		}
+
+		dol_syslog(
+			__METHOD__ . ' cloning shared proposal id=' . (int) $object->id
+				. ' from entity=' . (int) $object->entity
+				. ' to entity=' . (int) $conf->entity
+				. ' socid=' . $socid
+				. ' user_id=' . (int) $user->id,
+			LOG_INFO
+		);
+
+		$result = $object->createFromClone(
+			$user,
+			$socid,
+			(int) $conf->entity,
+			GETPOST('update_prices', 'alpha') === 'on',
+			GETPOST('update_desc', 'alpha') === 'on'
+		);
+
+		if ($result <= 0) {
+			dol_syslog(
+				__METHOD__ . ' createFromClone failed for proposal id=' . (int) $object->id . ' error=' . $object->error,
+				LOG_ERR
+			);
+			if (!empty($object->errors)) {
+				setEventMessages($object->error, $object->errors, 'errors');
+			} else {
+				setEventMessages($langs->trans('Error'), null, 'errors');
+			}
+			$action = '';
+			return 1;
+		}
+
+		header('Location: ' . $_SERVER['PHP_SELF'] . '?id=' . (int) $result);
+		exit;
 	}
 
 	/**
@@ -442,10 +676,15 @@ class ActionsClichaumeil extends CommonHookActions
 	 */
 	public function doActions($parameters, &$object, &$action, $hookmanager)
 	{
-		global $user, $langs;
+		global $user, $langs, $conf;
 		$langs->load('clichaumeil@clichaumeil');
 
 		$context = (string) ($parameters['context'] ?? ($parameters['currentcontext'] ?? ''));
+
+		$sharedCloneResult = $this->handleSharedPropalCloneDoActions($context, $object, $action, $user, $conf);
+		if ($sharedCloneResult !== null) {
+			return $sharedCloneResult;
+		}
 
 		$propalDefaultLineResult = $this->handlePropalDefaultLineDoActions($context, $object, $action, $user);
 		if ($propalDefaultLineResult !== null) {
@@ -863,6 +1102,13 @@ class ActionsClichaumeil extends CommonHookActions
 		$features = (string) ($parameters['features'] ?? '');
 		$feature2 = (string) ($parameters['feature2'] ?? '');
 		$objecttable = (string) ($parameters['objecttable'] ?? '');
+
+		if ($this->nativePropalCreer === null && $features !== '') {
+			$parts = preg_split('/[&|]/', $features);
+			if (in_array('propal', array_map('strtolower', (array) $parts), true)) {
+				$this->nativePropalCreer = (bool) $user->hasRight('propal', 'creer');
+			}
+		}
 
 		if (in_array($features, array('clichaumeil', 'chaumeilrfa', 'clichaumeil_chaumeilrfa'), true)
 			|| $feature2 === 'chaumeilrfa'

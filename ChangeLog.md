@@ -3,6 +3,8 @@
 
 ## Unreleased
 
+- FIX : R5-DIV: Ensure the shared-proposal clone button and action work correctly by registering clichaumeil for the 'main' hook context (priority 40) so it intercepts before multicompany (priority 50) erases propal.creer. *26/05/2026* - 1.15.1
+- NEW : R5-DIV: Allow cloning a shared (cross-entity) proposal even when multicompany has blocked write access, provided the user holds propal.creer — the clone is forced into the current entity. *26/05/2026* - 1.15.0
 - NEW : ACHT-7: Add file fee rate and amount to product cost breakdown calculation. *28/04/2026* - 1.15.0
 - NEW : Replace the eight commission coefficient setup constants with a dedicated Dolibarr dictionary, seed the default rows on module activation without duplicates on reactivation, migrate legacy values when available, and keep categories/groups on the commissions setup page. *30/04/2026* - 1.15.0
 - FIX : Stop injecting the generic `__CHECK_READ__` mass-mail tracking pixel into ST-8 transactional supplier-order emails, leaving the placeholder empty instead of calling `public/emailing/mailing-read.php` with an undefined tag. *28/04/2026* - 1.15.0
