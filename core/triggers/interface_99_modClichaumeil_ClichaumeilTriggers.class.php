@@ -482,10 +482,11 @@ class InterfaceClichaumeilTriggers extends DolibarrTriggers
 		}
 
 		// Direction 2: supplier_proposal is the SOURCE — the parent is the TARGET.
+		// Use alsosametype=0 to avoid loading sibling supplier_proposals (irrelevant here).
 		if (method_exists($object, 'clearObjectLinkedCache')) {
 			$object->clearObjectLinkedCache();
 		}
-		$object->fetchObjectLinked((int) $object->id, $object->element, '', '');
+		$object->fetchObjectLinked((int) $object->id, $object->element, '', '', 'OR', 0, 'sourcetype', 1);
 
 		if (!empty($object->linkedObjects['propal']) && is_array($object->linkedObjects['propal'])) {
 			return reset($object->linkedObjects['propal']);
