@@ -82,7 +82,7 @@ class CliChaumeilSubcontractorSelectionWorkflow
 	private CliChaumeilSupplierProposalGuard $supplierProposalGuard;
 
 	/**
-	 * Re-entrancy guard: prevents double execution when the PROPOSAL_SUPPLIER_SIGN trigger
+	 * Re-entrancy guard: prevents double execution when the PROPOSAL_SUPPLIER_CLOSE_SIGNED trigger
 	 * fires synchronously inside markSelectedProposalAsSigned() → cloture() during a button-flow call.
 	 * The second execute() call must return immediately without doing any work.
 	 *

@@ -47,6 +47,7 @@ require_once DOL_DOCUMENT_ROOT . '/user/class/user.class.php';
 require_once DOL_DOCUMENT_ROOT . '/commande/class/commande.class.php';
 require_once __DIR__ . '/../../class/Subcontracting/CliChaumeilSubcontractorSelectionWorkflow.class.php';
 require_once __DIR__ . '/../../class/Subcontracting/CliChaumeilSupplierProposalGuard.class.php';
+require_once __DIR__ . '/../../class/Subcontracting/CliChaumeilSupplierOrderConfig.class.php';
 
 
 
@@ -233,7 +234,7 @@ class InterfaceClichaumeilTriggers extends DolibarrTriggers
 				}
 				break;
 
-			case 'PROPOSAL_SUPPLIER_SIGN':
+			case 'PROPOSAL_SUPPLIER_CLOSE_SIGNED':
 				return $this->handleSupplierProposalSign($object, $user, $langs, $conf);
 
 			default:
@@ -398,7 +399,7 @@ class InterfaceClichaumeilTriggers extends DolibarrTriggers
 	/**
 	 * Trigger the ST-8 subcontractor selection workflow when a supplier proposal is signed.
 	 *
-	 * Called for PROPOSAL_SUPPLIER_SIGN. Applies only to supplier proposals linked to a customer
+	 * Called for PROPOSAL_SUPPLIER_CLOSE_SIGNED. Applies only to supplier proposals linked to a customer
 	 * propal or commande (subcontracting context). Silently ignores all other cases.
 	 * Never returns < 0 so it never blocks Dolibarr's own status transition.
 	 *
