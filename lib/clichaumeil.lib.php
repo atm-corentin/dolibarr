@@ -110,3 +110,45 @@ function externalAccessInitController($controllerContext, $user, $langs, $conf):
 
 	return 0; // 0 = OK (tells Dolibarr the trigger ran successfully)
 }
+
+/**
+ * Builds a multi-select field for active users in a FormSetup page.
+ *
+ * @param FormSetup $formSetup The FormSetup object.
+ * @param Form      $form      The Form object.
+ * @param string    $key       The configuration key.
+ * @return void
+ */
+function buildUserMultiSelectField(FormSetup $formSetup, Form $form, string $key): void
+{
+	if (!class_exists('FormSetup')) {
+		require_once DOL_DOCUMENT_ROOT . '/core/class/html.formsetup.class.php';
+	}
+	$currentValue = getDolGlobalString($key);
+	$selectedUsers = !empty($currentValue) ? explode(',', $currentValue) : [];
+
+	$item = $formSetup->newItem($key)->setAsMultiSelect([]);
+
+	$userFilter = '(employee:=:1) AND (u.statut:=:1)';
+
+	$item->fieldInputOverride = $form->select_dolusers(
+		$selectedUsers,
+		$key,
+		1,
+		null,
+		0,
+		'',
+		'',
+		'',
+		0,
+		0,
+		$userFilter,
+		0,
+		'',
+		'',
+		0,
+		0,
+		true,
+		0
+	);
+}

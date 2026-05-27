@@ -49,24 +49,6 @@ class SharedPropalCloneEligibleTest extends CommonClassTest
 	private $savedEntity;
 
 	/**
-	 * No DB writes in this class — begin/rollback not needed.
-	 *
-	 * @return void
-	 */
-	public static function setUpBeforeClass(): void
-	{
-	}
-
-	/**
-	 * No DB writes in this class — begin/rollback not needed.
-	 *
-	 * @return void
-	 */
-	public static function tearDownAfterClass(): void
-	{
-	}
-
-	/**
 	 * Initialise Reflection accessors and fix conf->entity to 1 for each test.
 	 *
 	 * @return void

@@ -374,7 +374,7 @@ class ActionsClichaumeil extends CommonHookActions
 			return 0;
 		}
 
-		if ($usercancreate) {
+		if (!empty($usercancreate)) {
 			return 0;
 		}
 
@@ -405,7 +405,7 @@ class ActionsClichaumeil extends CommonHookActions
 		$this->resprints = $form->formconfirm(
 			dol_escape_htmltag($_SERVER['PHP_SELF']) . '?id=' . (int) $object->id,
 			$langs->trans('ToClone'),
-			$langs->trans('ConfirmClonePropal', dol_escape_htmltag($object->ref)),
+			$langs->trans('ConfirmClonePropal', $object->ref),
 			'confirm_clone',
 			$formquestion,
 			'yes',
