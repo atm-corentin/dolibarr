@@ -448,8 +448,13 @@ class InterfaceClichaumeilTriggers extends DolibarrTriggers
 			return 0;
 		}
 
+		$langs->load('clichaumeil@clichaumeil');
 		$status = $result['status'] ?? '';
-		if ($status !== CliChaumeilSupplierOrderConfig::RESULT_SUCCESS) {
+		if ($status === CliChaumeilSupplierOrderConfig::RESULT_SUCCESS) {
+			setEventMessages($langs->trans('CliChaumeil_St8WorkflowSuccess'), null, 'mesgs');
+		} elseif ($status === CliChaumeilSupplierOrderConfig::RESULT_WARNING) {
+			setEventMessages($langs->transnoentitiesnoconv('CliChaumeil_St8WorkflowWarning', (string) ($result['message'] ?? '')), null, 'warnings');
+		} else {
 			$logMsg = __METHOD__.' ST-8 workflow non-success supplier_proposal_id='.((int) $object->id).' status='.$status.' message='.($result['message'] ?? '');
 			dol_syslog($logMsg, LOG_WARNING);
 		}
