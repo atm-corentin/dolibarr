@@ -422,11 +422,15 @@ class InterfaceClichaumeilTriggers extends DolibarrTriggers
 
 		// Reload with fresh data: cloture() may have altered in-memory state.
 		$freshProposal = new SupplierProposal($this->db);
-		if ($freshProposal->fetch((int) $object->id) <= 0) {
-			dol_syslog(__METHOD__.' failed to reload supplier_proposal #'.((int) $object->id), LOG_WARNING);
+		$fetchResult = $freshProposal->fetch((int) $object->id);
+		if ($fetchResult === 0) {
+			dol_syslog(__METHOD__.' supplier_proposal #'.((int) $object->id).' not found in database', LOG_WARNING);
 			return 0;
 		}
-		$freshProposal->fetch_optionals();
+		if ($fetchResult < 0) {
+			dol_syslog(__METHOD__.' SQL error reloading supplier_proposal #'.((int) $object->id).' — '.$this->db->lasterror(), LOG_ERR);
+			return 0;
+		}
 
 		$guard = new CliChaumeilSupplierProposalGuard();
 		if ($guard->isSupplierProposalProcessed($freshProposal)) {
