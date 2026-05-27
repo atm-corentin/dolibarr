@@ -3,6 +3,7 @@
 
 ## Unreleased
 
+- NEW : R1-ST-8: Trigger PROPOSAL_SUPPLIER_SIGN to run the subcontractor selection workflow (create validated CF, refuse other proposals, send email) when a supplier proposal is signed from the standard Dolibarr acceptance button, not only from the custom choose-subcontractor button. *27/05/2026* - 1.16.0
 - NEW : ACHT-7: Add file fee rate and amount to product cost breakdown calculation. *28/04/2026* - 1.15.0
 - NEW : Replace the eight commission coefficient setup constants with a dedicated Dolibarr dictionary, seed the default rows on module activation without duplicates on reactivation, migrate legacy values when available, and keep categories/groups on the commissions setup page. *30/04/2026* - 1.15.0
 - FIX : Stop injecting the generic `__CHECK_READ__` mass-mail tracking pixel into ST-8 transactional supplier-order emails, leaving the placeholder empty instead of calling `public/emailing/mailing-read.php` with an undefined tag. *28/04/2026* - 1.15.0
