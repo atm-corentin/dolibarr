@@ -457,6 +457,7 @@ class InterfaceClichaumeilTriggers extends DolibarrTriggers
 		} else {
 			$logMsg = __METHOD__.' ST-8 workflow non-success supplier_proposal_id='.((int) $object->id).' status='.$status.' message='.($result['message'] ?? '');
 			dol_syslog($logMsg, LOG_WARNING);
+			setEventMessages($langs->transnoentitiesnoconv('CliChaumeil_St8WorkflowError', (string) ($result['message'] ?? '')), null, 'errors');
 		}
 
 		// Never block the Dolibarr status transition.

@@ -327,6 +327,7 @@ CliChaumeil_St8AlreadyProcessed=Cette consultation a déjà été traitée. La c
 CliChaumeil_St8SelectedProposalStatusInvalid=La demande de prix fournisseur sélectionnée n'est plus dans un état compatible avec cette conversion.
 CliChaumeil_St8WorkflowSuccess=Commande fournisseur créée, validée et envoyée au fournisseur.
 CliChaumeil_St8WorkflowWarning=Commande fournisseur créée et validée, avec avertissement : %s
+CliChaumeil_St8WorkflowError=Erreur lors de la création de la commande fournisseur : %s
 CliChaumeil_St8NoEmailRecipient=Le mail n'a pas pu être envoyé car aucune adresse mail n'est disponible.
 CliChaumeil_St8SenderEmailMissing=Le mail n'a pas pu être envoyé car l'utilisateur connecté n'a pas d'adresse mail valide.
 CliChaumeil_St8MailTemplateMissingConfig=Le mail n'a pas pu être envoyé car aucun modèle de mail ST-8 n'est configuré.
