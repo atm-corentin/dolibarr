@@ -359,26 +359,10 @@ class ChaumeilRfa extends CommonObject
 	 */
 	public function getNomUrl($withpicto = 0, $option = '', $notooltip = 0, $morecss = '', $save_lastsearch_value = -1)
 	{
-		global $conf, $langs, $hookmanager;
-
-		if (!empty($conf->dol_no_mouse_hover)) {
-			$notooltip = 1; // Force disable tooltips
-		}
+		global $conf, $hookmanager;
 
 		$result = '';
-		$params = [
-			'id' => $this->id,
-			'objecttype' => $this->element.($this->module ? '@'.$this->module : ''),
-			'option' => $option,
-		];
-		$classfortooltip = 'classfortooltip';
-		$dataparams = '';
-		$label = implode($this->getTooltipContentArray($params));
-		if (getDolGlobalInt('MAIN_ENABLE_AJAX_TOOLTIP')) {
-			$classfortooltip = 'classforajaxtooltip';
-			$dataparams = ' data-params="'.dol_escape_htmltag(json_encode($params)).'"';
-			$label = '';
-		}
+
 		global $user;
 		if ($user->hasRight('clichaumeil', 'chaumeilrfa', 'write')) {
 			$url = dol_buildpath('/clichaumeil/chaumeilrfa_card.php', 1).'?id='.$this->id.'&action=edit&socid='.$this->fk_soc;
@@ -398,17 +382,7 @@ class ChaumeilRfa extends CommonObject
 			}
 		}
 
-		$linkclose = '';
-		if (empty($notooltip)) {
-			if (getDolGlobalInt('MAIN_OPTIMIZEFORTEXTBROWSER')) {
-				$label = $langs->trans("ShowChaumeilRfa");
-				$linkclose .= ' alt="'.dolPrintHTMLForAttribute($label).'"';
-			}
-			$linkclose .= ($label ? ' title="'.dolPrintHTMLForAttribute($label).'"' : ' title="tocomplete"');
-			$linkclose .= $dataparams.' class="'.$classfortooltip.($morecss ? ' '.$morecss : '').'"';
-		} else {
-			$linkclose = ($morecss ? ' class="'.$morecss.'"' : '');
-		}
+		$linkclose = ($morecss ? ' class="'.$morecss.'"' : '');
 
 		if ($option == 'nolink' || empty($url)) {
 			$linkstart = '<span';
@@ -426,7 +400,7 @@ class ChaumeilRfa extends CommonObject
 
 		if (empty($this->showphoto_on_popup)) {
 			if ($withpicto) {
-				$result .= img_object(($notooltip ? '' : $label), ($this->picto ? $this->picto : 'generic'), (($withpicto != 2) ? 'class="paddingright"' : ''), 0, 0, $notooltip ? 0 : 1);
+				$result .= img_object('', ($this->picto ? $this->picto : 'generic'), (($withpicto != 2) ? 'class="paddingright"' : ''), 0, 0, 0);
 			}
 		} else {
 			if ($withpicto) {
@@ -448,7 +422,7 @@ class ChaumeilRfa extends CommonObject
 
 					$result .= '</div>';
 				} else {
-					$result .= img_object(($notooltip ? '' : $label), ($this->picto ? $this->picto : 'generic'), ($notooltip ? (($withpicto != 2) ? 'class="paddingright"' : '') : 'class="'.(($withpicto != 2) ? 'paddingright ' : '').'"'), 0, 0, $notooltip ? 0 : 1);
+					$result .= img_object('', ($this->picto ? $this->picto : 'generic'), (($withpicto != 2) ? 'class="paddingright"' : ''), 0, 0, 0);
 				}
 			}
 		}
