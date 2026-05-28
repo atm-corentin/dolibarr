@@ -131,8 +131,6 @@ if ($action == 'update' && !empty($user->admin)) {
  * View
  */
 
-include DOL_DOCUMENT_ROOT . '/core/actions_setmoduleoptions.inc.php';
-
 $help_url = '';
 $title = "ClichaumeilSetup";
 

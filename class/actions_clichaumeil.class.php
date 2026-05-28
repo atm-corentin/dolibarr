@@ -76,7 +76,7 @@ class ActionsClichaumeil extends CommonHookActions
 	/**
 	 * @var int		Priority of hook (50 is used if value is not defined)
 	 */
-	public $priority;
+	public int $priority = 40;
 
 	private static $lineData = [];
 
@@ -137,7 +137,6 @@ class ActionsClichaumeil extends CommonHookActions
 	public function __construct($db)
 	{
 		$this->db = $db;
-		$this->priority = 40;
 	}
 
 	public $rfa_tab_added = false;
