@@ -58,17 +58,32 @@ ClichaumeilSetup = Paramètrages CliChaumeil
 Settings = Paramètrages
 ClichaumeilSetupPage = Paramètrages CliChaumeil
 
+CliChaumeilTabGeneral=Généraux
+CliChaumeilTabProducts=Produits
+CliChaumeilTabContracts=Contrats
+CliChaumeilTabSubcontracting=Sous-traitance
+
+CliChaumeilGeneralSetupPage=Paramètres généraux du module CliChaumeil.
+CliChaumeilProductsSetupPage=Configuration des paramètres liés aux produits et services.
+CliChaumeilContractsSetupPage=Configuration des paramètres liés à la révision automatique des contrats.
+CliChaumeilSubcontractingSetupPage=Configuration des paramètres liés à la sous-traitance.
+
 CliChaumeilReviewRate=Taux de révision (en %%)
 CliChaumeilReviewDate=Date de révision
 CliChaumeilSupplierResponseDate=Date réponse fournisseur
 
 CLICHAUMEIL_DEFAULT_OVERHEAD_RATE=Taux de frais généraux par défaut (%)
 CLICHAUMEIL_DEFAULT_OVERHEAD_RATETooltip=Convention : 10 = 10%%. Taux de frais généraux appliqué par défaut aux nouveaux produits et services simples si aucune valeur n'est saisie.
-CLICHAUMEIL_REVIEW_YEAR_DELAY=Décalage de la date de révision après renouvellement (en années)
-CLICHAUMEIL_PRICING_UPDATE_MANAGERS=Responsables de la mise à jour tarifaire
-CLICHAUMEIL_CRON_EMAIL_TEMPLATE=Modèle de mail à utiliser pour l’alerte par mail
+CLICHAUMEIL_REVIEW_YEAR_DELAY=Délai de report de la date de révision (en années)
+CLICHAUMEIL_REVIEW_YEAR_DELAYTooltip=Après le renouvellement d’un contrat, la prochaine date de révision est automatiquement décalée de ce nombre d’années. Exemple : saisir 1 pour que la révision suivante intervienne un an après le renouvellement.
+CLICHAUMEIL_PRICING_UPDATE_MANAGERS=Utilisateurs chargés de la révision tarifaire
+CLICHAUMEIL_PRICING_UPDATE_MANAGERSTooltip=Ces utilisateurs reçoivent un e-mail récapitulatif automatique à chaque exécution de la tâche planifiée de révision tarifaire. Configurez ici les responsables de la gestion des prix contractuels.
+CLICHAUMEIL_CRON_EMAIL_TEMPLATE=Modèle d’e-mail pour les alertes de renouvellement
+CLICHAUMEIL_CRON_EMAIL_TEMPLATETooltip=Modèle d’e-mail utilisé par la tâche planifiée pour envoyer le récapitulatif des révisions tarifaires aux responsables. Le modèle doit être de type « Contrat » et être actif.
 CLICHAUMEIL_SUPPLIER_ORDER_EMAIL_TEMPLATE=Modèle de mail à utiliser pour l’envoi des commandes de sous-traitance
-CLICHAUMEIL_CRON_NOTIF_USERS= Abonnés aux notifications de renouvellement
+CLICHAUMEIL_SUPPLIER_ORDER_EMAIL_TEMPLATETooltip=Modèle d’e-mail utilisé lors de l’envoi automatique de la commande fournisseur au sous-traitant sélectionné. Le modèle doit être de type « Commande fournisseur (envoi) » et être actif.
+CLICHAUMEIL_CRON_NOTIF_USERS=Destinataires des notifications de renouvellement
+CLICHAUMEIL_CRON_NOTIF_USERSTooltip=Ces utilisateurs reçoivent une notification bulle dans Dolibarr à chaque application automatique de révision tarifaire. Nécessite le module Advanced Notifier.
 CLICHAUMEIL_DEFAULT_PROPAL_PRODUCT_ID=Produits/services par défaut des devis
 CLICHAUMEIL_DEFAULT_PROPAL_PRODUCT_IDTooltip=Sélectionnez les produits et services à injecter automatiquement sur les nouveaux devis et lors du clonage.<br><br>Règles de fonctionnement :<br>- la configuration est propre à l'entité courante ;<br>- la protection repose sur un extrafield technique de ligne ;<br>- une ligne injectée reste protégée même si la configuration change plus tard ;<br>- les devis déjà créés ne sont pas mis à jour rétroactivement ;<br>- une ligne ajoutée manuellement avec le même produit n'est pas protégée automatiquement.
 CLICHAUMEIL_DEFAULT_PROPAL_LINE_MARKER=Marqueur ligne par défaut devis

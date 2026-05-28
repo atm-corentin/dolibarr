@@ -39,8 +39,23 @@ function clichaumeilAdminPrepareHead()
 	$head = array();
 
 	$head[$h][0] = dol_buildpath("/clichaumeil/admin/setup.php", 1);
-	$head[$h][1] = $langs->trans("Contract");
+	$head[$h][1] = $langs->trans("CliChaumeilTabGeneral");
 	$head[$h][2] = 'settings';
+	$h++;
+
+	$head[$h][0] = dol_buildpath("/clichaumeil/admin/setup_products.php", 1);
+	$head[$h][1] = $langs->trans("CliChaumeilTabProducts");
+	$head[$h][2] = 'products';
+	$h++;
+
+	$head[$h][0] = dol_buildpath("/clichaumeil/admin/setup_contracts.php", 1);
+	$head[$h][1] = $langs->trans("CliChaumeilTabContracts");
+	$head[$h][2] = 'contracts';
+	$h++;
+
+	$head[$h][0] = dol_buildpath("/clichaumeil/admin/setup_subcontracting.php", 1);
+	$head[$h][1] = $langs->trans("CliChaumeilTabSubcontracting");
+	$head[$h][2] = 'subcontracting';
 	$h++;
 
 	$head[$h][0] = dol_buildpath("/clichaumeil/admin/commissions.php", 1);
@@ -94,4 +109,46 @@ function externalAccessInitController($controllerContext, $user, $langs, $conf):
 	);
 
 	return 0; // 0 = OK (tells Dolibarr the trigger ran successfully)
+}
+
+/**
+ * Builds a multi-select field for active users in a FormSetup page.
+ *
+ * @param FormSetup $formSetup The FormSetup object.
+ * @param Form      $form      The Form object.
+ * @param string    $key       The configuration key.
+ * @return void
+ */
+function buildUserMultiSelectField(FormSetup $formSetup, Form $form, string $key): void
+{
+	if (!class_exists('FormSetup')) {
+		require_once DOL_DOCUMENT_ROOT . '/core/class/html.formsetup.class.php';
+	}
+	$currentValue = getDolGlobalString($key);
+	$selectedUsers = !empty($currentValue) ? explode(',', $currentValue) : [];
+
+	$item = $formSetup->newItem($key)->setAsMultiSelect([]);
+
+	$userFilter = '(employee:=:1) AND (u.statut:=:1)';
+
+	$item->fieldInputOverride = $form->select_dolusers(
+		$selectedUsers,
+		$key,
+		1,
+		null,
+		0,
+		'',
+		'',
+		'',
+		0,
+		0,
+		$userFilter,
+		0,
+		'',
+		'',
+		0,
+		0,
+		true,
+		0
+	);
 }
