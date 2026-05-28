@@ -715,4 +715,45 @@ class SupplierProposalService
 
 		return $supplierProposals;
 	}
+
+	/**
+	 * Resolve the parent commercial document (propal or commande) of a supplier proposal.
+	 *
+	 * Searches bidirectionally in llx_element_element: first where the supplier proposal
+	 * is the target (typical creation-from-propal case), then where it is the source.
+	 *
+	 * @param SupplierProposal $supplierProposal Supplier proposal to inspect.
+	 * @return CommonObject|null Propal or Commande if found, null otherwise.
+	 */
+	public static function resolveParentDocument(SupplierProposal $supplierProposal): ?CommonObject
+	{
+		// Direction 1: supplier_proposal is the TARGET — the parent is the SOURCE.
+		if (method_exists($supplierProposal, 'clearObjectLinkedCache')) {
+			$supplierProposal->clearObjectLinkedCache();
+		}
+		$supplierProposal->fetchObjectLinked('', '', (int) $supplierProposal->id, $supplierProposal->element, 'OR', 1, 'sourcetype', 1);
+
+		if (!empty($supplierProposal->linkedObjects['propal']) && is_array($supplierProposal->linkedObjects['propal'])) {
+			return reset($supplierProposal->linkedObjects['propal']);
+		}
+		if (!empty($supplierProposal->linkedObjects['commande']) && is_array($supplierProposal->linkedObjects['commande'])) {
+			return reset($supplierProposal->linkedObjects['commande']);
+		}
+
+		// Direction 2: supplier_proposal is the SOURCE — the parent is the TARGET.
+		// Use alsosametype=0 to avoid loading sibling supplier_proposals (irrelevant here).
+		if (method_exists($supplierProposal, 'clearObjectLinkedCache')) {
+			$supplierProposal->clearObjectLinkedCache();
+		}
+		$supplierProposal->fetchObjectLinked((int) $supplierProposal->id, $supplierProposal->element, '', '', 'OR', 0, 'sourcetype', 1);
+
+		if (!empty($supplierProposal->linkedObjects['propal']) && is_array($supplierProposal->linkedObjects['propal'])) {
+			return reset($supplierProposal->linkedObjects['propal']);
+		}
+		if (!empty($supplierProposal->linkedObjects['commande']) && is_array($supplierProposal->linkedObjects['commande'])) {
+			return reset($supplierProposal->linkedObjects['commande']);
+		}
+
+		return null;
+	}
 }

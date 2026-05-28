@@ -44,6 +44,7 @@ require_once DOL_DOCUMENT_ROOT . '/comm/propal/class/propal.class.php';
 require_once DOL_DOCUMENT_ROOT . '/societe/class/societe.class.php';
 require_once DOL_DOCUMENT_ROOT . '/supplier_proposal/class/supplier_proposal.class.php';
 require_once DOL_DOCUMENT_ROOT . '/user/class/user.class.php';
+require_once __DIR__ . '/../../class/Subcontracting/CliChaumeilSupplierProposalSignHandler.class.php';
 
 
 
@@ -229,6 +230,9 @@ class InterfaceClichaumeilTriggers extends DolibarrTriggers
 					}
 				}
 				break;
+
+			case 'PROPOSAL_SUPPLIER_CLOSE_SIGNED':
+				return (new CliChaumeilSupplierProposalSignHandler($this->db))->handle($object, $user, $langs, $conf);
 
 			default:
 				dol_syslog("Trigger '" . $this->name . "' for action '" . $action . "' launched by " . __FILE__ . ". id=" . $object->id);

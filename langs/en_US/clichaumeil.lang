@@ -280,6 +280,7 @@ CliChaumeil_St8AlreadyProcessed=This consultation has already been processed. Th
 CliChaumeil_St8SelectedProposalStatusInvalid=The selected supplier request for quotation is no longer in a state compatible with this conversion.
 CliChaumeil_St8WorkflowSuccess=Supplier order created, validated and sent to the supplier.
 CliChaumeil_St8WorkflowWarning=Supplier order created and validated, with warning: %s
+CliChaumeil_St8WorkflowError=Error while creating the supplier order: %s
 CliChaumeil_St8NoEmailRecipient=The email could not be sent because no email address is available.
 CliChaumeil_St8SenderEmailMissing=The email could not be sent because the logged-in user has no valid email address.
 CliChaumeil_St8MailTemplateMissingConfig=The email could not be sent because no ST-8 email template is configured.

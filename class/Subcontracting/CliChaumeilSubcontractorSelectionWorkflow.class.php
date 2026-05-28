@@ -82,6 +82,15 @@ class CliChaumeilSubcontractorSelectionWorkflow
 	private CliChaumeilSupplierProposalGuard $supplierProposalGuard;
 
 	/**
+	 * Re-entrancy guard: prevents double execution when the PROPOSAL_SUPPLIER_CLOSE_SIGNED trigger
+	 * fires synchronously inside markSelectedProposalAsSigned() → cloture() during a button-flow call.
+	 * The second execute() call must return immediately without doing any work.
+	 *
+	 * @var bool
+	 */
+	private static bool $isRunning = false;
+
+	/**
 	 * Constructor.
 	 *
 	 * @param DoliDB                                       $db                    Database handler.
@@ -119,6 +128,30 @@ class CliChaumeilSubcontractorSelectionWorkflow
 	 * @return array<string,mixed>
 	 */
 	public function execute(CommonObject $parent, int $supplierProposalId, User $user): array
+	{
+		if (self::$isRunning) {
+			dol_syslog(__METHOD__.' re-entrancy guard triggered — skipping nested call for supplier_proposal #'.$supplierProposalId, LOG_DEBUG);
+			return [];
+		}
+
+		self::$isRunning = true;
+
+		try {
+			return $this->executeInternal($parent, $supplierProposalId, $user);
+		} finally {
+			self::$isRunning = false;
+		}
+	}
+
+	/**
+	 * Internal execution — called exclusively by execute() after the re-entrancy guard.
+	 *
+	 * @param CommonObject $parent             Parent commercial document.
+	 * @param int          $supplierProposalId Selected supplier proposal id.
+	 * @param User         $user               Current user.
+	 * @return array<string,mixed>
+	 */
+	private function executeInternal(CommonObject $parent, int $supplierProposalId, User $user): array
 	{
 		$debug = array(
 			'parent_type' => (string) $parent->element,
