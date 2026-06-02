@@ -64,6 +64,11 @@ class modClichaumeil extends DolibarrModules
 	private const DEFAULT_RFA_SUMMARY_CRON_PARAMETERS = '';
 
 	/**
+	 * Default parameters for the ANTALIS price sync cron (error-report recipients).
+	 */
+	private const DEFAULT_ANTALIS_PRICE_CRON_PARAMETERS = '';
+
+	/**
 	 * Default proposal line extrafield key.
 	 *
 	 * @var string
@@ -112,7 +117,7 @@ class modClichaumeil extends DolibarrModules
 		$this->editor_squarred_logo = '';					// Must be image filename into the module/img directory followed with @modulename. Example: 'myimage.png@clichaumeil'
 
 		// Possible values for version are: 'development', 'experimental', 'dolibarr', 'dolibarr_deprecated', 'experimental_deprecated' or a version string like 'x.y.z'
-		$this->version = '1.16.0';
+		$this->version = '1.17.0';
 
 		// Url to the file with your last numberversion of this module
 		//$this->url_last_version = 'http://www.example.com/versionmodule.txt';
@@ -306,6 +311,21 @@ class modClichaumeil extends DolibarrModules
 				'method' => 'run',
 				'parameters' => self::DEFAULT_RFA_SUMMARY_CRON_PARAMETERS,
 				'comment' => $langs->trans('CliChaumeil_RfaSummaryCronDescription'),
+				'frequency' => 1,
+				'unitfrequency' => 86400,
+				'datestart' => $cronStart,
+				'datenextrun' => $cronStart,
+				'status' => 0,
+				'priority' => 50,
+			),
+			4 => array(
+				'label' => $langs->trans('CliChaumeil_AntalisPriceSyncCronLabel'),
+				'jobtype' => 'method',
+				'class' => '/clichaumeil/class/SupplierPriceSync/Cron/AntalisSupplierPriceSyncCronJob.php',
+				'objectname' => 'AntalisSupplierPriceSyncCronJob',
+				'method' => 'run',
+				'parameters' => self::DEFAULT_ANTALIS_PRICE_CRON_PARAMETERS,
+				'comment' => $langs->trans('CliChaumeil_AntalisPriceSyncCronComment'),
 				'frequency' => 1,
 				'unitfrequency' => 86400,
 				'datestart' => $cronStart,
@@ -543,7 +563,50 @@ class modClichaumeil extends DolibarrModules
 			}
 		}
 
-		return $this->_init($sql, $options);
+		$result = $this->_init($sql, $options);
+
+		$this->deduplicateAntalisPriceCron();
+
+		return $result;
+	}
+
+	/**
+	 * Remove duplicate ANTALIS price sync cron jobs for the current entity.
+	 *
+	 * Only the ANTALIS cron is de-duplicated (the oldest row is kept); other
+	 * historical cron jobs of the module are left untouched.
+	 *
+	 * @return void
+	 */
+	private function deduplicateAntalisPriceCron(): void
+	{
+		global $conf;
+
+		$sql = "SELECT MIN(rowid) as keptid FROM " . $this->db->prefix() . "cronjob";
+		$sql .= " WHERE objectname = 'AntalisSupplierPriceSyncCronJob'";
+		$sql .= " AND entity = " . ((int) $conf->entity);
+
+		$resql = $this->db->query($sql);
+		if (!$resql) {
+			dol_syslog('modClichaumeil::deduplicateAntalisPriceCron ' . $this->db->lasterror(), LOG_ERR);
+
+			return;
+		}
+		$obj = $this->db->fetch_object($resql);
+		$this->db->free($resql);
+
+		if (!$obj || empty($obj->keptid)) {
+			return;
+		}
+
+		$sqlDelete = "DELETE FROM " . $this->db->prefix() . "cronjob";
+		$sqlDelete .= " WHERE objectname = 'AntalisSupplierPriceSyncCronJob'";
+		$sqlDelete .= " AND entity = " . ((int) $conf->entity);
+		$sqlDelete .= " AND rowid <> " . ((int) $obj->keptid);
+
+		if (!$this->db->query($sqlDelete)) {
+			dol_syslog('modClichaumeil::deduplicateAntalisPriceCron delete ' . $this->db->lasterror(), LOG_ERR);
+		}
 	}
 
 	/**
