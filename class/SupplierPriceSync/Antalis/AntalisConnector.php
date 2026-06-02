@@ -331,7 +331,7 @@ final class AntalisConnector implements SupplierPriceConnectorInterface
 		return new SupplierPriceSyncIssue(
 			$severity,
 			$code,
-			$candidate->supplierRef,
+			'',
 			$candidate->supplierRef,
 			$candidate->productRef,
 			$candidate->quantity

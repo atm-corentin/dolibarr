@@ -113,7 +113,7 @@ abstract class AbstractSupplierPriceSyncCronJob
 			$service = new SupplierPriceSyncService($this->db);
 			$report = $service->run($config, $connector, $executionUser);
 
-			$this->output = $report->buildCronOutput();
+			$this->output = $report->buildCronOutput($this->langs);
 
 			if ($report->hasFailures() && !$recipients->isEmpty()) {
 				$mailer = new SupplierPriceSyncMailer();

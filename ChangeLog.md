@@ -3,6 +3,7 @@
 
 ## Unreleased
 
+- NEW : ACHT-2-ANTALIS: Add a generic supplier purchase price synchronisation engine (Config, Connector contract, Repository, Service, Report, Mailer, abstract cron) with ANTALIS as the first SOAP connector. A daily cron queries the ANTALIS stockPriceCheck service for every buyable ANTALIS supplier price line, updates the buy price (via update_buyprice, preserving history) only when it differs, closes lines no longer sold, reactivates resynced lines, reports issues and emails the report to the recipients configured on the scheduled job. Adds an "API connection" admin tab. Tier creation is out of scope (the API cannot enumerate tiers). *02/06/2026* - 1.17.0
 - NEW : R1-ST-8: Trigger PROPOSAL_SUPPLIER_SIGN to run the subcontractor selection workflow (create validated CF, refuse other proposals, send email) when a supplier proposal is signed from the standard Dolibarr acceptance button, not only from the custom choose-subcontractor button. *27/05/2026* - 1.16.0
 - FIX : Split the single module settings page into dedicated tabs (General, Products, Contracts, Subcontracting) with reformulated labels and tooltips for contract revision parameters. *26/05/2026* - 1.15.1
 - FIX : Remove tooltip from RFA getNomUrl links and clean up resulting dead code. *26/05/2026* - 1.15.1

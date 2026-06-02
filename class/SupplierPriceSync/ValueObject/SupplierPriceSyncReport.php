@@ -192,35 +192,41 @@ final class SupplierPriceSyncReport
 	}
 
 	/**
-	 * Render a single issue as a text line.
+	 * Render a single issue as a text line, translating the code with the ref.
 	 *
 	 * @param SupplierPriceSyncIssue $issue Issue to render.
+	 * @param Translate              $langs Translator.
 	 * @return string
 	 */
-	private function formatIssue(SupplierPriceSyncIssue $issue): string
+	private function formatIssue(SupplierPriceSyncIssue $issue, Translate $langs): string
 	{
+		$translated = $langs->trans('CliChaumeil_SupplierPriceSync_' . $issue->code, $issue->supplierRef);
+		$detail = ($issue->message !== '' && $issue->message !== $issue->supplierRef) ? ' ' . $issue->message : '';
+
 		return sprintf(
-			'- [%s] %s (ref=%s qty=%s) %s',
+			'- [%s] %s (ref=%s qty=%s) %s%s',
 			$issue->severity,
 			$issue->code,
 			$issue->supplierRef,
 			$issue->quantity,
-			$issue->message
+			$translated,
+			$detail
 		);
 	}
 
 	/**
 	 * Build the cron output (summary + capped issue list).
 	 *
+	 * @param Translate $langs Translator.
 	 * @return string
 	 */
-	public function buildCronOutput(): string
+	public function buildCronOutput(Translate $langs): string
 	{
 		$lines = array($this->summaryLine());
 
 		$shown = array_slice($this->issues, 0, self::MAX_DETAILED_ISSUES);
 		foreach ($shown as $issue) {
-			$lines[] = $this->formatIssue($issue);
+			$lines[] = $this->formatIssue($issue, $langs);
 		}
 
 		$total = count($this->issues);
@@ -252,7 +258,7 @@ final class SupplierPriceSyncReport
 	{
 		$lines = array($this->summaryLine(), '');
 		foreach ($this->issues as $issue) {
-			$lines[] = $this->formatIssue($issue);
+			$lines[] = $this->formatIssue($issue, $langs);
 		}
 
 		return implode("\n", $lines);

@@ -237,7 +237,7 @@ final class SupplierPriceSyncService
 		return new SupplierPriceSyncIssue(
 			SupplierPriceSyncIssue::SEVERITY_ERROR,
 			SupplierPriceSyncConstants::ISSUE_DOLIBARR_UPDATE_FAILED,
-			$candidate->supplierRef,
+			'',
 			$candidate->supplierRef,
 			$candidate->productRef,
 			$candidate->quantity

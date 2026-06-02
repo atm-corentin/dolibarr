@@ -38,12 +38,13 @@ class SupplierPriceSyncReportTest extends CommonClassTest
 	 */
 	public function testCountersAndNoFailure(): void
 	{
+		global $langs;
 		$report = new SupplierPriceSyncReport('ANTALIS');
 		$report->incrementUpdated();
 		$report->incrementUpdated();
 		$report->incrementClosed();
 
-		$out = $report->buildCronOutput();
+		$out = $report->buildCronOutput($langs);
 		$this->assertStringContainsString('ANTALIS', $out);
 		$this->assertStringContainsString('updated=2', $out);
 		$this->assertStringContainsString('closed=1', $out);
@@ -57,6 +58,7 @@ class SupplierPriceSyncReportTest extends CommonClassTest
 	 */
 	public function testErrorIssueMarksFailure(): void
 	{
+		global $langs;
 		$report = new SupplierPriceSyncReport('ANTALIS');
 		$report->addIssue(new SupplierPriceSyncIssue(
 			SupplierPriceSyncIssue::SEVERITY_ERROR,
@@ -68,7 +70,7 @@ class SupplierPriceSyncReportTest extends CommonClassTest
 		));
 
 		$this->assertTrue($report->hasFailures());
-		$this->assertStringContainsString('264910', $report->buildCronOutput());
+		$this->assertStringContainsString('264910', $report->buildCronOutput($langs));
 	}
 
 	/**
@@ -78,6 +80,7 @@ class SupplierPriceSyncReportTest extends CommonClassTest
 	 */
 	public function testCronOutputCapsAtFifty(): void
 	{
+		global $langs;
 		$report = new SupplierPriceSyncReport('ANTALIS');
 		for ($i = 0; $i < 60; $i++) {
 			$report->addIssue(new SupplierPriceSyncIssue(
@@ -90,7 +93,7 @@ class SupplierPriceSyncReportTest extends CommonClassTest
 			));
 		}
 
-		$out = $report->buildCronOutput();
+		$out = $report->buildCronOutput($langs);
 		// 1 summary + 50 issues + 1 overflow line = 52 lines => 51 newlines.
 		$this->assertSame(51, substr_count($out, "\n"));
 		$this->assertStringContainsString('cap 50', $out);
