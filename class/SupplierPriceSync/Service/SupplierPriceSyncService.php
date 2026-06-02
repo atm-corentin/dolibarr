@@ -74,9 +74,7 @@ final class SupplierPriceSyncService
 		$report = new SupplierPriceSyncReport($config->getCode());
 
 		$candidates = $this->repository->fetchCandidatesForSupplier($config->getSupplierThirdpartyId());
-		foreach ($candidates as $unusedCandidate) {
-			$report->incrementScanned();
-		}
+		$report->scanned = count($candidates);
 
 		$indexed = array();
 		foreach ($candidates as $candidate) {

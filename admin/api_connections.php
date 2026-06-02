@@ -91,10 +91,12 @@ if ($resql) {
 	$db->free($resql);
 }
 
+// The HTTP password is deliberately NOT managed by FormSetup: FormSetup renders
+// the stored value in the HTML "value" attribute (clear text in the page source).
+// It is handled by a dedicated, never-prefilled form below (see action setantalispassword).
 $formSetup = new FormSetup($db);
 $formSetup->newItem(SupplierPriceSyncConstants::CONST_BASE_URL)->setAsString();
 $formSetup->newItem(SupplierPriceSyncConstants::CONST_HTTP_LOGIN)->setAsString();
-$formSetup->newItem(SupplierPriceSyncConstants::CONST_HTTP_PASSWORD)->setAsPassword();
 $formSetup->newItem(SupplierPriceSyncConstants::CONST_THIRDPARTY_ID)->setAsSelect($supplierOptions);
 $formSetup->newItem(SupplierPriceSyncConstants::CONST_CUSTOMER_ID)->setAsString();
 $formSetup->newItem(SupplierPriceSyncConstants::CONST_USER_CODE)->setAsString();
@@ -106,6 +108,17 @@ $formSetup->newItem(SupplierPriceSyncConstants::CONST_DELIVERY_ADDRESS_ID)->setA
 
 if ($action == 'update' && !empty($user->admin)) {
 	$formSetup->saveConfFromPost();
+
+	header('Location: ' . $_SERVER["PHP_SELF"]);
+	exit;
+}
+
+if ($action == 'setantalispassword' && !empty($user->admin)) {
+	$newPassword = GETPOST(SupplierPriceSyncConstants::CONST_HTTP_PASSWORD, 'alphanohtml');
+	if ($newPassword !== '') {
+		dolibarr_set_const($db, SupplierPriceSyncConstants::CONST_HTTP_PASSWORD, $newPassword, 'chaine', 0, '', $conf->entity);
+		setEventMessages($langs->trans('RecordSaved'), null, 'mesgs');
+	}
 
 	header('Location: ' . $_SERVER["PHP_SELF"]);
 	exit;
@@ -125,11 +138,27 @@ $linkback = '<a href="' . ($backtopage ? dol_escape_htmltag($backtopage) : DOL_U
 print load_fiche_titre($langs->trans($title), $linkback, 'title_setup');
 
 $head = clichaumeilAdminPrepareHead();
-print dol_get_fiche_head($head, 'api_connections', $langs->trans("ClichaumeilSetup"), -1, "clichaumeil@clichaumeil");
+print dol_get_fiche_head($head, 'api_connections', $langs->trans("CliChaumeil_AntalisApiTitle"), -1, "clichaumeil@clichaumeil");
 
 echo '<span class="opacitymedium">' . $langs->trans("CliChaumeil_AntalisApiTitle") . '</span><br><br>';
 
 print $formSetup->generateOutput(true);
+print '<br>';
+
+// Dedicated HTTP password form: never pre-filled, only updated when a value is submitted.
+$hasPassword = (getDolGlobalString(SupplierPriceSyncConstants::CONST_HTTP_PASSWORD) !== '');
+print '<form method="POST" action="' . $_SERVER["PHP_SELF"] . '" autocomplete="off">';
+print '<input type="hidden" name="token" value="' . newToken() . '">';
+print '<input type="hidden" name="action" value="setantalispassword">';
+print '<table class="noborder centpercent"><tr class="liste_titre"><td>' . $langs->trans('CLICHAUMEIL_SUPPLIER_ANTALIS_HTTP_PASSWORD') . '</td><td></td></tr>';
+print '<tr class="oddeven"><td>';
+print '<input type="password" name="' . SupplierPriceSyncConstants::CONST_HTTP_PASSWORD . '" value="" autocomplete="new-password" class="flat">';
+print ' <span class="opacitymedium">' . $langs->trans('CliChaumeil_AntalisPasswordHint') . '</span>';
+if ($hasPassword) {
+	print ' ' . img_picto('', 'tick', 'class="paddingleft"') . ' ' . $langs->trans('CliChaumeil_AntalisPasswordConfigured');
+}
+print '</td><td class="right"><input type="submit" class="button button-save" value="' . dol_escape_htmltag($langs->trans('Save')) . '"></td></tr>';
+print '</table></form>';
 print '<br>';
 
 echo '<div class="info">' . $langs->trans("CliChaumeil_AntalisPriceSyncCronComment") . '</div>';
