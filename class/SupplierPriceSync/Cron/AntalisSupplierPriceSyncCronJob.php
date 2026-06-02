@@ -62,8 +62,8 @@ class AntalisSupplierPriceSyncCronJob extends AbstractSupplierPriceSyncCronJob
 	 */
 	protected function buildConnector(SupplierConfigInterface $config): SupplierPriceConnectorInterface
 	{
-		'@phan-var AntalisConnectorConfig $config';
-
+		// $config is always an AntalisConnectorConfig here (built by buildConfig()).
+		/** @var AntalisConnectorConfig $config */
 		return new AntalisConnector($config, new AntalisOrderUnitMapper());
 	}
 }

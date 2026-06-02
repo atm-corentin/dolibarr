@@ -74,7 +74,7 @@ $action = GETPOST('action', 'aZ09');
 $backtopage = GETPOST('backtopage', 'alpha');
 
 // Access control
-if (!$user->admin) {
+if (!isModEnabled('clichaumeil') || !$user->admin) {
 	accessforbidden();
 }
 

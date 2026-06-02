@@ -180,8 +180,13 @@ final class SupplierPriceSyncService
 	{
 		$productFournisseur = new ProductFournisseur($this->db);
 		$fetch = $productFournisseur->fetch_product_fournisseur_price($candidate->supplierPriceId);
-		if ($fetch <= 0) {
-			dol_syslog('SupplierPriceSyncService::updateBuyPrice cannot fetch line ' . $candidate->supplierPriceId, LOG_ERR);
+		if ($fetch == 0) {
+			dol_syslog('SupplierPriceSyncService::updateBuyPrice line not found (0) id=' . $candidate->supplierPriceId, LOG_WARNING);
+
+			return false;
+		}
+		if ($fetch < 0) {
+			dol_syslog('SupplierPriceSyncService::updateBuyPrice SQL error (-1) fetching line id=' . $candidate->supplierPriceId . ' ' . $productFournisseur->error, LOG_ERR);
 
 			return false;
 		}

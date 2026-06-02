@@ -124,6 +124,7 @@ final class SupplierPriceRepository
 		$sql = "UPDATE " . $this->db->prefix() . "product_fournisseur_price";
 		$sql .= " SET status = " . ((int) $status);
 		$sql .= " WHERE rowid = " . ((int) $supplierPriceId);
+		$sql .= " AND entity IN (" . getEntity('productsupplierprice') . ")";
 
 		$resql = $this->db->query($sql);
 		if (!$resql) {
