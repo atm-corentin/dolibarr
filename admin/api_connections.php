@@ -165,6 +165,14 @@ print '<br>';
 
 echo '<div class="info">' . $langs->trans("CliChaumeil_AntalisPriceSyncCronComment") . '</div>';
 
+// Operating guide, collapsed by default (native <details>, no JS).
+print '<br><details><summary class="cursorpointer">' . dol_escape_htmltag($langs->trans('CliChaumeil_AntalisPriceSyncHelpTitle')) . '</summary>';
+print '<div class="opacitymedium" style="margin-top:8px"><ul>';
+for ($helpLine = 1; $helpLine <= 7; $helpLine++) {
+	print '<li>' . $langs->trans('CliChaumeil_AntalisPriceSyncHelp' . $helpLine) . '</li>';
+}
+print '</ul></div></details>';
+
 print dol_get_fiche_end();
 
 llxFooter();
