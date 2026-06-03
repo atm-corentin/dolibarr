@@ -113,12 +113,14 @@ abstract class AbstractSupplierPriceSyncCronJob
 			$service = new SupplierPriceSyncService($this->db);
 			$report = $service->run($config, $connector, $executionUser);
 
-			$this->output = $report->buildCronOutput($this->langs);
-
+			// Send the mail before building the output so mail-sending issues
+			// (invalid sender, send failure) are reflected in the cron output.
 			if ($report->hasFailures() && !$recipients->isEmpty()) {
 				$mailer = new SupplierPriceSyncMailer();
 				$mailer->send($report, $recipients, $this->langs);
 			}
+
+			$this->output = $report->buildCronOutput($this->langs);
 
 			return $report->hasFailures() ? -1 : 0;
 		} catch (Throwable $exception) {

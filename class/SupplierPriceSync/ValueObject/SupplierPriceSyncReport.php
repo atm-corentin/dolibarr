@@ -160,24 +160,45 @@ final class SupplierPriceSyncReport
 	 */
 	public function hasFailures(): bool
 	{
-		foreach ($this->issues as $issue) {
-			if ($issue->isError()) {
-				return true;
-			}
-		}
-
-		return false;
+		return $this->countErrors() > 0;
 	}
 
 	/**
-	 * Build the short summary line.
+	 * Count blocking (error) issues.
+	 *
+	 * @return int
+	 */
+	public function countErrors(): int
+	{
+		$count = 0;
+		foreach ($this->issues as $issue) {
+			if ($issue->isError()) {
+				$count++;
+			}
+		}
+
+		return $count;
+	}
+
+	/**
+	 * Count non-blocking (warning) issues.
+	 *
+	 * @return int
+	 */
+	public function countWarnings(): int
+	{
+		return count($this->issues) - $this->countErrors();
+	}
+
+	/**
+	 * Build the short summary line (errors and warnings are counted separately).
 	 *
 	 * @return string
 	 */
 	private function summaryLine(): string
 	{
 		return sprintf(
-			'[%s] scanned=%d requested=%d updated=%d created=%d closed=%d reactivated=%d unchanged=%d skipped=%d issues=%d',
+			'[%s] scanned=%d requested=%d updated=%d created=%d closed=%d reactivated=%d unchanged=%d skipped=%d errors=%d warnings=%d',
 			$this->supplierCode,
 			$this->scanned,
 			$this->requested,
@@ -187,7 +208,8 @@ final class SupplierPriceSyncReport
 			$this->reactivated,
 			$this->unchanged,
 			$this->skipped,
-			count($this->issues)
+			$this->countErrors(),
+			$this->countWarnings()
 		);
 	}
 

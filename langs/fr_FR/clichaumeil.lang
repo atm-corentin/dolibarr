@@ -433,7 +433,7 @@ CliChaumeilSupplierResponseMailBody=Bonjour,<br><br>Une réponse a été dépos�
 # ACHT-2-ANTALIS : synchronisation des prix d'achats fournisseurs
 CliChaumeil_ApiConnectionsTab=Connexion API
 CliChaumeil_AntalisApiTitle=Configuration de la connexion à l'API ANTALIS
-CLICHAUMEIL_SUPPLIER_ANTALIS_BASE_URL=URL de l'API / WSDL ANTALIS
+CLICHAUMEIL_SUPPLIER_ANTALIS_BASE_URL=URL de l'endpoint SOAP ANTALIS (WSDL embarqué dans le module)
 CLICHAUMEIL_SUPPLIER_ANTALIS_HTTP_LOGIN=Identifiant HTTP
 CLICHAUMEIL_SUPPLIER_ANTALIS_HTTP_PASSWORD=Mot de passe HTTP
 CLICHAUMEIL_SUPPLIER_ANTALIS_THIRDPARTY_ID=Tiers associé à ANTALIS
