@@ -195,7 +195,7 @@ final class SupplierPriceSyncReport
 	 *
 	 * @return string
 	 */
-	private function summaryLine(): string
+	public function summaryLine(): string
 	{
 		return sprintf(
 			'[%s] scanned=%d requested=%d updated=%d created=%d closed=%d reactivated=%d unchanged=%d skipped=%d errors=%d warnings=%d',

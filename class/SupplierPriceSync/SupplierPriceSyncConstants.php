@@ -51,6 +51,9 @@ final class SupplierPriceSyncConstants
 	/** @var int Default number of lines sent per ANTALIS SOAP request. */
 	public const DEFAULT_ANTALIS_BATCH_SIZE = 50;
 
+	/** @var int Default max share (%) of scanned lines that a single run may close. */
+	public const DEFAULT_MAX_CLOSURE_RATIO = 50;
+
 	// --- ANTALIS API error codes (doc AntalisStockAndPriceEnquiry V1.4 §3.5) ---
 	/** @var string No error. */
 	public const API_OK = '00';
@@ -72,6 +75,10 @@ final class SupplierPriceSyncConstants
 	public const ISSUE_NEGATIVE_PRICE = 'NEGATIVE_PRICE';
 	/** @var string API returned no negotiated (personal) price for the product. */
 	public const ISSUE_MISSING_PERSONAL_PRICE = 'MISSING_PERSONAL_PRICE';
+	/** @var string API price unit inconsistent (personalPriceUnit != thresholdQtyUnit, or Dolibarr line unit differs). */
+	public const ISSUE_UNIT_MISMATCH = 'UNIT_MISMATCH';
+	/** @var string Closure threshold reached: further closures suspended this run. */
+	public const ISSUE_CLOSURE_THRESHOLD = 'CLOSURE_THRESHOLD';
 	/** @var string API unreachable or fatal back-end error. */
 	public const ISSUE_API_UNAVAILABLE = 'API_UNAVAILABLE';
 	/** @var string Generic per-product API error. */
@@ -100,6 +107,12 @@ final class SupplierPriceSyncConstants
 	public const CONST_USER_CODE = 'CLICHAUMEIL_SUPPLIER_ANTALIS_USER_CODE';
 	/** @var string */
 	public const CONST_DELIVERY_ADDRESS_ID = 'CLICHAUMEIL_SUPPLIER_ANTALIS_DELIVERY_ADDRESS_ID';
+
+	// --- Generic sync settings (supplier-agnostic) ---
+	/** @var string Dry-run flag: when set, the run computes but writes nothing. */
+	public const CONST_DRY_RUN = 'CLICHAUMEIL_SUPPLIER_PRICE_SYNC_DRY_RUN';
+	/** @var string Max share (%) of scanned lines a single run may close (>=100 disables the guard). */
+	public const CONST_MAX_CLOSURE_RATIO = 'CLICHAUMEIL_SUPPLIER_PRICE_SYNC_MAX_CLOSURE_RATIO';
 
 	/**
 	 * Pure constants holder — must never be instantiated.

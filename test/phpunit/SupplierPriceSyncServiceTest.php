@@ -269,14 +269,33 @@ class SupplierPriceSyncServiceTest extends CommonClassTest
 	 *
 	 * @param SupplierPriceGridFetchResult $fetch     Canned result.
 	 * @param bool                         $discovery Discovery capability.
+	 * @param bool                         $dryRun    Dry-run flag.
 	 * @return SupplierPriceSyncReport
 	 */
-	private function runService(SupplierPriceGridFetchResult $fetch, bool $discovery = true): SupplierPriceSyncReport
+	private function runService(SupplierPriceGridFetchResult $fetch, bool $discovery = true, bool $dryRun = false): SupplierPriceSyncReport
 	{
 		global $db, $user;
 		$service = new SupplierPriceSyncService($db);
 
-		return $service->run(new FakeSupplierConfig($this->supplierId), new FakeGridConnector($fetch, $discovery), $user);
+		return $service->run(new FakeSupplierConfig($this->supplierId), new FakeGridConnector($fetch, $discovery), $user, $dryRun);
+	}
+
+	/**
+	 * Add a second supplier price line (same product/ref, different quantity).
+	 *
+	 * @param float $quantity Quantity of the extra line.
+	 * @return void
+	 */
+	private function addLine(float $quantity): void
+	{
+		global $db, $user;
+		$productFournisseur = new ProductFournisseur($db);
+		$productFournisseur->id = $this->productId;
+		$productFournisseur->add_fournisseur($user, $this->supplierId, $this->supplierRef, $quantity);
+		$newId = (int) $productFournisseur->product_fourn_price_id;
+		$productFournisseur->fetch_product_fournisseur_price($newId);
+		$productFournisseur->id = $this->productId;
+		$productFournisseur->update_buyprice($quantity, 0.05 * $quantity, $user, 'HT', $this->supplierId, 0, $this->supplierRef, 20.0);
 	}
 
 	/**
@@ -432,5 +451,44 @@ class SupplierPriceSyncServiceTest extends CommonClassTest
 		$this->assertTrue($report->hasFailures());
 		$this->assertSame(0, $report->updated);
 		$this->assertEqualsWithDelta(0.048, (float) $this->readLine()->unitprice, 0.0001);
+	}
+
+	/**
+	 * Dry-run reports the intended changes but writes nothing to the database.
+	 *
+	 * @return void
+	 */
+	public function testDryRunWritesNothing(): void
+	{
+		$this->createLine(0.048);
+
+		$report = $this->runService($this->foundGrid(array(
+			new SupplierPriceTier($this->quantity, 'Pièces', 0.0321),
+		)), true, true);
+
+		$this->assertSame(1, $report->updated);
+		// The stored price is unchanged: nothing was written.
+		$this->assertEqualsWithDelta(0.048, (float) $this->readLine()->unitprice, 0.0001);
+	}
+
+	/**
+	 * The closure guard caps the number of lines closed in a single run (default 50%).
+	 *
+	 * @return void
+	 */
+	public function testClosureGuardCapsClosures(): void
+	{
+		$this->createLine(0.0321);
+		$this->addLine(200.0);
+
+		// Grid returns only a quantity absent from Dolibarr: both existing lines (100, 200)
+		// are closure candidates. scanned=2, ratio 50% => maxClosures=1.
+		$report = $this->runService($this->foundGrid(array(
+			new SupplierPriceTier(500.0, 'Pièces', 0.028),
+		)));
+
+		$this->assertSame(1, $report->closed);
+		$this->assertSame(1, $report->countErrors());
+		$this->assertTrue($report->hasFailures());
 	}
 }

@@ -205,6 +205,31 @@ class AntalisCustomerPricesNormalizeTest extends CommonClassTest
 	}
 
 	/**
+	 * personalPriceUnit different from thresholdQtyUnit skips the tier (no wrong price).
+	 *
+	 * @return void
+	 */
+	public function testUnitMismatchSkipsTier(): void
+	{
+		$threshold = (object) array(
+			'thresholdQty' => 500.0,
+			'thresholdQtyUnit' => 'ZSH',
+			'personalUnitPrice' => 32.09,
+			'personalPriceQty' => 1000.0,
+			'personalPriceUnit' => 'ZRM',
+		);
+		$response = (object) array('errorID' => '00', 'detailRow' => array(
+			(object) array('lineNr' => 1, 'errorID' => '00', 'threshold' => array($threshold)),
+		));
+
+		$result = $this->invoke($response, array(1 => $this->request('X')));
+
+		$this->assertSame(array(), $result->grids);
+		$this->assertSame(SupplierPriceSyncConstants::ISSUE_UNIT_MISMATCH, $result->issues[0]->code);
+		$this->assertFalse($result->issues[0]->isError());
+	}
+
+	/**
 	 * An unmapped unit still creates the tier with an empty label and a warning.
 	 *
 	 * @return void

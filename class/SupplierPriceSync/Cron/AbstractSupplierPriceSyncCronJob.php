@@ -113,8 +113,9 @@ abstract class AbstractSupplierPriceSyncCronJob
 		}
 
 		try {
+			$dryRun = getDolGlobalInt(SupplierPriceSyncConstants::CONST_DRY_RUN) === 1;
 			$service = new SupplierPriceSyncService($this->db);
-			$report = $service->run($config, $connector, $executionUser);
+			$report = $service->run($config, $connector, $executionUser, $dryRun);
 
 			// Send the mail before building the output so mail-sending issues
 			// (invalid sender, send failure) are reflected in the cron output.

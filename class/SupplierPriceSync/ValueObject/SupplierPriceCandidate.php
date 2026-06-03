@@ -39,6 +39,7 @@ final class SupplierPriceCandidate
 	 * @param float  $quantity         Quantity of the price line.
 	 * @param float  $currentUnitPrice Current stored unit price (HT).
 	 * @param int    $currentStatus    Current status (1 active, 0 inactive).
+	 * @param string $packagingUnit    Dolibarr packaging unit label (extrafield), for unit-consistency checks.
 	 */
 	public function __construct(
 		public readonly int $supplierPriceId,
@@ -48,7 +49,8 @@ final class SupplierPriceCandidate
 		public readonly string $supplierRef,
 		public readonly float $quantity,
 		public readonly float $currentUnitPrice,
-		public readonly int $currentStatus
+		public readonly int $currentStatus,
+		public readonly string $packagingUnit = ''
 	) {
 	}
 }

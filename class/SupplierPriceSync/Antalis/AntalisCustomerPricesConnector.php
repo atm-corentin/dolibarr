@@ -282,9 +282,18 @@ final class AntalisCustomerPricesConnector implements SupplierPriceConnectorInte
 			$personalUnitPrice = isset($threshold->personalUnitPrice) ? (float) $threshold->personalUnitPrice : 0.0;
 			$personalPriceQty = isset($threshold->personalPriceQty) ? (float) $threshold->personalPriceQty : 0.0;
 			$apiUnit = isset($threshold->thresholdQtyUnit) ? (string) $threshold->thresholdQtyUnit : '';
+			$personalPriceUnit = isset($threshold->personalPriceUnit) ? (string) $threshold->personalPriceUnit : '';
 
 			if ($personalUnitPrice <= 0.0 || $personalPriceQty <= 0.0) {
 				$issues[] = $this->productIssue(SupplierPriceSyncConstants::ISSUE_MISSING_PERSONAL_PRICE, $product);
+				continue;
+			}
+
+			// The normalised price is "per personalPriceUnit" but is attached to a line
+			// whose quantity is in thresholdQtyUnit. If those differ, the price would be
+			// expressed in the wrong unit: skip the tier rather than write a wrong price.
+			if ($personalPriceUnit !== '' && strcasecmp(trim($personalPriceUnit), trim($apiUnit)) !== 0) {
+				$issues[] = $this->productIssue(SupplierPriceSyncConstants::ISSUE_UNIT_MISMATCH, $product);
 				continue;
 			}
 
@@ -322,6 +331,7 @@ final class AntalisCustomerPricesConnector implements SupplierPriceConnectorInte
 		$warnings = array(
 			SupplierPriceSyncConstants::ISSUE_UNMAPPED_ORDER_UNIT,
 			SupplierPriceSyncConstants::ISSUE_MISSING_PERSONAL_PRICE,
+			SupplierPriceSyncConstants::ISSUE_UNIT_MISMATCH,
 		);
 		$severity = in_array($code, $warnings, true)
 			? SupplierPriceSyncIssue::SEVERITY_WARNING

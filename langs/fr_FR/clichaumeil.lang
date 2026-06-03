@@ -440,6 +440,8 @@ CLICHAUMEIL_SUPPLIER_ANTALIS_THIRDPARTY_ID=Tiers associé à ANTALIS
 CLICHAUMEIL_SUPPLIER_ANTALIS_CUSTOMER_ID=customerID ANTALIS
 CLICHAUMEIL_SUPPLIER_ANTALIS_USER_CODE=userCode ANTALIS
 CLICHAUMEIL_SUPPLIER_ANTALIS_DELIVERY_ADDRESS_ID=AntalisDeliveryAddressID (optionnel)
+CLICHAUMEIL_SUPPLIER_PRICE_SYNC_DRY_RUN=Mode simulation (aucune écriture, le rapport liste ce qui serait fait)
+CLICHAUMEIL_SUPPLIER_PRICE_SYNC_MAX_CLOSURE_RATIO=Part max. de lignes clôturables par exécution (%, 100 = sans garde-fou)
 CliChaumeil_AntalisPasswordHint=Laisser vide pour conserver le mot de passe actuel.
 CliChaumeil_AntalisPasswordConfigured=Un mot de passe est actuellement configuré.
 CliChaumeil_AntalisPriceSyncCronLabel=MAJ prix d'achats ANTALIS
@@ -455,3 +457,5 @@ CliChaumeil_SupplierPriceSync_UNMAPPED_ORDER_UNIT=%s - Unité de conditionnement
 CliChaumeil_SupplierPriceSync_API_LINE_ERROR=%s - Erreur API sur la ligne
 CliChaumeil_SupplierPriceSync_DOLIBARR_UPDATE_FAILED=%s - Erreur lors de la mise à jour
 CliChaumeil_SupplierPriceSync_MAIL_FAILED=Échec de l'envoi du rapport par email
+CliChaumeil_SupplierPriceSync_UNIT_MISMATCH=%s - Unité incohérente entre ANTALIS et Dolibarr (prix non appliqué)
+CliChaumeil_SupplierPriceSync_CLOSURE_THRESHOLD=%s - Seuil de clôture atteint : clôture suspendue pour ce run

@@ -39,8 +39,21 @@ en ajouter un.
   `product_fournisseur_price_log`). Le prix passé est le **total HT pour la quantité**.
   Création d'une ligne via `Product::add_fournisseur()` puis `update_buyprice()`.
 - `status` activé/clôturé en **SQL direct** (aucun setter core) via le Repository.
-- Comparaison des prix avec une tolérance (`SupplierPriceSyncConstants::PRICE_EPSILON`).
+- Comparaison des prix avec une tolérance (`PRICE_EPSILON`) ; matching palier↔ligne par quantité (`QUANTITY_EPSILON`).
 - Une erreur produit n'arrête pas le run ; une API injoignable (`fatalError`) l'arrête.
+
+### Garde-fous (socle, génériques)
+- **Cohérence d'unité du prix** : le connecteur **refuse** un palier dont `personalPriceUnit ≠ thresholdQtyUnit`
+  (le prix serait exprimé dans la mauvaise unité) → issue `UNIT_MISMATCH`, pas d'écriture.
+- **Divergence d'unité de ligne** : le Service **avertit** (sans bloquer) si l'unité Dolibarr de la ligne
+  diffère de l'unité du palier (comparaison de libellés Dolibarr, donc agnostique fournisseur).
+- **Garde-fou de clôture** : un run ne peut clôturer plus de `CLICHAUMEIL_SUPPLIER_PRICE_SYNC_MAX_CLOSURE_RATIO`%
+  des lignes scannées (défaut 50 ; ≥100 = désactivé). Au-delà → issue `CLOSURE_THRESHOLD`, clôtures suspendues.
+  Protège d'une réponse API partielle/erronée.
+- **Mode simulation** : `CLICHAUMEIL_SUPPLIER_PRICE_SYNC_DRY_RUN=1` → le run calcule les compteurs et le rapport
+  sans **aucune** écriture. Idéal pour valider sur données réelles avant activation.
+- Hypothèse de matching : pour une réf fournisseur donnée, une quantité de palier ⇒ une seule unité côté
+  Dolibarr (à valider en preprod ; la divergence est signalée par `UNIT_MISMATCH`).
 
 ## Ajouter un nouveau connecteur (recette)
 

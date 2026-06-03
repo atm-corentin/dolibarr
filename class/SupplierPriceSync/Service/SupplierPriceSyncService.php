@@ -54,6 +54,12 @@ final class SupplierPriceSyncService
 	/** @var SupplierPriceRepository Repository. */
 	private SupplierPriceRepository $repository;
 
+	/** @var bool When true, the run computes counters but performs no write. */
+	private bool $dryRun = false;
+
+	/** @var int Maximum number of lines this run is allowed to close (closure guard). */
+	private int $maxClosures = PHP_INT_MAX;
+
 	/**
 	 * @param DoliDB $db Database handler.
 	 */
@@ -69,19 +75,31 @@ final class SupplierPriceSyncService
 	 * @param SupplierConfigInterface         $config    Supplier configuration.
 	 * @param SupplierPriceConnectorInterface $connector Supplier connector.
 	 * @param User                            $user      Execution user.
+	 * @param bool                            $dryRun    When true, compute counters but write nothing.
 	 * @return SupplierPriceSyncReport
 	 * @throws Exception When products or lines cannot be loaded.
 	 */
 	public function run(
 		SupplierConfigInterface $config,
 		SupplierPriceConnectorInterface $connector,
-		User $user
+		User $user,
+		bool $dryRun = false
 	): SupplierPriceSyncReport {
 		$report = new SupplierPriceSyncReport($config->getCode());
 		$thirdpartyId = $config->getSupplierThirdpartyId();
+		$this->dryRun = $dryRun;
+		$startedAt = dol_now();
 
 		$existingLines = $this->repository->fetchCandidatesForSupplier($thirdpartyId);
 		$report->scanned = count($existingLines);
+		$this->maxClosures = $this->computeMaxClosures($report->scanned);
+
+		dol_syslog(
+			'SupplierPriceSyncService::run START supplier=' . $config->getCode()
+			. ' dryRun=' . ($dryRun ? '1' : '0') . ' scanned=' . $report->scanned
+			. ' maxClosures=' . $this->maxClosures . ' at=' . dol_print_date($startedAt, 'standard'),
+			LOG_INFO
+		);
 
 		$linesByRef = array();
 		foreach ($existingLines as $line) {
@@ -123,7 +141,32 @@ final class SupplierPriceSyncService
 			}
 		}
 
+		dol_syslog(
+			'SupplierPriceSyncService::run END ' . $report->summaryLine()
+			. ' durationsec=' . (dol_now() - $startedAt),
+			LOG_INFO
+		);
+
 		return $report;
+	}
+
+	/**
+	 * Compute the maximum number of lines this run may close (closure guard).
+	 *
+	 * @param int $scanned Number of scanned lines.
+	 * @return int Cap (>= ratio 100 disables the guard).
+	 */
+	private function computeMaxClosures(int $scanned): int
+	{
+		$ratio = getDolGlobalInt(
+			SupplierPriceSyncConstants::CONST_MAX_CLOSURE_RATIO,
+			SupplierPriceSyncConstants::DEFAULT_MAX_CLOSURE_RATIO
+		);
+		if ($ratio <= 0 || $ratio >= 100) {
+			return $scanned;
+		}
+
+		return (int) ceil($scanned * $ratio / 100);
 	}
 
 	/**
@@ -196,8 +239,10 @@ final class SupplierPriceSyncService
 		User $user,
 		SupplierPriceSyncReport $report
 	): void {
+		$this->warnIfUnitDiverges($candidate, $tier, $report);
+
 		if ($this->priceDiffers($candidate->currentUnitPrice, $tier->normalizedUnitPrice)) {
-			if (!$this->updateBuyPrice($candidate, $tier->normalizedUnitPrice, $user)) {
+			if (!$this->dryRun && !$this->updateBuyPrice($candidate, $tier->normalizedUnitPrice, $user)) {
 				$report->addIssue($this->updateFailedIssue($candidate->supplierRef, $candidate->productRef, $candidate->quantity));
 
 				return;
@@ -208,12 +253,66 @@ final class SupplierPriceSyncService
 		}
 
 		if ($candidate->currentStatus !== SupplierPriceSyncConstants::STATUS_ACTIVE) {
-			if ($this->repository->activate($candidate->supplierPriceId)) {
+			if ($this->dryRun || $this->repository->activate($candidate->supplierPriceId)) {
 				$report->incrementReactivated();
 			} else {
 				$report->addIssue($this->updateFailedIssue($candidate->supplierRef, $candidate->productRef, $candidate->quantity));
 			}
 		}
+	}
+
+	/**
+	 * Warn (without blocking) when the Dolibarr line packaging unit diverges from the
+	 * API threshold unit. Both are Dolibarr labels, so the comparison stays generic.
+	 *
+	 * @param SupplierPriceCandidate $candidate Existing line.
+	 * @param SupplierPriceTier      $tier      Matching API tier.
+	 * @param SupplierPriceSyncReport $report   Run report.
+	 * @return void
+	 */
+	private function warnIfUnitDiverges(
+		SupplierPriceCandidate $candidate,
+		SupplierPriceTier $tier,
+		SupplierPriceSyncReport $report
+	): void {
+		if ($candidate->packagingUnit === '' || $tier->unitLabel === '') {
+			return;
+		}
+		if ($this->normalizeUnitLabel($candidate->packagingUnit) === $this->normalizeUnitLabel($tier->unitLabel)) {
+			return;
+		}
+
+		$report->addIssue(new SupplierPriceSyncIssue(
+			SupplierPriceSyncIssue::SEVERITY_WARNING,
+			SupplierPriceSyncConstants::ISSUE_UNIT_MISMATCH,
+			$candidate->packagingUnit . ' / ' . $tier->unitLabel,
+			$candidate->supplierRef,
+			$candidate->productRef,
+			$candidate->quantity
+		));
+	}
+
+	/**
+	 * Normalise a packaging label for comparison (trim, lowercase, strip accents).
+	 *
+	 * @param string $value Raw label.
+	 * @return string
+	 */
+	private function normalizeUnitLabel(string $value): string
+	{
+		$value = mb_strtolower(trim($value));
+
+		return strtr(
+			$value,
+			array(
+				'à' => 'a', 'â' => 'a', 'ä' => 'a',
+				'é' => 'e', 'è' => 'e', 'ê' => 'e', 'ë' => 'e',
+				'î' => 'i', 'ï' => 'i',
+				'ô' => 'o', 'ö' => 'o',
+				'ù' => 'u', 'û' => 'u', 'ü' => 'u',
+				'ç' => 'c',
+			)
+		);
 	}
 
 	/**
@@ -231,6 +330,12 @@ final class SupplierPriceSyncService
 		User $user,
 		SupplierPriceSyncReport $report
 	): void {
+		if ($this->dryRun) {
+			$report->incrementCreated();
+
+			return;
+		}
+
 		$productFournisseur = new ProductFournisseur($this->db);
 		$productFournisseur->id = $product->productId;
 
@@ -292,7 +397,22 @@ final class SupplierPriceSyncService
 			if ($line->currentStatus !== SupplierPriceSyncConstants::STATUS_ACTIVE) {
 				continue;
 			}
-			if ($this->repository->deactivate($line->supplierPriceId)) {
+
+			// Closure guard: never close more than the allowed share of scanned lines
+			// in a single run (protects against a partial/erroneous API response).
+			if ($report->closed >= $this->maxClosures) {
+				$report->addIssue(new SupplierPriceSyncIssue(
+					SupplierPriceSyncIssue::SEVERITY_ERROR,
+					SupplierPriceSyncConstants::ISSUE_CLOSURE_THRESHOLD,
+					(string) $this->maxClosures,
+					$line->supplierRef,
+					$line->productRef,
+					$line->quantity
+				));
+				continue;
+			}
+
+			if ($this->dryRun || $this->repository->deactivate($line->supplierPriceId)) {
 				$report->incrementClosed();
 			} else {
 				$report->addIssue($this->updateFailedIssue($line->supplierRef, $line->productRef, $line->quantity));

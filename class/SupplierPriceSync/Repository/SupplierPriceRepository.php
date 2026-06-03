@@ -56,10 +56,14 @@ final class SupplierPriceRepository
 	 */
 	public function fetchCandidatesForSupplier(int $thirdpartyId): array
 	{
+		// The packaging unit (extrafield) is loaded to detect a divergence with the API
+		// threshold unit at reconciliation time (unit-consistency warning).
 		$sql = "SELECT pfp.rowid, pfp.fk_product, p.ref as product_ref, pfp.fk_soc,";
-		$sql .= " pfp.ref_fourn, pfp.quantity, pfp.unitprice, pfp.status";
+		$sql .= " pfp.ref_fourn, pfp.quantity, pfp.unitprice, pfp.status,";
+		$sql .= " ef.conditionnement_unite_de_prix as packaging_unit";
 		$sql .= " FROM " . $this->db->prefix() . "product_fournisseur_price as pfp";
 		$sql .= " INNER JOIN " . $this->db->prefix() . "product as p ON p.rowid = pfp.fk_product";
+		$sql .= " LEFT JOIN " . $this->db->prefix() . "product_fournisseur_price_extrafields as ef ON ef.fk_object = pfp.rowid";
 		$sql .= " WHERE pfp.fk_soc = " . ((int) $thirdpartyId);
 		$sql .= " AND p.tobuy = 1";
 		$sql .= " AND pfp.entity IN (" . getEntity('productsupplierprice') . ")";
@@ -80,7 +84,8 @@ final class SupplierPriceRepository
 				(string) $obj->ref_fourn,
 				(float) $obj->quantity,
 				(float) $obj->unitprice,
-				(int) $obj->status
+				(int) $obj->status,
+				(string) ($obj->packaging_unit ?? '')
 			);
 		}
 		$this->db->free($resql);
