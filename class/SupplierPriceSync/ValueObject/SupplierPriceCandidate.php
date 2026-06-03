@@ -39,7 +39,6 @@ final class SupplierPriceCandidate
 	 * @param float  $quantity         Quantity of the price line.
 	 * @param float  $currentUnitPrice Current stored unit price (HT).
 	 * @param int    $currentStatus    Current status (1 active, 0 inactive).
-	 * @param string $orderUnitSource  Source order unit label (extrafield conditionnement_unite_de_prix).
 	 */
 	public function __construct(
 		public readonly int $supplierPriceId,
@@ -49,18 +48,7 @@ final class SupplierPriceCandidate
 		public readonly string $supplierRef,
 		public readonly float $quantity,
 		public readonly float $currentUnitPrice,
-		public readonly int $currentStatus,
-		public readonly string $orderUnitSource
+		public readonly int $currentStatus
 	) {
-	}
-
-	/**
-	 * Business key used to match an API line with this candidate.
-	 *
-	 * @return string
-	 */
-	public function key(): string
-	{
-		return $this->supplierRef . '|' . $this->quantity;
 	}
 }

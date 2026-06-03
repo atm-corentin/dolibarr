@@ -234,8 +234,11 @@ final class SupplierPriceSyncService
 		$productFournisseur = new ProductFournisseur($this->db);
 		$productFournisseur->id = $product->productId;
 
+		$this->db->begin();
+
 		$created = $productFournisseur->add_fournisseur($user, $product->supplierId, $product->supplierRef, $tier->quantity);
 		if ($created < 0) {
+			$this->db->rollback();
 			dol_syslog('SupplierPriceSyncService::createTier add_fournisseur failed (' . $created . ') ref=' . $product->supplierRef, LOG_ERR);
 			$report->addIssue($this->updateFailedIssue($product->supplierRef, $product->productRef, $tier->quantity));
 
@@ -251,11 +254,11 @@ final class SupplierPriceSyncService
 			$product->supplierRef,
 			$tier->quantity,
 			0.0,
-			SupplierPriceSyncConstants::STATUS_ACTIVE,
-			''
+			SupplierPriceSyncConstants::STATUS_ACTIVE
 		);
 
 		if (!$this->updateBuyPrice($candidate, $tier->normalizedUnitPrice, $user)) {
+			$this->db->rollback();
 			$report->addIssue($this->updateFailedIssue($product->supplierRef, $product->productRef, $tier->quantity));
 
 			return;
@@ -265,7 +268,15 @@ final class SupplierPriceSyncService
 			$this->repository->setPackagingUnit($newLineId, $tier->unitLabel);
 		}
 
-		$report->incrementCreated();
+		$this->db->commit();
+
+		// add_fournisseur returns 1 when it created the line, 0 when the (ref, qty)
+		// row already existed: in the latter case it is an update, not a creation.
+		if ($created === 1) {
+			$report->incrementCreated();
+		} else {
+			$report->incrementUpdated();
+		}
 	}
 
 	/**
@@ -299,7 +310,7 @@ final class SupplierPriceSyncService
 	private function matchByQuantity(array $existingForRef, float $quantity): ?SupplierPriceCandidate
 	{
 		foreach ($existingForRef as $line) {
-			if (abs($line->quantity - $quantity) <= SupplierPriceSyncConstants::PRICE_EPSILON) {
+			if (abs($line->quantity - $quantity) <= SupplierPriceSyncConstants::QUANTITY_EPSILON) {
 				return $line;
 			}
 		}

@@ -73,7 +73,7 @@ final class SupplierPriceSyncMailer
 			dol_syslog('SupplierPriceSyncMailer::send failed: ' . $mail->error, LOG_ERR);
 			$report->addIssue(new SupplierPriceSyncIssue(
 				SupplierPriceSyncIssue::SEVERITY_WARNING,
-				SupplierPriceSyncConstants::ISSUE_API_LINE_ERROR,
+				SupplierPriceSyncConstants::ISSUE_MAIL_FAILED,
 				$mail->error
 			));
 		}

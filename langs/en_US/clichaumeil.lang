@@ -448,3 +448,4 @@ CliChaumeil_SupplierPriceSync_MISSING_PERSONAL_PRICE=%s - No negotiated price re
 CliChaumeil_SupplierPriceSync_UNMAPPED_ORDER_UNIT=%s - Unrecognised packaging unit
 CliChaumeil_SupplierPriceSync_API_LINE_ERROR=%s - API error on the line
 CliChaumeil_SupplierPriceSync_DOLIBARR_UPDATE_FAILED=%s - Update error
+CliChaumeil_SupplierPriceSync_MAIL_FAILED=Report email could not be sent

@@ -45,6 +45,9 @@ final class SupplierPriceSyncConstants
 	/** @var float Tolerance used when comparing two unit prices. */
 	public const PRICE_EPSILON = 0.000001;
 
+	/** @var float Tolerance used when matching an API tier quantity to a Dolibarr line. */
+	public const QUANTITY_EPSILON = 0.0001;
+
 	/** @var int Default number of lines sent per ANTALIS SOAP request. */
 	public const DEFAULT_ANTALIS_BATCH_SIZE = 50;
 
@@ -75,6 +78,8 @@ final class SupplierPriceSyncConstants
 	public const ISSUE_API_LINE_ERROR = 'API_LINE_ERROR';
 	/** @var string Dolibarr write failed. */
 	public const ISSUE_DOLIBARR_UPDATE_FAILED = 'DOLIBARR_UPDATE_FAILED';
+	/** @var string Report email could not be sent. */
+	public const ISSUE_MAIL_FAILED = 'MAIL_FAILED';
 	/** @var string Invalid cron recipient email. */
 	public const ISSUE_INVALID_CRON_RECIPIENT = 'INVALID_CRON_RECIPIENT';
 	/** @var string Mandatory configuration missing. */

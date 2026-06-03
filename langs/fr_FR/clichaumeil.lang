@@ -454,3 +454,4 @@ CliChaumeil_SupplierPriceSync_MISSING_PERSONAL_PRICE=%s - Aucun prix négocié r
 CliChaumeil_SupplierPriceSync_UNMAPPED_ORDER_UNIT=%s - Unité de conditionnement non reconnue
 CliChaumeil_SupplierPriceSync_API_LINE_ERROR=%s - Erreur API sur la ligne
 CliChaumeil_SupplierPriceSync_DOLIBARR_UPDATE_FAILED=%s - Erreur lors de la mise à jour
+CliChaumeil_SupplierPriceSync_MAIL_FAILED=Échec de l'envoi du rapport par email

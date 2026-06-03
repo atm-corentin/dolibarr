@@ -57,11 +57,9 @@ final class SupplierPriceRepository
 	public function fetchCandidatesForSupplier(int $thirdpartyId): array
 	{
 		$sql = "SELECT pfp.rowid, pfp.fk_product, p.ref as product_ref, pfp.fk_soc,";
-		$sql .= " pfp.ref_fourn, pfp.quantity, pfp.unitprice, pfp.status,";
-		$sql .= " ef.conditionnement_unite_de_prix as order_unit_source";
+		$sql .= " pfp.ref_fourn, pfp.quantity, pfp.unitprice, pfp.status";
 		$sql .= " FROM " . $this->db->prefix() . "product_fournisseur_price as pfp";
 		$sql .= " INNER JOIN " . $this->db->prefix() . "product as p ON p.rowid = pfp.fk_product";
-		$sql .= " LEFT JOIN " . $this->db->prefix() . "product_fournisseur_price_extrafields as ef ON ef.fk_object = pfp.rowid";
 		$sql .= " WHERE pfp.fk_soc = " . ((int) $thirdpartyId);
 		$sql .= " AND p.tobuy = 1";
 		$sql .= " AND pfp.entity IN (" . getEntity('productsupplierprice') . ")";
@@ -82,8 +80,7 @@ final class SupplierPriceRepository
 				(string) $obj->ref_fourn,
 				(float) $obj->quantity,
 				(float) $obj->unitprice,
-				(int) $obj->status,
-				(string) ($obj->order_unit_source ?? '')
+				(int) $obj->status
 			);
 		}
 		$this->db->free($resql);
