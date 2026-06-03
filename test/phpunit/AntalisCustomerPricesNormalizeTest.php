@@ -109,7 +109,7 @@ class AntalisCustomerPricesNormalizeTest extends CommonClassTest
 		$this->assertCount(1, $result->grids[0]->tiers);
 		$this->assertEqualsWithDelta(0.03209, $result->grids[0]->tiers[0]->normalizedUnitPrice, 0.00001);
 		$this->assertSame(500.0, $result->grids[0]->tiers[0]->quantity);
-		$this->assertSame('Pièces', $result->grids[0]->tiers[0]->unitLabel);
+		$this->assertSame('Un', $result->grids[0]->tiers[0]->unitLabel);
 	}
 
 	/**

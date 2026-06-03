@@ -39,14 +39,15 @@ class AntalisOrderUnitMapperTest extends CommonClassTest
 	{
 		$mapper = new AntalisOrderUnitMapper();
 
-		$this->assertSame('Feuilles', $mapper->dolibarrLabel('ZSH'));
-		$this->assertSame('Ramettes', $mapper->dolibarrLabel('ZRM'));
-		$this->assertSame('Pièces', $mapper->dolibarrLabel('ST'));
-		$this->assertSame('Pièces', $mapper->dolibarrLabel(' st '));
+		// Labels are aligned (singular) with Chaumeil's existing unit dictionary.
+		$this->assertSame('Feuille', $mapper->dolibarrLabel('ZSH'));
+		$this->assertSame('Ramette', $mapper->dolibarrLabel('ZRM'));
+		$this->assertSame('Un', $mapper->dolibarrLabel('ST'));
+		$this->assertSame('Un', $mapper->dolibarrLabel(' st '));
 		$this->assertSame('Carton', $mapper->dolibarrLabel('KAR'));
-		$this->assertSame('Palettes', $mapper->dolibarrLabel('PAL'));
-		$this->assertSame('Rouleaux', $mapper->dolibarrLabel('ROL'));
-		$this->assertSame('Kilos', $mapper->dolibarrLabel('KG'));
+		$this->assertSame('Palette', $mapper->dolibarrLabel('PAL'));
+		$this->assertSame('Rouleau', $mapper->dolibarrLabel('ROL'));
+		$this->assertSame('Kilo', $mapper->dolibarrLabel('KG'));
 	}
 
 	/**

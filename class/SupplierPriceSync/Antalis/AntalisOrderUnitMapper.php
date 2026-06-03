@@ -32,15 +32,24 @@ declare(strict_types=1);
  */
 final class AntalisOrderUnitMapper
 {
-	/** @var array<string,string> ANTALIS unit code => Dolibarr French packaging label. */
+	/**
+	 * ANTALIS unit code => Dolibarr French packaging label.
+	 *
+	 * Labels are aligned (singular form) with Chaumeil's existing supplier-price
+	 * unit dictionary (conditionnement_unite_de_prix): Feuille, Ramette, Un, Carton…
+	 * so they match the stored labels and do not raise spurious unit-divergence
+	 * warnings on the very first synchronisation run.
+	 *
+	 * @var array<string,string>
+	 */
 	private const MAP = array(
-		'ZSH' => 'Feuilles',
-		'ZRM' => 'Ramettes',
-		'PAL' => 'Palettes',
-		'ST' => 'Pièces',
-		'EA' => 'Pièces',
-		'ROL' => 'Rouleaux',
-		'KG' => 'Kilos',
+		'ZSH' => 'Feuille',
+		'ZRM' => 'Ramette',
+		'PAL' => 'Palette',
+		'ST' => 'Un',
+		'EA' => 'Un',
+		'ROL' => 'Rouleau',
+		'KG' => 'Kilo',
 		'ZBL' => 'Liasse',
 		'KAR' => 'Carton',
 	);
