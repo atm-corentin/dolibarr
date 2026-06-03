@@ -52,6 +52,7 @@ if (!$res) {
 
 // Libraries
 require_once DOL_DOCUMENT_ROOT . "/core/lib/admin.lib.php";
+require_once DOL_DOCUMENT_ROOT . "/core/lib/security.lib.php";
 require_once DOL_DOCUMENT_ROOT . "/core/class/html.formsetup.class.php";
 require_once '../lib/clichaumeil.lib.php';
 require_once __DIR__ . '/../class/SupplierPriceSync/SupplierPriceSyncConstants.php';
@@ -118,7 +119,9 @@ if ($action == 'update' && !empty($user->admin)) {
 if ($action == 'setantalispassword' && !empty($user->admin)) {
 	$newPassword = GETPOST(SupplierPriceSyncConstants::CONST_HTTP_PASSWORD, 'alphanohtml');
 	if ($newPassword !== '') {
-		dolibarr_set_const($db, SupplierPriceSyncConstants::CONST_HTTP_PASSWORD, $newPassword, 'chaine', 0, '', $conf->entity);
+		// Store the secret reversibly encrypted (dolEncrypt); conf auto-decrypts it
+		// on load (conf.class.php), so getDolGlobalString() still returns it in clear.
+		dolibarr_set_const($db, SupplierPriceSyncConstants::CONST_HTTP_PASSWORD, dolEncrypt($newPassword), 'chaine', 0, '', $conf->entity);
 		setEventMessages($langs->trans('RecordSaved'), null, 'mesgs');
 	}
 

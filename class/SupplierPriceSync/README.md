@@ -78,7 +78,9 @@ Exemple : `OVOL`.
    et ajouter la déduplication si nécessaire.
 6. **Admin** — ajouter la configuration OVOL (constantes + champs FormSetup) dans
    `admin/api_connections.php`. Le **mot de passe** se gère hors FormSetup (formulaire
-   dédié jamais pré-rempli — cf. ANTALIS) pour ne pas exposer le secret dans la source HTML.
+   dédié jamais pré-rempli — cf. ANTALIS) pour ne pas exposer le secret dans la source HTML,
+   et il est stocké **chiffré** via `dolEncrypt()` (conf le déchiffre automatiquement au chargement,
+   donc `getDolGlobalString()` le renvoie en clair).
 7. **Langues** — clés `fr_FR` + `en_US` (libellés des constantes, label/commentaire du cron).
    Les messages d'anomalie `CliChaumeil_SupplierPriceSync_<CODE>` sont **partagés** et déjà
    traduits : un nouveau connecteur les réutilise automatiquement.
