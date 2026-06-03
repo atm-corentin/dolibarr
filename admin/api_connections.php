@@ -56,6 +56,10 @@ require_once DOL_DOCUMENT_ROOT . "/core/lib/security.lib.php";
 require_once DOL_DOCUMENT_ROOT . "/core/class/html.formsetup.class.php";
 require_once '../lib/clichaumeil.lib.php';
 require_once __DIR__ . '/../class/SupplierPriceSync/SupplierPriceSyncConstants.php';
+require_once __DIR__ . '/../class/SupplierPriceSync/ValueObject/SupplierProductRequest.php';
+require_once __DIR__ . '/../class/SupplierPriceSync/Antalis/AntalisConnectorConfig.php';
+require_once __DIR__ . '/../class/SupplierPriceSync/Antalis/AntalisCustomerPricesConnector.php';
+require_once __DIR__ . '/../class/SupplierPriceSync/Antalis/AntalisOrderUnitMapper.php';
 
 /**
  * @var Conf $conf
@@ -96,12 +100,16 @@ if ($resql) {
 // the stored value in the HTML "value" attribute (clear text in the page source).
 // It is handled by a dedicated, never-prefilled form below (see action setantalispassword).
 $formSetup = new FormSetup($db);
+// Section 1: connection identity (who/where we connect).
+$formSetup->newItem('CliChaumeil_AntalisSectionConnection')->setAsTitle();
 $formSetup->newItem(SupplierPriceSyncConstants::CONST_BASE_URL)->setAsString();
 $formSetup->newItem(SupplierPriceSyncConstants::CONST_HTTP_LOGIN)->setAsString();
 $formSetup->newItem(SupplierPriceSyncConstants::CONST_THIRDPARTY_ID)->setAsSelect($supplierOptions);
 $formSetup->newItem(SupplierPriceSyncConstants::CONST_CUSTOMER_ID)->setAsString();
 $formSetup->newItem(SupplierPriceSyncConstants::CONST_USER_CODE)->setAsString();
 $formSetup->newItem(SupplierPriceSyncConstants::CONST_DELIVERY_ADDRESS_ID)->setAsString();
+// Section 2: behaviour (how the sync runs).
+$formSetup->newItem('CliChaumeil_AntalisSectionBehaviour')->setAsTitle();
 $formSetup->newItem(SupplierPriceSyncConstants::CONST_DRY_RUN)->setAsYesNo();
 $formSetup->newItem(SupplierPriceSyncConstants::CONST_MAX_CLOSURE_RATIO)->setAsString();
 
@@ -129,6 +137,32 @@ if ($action == 'setantalispassword' && !empty($user->admin)) {
 	exit;
 }
 
+if ($action == 'testantalisconnection' && !empty($user->admin)) {
+	// Read-only connectivity probe: build the connector and send a single dummy
+	// product. Any structured SOAP answer (even "unknown product") proves the URL,
+	// credentials and service are reachable; only a transport/auth failure is fatal.
+	try {
+		$probeConfig = AntalisConnectorConfig::fromGlobals();
+		$probeConnector = new AntalisCustomerPricesConnector($probeConfig, new AntalisOrderUnitMapper());
+		$probeRequest = new SupplierProductRequest(0, $probeConfig->getSupplierThirdpartyId(), 'TESTCONNECTION', 'TESTCONNECTION');
+		$probeResult = $probeConnector->fetchPriceGrids(array($probeRequest));
+
+		if ($probeResult->fatalError) {
+			$probeDetail = (!empty($probeResult->issues)) ? $probeResult->issues[0]->message : '';
+			setEventMessages($langs->trans('CliChaumeil_AntalisTestConnectionKo') . ($probeDetail !== '' ? ' (' . dol_trunc($probeDetail, 200) . ')' : ''), null, 'errors');
+		} else {
+			setEventMessages($langs->trans('CliChaumeil_AntalisTestConnectionOk'), null, 'mesgs');
+		}
+	} catch (RuntimeException $exception) {
+		setEventMessages($langs->trans('CliChaumeil_AntalisTestConnectionMissingConfig'), null, 'warnings');
+	} catch (Throwable $exception) {
+		setEventMessages($langs->trans('CliChaumeil_AntalisTestConnectionKo') . ' (' . dol_trunc($exception->getMessage(), 200) . ')', null, 'errors');
+	}
+
+	header('Location: ' . $_SERVER["PHP_SELF"]);
+	exit;
+}
+
 /*
  * View
  */
@@ -146,6 +180,12 @@ $head = clichaumeilAdminPrepareHead();
 print dol_get_fiche_head($head, 'api_connections', $langs->trans("CliChaumeil_AntalisApiTitle"), -1, "clichaumeil@clichaumeil");
 
 echo '<span class="opacitymedium">' . $langs->trans("CliChaumeil_AntalisApiTitle") . '</span><br><br>';
+
+// Prominent banner when the dry-run (simulation) mode is active: no price is ever
+// written, which is easy to forget and would otherwise look like a silent failure.
+if (getDolGlobalInt(SupplierPriceSyncConstants::CONST_DRY_RUN) === 1) {
+	print '<div class="warning">' . img_warning() . ' ' . $langs->trans('CliChaumeil_AntalisDryRunBanner') . '</div><br>';
+}
 
 print $formSetup->generateOutput(true);
 print '<br>';
@@ -166,7 +206,35 @@ print '</td><td class="right"><input type="submit" class="button button-save" va
 print '</table></form>';
 print '<br>';
 
-echo '<div class="info">' . $langs->trans("CliChaumeil_AntalisPriceSyncCronComment") . '</div>';
+// "Test connection" button: a read-only probe so config errors surface here and
+// now, instead of being discovered at the next nightly cron run.
+print '<form method="POST" action="' . dol_escape_htmltag($_SERVER["PHP_SELF"]) . '">';
+print '<input type="hidden" name="token" value="' . newToken() . '">';
+print '<input type="hidden" name="action" value="testantalisconnection">';
+print '<input type="submit" class="button button-save" value="' . dol_escape_htmltag($langs->trans('CliChaumeil_AntalisTestConnectionButton')) . '">';
+print ' <span class="opacitymedium">' . $langs->trans('CliChaumeil_AntalisTestConnectionHint') . '</span>';
+print '</form>';
+print '<br>';
+
+// Link to the scheduled job (where the last report and the recipients live).
+$cronJobId = 0;
+$sqlCron = "SELECT rowid FROM " . $db->prefix() . "cronjob";
+$sqlCron .= " WHERE objectname = 'AntalisSupplierPriceSyncCronJob'";
+$sqlCron .= " AND entity IN (0, " . ((int) $conf->entity) . ")";
+$resqlCron = $db->query($sqlCron);
+if ($resqlCron) {
+	if ($objCron = $db->fetch_object($resqlCron)) {
+		$cronJobId = (int) $objCron->rowid;
+	}
+	$db->free($resqlCron);
+}
+if ($cronJobId > 0) {
+	print '<div class="info">' . $langs->trans("CliChaumeil_AntalisPriceSyncCronComment");
+	print ' <a href="' . DOL_URL_ROOT . '/cron/card.php?id=' . $cronJobId . '">' . $langs->trans('CliChaumeil_AntalisPriceSyncCronLink') . '</a>';
+	print '</div>';
+} else {
+	echo '<div class="info">' . $langs->trans("CliChaumeil_AntalisPriceSyncCronComment") . '</div>';
+}
 
 // Operating guide, collapsed by default (native <details>, no JS).
 print '<br><details><summary class="cursorpointer">' . dol_escape_htmltag($langs->trans('CliChaumeil_AntalisPriceSyncHelpTitle')) . '</summary>';

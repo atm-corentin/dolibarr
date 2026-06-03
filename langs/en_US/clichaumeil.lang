@@ -427,6 +427,15 @@ CliChaumeilSupplierResponseMailBody=Hello,<br><br>A response has been submitted 
 # ACHT-2-ANTALIS: supplier purchase price synchronisation
 CliChaumeil_ApiConnectionsTab=API connection
 CliChaumeil_AntalisApiTitle=ANTALIS API connection settings
+CliChaumeil_AntalisSectionConnection=Connection (credentials and endpoint)
+CliChaumeil_AntalisSectionBehaviour=Synchronisation behaviour
+CliChaumeil_AntalisDryRunBanner=Dry-run mode enabled: no price is changed. Runs only compute the report. Disable it to apply the synchronisation for real.
+CliChaumeil_AntalisTestConnectionButton=Test connection
+CliChaumeil_AntalisTestConnectionHint=Sends a read-only test request (no price changed).
+CliChaumeil_AntalisTestConnectionOk=Connection succeeded: the ANTALIS service answered.
+CliChaumeil_AntalisTestConnectionKo=Connection to the ANTALIS service failed. Check the URL, login and password.
+CliChaumeil_AntalisTestConnectionMissingConfig=Incomplete configuration: fill in the URL, login, password, customerID and userCode before testing.
+CliChaumeil_AntalisPriceSyncCronLink=View the scheduled job and its last report
 CLICHAUMEIL_SUPPLIER_ANTALIS_BASE_URL=ANTALIS customerPricesCheck SOAP endpoint URL (WSDL bundled in the module)
 CLICHAUMEIL_SUPPLIER_ANTALIS_HTTP_LOGIN=HTTP login
 CLICHAUMEIL_SUPPLIER_ANTALIS_HTTP_PASSWORD=HTTP password
@@ -445,7 +454,7 @@ CliChaumeil_AntalisPriceSyncHelp1=1. Fill in the connection above (URL, login, c
 CliChaumeil_AntalisPriceSyncHelp2=2. Enable dry-run mode, then run the scheduled job manually: no price is changed, the report lists what would be done.
 CliChaumeil_AntalisPriceSyncHelp3=3. Review the report (updates, creations, closures) and any anomalies.
 CliChaumeil_AntalisPriceSyncHelp4=4. Common anomalies: "Inconsistent unit" → check the line packaging unit; "No negotiated price" → the supplier returned no negotiated price.
-CliChaumeil_AntalisPriceSyncHelp5=5. The closure guard caps the share of lines closable per run. "Closure threshold reached" flags a suspicious partial response to investigate before re-running.
+CliChaumeil_AntalisPriceSyncHelp5=5. The closure guard caps the share of lines closable per run (default 50%, value from 0 to 100, 100 = disabled). "Closure threshold reached" flags a suspicious partial response to investigate before re-running.
 CliChaumeil_AntalisPriceSyncHelp6=6. Once everything looks right, disable dry-run mode: the sync then applies for real on the next runs.
 CliChaumeil_AntalisPriceSyncHelp7=7. Former prices stay logged (purchase price history); a line closed by mistake can be reactivated manually.
 CliChaumeil_SupplierPriceSyncMailSubject=Price synchronisation report %s — %s issue(s)

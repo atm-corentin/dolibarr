@@ -433,6 +433,15 @@ CliChaumeilSupplierResponseMailBody=Bonjour,<br><br>Une réponse a été dépos�
 # ACHT-2-ANTALIS : synchronisation des prix d'achats fournisseurs
 CliChaumeil_ApiConnectionsTab=Connexion API
 CliChaumeil_AntalisApiTitle=Configuration de la connexion à l'API ANTALIS
+CliChaumeil_AntalisSectionConnection=Connexion (identifiants et endpoint)
+CliChaumeil_AntalisSectionBehaviour=Comportement de la synchronisation
+CliChaumeil_AntalisDryRunBanner=Mode simulation activé : aucun prix n'est modifié. Les exécutions calculent uniquement le rapport. Désactivez-le pour appliquer réellement la synchronisation.
+CliChaumeil_AntalisTestConnectionButton=Tester la connexion
+CliChaumeil_AntalisTestConnectionHint=Envoie une requête de test en lecture seule (aucun prix modifié).
+CliChaumeil_AntalisTestConnectionOk=Connexion réussie : le service ANTALIS a bien répondu.
+CliChaumeil_AntalisTestConnectionKo=Échec de la connexion au service ANTALIS. Vérifiez l'URL, l'identifiant et le mot de passe.
+CliChaumeil_AntalisTestConnectionMissingConfig=Configuration incomplète : renseignez l'URL, l'identifiant, le mot de passe, le customerID et le userCode avant de tester.
+CliChaumeil_AntalisPriceSyncCronLink=Voir la tâche planifiée et son dernier rapport
 CLICHAUMEIL_SUPPLIER_ANTALIS_BASE_URL=URL de l'endpoint SOAP ANTALIS customerPricesCheck (WSDL embarqué dans le module)
 CLICHAUMEIL_SUPPLIER_ANTALIS_HTTP_LOGIN=Identifiant HTTP
 CLICHAUMEIL_SUPPLIER_ANTALIS_HTTP_PASSWORD=Mot de passe HTTP
@@ -451,7 +460,7 @@ CliChaumeil_AntalisPriceSyncHelp1=1. Renseignez la connexion ci-dessus (URL, ide
 CliChaumeil_AntalisPriceSyncHelp2=2. Activez le mode simulation, puis lancez la tâche planifiée manuellement : aucun prix n'est modifié, le rapport liste ce qui serait fait.
 CliChaumeil_AntalisPriceSyncHelp3=3. Relisez le rapport (mises à jour, créations, clôtures) et les anomalies éventuelles.
 CliChaumeil_AntalisPriceSyncHelp4=4. Anomalies fréquentes : « Unité incohérente » → vérifiez l'unité de conditionnement de la ligne ; « Aucun prix négocié » → le fournisseur n'a pas renvoyé de tarif négocié.
-CliChaumeil_AntalisPriceSyncHelp5=5. Le garde-fou de clôture limite la part de lignes clôturables par exécution. « Seuil de clôture atteint » signale une réponse partielle suspecte, à investiguer avant de relancer.
+CliChaumeil_AntalisPriceSyncHelp5=5. Le garde-fou de clôture limite la part de lignes clôturables par exécution (défaut 50 %, valeur de 0 à 100, 100 = désactivé). « Seuil de clôture atteint » signale une réponse partielle suspecte, à investiguer avant de relancer.
 CliChaumeil_AntalisPriceSyncHelp6=6. Quand tout est cohérent, désactivez le mode simulation : la synchronisation s'applique alors réellement aux prochaines exécutions.
 CliChaumeil_AntalisPriceSyncHelp7=7. Les anciens prix restent historisés (journal des prix d'achat) ; une ligne clôturée à tort peut être réactivée manuellement.
 CliChaumeil_SupplierPriceSyncMailSubject=Rapport de synchronisation des prix %s — %s anomalie(s)
