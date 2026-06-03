@@ -54,7 +54,7 @@ final class SupplierPriceSyncConstants
 	/** @var int Default max share (%) of scanned lines that a single run may close. */
 	public const DEFAULT_MAX_CLOSURE_RATIO = 50;
 
-	// --- ANTALIS API error codes (doc AntalisStockAndPriceEnquiry V1.4 §3.5) ---
+	// --- ANTALIS customerPricesCheck error codes (doc AntalisCustomerPrices V1.2 §3.5) ---
 	/** @var string No error. */
 	public const API_OK = '00';
 	/** @var string Generic error. */
