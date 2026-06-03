@@ -31,7 +31,7 @@ require_once dirname(__FILE__) . '/../../class/SupplierPriceSync/Antalis/Antalis
 class AntalisOrderUnitMapperTest extends CommonClassTest
 {
 	/**
-	 * Known labels map to the expected ANTALIS codes (accents/case/spaces tolerated).
+	 * Known ANTALIS unit codes map to the expected Dolibarr labels (case/spaces tolerated).
 	 *
 	 * @return void
 	 */
@@ -39,18 +39,18 @@ class AntalisOrderUnitMapperTest extends CommonClassTest
 	{
 		$mapper = new AntalisOrderUnitMapper();
 
-		$this->assertSame('ZSH', $mapper->map('Feuilles'));
-		$this->assertSame('ST', $mapper->map('Pièce'));
-		$this->assertSame('ST', $mapper->map(' pieces '));
-		$this->assertSame('ZRM', $mapper->map('Ramette'));
-		$this->assertSame('KAR', $mapper->map('Cartons'));
-		$this->assertSame('PAL', $mapper->map('palette'));
-		$this->assertSame('ROL', $mapper->map('Rouleaux'));
-		$this->assertSame('ZBL', $mapper->map('Bundle'));
+		$this->assertSame('Feuilles', $mapper->dolibarrLabel('ZSH'));
+		$this->assertSame('Ramettes', $mapper->dolibarrLabel('ZRM'));
+		$this->assertSame('Pièces', $mapper->dolibarrLabel('ST'));
+		$this->assertSame('Pièces', $mapper->dolibarrLabel(' st '));
+		$this->assertSame('Carton', $mapper->dolibarrLabel('KAR'));
+		$this->assertSame('Palettes', $mapper->dolibarrLabel('PAL'));
+		$this->assertSame('Rouleaux', $mapper->dolibarrLabel('ROL'));
+		$this->assertSame('Kilos', $mapper->dolibarrLabel('KG'));
 	}
 
 	/**
-	 * Unknown or empty labels return null (never guessed).
+	 * Unknown or empty codes return null (never guessed).
 	 *
 	 * @return void
 	 */
@@ -58,8 +58,8 @@ class AntalisOrderUnitMapperTest extends CommonClassTest
 	{
 		$mapper = new AntalisOrderUnitMapper();
 
-		$this->assertNull($mapper->map('Lot'));
-		$this->assertNull($mapper->map('M2'));
-		$this->assertNull($mapper->map(''));
+		$this->assertNull($mapper->dolibarrLabel('XYZ'));
+		$this->assertNull($mapper->dolibarrLabel('M2'));
+		$this->assertNull($mapper->dolibarrLabel(''));
 	}
 }

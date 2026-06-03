@@ -23,14 +23,16 @@
 
 declare(strict_types=1);
 
-require_once __DIR__ . '/../ValueObject/SupplierPriceFetchResult.php';
+require_once __DIR__ . '/../ValueObject/SupplierPriceGridFetchResult.php';
 
 /**
  * Contract every supplier price connector must implement.
  *
- * The interface is transport-agnostic (SOAP, REST...). Tier discovery is exposed
- * as a capability flag only: no discovery method is declared while no connector
- * is able to enumerate price tiers.
+ * The interface is transport-agnostic (SOAP, REST...). Each request targets one
+ * supplier product and the connector returns its full price grid (all tiers).
+ * supportsTierDiscovery() tells the service whether the returned grid is
+ * authoritative (true => create missing tiers and close absent ones) or only
+ * covers already-known lines (false => touch known lines only).
  */
 interface SupplierPriceConnectorInterface
 {
@@ -42,24 +44,24 @@ interface SupplierPriceConnectorInterface
 	public function getCode(): string;
 
 	/**
-	 * Return the recommended number of candidates per remote call.
+	 * Return the recommended number of products per remote call.
 	 *
 	 * @return int
 	 */
 	public function getRecommendedBatchSize(): int;
 
 	/**
-	 * Tell whether the connector can discover price tiers absent from Dolibarr.
+	 * Tell whether the returned grids are authoritative (enable tier creation/closure).
 	 *
 	 * @return bool
 	 */
 	public function supportsTierDiscovery(): bool;
 
 	/**
-	 * Fetch prices for the given known candidates.
+	 * Fetch the full price grids for the given product requests.
 	 *
-	 * @param SupplierPriceCandidate[] $candidates Candidates of a single chunk.
-	 * @return SupplierPriceFetchResult
+	 * @param SupplierProductRequest[] $products Product requests of a single chunk.
+	 * @return SupplierPriceGridFetchResult
 	 */
-	public function fetchPrices(array $candidates): SupplierPriceFetchResult;
+	public function fetchPriceGrids(array $products): SupplierPriceGridFetchResult;
 }

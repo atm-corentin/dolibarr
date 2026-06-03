@@ -35,7 +35,7 @@ require_once __DIR__ . '/AbstractSupplierPriceSyncCronJob.php';
 require_once __DIR__ . '/../Contract/SupplierConfigInterface.php';
 require_once __DIR__ . '/../Contract/SupplierPriceConnectorInterface.php';
 require_once __DIR__ . '/../Antalis/AntalisConnectorConfig.php';
-require_once __DIR__ . '/../Antalis/AntalisConnector.php';
+require_once __DIR__ . '/../Antalis/AntalisCustomerPricesConnector.php';
 require_once __DIR__ . '/../Antalis/AntalisOrderUnitMapper.php';
 
 /**
@@ -64,6 +64,6 @@ class AntalisSupplierPriceSyncCronJob extends AbstractSupplierPriceSyncCronJob
 	{
 		// $config is always an AntalisConnectorConfig here (built by buildConfig()).
 		/** @var AntalisConnectorConfig $config */
-		return new AntalisConnector($config, new AntalisOrderUnitMapper());
+		return new AntalisCustomerPricesConnector($config, new AntalisOrderUnitMapper());
 	}
 }

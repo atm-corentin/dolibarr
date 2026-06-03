@@ -10,9 +10,9 @@ premier connecteur. OVOL (REST), GEODIS… se branchent en réutilisant tout le 
 Contract/         contrats génériques (à implémenter par chaque fournisseur)
   SupplierConfigInterface           getCode / getLabel / getSupplierThirdpartyId
   SupplierPriceConnectorInterface   getCode / getRecommendedBatchSize /
-                                    supportsTierDiscovery / fetchPrices(candidates)
-ValueObject/      objets immuables partagés (Candidate, LineResult, FetchResult,
-                  Issue, Report, CronRecipients)
+                                    supportsTierDiscovery / fetchPriceGrids(products)
+ValueObject/      objets immuables partagés (ProductRequest, PriceTier, ProductPriceGrid,
+                  GridFetchResult, Candidate=ligne existante, Issue, Report, CronRecipients)
 Repository/       SupplierPriceRepository : chargement candidats, activation/clôture
                   (status SQL direct), ligne extrafields. AUCUNE dépendance fournisseur.
 Service/          SupplierPriceSyncService : orchestration (compare/MAJ/clôture/réactive)
@@ -28,13 +28,19 @@ en ajouter un.
 
 ## Règles métier (communes à tous les connecteurs)
 
+- Unité d'interrogation = le **produit** (`SupplierProductRequest`, une réf fournisseur).
+  Le connecteur renvoie la **grille complète des paliers** (`SupplierProductPriceGrid`).
+- Le Service **réconcilie** chaque grille avec les lignes Dolibarr existantes :
+  palier présent+ligne → MAJ si prix diffère / inchangé ; palier présent sans ligne → **création** ;
+  ligne sans palier → **clôture** ; produit `ABSENT` → clôture de toutes ses lignes actives.
+- `supportsTierDiscovery()` : `true` ⇒ grille autoritative (création + clôture des absents) ;
+  `false` ⇒ on ne touche que les lignes déjà connues (connecteur par-ligne).
 - Écriture du prix via `ProductFournisseur::update_buyprice()` (préserve l'historique
   `product_fournisseur_price_log`). Le prix passé est le **total HT pour la quantité**.
+  Création d'une ligne via `Product::add_fournisseur()` puis `update_buyprice()`.
 - `status` activé/clôturé en **SQL direct** (aucun setter core) via le Repository.
 - Comparaison des prix avec une tolérance (`SupplierPriceSyncConstants::PRICE_EPSILON`).
-- On ne synchronise que les **lignes déjà connues** en base (pas de création de paliers
-  tant qu'aucun connecteur ne sait énumérer les paliers — voir `supportsTierDiscovery`).
-- Une erreur de ligne n'arrête pas le run ; une API injoignable (`fatalError`) l'arrête.
+- Une erreur produit n'arrête pas le run ; une API injoignable (`fatalError`) l'arrête.
 
 ## Ajouter un nouveau connecteur (recette)
 
@@ -44,13 +50,14 @@ Exemple : `OVOL`.
    construite depuis des constantes Dolibarr dédiées (`fromGlobals()` qui valide les
    champs requis et lève `RuntimeException` si incomplet).
 2. **Connecteur** — `Ovol/OvolConnector.php implements SupplierPriceConnectorInterface`.
-   `fetchPrices(array $candidates)` appelle l'API (REST/SOAP), puis **normalise** chaque
-   réponse en `SupplierPriceLineResult::success|close|error` et remplit
-   `SupplierPriceFetchResult(results, issues, fatalError)`. Réutiliser les codes
+   `fetchPriceGrids(array $products)` appelle l'API (REST/SOAP), puis **normalise** chaque
+   réponse en `SupplierProductPriceGrid::found(tiers[])|absent()|error()` et remplit
+   `SupplierPriceGridFetchResult(grids, issues, fatalError)`. Renvoyer `supportsTierDiscovery()`
+   selon la capacité de l'API à énumérer tous les paliers. Réutiliser les codes
    `SupplierPriceSyncConstants::ISSUE_*` pour les anomalies.
-3. **Mapping d'unités** (si l'API attend ses propres codes d'unité) —
+3. **Mapping d'unités** (si l'API renvoie ses propres codes d'unité) —
    `Ovol/OvolOrderUnitMapper.php`, qui renvoie `null` pour toute unité non mappable
-   (ne jamais deviner).
+   (ne jamais deviner ; le palier est alors créé avec un libellé vide + avertissement).
 4. **Cron** — `Cron/OvolSupplierPriceSyncCronJob.php extends AbstractSupplierPriceSyncCronJob` :
    implémenter `buildConfig()` (= `OvolConnectorConfig::fromGlobals()`) et
    `buildConnector()` (= `new OvolConnector(...)`). Rien d'autre : le `run()` est hérité.

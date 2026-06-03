@@ -86,6 +86,36 @@ class SupplierPriceRepositoryTest extends CommonClassTest
 		$repository->ensureExtrafieldsRow($target->supplierPriceId);
 		$repository->ensureExtrafieldsRow($target->supplierPriceId);
 		$this->assertSame(1, $this->countExtrafieldsRows($target->supplierPriceId));
+
+		// fetchProductsForSupplier returns one distinct product request for the ref.
+		$products = $repository->fetchProductsForSupplier((int) $supplierId);
+		$matchingProducts = array_filter($products, static function ($p) use ($supplierRef) {
+			return $p->supplierRef === $supplierRef;
+		});
+		$this->assertCount(1, $matchingProducts);
+		$product = array_values($matchingProducts)[0];
+		$this->assertSame($productId, $product->productId);
+
+		// setPackagingUnit stores the label in the extrafield.
+		$this->assertTrue($repository->setPackagingUnit($target->supplierPriceId, 'Feuilles'));
+		$this->assertSame('Feuilles', $this->readPackagingUnit($target->supplierPriceId));
+	}
+
+	/**
+	 * Read the packaging unit extrafield of a supplier price line.
+	 *
+	 * @param int $supplierPriceId product_fournisseur_price.rowid.
+	 * @return string
+	 */
+	private function readPackagingUnit(int $supplierPriceId): string
+	{
+		global $db;
+		$sql = "SELECT conditionnement_unite_de_prix FROM " . $db->prefix() . "product_fournisseur_price_extrafields WHERE fk_object = " . ((int) $supplierPriceId);
+		$resql = $db->query($sql);
+		$obj = $db->fetch_object($resql);
+		$db->free($resql);
+
+		return (string) $obj->conditionnement_unite_de_prix;
 	}
 
 	/**

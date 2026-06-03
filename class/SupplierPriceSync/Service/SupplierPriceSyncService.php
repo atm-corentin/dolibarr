@@ -29,16 +29,22 @@ require_once __DIR__ . '/../Contract/SupplierConfigInterface.php';
 require_once __DIR__ . '/../Contract/SupplierPriceConnectorInterface.php';
 require_once __DIR__ . '/../Repository/SupplierPriceRepository.php';
 require_once __DIR__ . '/../ValueObject/SupplierPriceCandidate.php';
-require_once __DIR__ . '/../ValueObject/SupplierPriceLineResult.php';
+require_once __DIR__ . '/../ValueObject/SupplierProductRequest.php';
+require_once __DIR__ . '/../ValueObject/SupplierPriceTier.php';
+require_once __DIR__ . '/../ValueObject/SupplierProductPriceGrid.php';
 require_once __DIR__ . '/../ValueObject/SupplierPriceSyncIssue.php';
 require_once __DIR__ . '/../ValueObject/SupplierPriceSyncReport.php';
 
 /**
  * Orchestrates the full synchronisation run for one supplier.
  *
- * Scope: only known Dolibarr lines are synchronised (no tier creation). Writes go
- * through ProductFournisseur::update_buyprice() to preserve the price log; the
- * activation status is toggled with a direct SQL update via the repository.
+ * For each supplier product, the connector returns the full price grid (all
+ * thresholds). The service reconciles each grid against the existing Dolibarr
+ * lines: update changed prices, create missing tiers, close tiers that vanished.
+ * Writes go through ProductFournisseur::update_buyprice() (preserves the price
+ * log); the activation status is toggled with a direct SQL update via the
+ * repository. Tier creation and closure-on-absence only happen when the
+ * connector advertises authoritative grids (supportsTierDiscovery() === true).
  */
 final class SupplierPriceSyncService
 {
@@ -60,11 +66,11 @@ final class SupplierPriceSyncService
 	/**
 	 * Run the synchronisation for the given supplier and connector.
 	 *
-	 * @param SupplierConfigInterface          $config    Supplier configuration.
+	 * @param SupplierConfigInterface         $config    Supplier configuration.
 	 * @param SupplierPriceConnectorInterface $connector Supplier connector.
-	 * @param User                             $user      Execution user.
+	 * @param User                            $user      Execution user.
 	 * @return SupplierPriceSyncReport
-	 * @throws Exception When candidates cannot be loaded.
+	 * @throws Exception When products or lines cannot be loaded.
 	 */
 	public function run(
 		SupplierConfigInterface $config,
@@ -72,25 +78,31 @@ final class SupplierPriceSyncService
 		User $user
 	): SupplierPriceSyncReport {
 		$report = new SupplierPriceSyncReport($config->getCode());
+		$thirdpartyId = $config->getSupplierThirdpartyId();
 
-		$candidates = $this->repository->fetchCandidatesForSupplier($config->getSupplierThirdpartyId());
-		$report->scanned = count($candidates);
+		$existingLines = $this->repository->fetchCandidatesForSupplier($thirdpartyId);
+		$report->scanned = count($existingLines);
 
-		$indexed = array();
-		foreach ($candidates as $candidate) {
-			$indexed[$candidate->key()] = $candidate;
+		$linesByRef = array();
+		foreach ($existingLines as $line) {
+			$linesByRef[$line->supplierRef][] = $line;
 		}
 
+		$products = $this->repository->fetchProductsForSupplier($thirdpartyId);
+		$discovery = $connector->supportsTierDiscovery();
 		$batchSize = max(1, $connector->getRecommendedBatchSize());
-		$chunks = array_chunk($candidates, $batchSize);
 
-		foreach ($chunks as $chunk) {
-			$fetch = $connector->fetchPrices($chunk);
+		foreach (array_chunk($products, $batchSize) as $chunk) {
+			$productByRef = array();
+			foreach ($chunk as $product) {
+				$productByRef[$product->supplierRef] = $product;
+			}
+
+			$fetch = $connector->fetchPriceGrids($chunk);
 
 			foreach ($fetch->issues as $issue) {
 				$report->addIssue($issue);
-				if ($issue->code === SupplierPriceSyncConstants::ISSUE_UNMAPPED_ORDER_UNIT
-					&& $issue->severity === SupplierPriceSyncIssue::SEVERITY_WARNING) {
+				if (!$issue->isError()) {
 					$report->incrementSkipped();
 				}
 			}
@@ -101,13 +113,13 @@ final class SupplierPriceSyncService
 				return $report;
 			}
 
-			foreach ($fetch->results as $result) {
-				$report->incrementRequested();
-				$candidate = $indexed[$result->key()] ?? null;
-				if ($candidate === null) {
+			foreach ($fetch->grids as $grid) {
+				$product = $productByRef[$grid->supplierRef] ?? null;
+				if ($product === null) {
 					continue;
 				}
-				$this->applyResult($result, $candidate, $config, $user, $report);
+				$existingForRef = $linesByRef[$grid->supplierRef] ?? array();
+				$this->reconcileGrid($grid, $product, $existingForRef, $discovery, $user, $report);
 			}
 		}
 
@@ -115,42 +127,78 @@ final class SupplierPriceSyncService
 	}
 
 	/**
-	 * Apply one normalised line result to the matching candidate.
+	 * Reconcile one product grid against its existing Dolibarr lines.
 	 *
-	 * @param SupplierPriceLineResult $result    Normalised line result.
-	 * @param SupplierPriceCandidate  $candidate Matching Dolibarr candidate.
-	 * @param SupplierConfigInterface $config    Supplier configuration.
-	 * @param User                    $user      Execution user.
-	 * @param SupplierPriceSyncReport $report    Run report.
+	 * @param SupplierProductPriceGrid $grid           Product price grid.
+	 * @param SupplierProductRequest   $product        Product request.
+	 * @param SupplierPriceCandidate[] $existingForRef Existing lines for this ref.
+	 * @param bool                     $discovery      Whether grids are authoritative.
+	 * @param User                     $user           Execution user.
+	 * @param SupplierPriceSyncReport  $report         Run report.
 	 * @return void
 	 */
-	private function applyResult(
-		SupplierPriceLineResult $result,
-		SupplierPriceCandidate $candidate,
-		SupplierConfigInterface $config,
+	private function reconcileGrid(
+		SupplierProductPriceGrid $grid,
+		SupplierProductRequest $product,
+		array $existingForRef,
+		bool $discovery,
 		User $user,
 		SupplierPriceSyncReport $report
 	): void {
-		if ($result->state === SupplierPriceLineResult::STATE_CLOSE) {
-			if ($candidate->currentStatus === SupplierPriceSyncConstants::STATUS_ACTIVE) {
-				if ($this->repository->deactivate($candidate->supplierPriceId)) {
-					$report->incrementClosed();
-				} else {
-					$report->addIssue($this->updateFailedIssue($candidate));
+		if ($grid->state === SupplierProductPriceGrid::STATE_ERROR) {
+			// Functional error already reported as an issue: no mutation.
+			return;
+		}
+
+		if ($grid->state === SupplierProductPriceGrid::STATE_ABSENT) {
+			$this->closeLines($existingForRef, $report);
+
+			return;
+		}
+
+		$matched = array();
+		foreach ($grid->tiers as $tier) {
+			$report->incrementRequested();
+			$candidate = $this->matchByQuantity($existingForRef, $tier->quantity);
+			if ($candidate !== null) {
+				$matched[$candidate->supplierPriceId] = true;
+				$this->applyTier($candidate, $tier, $user, $report);
+				continue;
+			}
+			if ($discovery) {
+				$this->createTier($product, $tier, $user, $report);
+			}
+		}
+
+		if ($discovery) {
+			$absentLines = array();
+			foreach ($existingForRef as $line) {
+				if (!isset($matched[$line->supplierPriceId])) {
+					$absentLines[] = $line;
 				}
 			}
-
-			return;
+			$this->closeLines($absentLines, $report);
 		}
+	}
 
-		if ($result->state !== SupplierPriceLineResult::STATE_SUCCESS) {
-			// Error lines: issue already reported by the connector, no mutation.
-			return;
-		}
-
-		if ($this->priceDiffers($candidate->currentUnitPrice, $result->normalizedUnitPrice)) {
-			if (!$this->updateBuyPrice($candidate, $result->normalizedUnitPrice, $user)) {
-				$report->addIssue($this->updateFailedIssue($candidate));
+	/**
+	 * Apply a tier to an existing matching line (update price, reactivate).
+	 *
+	 * @param SupplierPriceCandidate $candidate Existing line.
+	 * @param SupplierPriceTier      $tier      Matching API tier.
+	 * @param User                   $user      Execution user.
+	 * @param SupplierPriceSyncReport $report   Run report.
+	 * @return void
+	 */
+	private function applyTier(
+		SupplierPriceCandidate $candidate,
+		SupplierPriceTier $tier,
+		User $user,
+		SupplierPriceSyncReport $report
+	): void {
+		if ($this->priceDiffers($candidate->currentUnitPrice, $tier->normalizedUnitPrice)) {
+			if (!$this->updateBuyPrice($candidate, $tier->normalizedUnitPrice, $user)) {
+				$report->addIssue($this->updateFailedIssue($candidate->supplierRef, $candidate->productRef, $candidate->quantity));
 
 				return;
 			}
@@ -163,15 +211,106 @@ final class SupplierPriceSyncService
 			if ($this->repository->activate($candidate->supplierPriceId)) {
 				$report->incrementReactivated();
 			} else {
-				$report->addIssue($this->updateFailedIssue($candidate));
+				$report->addIssue($this->updateFailedIssue($candidate->supplierRef, $candidate->productRef, $candidate->quantity));
 			}
 		}
 	}
 
 	/**
-	 * Update the buy price of an existing line, preserving its VAT and discounts.
+	 * Create a new supplier price line for a discovered tier.
 	 *
-	 * @param SupplierPriceCandidate $candidate       Candidate to update.
+	 * @param SupplierProductRequest  $product Product request.
+	 * @param SupplierPriceTier       $tier    Discovered tier.
+	 * @param User                    $user    Execution user.
+	 * @param SupplierPriceSyncReport $report  Run report.
+	 * @return void
+	 */
+	private function createTier(
+		SupplierProductRequest $product,
+		SupplierPriceTier $tier,
+		User $user,
+		SupplierPriceSyncReport $report
+	): void {
+		$productFournisseur = new ProductFournisseur($this->db);
+		$productFournisseur->id = $product->productId;
+
+		$created = $productFournisseur->add_fournisseur($user, $product->supplierId, $product->supplierRef, $tier->quantity);
+		if ($created < 0) {
+			dol_syslog('SupplierPriceSyncService::createTier add_fournisseur failed (' . $created . ') ref=' . $product->supplierRef, LOG_ERR);
+			$report->addIssue($this->updateFailedIssue($product->supplierRef, $product->productRef, $tier->quantity));
+
+			return;
+		}
+
+		$newLineId = (int) $productFournisseur->product_fourn_price_id;
+		$candidate = new SupplierPriceCandidate(
+			$newLineId,
+			$product->productId,
+			$product->productRef,
+			$product->supplierId,
+			$product->supplierRef,
+			$tier->quantity,
+			0.0,
+			SupplierPriceSyncConstants::STATUS_ACTIVE,
+			''
+		);
+
+		if (!$this->updateBuyPrice($candidate, $tier->normalizedUnitPrice, $user)) {
+			$report->addIssue($this->updateFailedIssue($product->supplierRef, $product->productRef, $tier->quantity));
+
+			return;
+		}
+
+		if ($tier->unitLabel !== '') {
+			$this->repository->setPackagingUnit($newLineId, $tier->unitLabel);
+		}
+
+		$report->incrementCreated();
+	}
+
+	/**
+	 * Close (deactivate) every active line of the given set.
+	 *
+	 * @param SupplierPriceCandidate[] $lines  Lines to close.
+	 * @param SupplierPriceSyncReport  $report Run report.
+	 * @return void
+	 */
+	private function closeLines(array $lines, SupplierPriceSyncReport $report): void
+	{
+		foreach ($lines as $line) {
+			if ($line->currentStatus !== SupplierPriceSyncConstants::STATUS_ACTIVE) {
+				continue;
+			}
+			if ($this->repository->deactivate($line->supplierPriceId)) {
+				$report->incrementClosed();
+			} else {
+				$report->addIssue($this->updateFailedIssue($line->supplierRef, $line->productRef, $line->quantity));
+			}
+		}
+	}
+
+	/**
+	 * Find an existing line matching a tier quantity.
+	 *
+	 * @param SupplierPriceCandidate[] $existingForRef Existing lines for the ref.
+	 * @param float                    $quantity       Tier quantity.
+	 * @return SupplierPriceCandidate|null
+	 */
+	private function matchByQuantity(array $existingForRef, float $quantity): ?SupplierPriceCandidate
+	{
+		foreach ($existingForRef as $line) {
+			if (abs($line->quantity - $quantity) <= SupplierPriceSyncConstants::PRICE_EPSILON) {
+				return $line;
+			}
+		}
+
+		return null;
+	}
+
+	/**
+	 * Update the buy price of a line, preserving its VAT and discounts.
+	 *
+	 * @param SupplierPriceCandidate $candidate       Line to update.
 	 * @param float                  $normalizedPrice Normalised HT unit price.
 	 * @param User                   $user            Execution user.
 	 * @return bool True on success.
@@ -230,20 +369,22 @@ final class SupplierPriceSyncService
 	}
 
 	/**
-	 * Build a Dolibarr update failure issue for a candidate.
+	 * Build a Dolibarr write-failure issue.
 	 *
-	 * @param SupplierPriceCandidate $candidate Candidate concerned.
+	 * @param string $supplierRef Supplier reference.
+	 * @param string $productRef  Dolibarr product reference.
+	 * @param float  $quantity    Quantity concerned.
 	 * @return SupplierPriceSyncIssue
 	 */
-	private function updateFailedIssue(SupplierPriceCandidate $candidate): SupplierPriceSyncIssue
+	private function updateFailedIssue(string $supplierRef, string $productRef, float $quantity): SupplierPriceSyncIssue
 	{
 		return new SupplierPriceSyncIssue(
 			SupplierPriceSyncIssue::SEVERITY_ERROR,
 			SupplierPriceSyncConstants::ISSUE_DOLIBARR_UPDATE_FAILED,
 			'',
-			$candidate->supplierRef,
-			$candidate->productRef,
-			$candidate->quantity
+			$supplierRef,
+			$productRef,
+			$quantity
 		);
 	}
 }

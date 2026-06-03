@@ -25,6 +25,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../SupplierPriceSyncConstants.php';
 require_once __DIR__ . '/../ValueObject/SupplierPriceCandidate.php';
+require_once __DIR__ . '/../ValueObject/SupplierProductRequest.php';
 
 /**
  * Reads supplier price candidates and toggles their activation status.
@@ -91,6 +92,46 @@ final class SupplierPriceRepository
 	}
 
 	/**
+	 * Load the distinct buyable products (ref_fourn) to query for the supplier.
+	 *
+	 * One request per distinct (fk_product, ref_fourn): the connector returns the
+	 * full price grid for each.
+	 *
+	 * @param int $thirdpartyId Supplier third party id (fk_soc).
+	 * @return SupplierProductRequest[]
+	 * @throws Exception When the SQL query fails.
+	 */
+	public function fetchProductsForSupplier(int $thirdpartyId): array
+	{
+		$sql = "SELECT DISTINCT pfp.fk_product, pfp.fk_soc, pfp.ref_fourn, p.ref as product_ref";
+		$sql .= " FROM " . $this->db->prefix() . "product_fournisseur_price as pfp";
+		$sql .= " INNER JOIN " . $this->db->prefix() . "product as p ON p.rowid = pfp.fk_product";
+		$sql .= " WHERE pfp.fk_soc = " . ((int) $thirdpartyId);
+		$sql .= " AND p.tobuy = 1";
+		$sql .= " AND pfp.ref_fourn <> ''";
+		$sql .= " AND pfp.entity IN (" . getEntity('productsupplierprice') . ")";
+
+		$resql = $this->db->query($sql);
+		if (!$resql) {
+			dol_syslog('SupplierPriceRepository::fetchProductsForSupplier ' . $this->db->lasterror(), LOG_ERR);
+			throw new Exception('Unable to load supplier products');
+		}
+
+		$products = array();
+		while ($obj = $this->db->fetch_object($resql)) {
+			$products[] = new SupplierProductRequest(
+				(int) $obj->fk_product,
+				(int) $obj->fk_soc,
+				(string) $obj->ref_fourn,
+				(string) $obj->product_ref
+			);
+		}
+		$this->db->free($resql);
+
+		return $products;
+	}
+
+	/**
 	 * Activate a supplier price line (status = 1).
 	 *
 	 * @param int $supplierPriceId product_fournisseur_price.rowid.
@@ -129,6 +170,40 @@ final class SupplierPriceRepository
 		$resql = $this->db->query($sql);
 		if (!$resql) {
 			dol_syslog('SupplierPriceRepository::setStatus ' . $this->db->lasterror(), LOG_ERR);
+
+			return false;
+		}
+
+		return true;
+	}
+
+	/**
+	 * Store the packaging unit label of a supplier price line (extrafield).
+	 *
+	 * Best-effort: ensures the extrafields row then updates the label. Used when
+	 * creating a new tier discovered through the API.
+	 *
+	 * @param int    $supplierPriceId product_fournisseur_price.rowid.
+	 * @param string $label           Dolibarr packaging unit label.
+	 * @return bool True on success.
+	 */
+	public function setPackagingUnit(int $supplierPriceId, string $label): bool
+	{
+		try {
+			$this->ensureExtrafieldsRow($supplierPriceId);
+		} catch (Exception $exception) {
+			dol_syslog('SupplierPriceRepository::setPackagingUnit ' . $exception->getMessage(), LOG_ERR);
+
+			return false;
+		}
+
+		$sql = "UPDATE " . $this->db->prefix() . "product_fournisseur_price_extrafields";
+		$sql .= " SET conditionnement_unite_de_prix = '" . $this->db->escape($label) . "'";
+		$sql .= " WHERE fk_object = " . ((int) $supplierPriceId);
+
+		$resql = $this->db->query($sql);
+		if (!$resql) {
+			dol_syslog('SupplierPriceRepository::setPackagingUnit ' . $this->db->lasterror(), LOG_ERR);
 
 			return false;
 		}

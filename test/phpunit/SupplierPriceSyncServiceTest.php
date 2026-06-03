@@ -9,9 +9,9 @@
 
 /**
  * @file    test/phpunit/SupplierPriceSyncServiceTest.php
- * @brief   Integration tests for SupplierPriceSyncService (ACHT-2-ANTALIS).
+ * @brief   Integration tests for SupplierPriceSyncService (ACHT-2-ANTALIS, grid pivot).
  *
- * Real database (begin/rollback), with a FakeConnector returning canned results.
+ * Real database (begin/rollback), with a FakeConnector returning canned grids.
  *
  * Run: phpunit htdocs/custom/clichaumeil/test/phpunit/SupplierPriceSyncServiceTest.php
  *
@@ -30,28 +30,35 @@ require_once DOL_DOCUMENT_ROOT . '/product/class/product.class.php';
 require_once DOL_DOCUMENT_ROOT . '/fourn/class/fournisseur.product.class.php';
 require_once dirname(__FILE__) . '/../../class/SupplierPriceSync/Contract/SupplierConfigInterface.php';
 require_once dirname(__FILE__) . '/../../class/SupplierPriceSync/Contract/SupplierPriceConnectorInterface.php';
-require_once dirname(__FILE__) . '/../../class/SupplierPriceSync/ValueObject/SupplierPriceFetchResult.php';
-require_once dirname(__FILE__) . '/../../class/SupplierPriceSync/ValueObject/SupplierPriceLineResult.php';
+require_once dirname(__FILE__) . '/../../class/SupplierPriceSync/ValueObject/SupplierProductRequest.php';
+require_once dirname(__FILE__) . '/../../class/SupplierPriceSync/ValueObject/SupplierPriceTier.php';
+require_once dirname(__FILE__) . '/../../class/SupplierPriceSync/ValueObject/SupplierProductPriceGrid.php';
+require_once dirname(__FILE__) . '/../../class/SupplierPriceSync/ValueObject/SupplierPriceGridFetchResult.php';
 require_once dirname(__FILE__) . '/../../class/SupplierPriceSync/Repository/SupplierPriceRepository.php';
 require_once dirname(__FILE__) . '/../../class/SupplierPriceSync/Service/SupplierPriceSyncService.php';
 
 /**
- * Connector test double returning canned results.
+ * Connector test double returning a canned grid fetch result.
  */
-class FakeSupplierPriceConnector implements SupplierPriceConnectorInterface
+class FakeGridConnector implements SupplierPriceConnectorInterface
 {
-	/** @var SupplierPriceFetchResult Canned result. */
-	private SupplierPriceFetchResult $canned;
+	/** @var SupplierPriceGridFetchResult Canned result. */
+	private SupplierPriceGridFetchResult $canned;
 
-	/** @var int Number of candidates received on the last call. */
+	/** @var bool Tier discovery capability. */
+	private bool $discovery;
+
+	/** @var int Number of products received on the last call. */
 	public int $receivedCount = 0;
 
 	/**
-	 * @param SupplierPriceFetchResult $canned Canned fetch result.
+	 * @param SupplierPriceGridFetchResult $canned    Canned fetch result.
+	 * @param bool                         $discovery Tier discovery capability.
 	 */
-	public function __construct(SupplierPriceFetchResult $canned)
+	public function __construct(SupplierPriceGridFetchResult $canned, bool $discovery = true)
 	{
 		$this->canned = $canned;
+		$this->discovery = $discovery;
 	}
 
 	/**
@@ -75,24 +82,24 @@ class FakeSupplierPriceConnector implements SupplierPriceConnectorInterface
 	}
 
 	/**
-	 * No tier discovery.
+	 * Return the tier discovery capability.
 	 *
 	 * @return bool
 	 */
 	public function supportsTierDiscovery(): bool
 	{
-		return false;
+		return $this->discovery;
 	}
 
 	/**
-	 * Return the canned result.
+	 * Return the canned grid result.
 	 *
-	 * @param SupplierPriceCandidate[] $candidates Candidates received from the service.
-	 * @return SupplierPriceFetchResult
+	 * @param SupplierProductRequest[] $products Products received from the service.
+	 * @return SupplierPriceGridFetchResult
 	 */
-	public function fetchPrices(array $candidates): SupplierPriceFetchResult
+	public function fetchPriceGrids(array $products): SupplierPriceGridFetchResult
 	{
-		$this->receivedCount = count($candidates);
+		$this->receivedCount = count($products);
 
 		return $this->canned;
 	}
@@ -211,21 +218,22 @@ class SupplierPriceSyncServiceTest extends CommonClassTest
 	}
 
 	/**
-	 * Reload the candidate after creation.
+	 * Build a found grid for the created supplier reference.
 	 *
-	 * @return SupplierPriceCandidate
+	 * @param SupplierPriceTier[] $tiers Tiers.
+	 * @return SupplierPriceGridFetchResult
 	 */
-	private function reloadCandidate(): SupplierPriceCandidate
+	private function foundGrid(array $tiers): SupplierPriceGridFetchResult
 	{
-		global $db;
-		$repository = new SupplierPriceRepository($db);
-		$candidates = $repository->fetchCandidatesForSupplier($this->supplierId);
-
-		return $candidates[0];
+		return new SupplierPriceGridFetchResult(
+			array(SupplierProductPriceGrid::found($this->supplierRef, $tiers)),
+			array(),
+			false
+		);
 	}
 
 	/**
-	 * Read the raw status/unitprice of the line.
+	 * Read the raw status/unitprice of the original line.
 	 *
 	 * @return object
 	 */
@@ -241,23 +249,48 @@ class SupplierPriceSyncServiceTest extends CommonClassTest
 	}
 
 	/**
+	 * Count the supplier price lines of the test supplier.
+	 *
+	 * @return int
+	 */
+	private function countLines(): int
+	{
+		global $db;
+		$sql = "SELECT COUNT(*) as nb FROM " . $db->prefix() . "product_fournisseur_price WHERE fk_soc = " . ((int) $this->supplierId);
+		$resql = $db->query($sql);
+		$obj = $db->fetch_object($resql);
+		$db->free($resql);
+
+		return (int) $obj->nb;
+	}
+
+	/**
+	 * Run the service against a canned fetch result.
+	 *
+	 * @param SupplierPriceGridFetchResult $fetch     Canned result.
+	 * @param bool                         $discovery Discovery capability.
+	 * @return SupplierPriceSyncReport
+	 */
+	private function runService(SupplierPriceGridFetchResult $fetch, bool $discovery = true): SupplierPriceSyncReport
+	{
+		global $db, $user;
+		$service = new SupplierPriceSyncService($db);
+
+		return $service->run(new FakeSupplierConfig($this->supplierId), new FakeGridConnector($fetch, $discovery), $user);
+	}
+
+	/**
 	 * A different price triggers an update and rewrites the stored unit price.
 	 *
 	 * @return void
 	 */
 	public function testDifferentPriceUpdates(): void
 	{
-		global $db, $user;
 		$this->createLine(0.048);
-		$candidate = $this->reloadCandidate();
 
-		$fetch = new SupplierPriceFetchResult(
-			array(SupplierPriceLineResult::success($candidate->supplierRef, $candidate->quantity, 0.0321)),
-			array(),
-			false
-		);
-		$service = new SupplierPriceSyncService($db);
-		$report = $service->run(new FakeSupplierConfig($this->supplierId), new FakeSupplierPriceConnector($fetch), $user);
+		$report = $this->runService($this->foundGrid(array(
+			new SupplierPriceTier($this->quantity, 'Pièces', 0.0321),
+		)));
 
 		$this->assertSame(1, $report->updated);
 		$this->assertSame(0, $report->unchanged);
@@ -271,68 +304,111 @@ class SupplierPriceSyncServiceTest extends CommonClassTest
 	 */
 	public function testIdenticalPriceUnchanged(): void
 	{
-		global $db, $user;
 		$this->createLine(0.0321);
-		$candidate = $this->reloadCandidate();
 
-		$fetch = new SupplierPriceFetchResult(
-			array(SupplierPriceLineResult::success($candidate->supplierRef, $candidate->quantity, 0.0321)),
-			array(),
-			false
-		);
-		$service = new SupplierPriceSyncService($db);
-		$report = $service->run(new FakeSupplierConfig($this->supplierId), new FakeSupplierPriceConnector($fetch), $user);
+		$report = $this->runService($this->foundGrid(array(
+			new SupplierPriceTier($this->quantity, 'Pièces', 0.0321),
+		)));
 
 		$this->assertSame(0, $report->updated);
 		$this->assertSame(1, $report->unchanged);
 	}
 
 	/**
-	 * A close result deactivates an active line.
+	 * An absent grid deactivates the active lines.
 	 *
 	 * @return void
 	 */
-	public function testCloseDeactivatesActiveLine(): void
+	public function testAbsentGridClosesLines(): void
 	{
-		global $db, $user;
 		$this->createLine(0.048);
-		$candidate = $this->reloadCandidate();
 
-		$fetch = new SupplierPriceFetchResult(
-			array(SupplierPriceLineResult::close($candidate->supplierRef, $candidate->quantity)),
+		$fetch = new SupplierPriceGridFetchResult(
+			array(SupplierProductPriceGrid::absent($this->supplierRef)),
 			array(),
 			false
 		);
-		$service = new SupplierPriceSyncService($db);
-		$report = $service->run(new FakeSupplierConfig($this->supplierId), new FakeSupplierPriceConnector($fetch), $user);
+		$report = $this->runService($fetch);
 
 		$this->assertSame(1, $report->closed);
 		$this->assertSame(0, (int) $this->readLine()->status);
 	}
 
 	/**
-	 * A success result reactivates a previously closed line.
+	 * A found grid reactivates a previously closed matching line.
 	 *
 	 * @return void
 	 */
-	public function testSuccessReactivatesInactiveLine(): void
+	public function testFoundGridReactivatesInactiveLine(): void
 	{
-		global $db, $user;
+		global $db;
 		$this->createLine(0.0321);
-		$repository = new SupplierPriceRepository($db);
-		$repository->deactivate($this->supplierPriceId);
-		$candidate = $this->reloadCandidate();
-		$this->assertSame(0, $candidate->currentStatus);
+		(new SupplierPriceRepository($db))->deactivate($this->supplierPriceId);
 
-		$fetch = new SupplierPriceFetchResult(
-			array(SupplierPriceLineResult::success($candidate->supplierRef, $candidate->quantity, 0.0321)),
-			array(),
-			false
-		);
-		$service = new SupplierPriceSyncService($db);
-		$report = $service->run(new FakeSupplierConfig($this->supplierId), new FakeSupplierPriceConnector($fetch), $user);
+		$report = $this->runService($this->foundGrid(array(
+			new SupplierPriceTier($this->quantity, 'Pièces', 0.0321),
+		)));
 
 		$this->assertSame(1, $report->reactivated);
+		$this->assertSame(1, (int) $this->readLine()->status);
+	}
+
+	/**
+	 * A new tier is created when discovery is enabled; the existing line is kept.
+	 *
+	 * @return void
+	 */
+	public function testNewTierCreated(): void
+	{
+		$this->createLine(0.0321);
+		$before = $this->countLines();
+
+		$report = $this->runService($this->foundGrid(array(
+			new SupplierPriceTier($this->quantity, 'Pièces', 0.0321),
+			new SupplierPriceTier(500.0, 'Pièces', 0.028),
+		)));
+
+		$this->assertSame(1, $report->created);
+		$this->assertSame(1, $report->unchanged);
+		$this->assertSame($before + 1, $this->countLines());
+	}
+
+	/**
+	 * A tier absent from an authoritative grid closes the existing line.
+	 *
+	 * @return void
+	 */
+	public function testTierAbsentFromGridClosesLine(): void
+	{
+		$this->createLine(0.0321);
+
+		// Grid returns only a different quantity: the qty=100 line vanished.
+		$report = $this->runService($this->foundGrid(array(
+			new SupplierPriceTier(500.0, 'Pièces', 0.028),
+		)));
+
+		$this->assertSame(1, $report->closed);
+		$this->assertSame(1, $report->created);
+		$this->assertSame(0, (int) $this->readLine()->status);
+	}
+
+	/**
+	 * With a non-authoritative connector, missing tiers are neither created nor closed.
+	 *
+	 * @return void
+	 */
+	public function testNoCreationNorClosureWhenNotDiscovery(): void
+	{
+		$this->createLine(0.0321);
+		$before = $this->countLines();
+
+		$report = $this->runService($this->foundGrid(array(
+			new SupplierPriceTier(500.0, 'Pièces', 0.028),
+		)), false);
+
+		$this->assertSame(0, $report->created);
+		$this->assertSame(0, $report->closed);
+		$this->assertSame($before, $this->countLines());
 		$this->assertSame(1, (int) $this->readLine()->status);
 	}
 
@@ -343,7 +419,6 @@ class SupplierPriceSyncServiceTest extends CommonClassTest
 	 */
 	public function testFatalErrorStopsRun(): void
 	{
-		global $db, $user;
 		$this->createLine(0.048);
 
 		$issue = new SupplierPriceSyncIssue(
@@ -351,9 +426,8 @@ class SupplierPriceSyncServiceTest extends CommonClassTest
 			SupplierPriceSyncConstants::ISSUE_API_UNAVAILABLE,
 			'down'
 		);
-		$fetch = new SupplierPriceFetchResult(array(), array($issue), true);
-		$service = new SupplierPriceSyncService($db);
-		$report = $service->run(new FakeSupplierConfig($this->supplierId), new FakeSupplierPriceConnector($fetch), $user);
+		$fetch = new SupplierPriceGridFetchResult(array(), array($issue), true);
+		$report = $this->runService($fetch);
 
 		$this->assertTrue($report->hasFailures());
 		$this->assertSame(0, $report->updated);

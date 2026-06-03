@@ -16,28 +16,28 @@
  */
 
 /**
- * \file    class/SupplierPriceSync/ValueObject/SupplierPriceFetchResult.php
+ * \file    class/SupplierPriceSync/ValueObject/SupplierPriceGridFetchResult.php
  * \ingroup clichaumeil
- * \brief   Value object encapsulating the outcome of a connector fetch.
+ * \brief   Value object encapsulating the outcome of a connector grid fetch.
  */
 
 declare(strict_types=1);
 
 /**
- * Immutable outcome of a connector fetch for one chunk of candidates.
+ * Immutable outcome of a connector fetch for one chunk of product requests.
  *
- * A per-line business error must NOT set fatalError: only an unreachable API or
- * a back-end-down response does.
+ * A per-product functional error must NOT set fatalError: only an unreachable
+ * API or a back-end-down response does.
  */
-final class SupplierPriceFetchResult
+final class SupplierPriceGridFetchResult
 {
 	/**
-	 * @param SupplierPriceLineResult[] $results    Normalised line results.
-	 * @param SupplierPriceSyncIssue[]  $issues     Issues raised during the fetch.
-	 * @param bool                      $fatalError True if the whole run must stop.
+	 * @param SupplierProductPriceGrid[] $grids      Normalised product grids.
+	 * @param SupplierPriceSyncIssue[]   $issues     Issues raised during the fetch.
+	 * @param bool                       $fatalError True if the whole run must stop.
 	 */
 	public function __construct(
-		public readonly array $results,
+		public readonly array $grids,
 		public readonly array $issues,
 		public readonly bool $fatalError
 	) {

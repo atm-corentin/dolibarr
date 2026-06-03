@@ -50,36 +50,28 @@ final class SupplierPriceSyncConstants
 
 	// --- ANTALIS API error codes (doc AntalisStockAndPriceEnquiry V1.4 §3.5) ---
 	/** @var string No error. */
-	public const API_OK = '0000';
-	/** @var string Generic header error. */
-	public const API_GENERIC_ERROR = '0001';
+	public const API_OK = '00';
+	/** @var string Generic error. */
+	public const API_GENERIC_ERROR = '01';
 	/** @var string Unknown product. */
-	public const API_UNKNOWN_PRODUCT = '0004';
-	/** @var string Unknown order unit. */
-	public const API_UNKNOWN_UNIT = '0005';
-	/** @var string Illegal quantity. */
-	public const API_ILLEGAL_QTY = '0013';
+	public const API_UNKNOWN_PRODUCT = '04';
 	/** @var string Product not available. */
-	public const API_NOT_AVAILABLE = '0016';
-	/** @var string Antalink profile required. */
-	public const API_ANTALINK = '0088';
+	public const API_NOT_AVAILABLE = '16';
 	/** @var string Back-end down. */
-	public const API_BACKEND_DOWN = '0090';
+	public const API_BACKEND_DOWN = '90';
 
 	// --- Internal issue codes ---
-	/** @var string Source order unit cannot be mapped to an ANTALIS code. */
+	/** @var string API unit cannot be mapped to a Dolibarr packaging label. */
 	public const ISSUE_UNMAPPED_ORDER_UNIT = 'UNMAPPED_ORDER_UNIT';
 	/** @var string Supplier reference unknown on the API side. */
 	public const ISSUE_REFERENCE_NOT_FOUND = 'REFERENCE_NOT_FOUND';
 	/** @var string API returned a negative price. */
 	public const ISSUE_NEGATIVE_PRICE = 'NEGATIVE_PRICE';
-	/** @var string API rejected the requested quantity. */
-	public const ISSUE_ILLEGAL_QUANTITY = 'ILLEGAL_QUANTITY';
-	/** @var string Antalink profile missing. */
-	public const ISSUE_ANTALINK_PROFILE = 'ANTALINK_PROFILE';
+	/** @var string API returned no negotiated (personal) price for the product. */
+	public const ISSUE_MISSING_PERSONAL_PRICE = 'MISSING_PERSONAL_PRICE';
 	/** @var string API unreachable or fatal back-end error. */
 	public const ISSUE_API_UNAVAILABLE = 'API_UNAVAILABLE';
-	/** @var string Generic per-line API error. */
+	/** @var string Generic per-product API error. */
 	public const ISSUE_API_LINE_ERROR = 'API_LINE_ERROR';
 	/** @var string Dolibarr write failed. */
 	public const ISSUE_DOLIBARR_UPDATE_FAILED = 'DOLIBARR_UPDATE_FAILED';

@@ -18,71 +18,43 @@
 /**
  * \file    class/SupplierPriceSync/Antalis/AntalisOrderUnitMapper.php
  * \ingroup clichaumeil
- * \brief   Maps a Dolibarr packaging unit label to an ANTALIS order unit code.
+ * \brief   Maps an ANTALIS unit code to a Dolibarr packaging unit label.
  */
 
 declare(strict_types=1);
 
 /**
- * Maps the Dolibarr "conditionnement_unite_de_prix" label to an ANTALIS orderUnit code.
+ * Maps an ANTALIS unit code (thresholdQtyUnit) to a Dolibarr packaging label.
  *
- * Order unit codes come from the ANTALIS doc (AntalisStockAndPriceEnquiry V1.4 §2.3).
- * Any unknown label returns null on purpose: never guess Lot/M2 mappings.
+ * Unit codes come from the ANTALIS doc (AntalisCustomerPrices V1.2 §3.4) and the
+ * SAP UOM table. Used when creating a new tier to fill the Dolibarr packaging
+ * extrafield. Any unknown code returns null on purpose: never guess a label.
  */
 final class AntalisOrderUnitMapper
 {
-	/** @var array<string,string> Normalised label => ANTALIS order unit code. */
+	/** @var array<string,string> ANTALIS unit code => Dolibarr French packaging label. */
 	private const MAP = array(
-		'feuille' => 'ZSH',
-		'feuilles' => 'ZSH',
-		'ramette' => 'ZRM',
-		'ramettes' => 'ZRM',
-		'un' => 'ST',
-		'piece' => 'ST',
-		'pieces' => 'ST',
-		'carton' => 'KAR',
-		'cartons' => 'KAR',
-		'rouleau' => 'ROL',
-		'rouleaux' => 'ROL',
-		'palette' => 'PAL',
-		'palettes' => 'PAL',
-		'bundle' => 'ZBL',
-		'bundles' => 'ZBL',
+		'ZSH' => 'Feuilles',
+		'ZRM' => 'Ramettes',
+		'PAL' => 'Palettes',
+		'ST' => 'Pièces',
+		'EA' => 'Pièces',
+		'ROL' => 'Rouleaux',
+		'KG' => 'Kilos',
+		'ZBL' => 'Liasse',
+		'KAR' => 'Carton',
 	);
 
 	/**
-	 * Map a source packaging unit label to an ANTALIS order unit code.
+	 * Map an ANTALIS unit code to a Dolibarr packaging unit label.
 	 *
-	 * @param string $source Raw Dolibarr packaging unit label.
-	 * @return string|null ANTALIS code, or null if not mappable.
+	 * @param string $apiUnit Raw ANTALIS unit code (e.g. "ZSH", "ST").
+	 * @return string|null Dolibarr label, or null if the code is unknown.
 	 */
-	public function map(string $source): ?string
+	public function dolibarrLabel(string $apiUnit): ?string
 	{
-		$key = $this->normalize($source);
+		$key = strtoupper(trim($apiUnit));
 
 		return self::MAP[$key] ?? null;
-	}
-
-	/**
-	 * Normalise a label: trim, lowercase, strip accents.
-	 *
-	 * @param string $value Raw label.
-	 * @return string Normalised key.
-	 */
-	private function normalize(string $value): string
-	{
-		$value = mb_strtolower(trim($value));
-
-		return strtr(
-			$value,
-			array(
-				'à' => 'a', 'â' => 'a', 'ä' => 'a',
-				'é' => 'e', 'è' => 'e', 'ê' => 'e', 'ë' => 'e',
-				'î' => 'i', 'ï' => 'i',
-				'ô' => 'o', 'ö' => 'o',
-				'ù' => 'u', 'û' => 'u', 'ü' => 'u',
-				'ç' => 'c',
-			)
-		);
 	}
 }
