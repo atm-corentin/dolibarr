@@ -147,7 +147,7 @@ print '<br>';
 
 // Dedicated HTTP password form: never pre-filled, only updated when a value is submitted.
 $hasPassword = (getDolGlobalString(SupplierPriceSyncConstants::CONST_HTTP_PASSWORD) !== '');
-print '<form method="POST" action="' . $_SERVER["PHP_SELF"] . '" autocomplete="off">';
+print '<form method="POST" action="' . dol_escape_htmltag($_SERVER["PHP_SELF"]) . '" autocomplete="off">';
 print '<input type="hidden" name="token" value="' . newToken() . '">';
 print '<input type="hidden" name="action" value="setantalispassword">';
 print '<table class="noborder centpercent"><tr class="liste_titre"><td>' . $langs->trans('CLICHAUMEIL_SUPPLIER_ANTALIS_HTTP_PASSWORD') . '</td><td></td></tr>';

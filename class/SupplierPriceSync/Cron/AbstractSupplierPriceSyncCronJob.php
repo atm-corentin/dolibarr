@@ -44,6 +44,9 @@ abstract class AbstractSupplierPriceSyncCronJob
 	/** @var Translate Translator. */
 	public Translate $langs;
 
+	/** @var int Entity set by the cron scheduler before run(). */
+	public int $entity = 0;
+
 	/** @var string Last error message. */
 	public string $error = '';
 
