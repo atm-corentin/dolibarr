@@ -453,7 +453,7 @@ CliChaumeil_AntalisPriceSyncHelpTitle=Help / operating guide (purchase price syn
 CliChaumeil_AntalisPriceSyncHelp1=1. Fill in the connection above (URL, login, customerID, userCode, supplier third party), then the password via the dedicated form.
 CliChaumeil_AntalisPriceSyncHelp2=2. Enable dry-run mode, then run the scheduled job manually: no price is changed, the report lists what would be done.
 CliChaumeil_AntalisPriceSyncHelp3=3. Review the report (updates, creations, closures) and any anomalies.
-CliChaumeil_AntalisPriceSyncHelp4=4. Common anomalies: "Inconsistent unit" → check the line packaging unit; "No negotiated price" → the supplier returned no negotiated price.
+CliChaumeil_AntalisPriceSyncHelp4=4. Common anomalies: "No price in the line unit" → the supplier returns no price in the line packaging unit (check/map it); "No negotiated price" → the supplier returned no negotiated price.
 CliChaumeil_AntalisPriceSyncHelp5=5. The closure guard caps the share of lines closable per run (default 50%, value from 0 to 100, 100 = disabled). "Closure threshold reached" flags a suspicious partial response to investigate before re-running.
 CliChaumeil_AntalisPriceSyncHelp6=6. Once everything looks right, disable dry-run mode: the sync then applies for real on the next runs.
 CliChaumeil_AntalisPriceSyncHelp7=7. Former prices stay logged (purchase price history); a line closed by mistake can be reactivated manually.
@@ -472,5 +472,5 @@ CliChaumeil_SupplierPriceSync_UNMAPPED_ORDER_UNIT=Unrecognised packaging unit
 CliChaumeil_SupplierPriceSync_API_LINE_ERROR=Supplier API error on the product
 CliChaumeil_SupplierPriceSync_DOLIBARR_UPDATE_FAILED=Failed to update the purchase price in Dolibarr
 CliChaumeil_SupplierPriceSync_MAIL_FAILED=Report email could not be sent
-CliChaumeil_SupplierPriceSync_UNIT_MISMATCH=Inconsistent unit between the supplier and Dolibarr (price not applied)
+CliChaumeil_SupplierPriceSync_UNIT_MISMATCH=No supplier price returned in the line unit (price not applied)
 CliChaumeil_SupplierPriceSync_CLOSURE_THRESHOLD=Closure threshold reached: closures suspended for this run

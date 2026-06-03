@@ -48,6 +48,9 @@ class AntalisOrderUnitMapperTest extends CommonClassTest
 		$this->assertSame('Palette', $mapper->dolibarrLabel('PAL'));
 		$this->assertSame('Rouleau', $mapper->dolibarrLabel('ROL'));
 		$this->assertSame('Kilo', $mapper->dolibarrLabel('KG'));
+		// Commercial price units observed on real data (priceUnit axis).
+		$this->assertSame('M2', $mapper->dolibarrLabel('M2'));
+		$this->assertSame('Lot', $mapper->dolibarrLabel('ZBX'));
 	}
 
 	/**
@@ -60,7 +63,7 @@ class AntalisOrderUnitMapperTest extends CommonClassTest
 		$mapper = new AntalisOrderUnitMapper();
 
 		$this->assertNull($mapper->dolibarrLabel('XYZ'));
-		$this->assertNull($mapper->dolibarrLabel('M2'));
+		$this->assertNull($mapper->dolibarrLabel('ZZZ'));
 		$this->assertNull($mapper->dolibarrLabel(''));
 	}
 }

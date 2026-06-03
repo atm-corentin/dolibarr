@@ -239,7 +239,7 @@ final class SupplierPriceSyncService
 		$matched = array();
 		foreach ($grid->tiers as $tier) {
 			$report->incrementRequested();
-			$candidate = $this->matchByQuantity($existingForRef, $tier->quantity);
+			$candidate = $this->matchLine($existingForRef, $tier);
 			if ($candidate !== null) {
 				$matched[$candidate->supplierPriceId] = true;
 				$this->applyTier($candidate, $tier, $user, $report);
@@ -258,6 +258,24 @@ final class SupplierPriceSyncService
 				}
 			}
 			$this->closeLines($absentLines, $report);
+
+			return;
+		}
+
+		// Update-only mode: surface a line whose unit was not returned by the API (no
+		// matching price unit). Fail-safe: the line is left untouched rather than
+		// rewritten with a price expressed in the wrong unit.
+		foreach ($existingForRef as $line) {
+			if (!isset($matched[$line->supplierPriceId]) && $line->packagingUnit !== '') {
+				$report->addIssue(new SupplierPriceSyncIssue(
+					SupplierPriceSyncIssue::SEVERITY_WARNING,
+					SupplierPriceSyncConstants::ISSUE_UNIT_MISMATCH,
+					$line->packagingUnit,
+					$line->supplierRef,
+					$line->productRef,
+					$line->quantity
+				));
+			}
 		}
 	}
 
@@ -276,8 +294,6 @@ final class SupplierPriceSyncService
 		User $user,
 		SupplierPriceSyncReport $report
 	): void {
-		$this->warnIfUnitDiverges($candidate, $tier, $report);
-
 		if ($this->priceDiffers($candidate->currentUnitPrice, $tier->normalizedUnitPrice)) {
 			if (!$this->dryRun && !$this->updateBuyPrice($candidate, $tier->normalizedUnitPrice, $user)) {
 				$report->addIssue($this->updateFailedIssue($candidate->supplierRef, $candidate->productRef, $candidate->quantity));
@@ -299,34 +315,31 @@ final class SupplierPriceSyncService
 	}
 
 	/**
-	 * Warn (without blocking) when the Dolibarr line packaging unit diverges from the
-	 * API threshold unit. Both are Dolibarr labels, so the comparison stays generic.
+	 * Match an existing line to a tier, by unit when the tier carries one.
 	 *
-	 * @param SupplierPriceCandidate $candidate Existing line.
-	 * @param SupplierPriceTier      $tier      Matching API tier.
-	 * @param SupplierPriceSyncReport $report   Run report.
-	 * @return void
+	 * ANTALIS returns one threshold per price unit (per sheet, per ream…) with a
+	 * thresholdQty that does not align with the stored line quantity, so the reliable
+	 * join key is the unit, not the quantity. Quantity matching is kept as a fallback
+	 * for unit-less connectors (and for unmapped tier units).
+	 *
+	 * @param SupplierPriceCandidate[] $existingForRef Existing lines for the product.
+	 * @param SupplierPriceTier        $tier           API tier to match.
+	 * @return SupplierPriceCandidate|null
 	 */
-	private function warnIfUnitDiverges(
-		SupplierPriceCandidate $candidate,
-		SupplierPriceTier $tier,
-		SupplierPriceSyncReport $report
-	): void {
-		if ($candidate->packagingUnit === '' || $tier->unitLabel === '') {
-			return;
-		}
-		if ($this->normalizeUnitLabel($candidate->packagingUnit) === $this->normalizeUnitLabel($tier->unitLabel)) {
-			return;
+	private function matchLine(array $existingForRef, SupplierPriceTier $tier): ?SupplierPriceCandidate
+	{
+		if ($tier->unitLabel !== '') {
+			$tierUnit = $this->normalizeUnitLabel($tier->unitLabel);
+			foreach ($existingForRef as $line) {
+				if ($line->packagingUnit !== '' && $this->normalizeUnitLabel($line->packagingUnit) === $tierUnit) {
+					return $line;
+				}
+			}
+
+			return null;
 		}
 
-		$report->addIssue(new SupplierPriceSyncIssue(
-			SupplierPriceSyncIssue::SEVERITY_WARNING,
-			SupplierPriceSyncConstants::ISSUE_UNIT_MISMATCH,
-			$candidate->packagingUnit . ' / ' . $tier->unitLabel,
-			$candidate->supplierRef,
-			$candidate->productRef,
-			$candidate->quantity
-		));
+		return $this->matchByQuantity($existingForRef, $tier->quantity);
 	}
 
 	/**

@@ -30,30 +30,38 @@ en ajouter un.
 
 - Unité d'interrogation = le **produit** (`SupplierProductRequest`, une réf fournisseur).
   Le connecteur renvoie la **grille complète des paliers** (`SupplierProductPriceGrid`).
-- Le Service **réconcilie** chaque grille avec les lignes Dolibarr existantes :
-  palier présent+ligne → MAJ si prix diffère / inchangé ; palier présent sans ligne → **création** ;
-  ligne sans palier → **clôture** ; produit `ABSENT` → clôture de toutes ses lignes actives.
-- `supportsTierDiscovery()` : `true` ⇒ grille autoritative (création + clôture des absents) ;
-  `false` ⇒ on ne touche que les lignes déjà connues (connecteur par-ligne).
+- Un palier (`SupplierPriceTier`) porte `quantity`, `unitLabel` (= **unité de prix** Dolibarr) et
+  `normalizedUnitPrice`. Un produit peut renvoyer **plusieurs paliers de même quantité dans des unités
+  de prix différentes** (cas ANTALIS : prix par feuille ET par ramette). `unitLabel` = l'unité dans
+  laquelle le prix est exprimé, c'est la **clé de réconciliation**.
+- Le Service **réconcilie** par **unité** (`matchLine`) : le palier dont `unitLabel` = l'unité de
+  conditionnement de la ligne → MAJ du prix dans cette même unité (jamais de changement d'unité).
+  Repli par **quantité** (`QUANTITY_EPSILON`) pour les connecteurs sans unité.
+- `supportsTierDiscovery()` : `true` ⇒ grille autoritative (création des paliers manquants + clôture des
+  absents) ; `false` ⇒ **update-only** (on ne touche que les lignes connues, jamais de création/clôture
+  sur palier manquant). Produit `ABSENT` → clôture des lignes actives **dans les deux cas**.
 - Écriture du prix via `ProductFournisseur::update_buyprice()` (préserve l'historique
   `product_fournisseur_price_log`). Le prix passé est le **total HT pour la quantité**.
-  Création d'une ligne via `Product::add_fournisseur()` puis `update_buyprice()`.
 - `status` activé/clôturé en **SQL direct** (aucun setter core) via le Repository.
-- Comparaison des prix avec une tolérance (`PRICE_EPSILON`) ; matching palier↔ligne par quantité (`QUANTITY_EPSILON`).
+- Comparaison des prix avec une tolérance (`PRICE_EPSILON`).
 - Une erreur produit n'arrête pas le run ; une API injoignable (`fatalError`) l'arrête.
 
+### Cas ANTALIS (vérifié sur l'API réelle)
+`customerPricesCheck` renvoie un palier **par unité de prix** (`personalPriceUnit`), pas par quantité :
+un produit vendu à la ramette renvoie `{ZRM: 9,76/ramette}` **et** `{ZSH: 0,02/feuille}` (même `thresholdQty`).
+Le connecteur émet **tous** les paliers étiquetés par `personalPriceUnit` ; le Service matche celui dont
+l'unité = l'unité de la ligne (Ramette/Lot/M2…). ANTALIS est en `supportsTierDiscovery()=false` (**update-only**) :
+les multi-paliers sont des variantes d'unité du même produit, pas des paliers à créer. La quantité stockée
+(jusqu'à des millions de feuilles) ne correspond pas à `thresholdQty` → on ne matche **jamais** par quantité.
+
 ### Garde-fous (socle, génériques)
-- **Cohérence d'unité du prix** : le connecteur **refuse** un palier dont `personalPriceUnit ≠ thresholdQtyUnit`
-  (le prix serait exprimé dans la mauvaise unité) → issue `UNIT_MISMATCH`, pas d'écriture.
-- **Divergence d'unité de ligne** : le Service **avertit** (sans bloquer) si l'unité Dolibarr de la ligne
-  diffère de l'unité du palier (comparaison de libellés Dolibarr, donc agnostique fournisseur).
+- **Fail-safe d'unité** : si aucun palier ne correspond à l'unité de la ligne, le Service **avertit**
+  (`UNIT_MISMATCH`) et **n'écrit rien** — jamais de prix dans la mauvaise unité.
 - **Garde-fou de clôture** : un run ne peut clôturer plus de `CLICHAUMEIL_SUPPLIER_PRICE_SYNC_MAX_CLOSURE_RATIO`%
   des lignes scannées (défaut 50 ; ≥100 = désactivé). Au-delà → issue `CLOSURE_THRESHOLD`, clôtures suspendues.
   Protège d'une réponse API partielle/erronée.
 - **Mode simulation** : `CLICHAUMEIL_SUPPLIER_PRICE_SYNC_DRY_RUN=1` → le run calcule les compteurs et le rapport
   sans **aucune** écriture. Idéal pour valider sur données réelles avant activation.
-- Hypothèse de matching : pour une réf fournisseur donnée, une quantité de palier ⇒ une seule unité côté
-  Dolibarr (à valider en preprod ; la divergence est signalée par `UNIT_MISMATCH`).
 
 ## Ajouter un nouveau connecteur (recette)
 

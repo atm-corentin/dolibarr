@@ -102,13 +102,17 @@ final class AntalisCustomerPricesConnector implements SupplierPriceConnectorInte
 	}
 
 	/**
-	 * customerPricesCheck returns the full grid: tiers are authoritative.
+	 * Update-only: ANTALIS thresholds are price-UNIT variants of the same product
+	 * (per sheet / per ream…), NOT quantity tiers, and the stored line quantity does
+	 * not align with thresholdQty. So lines are matched by unit and only refreshed:
+	 * never created (a unit variant is not a new product), never closed on a missing
+	 * tier. A fully unavailable product (errorID 16 => absent grid) still closes its line.
 	 *
 	 * @return bool
 	 */
 	public function supportsTierDiscovery(): bool
 	{
-		return true;
+		return false;
 	}
 
 	/**
@@ -299,19 +303,15 @@ final class AntalisCustomerPricesConnector implements SupplierPriceConnectorInte
 			$quantity = isset($threshold->thresholdQty) ? (float) $threshold->thresholdQty : 0.0;
 			$personalUnitPrice = isset($threshold->personalUnitPrice) ? (float) $threshold->personalUnitPrice : 0.0;
 			$personalPriceQty = isset($threshold->personalPriceQty) ? (float) $threshold->personalPriceQty : 0.0;
-			$apiUnit = isset($threshold->thresholdQtyUnit) ? (string) $threshold->thresholdQtyUnit : '';
+			// The price is expressed per personalPriceUnit (the commercial unit). A product
+			// can be returned in several price units at once (e.g. per sheet AND per ream),
+			// each as its own threshold with the SAME thresholdQty. personalPriceUnit is what
+			// the line is matched on downstream, so it labels the tier — NOT thresholdQtyUnit
+			// (always the base/stock unit, which would write the price in the wrong unit).
 			$personalPriceUnit = isset($threshold->personalPriceUnit) ? (string) $threshold->personalPriceUnit : '';
 
 			if ($personalUnitPrice <= 0.0 || $personalPriceQty <= 0.0) {
 				$issues[] = $this->productIssue(SupplierPriceSyncConstants::ISSUE_MISSING_PERSONAL_PRICE, $product);
-				continue;
-			}
-
-			// The normalised price is "per personalPriceUnit" but is attached to a line
-			// whose quantity is in thresholdQtyUnit. If those differ, the price would be
-			// expressed in the wrong unit: skip the tier rather than write a wrong price.
-			if ($personalPriceUnit !== '' && strcasecmp(trim($personalPriceUnit), trim($apiUnit)) !== 0) {
-				$issues[] = $this->productIssue(SupplierPriceSyncConstants::ISSUE_UNIT_MISMATCH, $product);
 				continue;
 			}
 
@@ -321,7 +321,7 @@ final class AntalisCustomerPricesConnector implements SupplierPriceConnectorInte
 				continue;
 			}
 
-			$label = $this->orderUnitMapper->dolibarrLabel($apiUnit);
+			$label = $this->orderUnitMapper->dolibarrLabel($personalPriceUnit);
 			if ($label === null) {
 				$issues[] = $this->productIssue(SupplierPriceSyncConstants::ISSUE_UNMAPPED_ORDER_UNIT, $product);
 				$label = '';

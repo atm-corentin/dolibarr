@@ -175,10 +175,11 @@ class SupplierPriceSyncServiceTest extends CommonClassTest
 	/**
 	 * Create a supplier price line with a known initial unit price.
 	 *
-	 * @param float $initialUnitPrice Initial unit price to store.
+	 * @param float  $initialUnitPrice Initial unit price to store.
+	 * @param string $packagingUnit    Optional packaging unit label (extrafield).
 	 * @return void
 	 */
-	private function createLine(float $initialUnitPrice): void
+	private function createLine(float $initialUnitPrice, string $packagingUnit = ''): void
 	{
 		global $db, $user;
 
@@ -215,6 +216,10 @@ class SupplierPriceSyncServiceTest extends CommonClassTest
 			$this->supplierRef,
 			20.0
 		);
+
+		if ($packagingUnit !== '') {
+			$repository->setPackagingUnit($this->supplierPriceId, $packagingUnit);
+		}
 	}
 
 	/**
@@ -308,7 +313,7 @@ class SupplierPriceSyncServiceTest extends CommonClassTest
 		$this->createLine(0.048);
 
 		$report = $this->runService($this->foundGrid(array(
-			new SupplierPriceTier($this->quantity, 'Pièces', 0.0321),
+			new SupplierPriceTier($this->quantity, '', 0.0321),
 		)));
 
 		$this->assertSame(1, $report->updated);
@@ -326,7 +331,7 @@ class SupplierPriceSyncServiceTest extends CommonClassTest
 		$this->createLine(0.0321);
 
 		$report = $this->runService($this->foundGrid(array(
-			new SupplierPriceTier($this->quantity, 'Pièces', 0.0321),
+			new SupplierPriceTier($this->quantity, '', 0.0321),
 		)));
 
 		$this->assertSame(0, $report->updated);
@@ -365,7 +370,7 @@ class SupplierPriceSyncServiceTest extends CommonClassTest
 		(new SupplierPriceRepository($db))->deactivate($this->supplierPriceId);
 
 		$report = $this->runService($this->foundGrid(array(
-			new SupplierPriceTier($this->quantity, 'Pièces', 0.0321),
+			new SupplierPriceTier($this->quantity, '', 0.0321),
 		)));
 
 		$this->assertSame(1, $report->reactivated);
@@ -383,8 +388,8 @@ class SupplierPriceSyncServiceTest extends CommonClassTest
 		$before = $this->countLines();
 
 		$report = $this->runService($this->foundGrid(array(
-			new SupplierPriceTier($this->quantity, 'Pièces', 0.0321),
-			new SupplierPriceTier(500.0, 'Pièces', 0.028),
+			new SupplierPriceTier($this->quantity, '', 0.0321),
+			new SupplierPriceTier(500.0, '', 0.028),
 		)));
 
 		$this->assertSame(1, $report->created);
@@ -403,7 +408,7 @@ class SupplierPriceSyncServiceTest extends CommonClassTest
 
 		// Grid returns only a different quantity: the qty=100 line vanished.
 		$report = $this->runService($this->foundGrid(array(
-			new SupplierPriceTier(500.0, 'Pièces', 0.028),
+			new SupplierPriceTier(500.0, '', 0.028),
 		)));
 
 		$this->assertSame(1, $report->closed);
@@ -422,7 +427,7 @@ class SupplierPriceSyncServiceTest extends CommonClassTest
 		$before = $this->countLines();
 
 		$report = $this->runService($this->foundGrid(array(
-			new SupplierPriceTier(500.0, 'Pièces', 0.028),
+			new SupplierPriceTier(500.0, '', 0.028),
 		)), false);
 
 		$this->assertSame(0, $report->created);
@@ -463,7 +468,7 @@ class SupplierPriceSyncServiceTest extends CommonClassTest
 		$this->createLine(0.048);
 
 		$report = $this->runService($this->foundGrid(array(
-			new SupplierPriceTier($this->quantity, 'Pièces', 0.0321),
+			new SupplierPriceTier($this->quantity, '', 0.0321),
 		)), true, true);
 
 		$this->assertSame(1, $report->updated);
@@ -484,11 +489,52 @@ class SupplierPriceSyncServiceTest extends CommonClassTest
 		// Grid returns only a quantity absent from Dolibarr: both existing lines (100, 200)
 		// are closure candidates. scanned=2, ratio 50% => maxClosures=1.
 		$report = $this->runService($this->foundGrid(array(
-			new SupplierPriceTier(500.0, 'Pièces', 0.028),
+			new SupplierPriceTier(500.0, '', 0.028),
 		)));
 
 		$this->assertSame(1, $report->closed);
 		$this->assertSame(1, $report->countErrors());
 		$this->assertTrue($report->hasFailures());
+	}
+
+	/**
+	 * With several price-unit tiers, the line is updated from the tier matching its
+	 * unit, NOT from the base-unit tier (regression for the ANTALIS multi-unit grid).
+	 *
+	 * @return void
+	 */
+	public function testUnitMatchPicksTierOfLineUnit(): void
+	{
+		$this->createLine(0.01, 'Ramette');
+
+		// ANTALIS-style grid: same quantity, one base-unit tier + one commercial tier.
+		$report = $this->runService($this->foundGrid(array(
+			new SupplierPriceTier($this->quantity, 'Feuille', 0.02),
+			new SupplierPriceTier($this->quantity, 'Ramette', 9.76),
+		)), false);
+
+		$this->assertSame(1, $report->updated);
+		$this->assertSame(0, $report->created);
+		$this->assertEqualsWithDelta(9.76, (float) $this->readLine()->unitprice, 0.0001);
+	}
+
+	/**
+	 * When no returned tier matches the line unit, the line is left untouched and a
+	 * warning is raised (fail-safe: never write a price in the wrong unit).
+	 *
+	 * @return void
+	 */
+	public function testNoTierForLineUnitWarnsAndKeepsLine(): void
+	{
+		$this->createLine(0.01, 'Ramette');
+
+		$report = $this->runService($this->foundGrid(array(
+			new SupplierPriceTier($this->quantity, 'Feuille', 0.02),
+		)), false);
+
+		$this->assertSame(0, $report->updated);
+		$this->assertSame(0, $report->created);
+		$this->assertGreaterThanOrEqual(1, $report->countWarnings());
+		$this->assertEqualsWithDelta(0.01, (float) $this->readLine()->unitprice, 0.0001);
 	}
 }

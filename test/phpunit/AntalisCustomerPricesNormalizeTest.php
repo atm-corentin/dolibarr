@@ -205,28 +205,40 @@ class AntalisCustomerPricesNormalizeTest extends CommonClassTest
 	}
 
 	/**
-	 * personalPriceUnit different from thresholdQtyUnit skips the tier (no wrong price).
+	 * Real ANTALIS pattern: a product priced in several units returns several thresholds
+	 * (same thresholdQty, different personalPriceUnit). Each is kept and labelled by its
+	 * personalPriceUnit (the commercial unit), not thresholdQtyUnit. No mismatch issue.
 	 *
 	 * @return void
 	 */
-	public function testUnitMismatchSkipsTier(): void
+	public function testMultiUnitThresholdsKeptLabeledByPriceUnit(): void
 	{
-		$threshold = (object) array(
-			'thresholdQty' => 500.0,
+		$commercial = (object) array(
+			'thresholdQty' => 2500.0,
 			'thresholdQtyUnit' => 'ZSH',
-			'personalUnitPrice' => 32.09,
-			'personalPriceQty' => 1000.0,
+			'personalUnitPrice' => 9.76,
+			'personalPriceQty' => 1.0,
 			'personalPriceUnit' => 'ZRM',
 		);
+		$base = (object) array(
+			'thresholdQty' => 2500.0,
+			'thresholdQtyUnit' => 'ZSH',
+			'personalUnitPrice' => 0.02,
+			'personalPriceQty' => 1.0,
+			'personalPriceUnit' => 'ZSH',
+		);
 		$response = (object) array('errorID' => '00', 'detailRow' => array(
-			(object) array('lineNr' => 1, 'errorID' => '00', 'threshold' => array($threshold)),
+			(object) array('lineNr' => 1, 'errorID' => '00', 'threshold' => array($commercial, $base)),
 		));
 
-		$result = $this->invoke($response, array(1 => $this->request('X')));
+		$result = $this->invoke($response, array(1 => $this->request('266402')));
 
-		$this->assertSame(array(), $result->grids);
-		$this->assertSame(SupplierPriceSyncConstants::ISSUE_UNIT_MISMATCH, $result->issues[0]->code);
-		$this->assertFalse($result->issues[0]->isError());
+		$this->assertSame(array(), $result->issues);
+		$this->assertCount(2, $result->grids[0]->tiers);
+		$this->assertSame('Ramette', $result->grids[0]->tiers[0]->unitLabel);
+		$this->assertEqualsWithDelta(9.76, $result->grids[0]->tiers[0]->normalizedUnitPrice, 0.0001);
+		$this->assertSame('Feuille', $result->grids[0]->tiers[1]->unitLabel);
+		$this->assertEqualsWithDelta(0.02, $result->grids[0]->tiers[1]->normalizedUnitPrice, 0.0001);
 	}
 
 	/**

@@ -459,7 +459,7 @@ CliChaumeil_AntalisPriceSyncHelpTitle=Aide / mode d'emploi (synchronisation des 
 CliChaumeil_AntalisPriceSyncHelp1=1. Renseignez la connexion ci-dessus (URL, identifiant, customerID, userCode, tiers fournisseur), puis le mot de passe via le formulaire dédié.
 CliChaumeil_AntalisPriceSyncHelp2=2. Activez le mode simulation, puis lancez la tâche planifiée manuellement : aucun prix n'est modifié, le rapport liste ce qui serait fait.
 CliChaumeil_AntalisPriceSyncHelp3=3. Relisez le rapport (mises à jour, créations, clôtures) et les anomalies éventuelles.
-CliChaumeil_AntalisPriceSyncHelp4=4. Anomalies fréquentes : « Unité incohérente » → vérifiez l'unité de conditionnement de la ligne ; « Aucun prix négocié » → le fournisseur n'a pas renvoyé de tarif négocié.
+CliChaumeil_AntalisPriceSyncHelp4=4. Anomalies fréquentes : « Aucun tarif dans l'unité de la ligne » → le fournisseur ne renvoie pas de prix dans l'unité de conditionnement de la ligne (à vérifier/mapper) ; « Aucun prix négocié » → le fournisseur n'a pas renvoyé de tarif négocié.
 CliChaumeil_AntalisPriceSyncHelp5=5. Le garde-fou de clôture limite la part de lignes clôturables par exécution (défaut 50 %, valeur de 0 à 100, 100 = désactivé). « Seuil de clôture atteint » signale une réponse partielle suspecte, à investiguer avant de relancer.
 CliChaumeil_AntalisPriceSyncHelp6=6. Quand tout est cohérent, désactivez le mode simulation : la synchronisation s'applique alors réellement aux prochaines exécutions.
 CliChaumeil_AntalisPriceSyncHelp7=7. Les anciens prix restent historisés (journal des prix d'achat) ; une ligne clôturée à tort peut être réactivée manuellement.
@@ -478,5 +478,5 @@ CliChaumeil_SupplierPriceSync_UNMAPPED_ORDER_UNIT=Unité de conditionnement non 
 CliChaumeil_SupplierPriceSync_API_LINE_ERROR=Erreur de l'API fournisseur sur le produit
 CliChaumeil_SupplierPriceSync_DOLIBARR_UPDATE_FAILED=Échec de la mise à jour du prix d'achat dans Dolibarr
 CliChaumeil_SupplierPriceSync_MAIL_FAILED=Échec de l'envoi du rapport par email
-CliChaumeil_SupplierPriceSync_UNIT_MISMATCH=Unité incohérente entre le fournisseur et Dolibarr (prix non appliqué)
+CliChaumeil_SupplierPriceSync_UNIT_MISMATCH=Aucun tarif renvoyé par le fournisseur dans l'unité de la ligne (prix non appliqué)
 CliChaumeil_SupplierPriceSync_CLOSURE_THRESHOLD=Seuil de clôture atteint : clôtures suspendues pour cette exécution

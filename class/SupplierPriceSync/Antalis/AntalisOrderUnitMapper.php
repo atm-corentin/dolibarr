@@ -52,6 +52,8 @@ final class AntalisOrderUnitMapper
 		'KG' => 'Kilo',
 		'ZBL' => 'Liasse',
 		'KAR' => 'Carton',
+		'M2' => 'M2',
+		'ZBX' => 'Lot',
 	);
 
 	/**
