@@ -214,7 +214,34 @@ final class SupplierPriceSyncReport
 	}
 
 	/**
-	 * Render a single issue as a text line, translating the code with the ref.
+	 * Build the human-readable, translated summary line (for cron output and mail).
+	 *
+	 * @param Translate $langs Translator (module file loaded).
+	 * @return string
+	 */
+	private function translatedSummary(Translate $langs): string
+	{
+		// Token substitution (not trans() %s placeholders): trans() sprintf()s its
+		// own up-to-4 params, so a 10-placeholder template would throw inside trans().
+		return strtr(
+			$langs->transnoentities('CliChaumeil_SupplierPriceSyncSummary'),
+			array(
+				'{sup}' => $this->supplierCode,
+				'{scanned}' => (string) $this->scanned,
+				'{updated}' => (string) $this->updated,
+				'{created}' => (string) $this->created,
+				'{closed}' => (string) $this->closed,
+				'{reactivated}' => (string) $this->reactivated,
+				'{unchanged}' => (string) $this->unchanged,
+				'{skipped}' => (string) $this->skipped,
+				'{errors}' => (string) $this->countErrors(),
+				'{warnings}' => (string) $this->countWarnings(),
+			)
+		);
+	}
+
+	/**
+	 * Render a single issue as a readable, translated text line.
 	 *
 	 * @param SupplierPriceSyncIssue $issue Issue to render.
 	 * @param Translate              $langs Translator.
@@ -222,18 +249,16 @@ final class SupplierPriceSyncReport
 	 */
 	private function formatIssue(SupplierPriceSyncIssue $issue, Translate $langs): string
 	{
-		$translated = $langs->trans('CliChaumeil_SupplierPriceSync_' . $issue->code, $issue->supplierRef);
-		$detail = ($issue->message !== '' && $issue->message !== $issue->supplierRef) ? ' ' . $issue->message : '';
+		$severity = $langs->transnoentities($issue->isError()
+			? 'CliChaumeil_SupplierPriceSyncSeverityError'
+			: 'CliChaumeil_SupplierPriceSyncSeverityWarning');
+		$message = $langs->transnoentities('CliChaumeil_SupplierPriceSync_' . $issue->code);
+		$context = $issue->supplierRef !== ''
+			? ' ' . $langs->transnoentities('CliChaumeil_SupplierPriceSyncRefQty', $issue->supplierRef, (string) $issue->quantity)
+			: '';
+		$detail = ($issue->message !== '' && $issue->message !== $issue->supplierRef) ? ' — ' . $issue->message : '';
 
-		return sprintf(
-			'- [%s] %s (ref=%s qty=%s) %s%s',
-			$issue->severity,
-			$issue->code,
-			$issue->supplierRef,
-			$issue->quantity,
-			$translated,
-			$detail
-		);
+		return sprintf('- [%s] %s%s%s', $severity, $message, $context, $detail);
 	}
 
 	/**
@@ -244,7 +269,7 @@ final class SupplierPriceSyncReport
 	 */
 	public function buildCronOutput(Translate $langs): string
 	{
-		$lines = array($this->summaryLine());
+		$lines = array($this->translatedSummary($langs));
 
 		$shown = array_slice($this->issues, 0, self::MAX_DETAILED_ISSUES);
 		foreach ($shown as $issue) {
@@ -267,7 +292,7 @@ final class SupplierPriceSyncReport
 	 */
 	public function buildMailSubject(Translate $langs): string
 	{
-		return $langs->trans('CliChaumeil_SupplierPriceSyncMailSubject', $this->supplierCode, count($this->issues));
+		return $langs->transnoentities('CliChaumeil_SupplierPriceSyncMailSubject', $this->supplierCode, count($this->issues));
 	}
 
 	/**
@@ -278,7 +303,7 @@ final class SupplierPriceSyncReport
 	 */
 	public function buildMailBody(Translate $langs): string
 	{
-		$lines = array($this->summaryLine(), '');
+		$lines = array($this->translatedSummary($langs), '');
 		foreach ($this->issues as $issue) {
 			$lines[] = $this->formatIssue($issue, $langs);
 		}

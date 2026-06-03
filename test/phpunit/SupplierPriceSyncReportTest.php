@@ -23,6 +23,7 @@ global $conf, $user, $langs, $db;
 
 require_once dirname(__FILE__) . '/../../../../master.inc.php';
 require_once dirname(__FILE__) . '/../../../../../test/phpunit/CommonClassTest.class.php';
+require_once dirname(__FILE__) . '/../../class/SupplierPriceSync/SupplierPriceSyncConstants.php';
 require_once dirname(__FILE__) . '/../../class/SupplierPriceSync/ValueObject/SupplierPriceSyncIssue.php';
 require_once dirname(__FILE__) . '/../../class/SupplierPriceSync/ValueObject/SupplierPriceSyncReport.php';
 
@@ -39,6 +40,7 @@ class SupplierPriceSyncReportTest extends CommonClassTest
 	public function testCountersAndNoFailure(): void
 	{
 		global $langs;
+		$langs->loadLangs(array('clichaumeil@clichaumeil'));
 		$report = new SupplierPriceSyncReport('ANTALIS');
 		$report->incrementUpdated();
 		$report->incrementUpdated();
@@ -46,8 +48,8 @@ class SupplierPriceSyncReportTest extends CommonClassTest
 
 		$out = $report->buildCronOutput($langs);
 		$this->assertStringContainsString('ANTALIS', $out);
-		$this->assertStringContainsString('updated=2', $out);
-		$this->assertStringContainsString('closed=1', $out);
+		$this->assertStringContainsString('2 mises à jour', $out);
+		$this->assertStringContainsString('1 clôturées', $out);
 		$this->assertFalse($report->hasFailures());
 	}
 
@@ -59,18 +61,21 @@ class SupplierPriceSyncReportTest extends CommonClassTest
 	public function testErrorIssueMarksFailure(): void
 	{
 		global $langs;
+		$langs->loadLangs(array('clichaumeil@clichaumeil'));
 		$report = new SupplierPriceSyncReport('ANTALIS');
 		$report->addIssue(new SupplierPriceSyncIssue(
 			SupplierPriceSyncIssue::SEVERITY_ERROR,
-			'X',
-			'boom',
+			SupplierPriceSyncConstants::ISSUE_REFERENCE_NOT_FOUND,
+			'',
 			'264910',
 			'P1',
 			500.0
 		));
 
 		$this->assertTrue($report->hasFailures());
-		$this->assertStringContainsString('264910', $report->buildCronOutput($langs));
+		$out = $report->buildCronOutput($langs);
+		$this->assertStringContainsString('264910', $out);
+		$this->assertStringContainsString('Erreur', $out);
 	}
 
 	/**
@@ -81,6 +86,7 @@ class SupplierPriceSyncReportTest extends CommonClassTest
 	public function testCronOutputCapsAtFifty(): void
 	{
 		global $langs;
+		$langs->loadLangs(array('clichaumeil@clichaumeil'));
 		$report = new SupplierPriceSyncReport('ANTALIS');
 		for ($i = 0; $i < 60; $i++) {
 			$report->addIssue(new SupplierPriceSyncIssue(

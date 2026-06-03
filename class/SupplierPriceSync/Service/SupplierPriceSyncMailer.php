@@ -57,7 +57,7 @@ final class SupplierPriceSyncMailer
 			$report->addIssue(new SupplierPriceSyncIssue(
 				SupplierPriceSyncIssue::SEVERITY_WARNING,
 				SupplierPriceSyncConstants::ISSUE_MISSING_CONFIGURATION,
-				$langs->trans('CliChaumeil_SupplierPriceSync_MISSING_CONFIGURATION')
+				''
 			));
 
 			return;

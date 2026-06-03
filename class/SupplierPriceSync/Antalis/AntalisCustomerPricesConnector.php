@@ -48,6 +48,9 @@ final class AntalisCustomerPricesConnector implements SupplierPriceConnectorInte
 	/** @var string Mandatory enquiry type (customer prices). */
 	private const ENQUIRY_TYPE = 'CPR';
 
+	/** @var int SOAP connection timeout in seconds. */
+	private const SOAP_CONNECTION_TIMEOUT = 30;
+
 	/** @var AntalisConnectorConfig|null Connector configuration (null in test seam). */
 	private ?AntalisConnectorConfig $config;
 
@@ -164,7 +167,7 @@ final class AntalisCustomerPricesConnector implements SupplierPriceConnectorInte
 			'exceptions' => true,
 			'soap_version' => SOAP_1_1,
 			'cache_wsdl' => WSDL_CACHE_NONE,
-			'connection_timeout' => 30,
+			'connection_timeout' => self::SOAP_CONNECTION_TIMEOUT,
 		);
 
 		$client = new SoapClient(self::WSDL_FILE, $options);
