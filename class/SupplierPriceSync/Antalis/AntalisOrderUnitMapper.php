@@ -54,6 +54,11 @@ final class AntalisOrderUnitMapper
 		'KAR' => 'Carton',
 		'M2' => 'M2',
 		'ZBX' => 'Lot',
+		// PAK (paper "Paket"): the sampled PAK products are all stored as "Ramette"
+		// on Chaumeil's side, with PAK as their commercial price unit (no ZRM row).
+		// Inferred from real preprod data — to confirm with ANTALIS. Harmless if wrong:
+		// a non-matching unit only warns (no price written).
+		'PAK' => 'Ramette',
 	);
 
 	/**

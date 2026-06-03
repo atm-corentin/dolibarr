@@ -51,6 +51,7 @@ class AntalisOrderUnitMapperTest extends CommonClassTest
 		// Commercial price units observed on real data (priceUnit axis).
 		$this->assertSame('M2', $mapper->dolibarrLabel('M2'));
 		$this->assertSame('Lot', $mapper->dolibarrLabel('ZBX'));
+		$this->assertSame('Ramette', $mapper->dolibarrLabel('PAK'));
 	}
 
 	/**
