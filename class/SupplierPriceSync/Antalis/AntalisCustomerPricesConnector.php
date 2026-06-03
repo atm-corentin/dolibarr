@@ -57,6 +57,9 @@ final class AntalisCustomerPricesConnector implements SupplierPriceConnectorInte
 	/** @var AntalisOrderUnitMapper Unit mapper (API code => Dolibarr label). */
 	private AntalisOrderUnitMapper $orderUnitMapper;
 
+	/** @var SoapClient|null Lazily built SOAP client, reused across chunks. */
+	private ?SoapClient $client = null;
+
 	/**
 	 * @param AntalisConnectorConfig|null $config          Connector configuration.
 	 * @param AntalisOrderUnitMapper      $orderUnitMapper Unit mapper.
@@ -159,19 +162,6 @@ final class AntalisCustomerPricesConnector implements SupplierPriceConnectorInte
 	 */
 	private function callSoap(array $detailRows): object
 	{
-		$options = array(
-			'login' => $this->config->getHttpLogin(),
-			'password' => $this->config->getHttpPassword(),
-			'location' => $this->config->getBaseUrl(),
-			'trace' => 0,
-			'exceptions' => true,
-			'soap_version' => SOAP_1_1,
-			'cache_wsdl' => WSDL_CACHE_NONE,
-			'connection_timeout' => self::SOAP_CONNECTION_TIMEOUT,
-		);
-
-		$client = new SoapClient(self::WSDL_FILE, $options);
-
 		$input = array(
 			'enquiryType' => self::ENQUIRY_TYPE,
 			'userCode' => $this->config->getUserCode(),
@@ -180,7 +170,32 @@ final class AntalisCustomerPricesConnector implements SupplierPriceConnectorInte
 			'detailRow' => $detailRows,
 		);
 
-		return $client->customerPricesCheck($input);
+		return $this->soapClient()->customerPricesCheck($input);
+	}
+
+	/**
+	 * Build (once) and return the SOAP client, reused across chunks.
+	 *
+	 * Avoids re-parsing the WSDL on every batch of a large catalogue.
+	 *
+	 * @return SoapClient
+	 */
+	private function soapClient(): SoapClient
+	{
+		if ($this->client === null) {
+			$this->client = new SoapClient(self::WSDL_FILE, array(
+				'login' => $this->config->getHttpLogin(),
+				'password' => $this->config->getHttpPassword(),
+				'location' => $this->config->getBaseUrl(),
+				'trace' => 0,
+				'exceptions' => true,
+				'soap_version' => SOAP_1_1,
+				'cache_wsdl' => WSDL_CACHE_MEMORY,
+				'connection_timeout' => self::SOAP_CONNECTION_TIMEOUT,
+			));
+		}
+
+		return $this->client;
 	}
 
 	/**

@@ -107,6 +107,7 @@ final class SupplierPriceSyncService
 		}
 
 		$products = $this->repository->fetchProductsForSupplier($thirdpartyId);
+		$this->warnOnSharedReferences($products);
 		$discovery = $connector->supportsTierDiscovery();
 		$batchSize = max(1, $connector->getRecommendedBatchSize());
 
@@ -151,6 +152,32 @@ final class SupplierPriceSyncService
 	}
 
 	/**
+	 * Log a warning for any supplier reference shared by several Dolibarr products.
+	 *
+	 * Such a reference is reconciled per product (see reconcileGrid scoping); this
+	 * surfaces a data oddity that would otherwise sync only one of the products.
+	 *
+	 * @param SupplierProductRequest[] $products Product requests.
+	 * @return void
+	 */
+	private function warnOnSharedReferences(array $products): void
+	{
+		$byRef = array();
+		foreach ($products as $product) {
+			$byRef[$product->supplierRef][$product->productId] = true;
+		}
+		foreach ($byRef as $ref => $productIds) {
+			if (count($productIds) > 1) {
+				dol_syslog(
+					'SupplierPriceSyncService::run supplier ref shared by ' . count($productIds)
+					. ' products, reconciled per product: ' . $ref,
+					LOG_WARNING
+				);
+			}
+		}
+	}
+
+	/**
 	 * Compute the maximum number of lines this run may close (closure guard).
 	 *
 	 * @param int $scanned Number of scanned lines.
@@ -188,6 +215,16 @@ final class SupplierPriceSyncService
 		User $user,
 		SupplierPriceSyncReport $report
 	): void {
+		// Defensive scoping: only this product's lines may be touched by its grid.
+		// Guarantees that a ref_fourn shared by several Dolibarr products never lets
+		// one product's grid update or close another product's lines.
+		$existingForRef = array_values(array_filter(
+			$existingForRef,
+			static function (SupplierPriceCandidate $line) use ($product): bool {
+				return $line->productId === $product->productId;
+			}
+		));
+
 		if ($grid->state === SupplierProductPriceGrid::STATE_ERROR) {
 			// Functional error already reported as an issue: no mutation.
 			return;
