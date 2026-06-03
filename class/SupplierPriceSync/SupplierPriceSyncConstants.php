@@ -48,8 +48,17 @@ final class SupplierPriceSyncConstants
 	/** @var float Tolerance used when matching an API tier quantity to a Dolibarr line. */
 	public const QUANTITY_EPSILON = 0.0001;
 
-	/** @var int Default number of lines sent per ANTALIS SOAP request. */
-	public const DEFAULT_ANTALIS_BATCH_SIZE = 50;
+	/**
+	 * Default number of products sent per ANTALIS SOAP request.
+	 *
+	 * The preprod service answers in ~2.4 s/product and the SOAP call times out near
+	 * 60 s, so batches of 30+ fail systematically. 10 keeps a call around ~22 s, well
+	 * within the limit. NB: this does not shorten the total run (server time is linear
+	 * in the product count) — see the operating notes for the full-catalogue duration.
+	 *
+	 * @var int
+	 */
+	public const DEFAULT_ANTALIS_BATCH_SIZE = 10;
 
 	/** @var int Default max share (%) of scanned lines that a single run may close. */
 	public const DEFAULT_MAX_CLOSURE_RATIO = 50;
