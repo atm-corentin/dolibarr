@@ -54,6 +54,7 @@ if (!$res) {
 require_once DOL_DOCUMENT_ROOT . "/core/lib/admin.lib.php";
 require_once DOL_DOCUMENT_ROOT . "/core/lib/security.lib.php";
 require_once DOL_DOCUMENT_ROOT . "/core/class/html.formsetup.class.php";
+require_once DOL_DOCUMENT_ROOT . "/core/class/html.form.class.php";
 require_once '../lib/clichaumeil.lib.php';
 require_once __DIR__ . '/../class/SupplierPriceSync/SupplierPriceSyncConstants.php';
 require_once __DIR__ . '/../class/SupplierPriceSync/ValueObject/SupplierProductRequest.php';
@@ -100,6 +101,7 @@ if ($resql) {
 // the stored value in the HTML "value" attribute (clear text in the page source).
 // It is handled by a dedicated, never-prefilled form below (see action setantalispassword).
 $formSetup = new FormSetup($db);
+$form = new Form($db);
 // Section 1: connection identity (who/where we connect).
 $formSetup->newItem('CliChaumeil_AntalisSectionConnection')->setAsTitle();
 $formSetup->newItem(SupplierPriceSyncConstants::CONST_BASE_URL)->setAsString();
@@ -202,7 +204,7 @@ $hasPassword = (getDolGlobalString(SupplierPriceSyncConstants::CONST_HTTP_PASSWO
 print '<form method="POST" action="' . dol_escape_htmltag($_SERVER["PHP_SELF"]) . '" autocomplete="off">';
 print '<input type="hidden" name="token" value="' . newToken() . '">';
 print '<input type="hidden" name="action" value="setantalispassword">';
-print '<table class="noborder centpercent"><tr class="liste_titre"><td>' . $langs->trans('CLICHAUMEIL_SUPPLIER_ANTALIS_HTTP_PASSWORD') . '</td><td></td></tr>';
+print '<table class="noborder centpercent"><tr class="liste_titre"><td>' . $form->textwithpicto($langs->trans('CLICHAUMEIL_SUPPLIER_ANTALIS_HTTP_PASSWORD'), $langs->trans('CliChaumeil_AntalisPasswordTooltip')) . '</td><td></td></tr>';
 print '<tr class="oddeven"><td>';
 print '<input type="password" name="' . SupplierPriceSyncConstants::CONST_HTTP_PASSWORD . '" value="" autocomplete="new-password" class="flat">';
 print ' <span class="opacitymedium">' . $langs->trans('CliChaumeil_AntalisPasswordHint') . '</span>';
@@ -241,6 +243,18 @@ if ($cronJobId > 0) {
 	print '</div>';
 } else {
 	echo '<div class="info">' . $langs->trans("CliChaumeil_AntalisPriceSyncCronComment") . '</div>';
+}
+
+// Last recorded run (persisted by the cron after each execution).
+$lastRunRaw = getDolGlobalString(SupplierPriceSyncConstants::CONST_LASTRUN_PREFIX . SupplierPriceSyncConstants::SUPPLIER_ANTALIS);
+$lastRun = $lastRunRaw !== '' ? json_decode($lastRunRaw, true) : null;
+if (is_array($lastRun) && isset($lastRun['date'], $lastRun['summary'])) {
+	$dryRunTag = !empty($lastRun['dryRun']) ? ' ' . $langs->trans('CliChaumeil_AntalisLastRunDryRun') : '';
+	print '<div class="info">' . dol_escape_htmltag($langs->trans('CliChaumeil_AntalisLastRunLabel')) . ' : '
+		. dol_escape_htmltag(dol_print_date((int) $lastRun['date'], 'dayhour')) . dol_escape_htmltag($dryRunTag)
+		. ' — ' . dol_escape_htmltag((string) $lastRun['summary']) . '</div>';
+} else {
+	print '<div class="opacitymedium">' . dol_escape_htmltag($langs->trans('CliChaumeil_AntalisLastRunNone')) . '</div>';
 }
 
 // Operating guide, collapsed by default (native <details>, no JS).

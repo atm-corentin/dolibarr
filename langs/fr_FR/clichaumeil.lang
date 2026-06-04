@@ -490,3 +490,7 @@ CliChaumeil_SupplierPriceSync_DOLIBARR_UPDATE_FAILED=Échec de la mise à jour d
 CliChaumeil_SupplierPriceSync_MAIL_FAILED=Échec de l'envoi du rapport par email
 CliChaumeil_SupplierPriceSync_UNIT_MISMATCH=Aucun tarif renvoyé par le fournisseur dans l'unité de la ligne (prix non appliqué)
 CliChaumeil_SupplierPriceSync_CLOSURE_THRESHOLD=Seuil de clôture atteint : clôtures suspendues pour cette exécution
+CliChaumeil_AntalisLastRunLabel=Dernière synchronisation
+CliChaumeil_AntalisLastRunNone=Aucune synchronisation enregistrée pour l'instant.
+CliChaumeil_AntalisLastRunDryRun=(simulation)
+CliChaumeil_AntalisPasswordTooltip=Mot de passe technique du compte SOAP ANTALIS (HTTP Basic), à demander à ANTALIS. Il n'est jamais réaffiché : laissez vide pour le conserver.
