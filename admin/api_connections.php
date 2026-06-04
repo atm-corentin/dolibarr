@@ -189,6 +189,11 @@ if (getDolGlobalInt(SupplierPriceSyncConstants::CONST_DRY_RUN) === 1) {
 	print '<div class="warning">' . img_warning() . ' ' . $langs->trans('CliChaumeil_AntalisDryRunBanner') . '</div><br>';
 }
 
+// Connector section, collapsible so future connectors (GEODIS, OVOL...) each get
+// their own <details> block on this single page rather than an extra admin tab.
+print '<details open><summary class="cursorpointer"><strong>' . dol_escape_htmltag($langs->trans('CliChaumeil_AntalisConnectorSectionTitle')) . '</strong></summary>';
+print '<div style="margin-top:10px">';
+
 print $formSetup->generateOutput(true);
 print '<br>';
 
@@ -245,6 +250,9 @@ for ($helpLine = 1; $helpLine <= 7; $helpLine++) {
 	print '<li>' . $langs->trans('CliChaumeil_AntalisPriceSyncHelp' . $helpLine) . '</li>';
 }
 print '</ul></div></details>';
+
+// Close the ANTALIS connector section.
+print '</div></details>';
 
 print dol_get_fiche_end();
 
