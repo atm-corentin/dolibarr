@@ -31,9 +31,10 @@ declare(strict_types=1);
 final class SupplierPriceTier
 {
 	/**
-	 * @param float  $quantity            Threshold quantity (Dolibarr line quantity).
-	 * @param string $unitLabel           Dolibarr packaging unit label (best-effort, may be empty).
-	 * @param float  $normalizedUnitPrice Normalised HT unit price (personalUnitPrice / personalPriceQty).
+	 * @param float  $quantity            Threshold quantity (thresholdQty, base/stock unit).
+	 * @param string $unitLabel           Dolibarr label of the PRICE unit (mapped personalPriceUnit); the
+	 *                                    reconciliation key against the line packaging unit. May be empty when unmapped.
+	 * @param float  $normalizedUnitPrice Normalised HT price per price unit (personalUnitPrice / personalPriceQty).
 	 */
 	public function __construct(
 		public readonly float $quantity,

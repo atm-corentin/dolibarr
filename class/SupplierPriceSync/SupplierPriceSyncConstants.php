@@ -66,8 +66,6 @@ final class SupplierPriceSyncConstants
 	// --- ANTALIS customerPricesCheck error codes (doc AntalisCustomerPrices V1.2 §3.5) ---
 	/** @var string No error. */
 	public const API_OK = '00';
-	/** @var string Generic error. */
-	public const API_GENERIC_ERROR = '01';
 	/** @var string Unknown product. */
 	public const API_UNKNOWN_PRODUCT = '04';
 	/** @var string Product not available. */
@@ -84,7 +82,7 @@ final class SupplierPriceSyncConstants
 	public const ISSUE_NEGATIVE_PRICE = 'NEGATIVE_PRICE';
 	/** @var string API returned no negotiated (personal) price for the product. */
 	public const ISSUE_MISSING_PERSONAL_PRICE = 'MISSING_PERSONAL_PRICE';
-	/** @var string API price unit inconsistent (personalPriceUnit != thresholdQtyUnit, or Dolibarr line unit differs). */
+	/** @var string No supplier price returned in the existing line packaging unit (price not applied). */
 	public const ISSUE_UNIT_MISMATCH = 'UNIT_MISMATCH';
 	/** @var string Closure threshold reached: further closures suspended this run. */
 	public const ISSUE_CLOSURE_THRESHOLD = 'CLOSURE_THRESHOLD';
@@ -96,8 +94,6 @@ final class SupplierPriceSyncConstants
 	public const ISSUE_DOLIBARR_UPDATE_FAILED = 'DOLIBARR_UPDATE_FAILED';
 	/** @var string Report email could not be sent. */
 	public const ISSUE_MAIL_FAILED = 'MAIL_FAILED';
-	/** @var string Invalid cron recipient email. */
-	public const ISSUE_INVALID_CRON_RECIPIENT = 'INVALID_CRON_RECIPIENT';
 	/** @var string Mandatory configuration missing. */
 	public const ISSUE_MISSING_CONFIGURATION = 'MISSING_CONFIGURATION';
 

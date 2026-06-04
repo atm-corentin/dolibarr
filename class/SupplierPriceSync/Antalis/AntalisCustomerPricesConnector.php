@@ -349,7 +349,6 @@ final class AntalisCustomerPricesConnector implements SupplierPriceConnectorInte
 		$warnings = array(
 			SupplierPriceSyncConstants::ISSUE_UNMAPPED_ORDER_UNIT,
 			SupplierPriceSyncConstants::ISSUE_MISSING_PERSONAL_PRICE,
-			SupplierPriceSyncConstants::ISSUE_UNIT_MISMATCH,
 		);
 		$severity = in_array($code, $warnings, true)
 			? SupplierPriceSyncIssue::SEVERITY_WARNING

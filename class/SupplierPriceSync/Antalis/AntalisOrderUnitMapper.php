@@ -24,11 +24,11 @@
 declare(strict_types=1);
 
 /**
- * Maps an ANTALIS unit code (thresholdQtyUnit) to a Dolibarr packaging label.
+ * Maps an ANTALIS price-unit code (personalPriceUnit) to a Dolibarr packaging label.
  *
  * Unit codes come from the ANTALIS doc (AntalisCustomerPrices V1.2 §3.4) and the
- * SAP UOM table. Used when creating a new tier to fill the Dolibarr packaging
- * extrafield. Any unknown code returns null on purpose: never guess a label.
+ * SAP UOM table. The label is the reconciliation key against the existing line
+ * packaging unit. Any unknown code returns null on purpose: never guess a label.
  */
 final class AntalisOrderUnitMapper
 {
