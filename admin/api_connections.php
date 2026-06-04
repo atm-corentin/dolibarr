@@ -181,7 +181,7 @@ print load_fiche_titre($langs->trans($title), $linkback, 'title_setup');
 $head = clichaumeilAdminPrepareHead();
 print dol_get_fiche_head($head, 'api_connections', $langs->trans("CliChaumeil_AntalisApiTitle"), -1, "clichaumeil@clichaumeil");
 
-echo '<span class="opacitymedium">' . $langs->trans("CliChaumeil_AntalisApiTitle") . '</span><br><br>';
+echo '<span class="opacitymedium">' . $langs->trans("CliChaumeil_AntalisApiIntro") . '</span><br><br>';
 
 // Prominent banner when the dry-run (simulation) mode is active: no price is ever
 // written, which is easy to forget and would otherwise look like a silent failure.
