@@ -708,4 +708,24 @@ class SupplierPriceSyncServiceTest extends CommonClassTest
 		$this->assertSame(6, $connector->calls);
 		$this->assertTrue($report->hasFailures());
 	}
+
+	/**
+	 * A run longer than the heartbeat cadence completes and processes every batch.
+	 *
+	 * @return void
+	 */
+	public function testHeartbeatDoesNotBreakLongRun(): void
+	{
+		global $db, $user;
+		$batches = SupplierPriceSyncConstants::HEARTBEAT_EVERY_BATCHES + 1;
+		$this->createSupplierWithProducts($batches);
+
+		$connector = new SequencedGridConnector(array());
+
+		$service = new SupplierPriceSyncService($db);
+		$report = $service->run(new FakeSupplierConfig($this->supplierId), $connector, $user, false);
+
+		$this->assertSame($batches, $connector->calls);
+		$this->assertFalse($report->hasFailures());
+	}
 }

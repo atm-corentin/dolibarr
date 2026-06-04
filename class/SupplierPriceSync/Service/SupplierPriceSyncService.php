@@ -112,8 +112,13 @@ final class SupplierPriceSyncService
 		$batchSize = max(1, $connector->getRecommendedBatchSize());
 
 		$consecutiveFailedBatches = 0;
+		$batches = array_chunk($products, $batchSize);
+		$totalBatches = count($batches);
+		$batchNr = 0;
+		dol_syslog('SupplierPriceSyncService::run total batches=' . $totalBatches, LOG_INFO);
 
-		foreach (array_chunk($products, $batchSize) as $chunk) {
+		foreach ($batches as $chunk) {
+			$batchNr++;
 			$productByRef = array();
 			foreach ($chunk as $product) {
 				$productByRef[$product->supplierRef] = $product;
@@ -147,6 +152,21 @@ final class SupplierPriceSyncService
 				continue;
 			}
 			$consecutiveFailedBatches = 0;
+
+			if ($batchNr % SupplierPriceSyncConstants::HEARTBEAT_EVERY_BATCHES === 0) {
+				dol_syslog(
+					sprintf(
+						'SupplierPriceSyncService::run heartbeat batch %d/%d updated=%d created=%d closed=%d warnings=%d',
+						$batchNr,
+						$totalBatches,
+						$report->updated,
+						$report->created,
+						$report->closed,
+						$report->countWarnings()
+					),
+					LOG_INFO
+				);
+			}
 
 			foreach ($fetch->grids as $grid) {
 				$product = $productByRef[$grid->supplierRef] ?? null;
