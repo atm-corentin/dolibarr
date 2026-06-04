@@ -453,8 +453,8 @@ CLICHAUMEIL_SUPPLIER_ANTALIS_DELIVERY_ADDRESS_ID=ANTALIS delivery address (optio
 CLICHAUMEIL_SUPPLIER_ANTALIS_DELIVERY_ADDRESS_IDTooltip=ANTALIS delivery address identifier. Prices may depend on the delivery location. Leave empty for the default address; if Chaumeil has several sites with different prices, ask ANTALIS for the identifier. (Technical name: AntalisDeliveryAddressID.)
 CLICHAUMEIL_SUPPLIER_PRICE_SYNC_DRY_RUN=Dry-run mode (no write, the report lists what would be done)
 CLICHAUMEIL_SUPPLIER_PRICE_SYNC_DRY_RUNTooltip=Enable it for a first trial: the sync computes and emails a report without changing any price. Disable it once the report has been reviewed to actually apply prices.
-CLICHAUMEIL_SUPPLIER_PRICE_SYNC_MAX_CLOSURE_RATIO=Closure safety limit (% of lines, default 50)
-CLICHAUMEIL_SUPPLIER_PRICE_SYNC_MAX_CLOSURE_RATIOTooltip=Prevents a run from deactivating at once more than this percentage of existing prices (protects against an incomplete ANTALIS response). 50 recommended. 100 = no limit.
+CLICHAUMEIL_SUPPLIER_PRICE_SYNC_MAX_CLOSURE_RATIO=Safety cap: max % of prices deactivated per run (default 50)
+CLICHAUMEIL_SUPPLIER_PRICE_SYNC_MAX_CLOSURE_RATIOTooltip=When ANTALIS no longer returns a product (no longer available), its purchase-price line is automatically deactivated. This safety cap limits how many deactivations a single run may perform, as a percentage of all existing prices: if the API mistakenly returns a very incomplete response, this prevents deactivating everything at once. Example: 50 = at most half of the prices may be deactivated in one run; beyond that, deactivations are suspended and reported. 100 = no limit. Recommended value: 50.
 CLICHAUMEIL_SUPPLIER_PRICE_SYNC_PRODUCT_LIMIT=Processed refs limit (0 = all, for testing)
 CLICHAUMEIL_SUPPLIER_PRICE_SYNC_PRODUCT_LIMITTooltip=For testing only: caps the number of references queried per run to shorten a trial (a full run otherwise takes hours). 0 = whole catalogue. Reset to 0 in production.
 CliChaumeil_AntalisProductLimitBanner=Test limit active: only the first %s references are synchronised. Reset the limit to 0 to process the whole catalogue.
