@@ -51,7 +51,6 @@ class AntalisOrderUnitMapperTest extends CommonClassTest
 		// Commercial price units observed on real data (priceUnit axis).
 		$this->assertSame('M2', $mapper->dolibarrLabel('M2'));
 		$this->assertSame('Lot', $mapper->dolibarrLabel('ZBX'));
-		$this->assertSame('Ramette', $mapper->dolibarrLabel('PAK'));
 	}
 
 	/**
@@ -66,5 +65,7 @@ class AntalisOrderUnitMapperTest extends CommonClassTest
 		$this->assertNull($mapper->dolibarrLabel('XYZ'));
 		$this->assertNull($mapper->dolibarrLabel('ZZZ'));
 		$this->assertNull($mapper->dolibarrLabel(''));
+		// PAK (pack != ream) is deliberately left unmapped (fail-safe, no wrong write).
+		$this->assertNull($mapper->dolibarrLabel('PAK'));
 	}
 }
