@@ -292,4 +292,54 @@ class AntalisCustomerPricesNormalizeTest extends CommonClassTest
 		$this->assertTrue($result->fatalError);
 		$this->assertSame(SupplierPriceSyncConstants::ISSUE_API_UNAVAILABLE, $result->issues[0]->code);
 	}
+
+	/**
+	 * A transient SoapFault on the first attempt is retried and the second succeeds.
+	 *
+	 * @return void
+	 */
+	public function testSoapRetrySucceedsOnSecondAttempt(): void
+	{
+		$calls = 0;
+		$connector = AntalisCustomerPricesConnector::forRetryTesting(
+			new AntalisOrderUnitMapper(),
+			function (array $detailRows) use (&$calls) {
+				$calls++;
+				if ($calls === 1) {
+					throw new SoapFault('Server', 'transient');
+				}
+
+				return (object) array();
+			}
+		);
+
+		$result = $connector->fetchPriceGrids(array(new SupplierProductRequest(1, 10, 'REF1', 'P1')));
+
+		$this->assertSame(2, $calls);
+		$this->assertFalse($result->fatalError);
+	}
+
+	/**
+	 * When every attempt faults, the batch is declared fatal (API unavailable).
+	 *
+	 * @return void
+	 */
+	public function testSoapRetryExhaustionIsFatal(): void
+	{
+		$calls = 0;
+		$connector = AntalisCustomerPricesConnector::forRetryTesting(
+			new AntalisOrderUnitMapper(),
+			function (array $detailRows) use (&$calls) {
+				$calls++;
+
+				throw new SoapFault('Server', 'down');
+			}
+		);
+
+		$result = $connector->fetchPriceGrids(array(new SupplierProductRequest(1, 10, 'REF1', 'P1')));
+
+		$this->assertSame(2, $calls);
+		$this->assertTrue($result->fatalError);
+		$this->assertNotEmpty($result->issues);
+	}
 }

@@ -60,6 +60,9 @@ final class AntalisCustomerPricesConnector implements SupplierPriceConnectorInte
 	/** @var SoapClient|null Lazily built SOAP client, reused across chunks. */
 	private ?SoapClient $client = null;
 
+	/** @var (callable(array<int,array<string,mixed>>):object)|null Test seam replacing the live SOAP call. */
+	private $soapCallOverride = null;
+
 	/**
 	 * @param AntalisConnectorConfig|null $config          Connector configuration.
 	 * @param AntalisOrderUnitMapper      $orderUnitMapper Unit mapper.
@@ -79,6 +82,22 @@ final class AntalisCustomerPricesConnector implements SupplierPriceConnectorInte
 	public static function forTesting(AntalisOrderUnitMapper $orderUnitMapper): self
 	{
 		return new self(null, $orderUnitMapper);
+	}
+
+	/**
+	 * Build a connector whose SOAP call is replaced by a callable, to test the retry
+	 * logic without a live endpoint (and without a real backoff sleep).
+	 *
+	 * @param AntalisOrderUnitMapper                          $orderUnitMapper Unit mapper.
+	 * @param callable(array<int,array<string,mixed>>):object $soapCallOverride Fake SOAP call.
+	 * @return self
+	 */
+	public static function forRetryTesting(AntalisOrderUnitMapper $orderUnitMapper, callable $soapCallOverride): self
+	{
+		$connector = new self(null, $orderUnitMapper);
+		$connector->soapCallOverride = $soapCallOverride;
+
+		return $connector;
 	}
 
 	/**
@@ -124,7 +143,7 @@ final class AntalisCustomerPricesConnector implements SupplierPriceConnectorInte
 	 */
 	public function fetchPriceGrids(array $products): SupplierPriceGridFetchResult
 	{
-		if ($this->config === null) {
+		if ($this->config === null && $this->soapCallOverride === null) {
 			throw new RuntimeException('AntalisCustomerPricesConnector used without configuration');
 		}
 
@@ -142,7 +161,7 @@ final class AntalisCustomerPricesConnector implements SupplierPriceConnectorInte
 		}
 
 		try {
-			$response = $this->callSoap($detailRows);
+			$response = $this->callSoapWithRetry($detailRows);
 		} catch (SoapFault $fault) {
 			dol_syslog('AntalisCustomerPricesConnector::fetchPriceGrids SOAP fault: ' . $fault->getMessage(), LOG_ERR);
 			$issue = new SupplierPriceSyncIssue(
@@ -166,6 +185,10 @@ final class AntalisCustomerPricesConnector implements SupplierPriceConnectorInte
 	 */
 	private function callSoap(array $detailRows): object
 	{
+		if ($this->soapCallOverride !== null) {
+			return ($this->soapCallOverride)($detailRows);
+		}
+
 		$input = array(
 			'enquiryType' => self::ENQUIRY_TYPE,
 			'userCode' => $this->config->getUserCode(),
@@ -175,6 +198,38 @@ final class AntalisCustomerPricesConnector implements SupplierPriceConnectorInte
 		);
 
 		return $this->soapClient()->customerPricesCheck($input);
+	}
+
+	/**
+	 * Call the SOAP service, retrying once on a transient fault before giving up.
+	 *
+	 * Filters out isolated network blips so one transient fault does not fail the
+	 * whole batch. The backoff sleep is skipped under the test seam to keep tests fast.
+	 *
+	 * @param array<int,array<string,mixed>> $detailRows Built input detail rows.
+	 * @return object SOAP response object.
+	 * @throws SoapFault When every attempt fails.
+	 */
+	private function callSoapWithRetry(array $detailRows): object
+	{
+		$attempts = 1 + SupplierPriceSyncConstants::SOAP_RETRIES;
+		for ($attempt = 1; ; $attempt++) {
+			try {
+				return $this->callSoap($detailRows);
+			} catch (SoapFault $fault) {
+				if ($attempt >= $attempts) {
+					throw $fault;
+				}
+				dol_syslog(
+					'AntalisCustomerPricesConnector::callSoapWithRetry attempt ' . $attempt
+					. ' failed (' . $fault->getMessage() . '), retrying',
+					LOG_WARNING
+				);
+				if ($this->soapCallOverride === null) {
+					sleep(SupplierPriceSyncConstants::SOAP_RETRY_BACKOFF_SECONDS);
+				}
+			}
+		}
 	}
 
 	/**
