@@ -35,6 +35,9 @@ final class SupplierPriceSyncReport
 	/** @var int Maximum number of detailed issues rendered in the cron output. */
 	private const MAX_DETAILED_ISSUES = 50;
 
+	/** @var int Maximum number of detailed change lines rendered. */
+	private const MAX_DETAILED_CHANGES = 100;
+
 	/** @var int Number of candidate lines scanned. */
 	public int $scanned = 0;
 	/** @var int Number of lines actually requested to the API. */
@@ -52,8 +55,14 @@ final class SupplierPriceSyncReport
 	/** @var int Number of lines reactivated. */
 	public int $reactivated = 0;
 
+	/** @var bool Whether the run was a dry-run (computed but nothing written). */
+	public bool $dryRun = false;
+
 	/** @var SupplierPriceSyncIssue[] Issues raised during the run. */
 	private array $issues = array();
+
+	/** @var array<int,array<string,mixed>> Per-line changes recorded during the run. */
+	private array $changes = array();
 
 	/**
 	 * @param string $supplierCode Supplier code (for summary/mail subject).
@@ -141,6 +150,39 @@ final class SupplierPriceSyncReport
 	public function addIssue(SupplierPriceSyncIssue $issue): void
 	{
 		$this->issues[] = $issue;
+	}
+
+	/**
+	 * Record a per-line change for the detailed report.
+	 *
+	 * @param string     $type        One of SupplierPriceSyncConstants::CHANGE_*.
+	 * @param string     $supplierRef Supplier reference.
+	 * @param string     $productRef  Dolibarr product reference.
+	 * @param float|null $oldPrice    Previous unit price (null when not applicable).
+	 * @param float|null $newPrice    New unit price (null when not applicable).
+	 * @param string     $unit        Packaging/price unit label.
+	 * @return void
+	 */
+	public function recordChange(string $type, string $supplierRef, string $productRef, ?float $oldPrice, ?float $newPrice, string $unit): void
+	{
+		$this->changes[] = array(
+			'type' => $type,
+			'supplierRef' => $supplierRef,
+			'productRef' => $productRef,
+			'oldPrice' => $oldPrice,
+			'newPrice' => $newPrice,
+			'unit' => $unit,
+		);
+	}
+
+	/**
+	 * Count recorded per-line changes.
+	 *
+	 * @return int
+	 */
+	public function countChanges(): int
+	{
+		return count($this->changes);
 	}
 
 	/**
@@ -252,51 +294,162 @@ final class SupplierPriceSyncReport
 	}
 
 	/**
-	 * Build the cron output (summary + capped issue list).
+	 * Build the leading lines: dry-run banner (when applicable) and the summary.
+	 *
+	 * @param Translate $langs Translator.
+	 * @return string[]
+	 */
+	private function headerLines(Translate $langs): array
+	{
+		$lines = array();
+		if ($this->dryRun) {
+			$lines[] = $langs->transnoentities('CliChaumeil_SupplierPriceSyncDryRunNotice', (string) count($this->changes));
+		}
+		$lines[] = $this->translatedSummary($langs);
+
+		return $lines;
+	}
+
+	/**
+	 * Format a unit price compactly (up to 5 decimals, trailing zeros trimmed).
+	 *
+	 * @param float $value Price.
+	 * @return string
+	 */
+	private function formatPrice(float $value): string
+	{
+		$formatted = number_format($value, 5, '.', '');
+		if (strpos($formatted, '.') !== false) {
+			$formatted = rtrim(rtrim($formatted, '0'), '.');
+		}
+
+		return $formatted === '' ? '0' : $formatted;
+	}
+
+	/**
+	 * Format a recorded change as a readable, translated text line.
+	 *
+	 * @param array<string,mixed> $change Recorded change.
+	 * @param Translate           $langs  Translator.
+	 * @return string
+	 */
+	private function formatChange(array $change, Translate $langs): string
+	{
+		$labels = array(
+			SupplierPriceSyncConstants::CHANGE_UPDATE => 'CliChaumeil_SupplierPriceSyncChangeUpdate',
+			SupplierPriceSyncConstants::CHANGE_CREATE => 'CliChaumeil_SupplierPriceSyncChangeCreate',
+			SupplierPriceSyncConstants::CHANGE_CLOSE => 'CliChaumeil_SupplierPriceSyncChangeClose',
+			SupplierPriceSyncConstants::CHANGE_REACTIVATE => 'CliChaumeil_SupplierPriceSyncChangeReactivate',
+		);
+		$label = $langs->transnoentities($labels[$change['type']] ?? $change['type']);
+		$ref = $change['supplierRef'];
+		if ($change['productRef'] !== '') {
+			$ref .= ' / ' . $change['productRef'];
+		}
+		$unit = $change['unit'] !== '' ? ' ' . $change['unit'] : '';
+
+		if ($change['oldPrice'] !== null && $change['newPrice'] !== null) {
+			return sprintf('- %s %s : %s → %s%s', $label, $ref, $this->formatPrice($change['oldPrice']), $this->formatPrice($change['newPrice']), $unit);
+		}
+		if ($change['newPrice'] !== null) {
+			return sprintf('- %s %s : %s%s', $label, $ref, $this->formatPrice($change['newPrice']), $unit);
+		}
+
+		return sprintf('- %s %s%s', $label, $ref, $change['unit'] !== '' ? ' (' . $change['unit'] . ')' : '');
+	}
+
+	/**
+	 * Render the change-detail section (header + capped lines), empty when no change.
+	 *
+	 * @param Translate $langs Translator.
+	 * @param int       $cap   Maximum change lines to render.
+	 * @return string[]
+	 */
+	private function renderChangeLines(Translate $langs, int $cap): array
+	{
+		if ($this->changes === array()) {
+			return array();
+		}
+		$lines = array($langs->transnoentities('CliChaumeil_SupplierPriceSyncChangesHeader'));
+		foreach (array_slice($this->changes, 0, $cap) as $change) {
+			$lines[] = $this->formatChange($change, $langs);
+		}
+		$total = count($this->changes);
+		if ($total > $cap) {
+			$lines[] = $langs->transnoentities('CliChaumeil_SupplierPriceSyncChangesMore', (string) ($total - $cap));
+		}
+
+		return $lines;
+	}
+
+	/**
+	 * Render the issues section (header + lines), empty when no issue.
+	 *
+	 * @param Translate $langs Translator.
+	 * @param int|null  $cap   Maximum issue lines to render (null = uncapped).
+	 * @return string[]
+	 */
+	private function renderIssueLines(Translate $langs, ?int $cap): array
+	{
+		if ($this->issues === array()) {
+			return array();
+		}
+		$lines = array($langs->transnoentities('CliChaumeil_SupplierPriceSyncIssuesHeader'));
+		$shown = $cap === null ? $this->issues : array_slice($this->issues, 0, $cap);
+		foreach ($shown as $issue) {
+			$lines[] = $this->formatIssue($issue, $langs);
+		}
+		$total = count($this->issues);
+		if ($cap !== null && $total > $cap) {
+			$lines[] = sprintf('... +%d (cap %d)', $total - $cap, $cap);
+		}
+
+		return $lines;
+	}
+
+	/**
+	 * Build the cron output (dry-run banner + summary + changes + capped issues).
 	 *
 	 * @param Translate $langs Translator.
 	 * @return string
 	 */
 	public function buildCronOutput(Translate $langs): string
 	{
-		$lines = array($this->translatedSummary($langs));
-
-		$shown = array_slice($this->issues, 0, self::MAX_DETAILED_ISSUES);
-		foreach ($shown as $issue) {
-			$lines[] = $this->formatIssue($issue, $langs);
-		}
-
-		$total = count($this->issues);
-		if ($total > self::MAX_DETAILED_ISSUES) {
-			$lines[] = sprintf('... +%d (cap %d)', $total - self::MAX_DETAILED_ISSUES, self::MAX_DETAILED_ISSUES);
-		}
+		$lines = $this->headerLines($langs);
+		$lines = array_merge($lines, $this->renderChangeLines($langs, self::MAX_DETAILED_CHANGES));
+		$lines = array_merge($lines, $this->renderIssueLines($langs, self::MAX_DETAILED_ISSUES));
 
 		return implode("\n", $lines);
 	}
 
 	/**
-	 * Build the mail subject.
+	 * Build the mail subject (prefixed with a dry-run tag in simulation).
 	 *
 	 * @param Translate $langs Translator (already loaded with the module file).
 	 * @return string
 	 */
 	public function buildMailSubject(Translate $langs): string
 	{
-		return $langs->transnoentities('CliChaumeil_SupplierPriceSyncMailSubject', $this->supplierCode, count($this->issues));
+		$subject = $langs->transnoentities('CliChaumeil_SupplierPriceSyncMailSubject', $this->supplierCode, count($this->issues));
+		if ($this->dryRun) {
+			$subject = $langs->transnoentities('CliChaumeil_SupplierPriceSyncDryRunTag') . ' ' . $subject;
+		}
+
+		return $subject;
 	}
 
 	/**
-	 * Build the full mail body (all issues, uncapped).
+	 * Build the full mail body (dry-run banner + summary + changes + all issues).
 	 *
 	 * @param Translate $langs Translator (already loaded with the module file).
 	 * @return string
 	 */
 	public function buildMailBody(Translate $langs): string
 	{
-		$lines = array($this->translatedSummary($langs), '');
-		foreach ($this->issues as $issue) {
-			$lines[] = $this->formatIssue($issue, $langs);
-		}
+		$lines = $this->headerLines($langs);
+		$lines[] = '';
+		$lines = array_merge($lines, $this->renderChangeLines($langs, self::MAX_DETAILED_CHANGES));
+		$lines = array_merge($lines, $this->renderIssueLines($langs, null));
 
 		return implode("\n", $lines);
 	}

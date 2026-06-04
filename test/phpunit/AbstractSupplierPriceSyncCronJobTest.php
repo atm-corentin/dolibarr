@@ -231,7 +231,13 @@ class AbstractSupplierPriceSyncCronJobTest extends CommonClassTest
 	 */
 	private function buildCron(SupplierPriceGridFetchResult $canned): TestableSupplierPriceSyncCronJob
 	{
-		global $db;
+		global $db, $conf;
+
+		// Hermetic: pin the sync settings the cron reads from the instance config,
+		// so an ambient dry-run flag or product limit cannot skew the assertions.
+		$conf->global->{SupplierPriceSyncConstants::CONST_DRY_RUN} = 0;
+		$conf->global->{SupplierPriceSyncConstants::CONST_PRODUCT_LIMIT} = 0;
+
 		$cron = new TestableSupplierPriceSyncCronJob($db);
 		$cron->injectedConfig = new CronTestConfig($this->supplierId);
 		$cron->injectedConnector = new CronTestConnector($canned);

@@ -86,6 +86,7 @@ final class SupplierPriceSyncService
 		bool $dryRun = false
 	): SupplierPriceSyncReport {
 		$report = new SupplierPriceSyncReport($config->getCode());
+		$report->dryRun = $dryRun;
 		$thirdpartyId = $config->getSupplierThirdpartyId();
 		$this->dryRun = $dryRun;
 		$startedAt = dol_now();
@@ -343,6 +344,8 @@ final class SupplierPriceSyncService
 		User $user,
 		SupplierPriceSyncReport $report
 	): void {
+		$unit = $tier->unitLabel !== '' ? $tier->unitLabel : $candidate->packagingUnit;
+
 		if ($this->priceDiffers($candidate->currentUnitPrice, $tier->normalizedUnitPrice)) {
 			if (!$this->dryRun && !$this->updateBuyPrice($candidate, $tier->normalizedUnitPrice, $user)) {
 				$report->addIssue($this->updateFailedIssue($candidate->supplierRef, $candidate->productRef, $candidate->quantity));
@@ -350,6 +353,14 @@ final class SupplierPriceSyncService
 				return;
 			}
 			$report->incrementUpdated();
+			$report->recordChange(
+				SupplierPriceSyncConstants::CHANGE_UPDATE,
+				$candidate->supplierRef,
+				$candidate->productRef,
+				$candidate->currentUnitPrice,
+				$tier->normalizedUnitPrice,
+				$unit
+			);
 		} else {
 			$report->incrementUnchanged();
 		}
@@ -357,6 +368,14 @@ final class SupplierPriceSyncService
 		if ($candidate->currentStatus !== SupplierPriceSyncConstants::STATUS_ACTIVE) {
 			if ($this->dryRun || $this->repository->activate($candidate->supplierPriceId)) {
 				$report->incrementReactivated();
+				$report->recordChange(
+					SupplierPriceSyncConstants::CHANGE_REACTIVATE,
+					$candidate->supplierRef,
+					$candidate->productRef,
+					null,
+					null,
+					$unit
+				);
 			} else {
 				$report->addIssue($this->updateFailedIssue($candidate->supplierRef, $candidate->productRef, $candidate->quantity));
 			}
@@ -431,6 +450,14 @@ final class SupplierPriceSyncService
 	): void {
 		if ($this->dryRun) {
 			$report->incrementCreated();
+			$report->recordChange(
+				SupplierPriceSyncConstants::CHANGE_CREATE,
+				$product->supplierRef,
+				$product->productRef,
+				null,
+				$tier->normalizedUnitPrice,
+				$tier->unitLabel
+			);
 
 			return;
 		}
@@ -478,8 +505,24 @@ final class SupplierPriceSyncService
 		// row already existed: in the latter case it is an update, not a creation.
 		if ($created === 1) {
 			$report->incrementCreated();
+			$report->recordChange(
+				SupplierPriceSyncConstants::CHANGE_CREATE,
+				$product->supplierRef,
+				$product->productRef,
+				null,
+				$tier->normalizedUnitPrice,
+				$tier->unitLabel
+			);
 		} else {
 			$report->incrementUpdated();
+			$report->recordChange(
+				SupplierPriceSyncConstants::CHANGE_UPDATE,
+				$product->supplierRef,
+				$product->productRef,
+				null,
+				$tier->normalizedUnitPrice,
+				$tier->unitLabel
+			);
 		}
 	}
 
@@ -513,6 +556,14 @@ final class SupplierPriceSyncService
 
 			if ($this->dryRun || $this->repository->deactivate($line->supplierPriceId)) {
 				$report->incrementClosed();
+				$report->recordChange(
+					SupplierPriceSyncConstants::CHANGE_CLOSE,
+					$line->supplierRef,
+					$line->productRef,
+					null,
+					null,
+					$line->packagingUnit
+				);
 			} else {
 				$report->addIssue($this->updateFailedIssue($line->supplierRef, $line->productRef, $line->quantity));
 			}

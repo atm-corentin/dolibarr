@@ -109,6 +109,16 @@ final class SupplierPriceSyncConstants
 	/** @var string Mandatory configuration missing. */
 	public const ISSUE_MISSING_CONFIGURATION = 'MISSING_CONFIGURATION';
 
+	// --- Per-line change types (detailed report) ---
+	/** @var string An existing line had its price updated. */
+	public const CHANGE_UPDATE = 'update';
+	/** @var string A new line was created. */
+	public const CHANGE_CREATE = 'create';
+	/** @var string A line was deactivated (closed). */
+	public const CHANGE_CLOSE = 'close';
+	/** @var string A previously closed line was reactivated. */
+	public const CHANGE_REACTIVATE = 'reactivate';
+
 	// --- Dolibarr configuration constant names ---
 	/** @var string */
 	public const CONST_BASE_URL = 'CLICHAUMEIL_SUPPLIER_ANTALIS_BASE_URL';

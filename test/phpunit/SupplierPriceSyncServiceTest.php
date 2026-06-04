@@ -380,7 +380,10 @@ class SupplierPriceSyncServiceTest extends CommonClassTest
 	 */
 	private function createSupplierWithProducts(int $count): void
 	{
-		global $db, $user;
+		global $db, $user, $conf;
+
+		// Hermetic: neutralise any product limit configured on the instance.
+		$conf->global->{SupplierPriceSyncConstants::CONST_PRODUCT_LIMIT} = 0;
 
 		$supplier = new Societe($db);
 		$supplier->name = 'TEST SVC MULTI';

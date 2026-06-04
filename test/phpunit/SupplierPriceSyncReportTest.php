@@ -100,8 +100,38 @@ class SupplierPriceSyncReportTest extends CommonClassTest
 		}
 
 		$out = $report->buildCronOutput($langs);
-		// 1 summary + 50 issues + 1 overflow line = 52 lines => 51 newlines.
-		$this->assertSame(51, substr_count($out, "\n"));
+		// 50 capped issue bullets are rendered, plus an overflow marker.
+		$this->assertSame(50, substr_count($out, "\n- "));
 		$this->assertStringContainsString('cap 50', $out);
+	}
+
+	/**
+	 * Dry-run output shows the simulation banner and the per-line change detail.
+	 *
+	 * @return void
+	 */
+	public function testDryRunBannerAndChangeDetail(): void
+	{
+		global $langs;
+		$langs->loadLangs(array('clichaumeil@clichaumeil'));
+		$report = new SupplierPriceSyncReport('ANTALIS');
+		$report->dryRun = true;
+		$report->incrementUpdated();
+		$report->recordChange(
+			SupplierPriceSyncConstants::CHANGE_UPDATE,
+			'264910',
+			'P1',
+			0.048,
+			0.0321,
+			'Feuille'
+		);
+
+		$out = $report->buildCronOutput($langs);
+		$this->assertStringContainsString('SIMULATION', $out);
+		$this->assertStringContainsString('264910', $out);
+		$this->assertStringContainsString('0.048', $out);
+		$this->assertStringContainsString('0.0321', $out);
+		$this->assertStringContainsString('Feuille', $out);
+		$this->assertSame(1, $report->countChanges());
 	}
 }
