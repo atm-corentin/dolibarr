@@ -114,6 +114,7 @@ $formSetup->newItem(SupplierPriceSyncConstants::CONST_DELIVERY_ADDRESS_ID)->setA
 $formSetup->newItem('CliChaumeil_AntalisSectionBehaviour')->setAsTitle();
 $formSetup->newItem(SupplierPriceSyncConstants::CONST_DRY_RUN)->setAsYesNo();
 $formSetup->newItem(SupplierPriceSyncConstants::CONST_MAX_CLOSURE_RATIO)->setAsString();
+$formSetup->newItem(SupplierPriceSyncConstants::CONST_PRODUCT_LIMIT)->setAsString();
 
 /*
  * Actions
@@ -189,6 +190,13 @@ echo '<span class="opacitymedium">' . $langs->trans("CliChaumeil_AntalisApiIntro
 // written, which is easy to forget and would otherwise look like a silent failure.
 if (getDolGlobalInt(SupplierPriceSyncConstants::CONST_DRY_RUN) === 1) {
 	print '<div class="warning">' . img_warning() . ' ' . $langs->trans('CliChaumeil_AntalisDryRunBanner') . '</div><br>';
+}
+
+// Prominent banner when the product limit (test knob) is active: only a subset of the
+// catalogue is synced, which must never be left on in production.
+$productLimitActive = getDolGlobalInt(SupplierPriceSyncConstants::CONST_PRODUCT_LIMIT);
+if ($productLimitActive > 0) {
+	print '<div class="warning">' . img_warning() . ' ' . $langs->trans('CliChaumeil_AntalisProductLimitBanner', $productLimitActive) . '</div><br>';
 }
 
 // Connector section, collapsible so future connectors (GEODIS, OVOL...) each get

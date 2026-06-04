@@ -107,6 +107,19 @@ final class SupplierPriceSyncService
 		}
 
 		$products = $this->repository->fetchProductsForSupplier($thirdpartyId);
+
+		// Test knob: cap the number of products processed so a dry-run does not take hours.
+		// 0 = whole catalogue. Logged loudly so it is never silently left on in production.
+		$productLimit = getDolGlobalInt(SupplierPriceSyncConstants::CONST_PRODUCT_LIMIT);
+		if ($productLimit > 0 && count($products) > $productLimit) {
+			$products = array_slice($products, 0, $productLimit);
+			dol_syslog(
+				'SupplierPriceSyncService::run PRODUCT LIMIT active (test mode): only '
+				. $productLimit . ' products processed',
+				LOG_WARNING
+			);
+		}
+
 		$this->warnOnSharedReferences($products);
 		$discovery = $connector->supportsTierDiscovery();
 		$batchSize = max(1, $connector->getRecommendedBatchSize());

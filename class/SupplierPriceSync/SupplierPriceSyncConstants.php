@@ -130,6 +130,8 @@ final class SupplierPriceSyncConstants
 	public const CONST_DRY_RUN = 'CLICHAUMEIL_SUPPLIER_PRICE_SYNC_DRY_RUN';
 	/** @var string Max share (%) of scanned lines a single run may close (>=100 disables the guard). */
 	public const CONST_MAX_CLOSURE_RATIO = 'CLICHAUMEIL_SUPPLIER_PRICE_SYNC_MAX_CLOSURE_RATIO';
+	/** @var string Test knob: cap the number of products processed per run (0 = whole catalogue). */
+	public const CONST_PRODUCT_LIMIT = 'CLICHAUMEIL_SUPPLIER_PRICE_SYNC_PRODUCT_LIMIT';
 	/** @var string Prefix of the per-supplier persisted "last run" constant (suffix = supplier code). */
 	public const CONST_LASTRUN_PREFIX = 'CLICHAUMEIL_SUPPLIER_PRICE_SYNC_LASTRUN_';
 

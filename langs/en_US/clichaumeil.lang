@@ -455,6 +455,9 @@ CLICHAUMEIL_SUPPLIER_PRICE_SYNC_DRY_RUN=Dry-run mode (no write, the report lists
 CLICHAUMEIL_SUPPLIER_PRICE_SYNC_DRY_RUNTooltip=Enable it for a first trial: the sync computes and emails a report without changing any price. Disable it once the report has been reviewed to actually apply prices.
 CLICHAUMEIL_SUPPLIER_PRICE_SYNC_MAX_CLOSURE_RATIO=Closure safety limit (% of lines, default 50)
 CLICHAUMEIL_SUPPLIER_PRICE_SYNC_MAX_CLOSURE_RATIOTooltip=Prevents a run from deactivating at once more than this percentage of existing prices (protects against an incomplete ANTALIS response). 50 recommended. 100 = no limit.
+CLICHAUMEIL_SUPPLIER_PRICE_SYNC_PRODUCT_LIMIT=Processed refs limit (0 = all, for testing)
+CLICHAUMEIL_SUPPLIER_PRICE_SYNC_PRODUCT_LIMITTooltip=For testing only: caps the number of references queried per run to shorten a trial (a full run otherwise takes hours). 0 = whole catalogue. Reset to 0 in production.
+CliChaumeil_AntalisProductLimitBanner=Test limit active: only the first %s references are synchronised. Reset the limit to 0 to process the whole catalogue.
 CliChaumeil_AntalisPasswordHint=Leave empty to keep the current password.
 CliChaumeil_AntalisPasswordConfigured=A password is currently configured.
 CliChaumeil_AntalisPriceSyncCronLabel=ANTALIS purchase price update

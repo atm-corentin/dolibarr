@@ -461,6 +461,9 @@ CLICHAUMEIL_SUPPLIER_PRICE_SYNC_DRY_RUN=Mode simulation (aucune écriture, le ra
 CLICHAUMEIL_SUPPLIER_PRICE_SYNC_DRY_RUNTooltip=À activer pour un premier essai : la synchronisation calcule et envoie un rapport sans modifier aucun prix. À désactiver une fois le rapport vérifié pour appliquer réellement les prix.
 CLICHAUMEIL_SUPPLIER_PRICE_SYNC_MAX_CLOSURE_RATIO=Limite de sécurité de clôture (% des lignes, défaut 50)
 CLICHAUMEIL_SUPPLIER_PRICE_SYNC_MAX_CLOSURE_RATIOTooltip=Empêche une exécution de désactiver d'un coup plus que ce pourcentage des prix existants (protège d'une réponse incomplète d'ANTALIS). 50 recommandé. 100 = aucune limite.
+CLICHAUMEIL_SUPPLIER_PRICE_SYNC_PRODUCT_LIMIT=Limite de réfs traitées (0 = toutes, pour tests)
+CLICHAUMEIL_SUPPLIER_PRICE_SYNC_PRODUCT_LIMITTooltip=Pour les tests uniquement : limite le nombre de références interrogées par exécution, afin de raccourcir un essai (sinon un run complet dure plusieurs heures). 0 = catalogue complet. À remettre à 0 en production.
+CliChaumeil_AntalisProductLimitBanner=Limite de test active : seules les %s premières références sont synchronisées. Remettez la limite à 0 pour traiter le catalogue complet.
 CliChaumeil_AntalisPasswordHint=Laisser vide pour conserver le mot de passe actuel.
 CliChaumeil_AntalisPasswordConfigured=Un mot de passe est actuellement configuré.
 CliChaumeil_AntalisPriceSyncCronLabel=MAJ prix d'achats ANTALIS

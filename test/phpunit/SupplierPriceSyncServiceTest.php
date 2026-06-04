@@ -728,4 +728,27 @@ class SupplierPriceSyncServiceTest extends CommonClassTest
 		$this->assertSame($batches, $connector->calls);
 		$this->assertFalse($report->hasFailures());
 	}
+
+	/**
+	 * The product-limit test knob caps the number of products processed.
+	 *
+	 * @return void
+	 */
+	public function testProductLimitCapsProcessing(): void
+	{
+		global $db, $user, $conf;
+		$this->createSupplierWithProducts(5);
+
+		$key = SupplierPriceSyncConstants::CONST_PRODUCT_LIMIT;
+		$conf->global->$key = 2;
+		try {
+			$connector = new SequencedGridConnector(array());
+			$service = new SupplierPriceSyncService($db);
+			$service->run(new FakeSupplierConfig($this->supplierId), $connector, $user, false);
+
+			$this->assertSame(2, $connector->calls);
+		} finally {
+			unset($conf->global->$key);
+		}
+	}
 }
