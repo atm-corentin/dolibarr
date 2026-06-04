@@ -514,6 +514,11 @@ final class SupplierPriceSyncService
 		$productFournisseur->id = $candidate->productId;
 		$totalHtForQuantity = $normalizedPrice * $candidate->quantity;
 
+		// NB: $fourn is passed as the int supplier id. update_buyprice() only
+		// dereferences $fourn->id in its INSERT branch; here the line is always
+		// pre-fetched above (product_fourn_price_id > 0) so it takes the UPDATE
+		// branch and never touches $fourn. A future connector that relies on the
+		// INSERT branch must pass a Societe object instead.
 		$result = $productFournisseur->update_buyprice(
 			$candidate->quantity,
 			$totalHtForQuantity,

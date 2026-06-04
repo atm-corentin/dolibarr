@@ -67,6 +67,9 @@ final class SupplierPriceRepository
 		$sql .= " WHERE pfp.fk_soc = " . ((int) $thirdpartyId);
 		$sql .= " AND p.tobuy = 1";
 		$sql .= " AND pfp.entity IN (" . getEntity('productsupplierprice') . ")";
+		// Deterministic order: when several lines share a ref/unit, reconciliation
+		// always resolves to the same row across runs.
+		$sql .= " ORDER BY pfp.ref_fourn, pfp.quantity, pfp.rowid";
 
 		$resql = $this->db->query($sql);
 		if (!$resql) {
@@ -112,6 +115,7 @@ final class SupplierPriceRepository
 		$sql .= " AND p.tobuy = 1";
 		$sql .= " AND pfp.ref_fourn <> ''";
 		$sql .= " AND pfp.entity IN (" . getEntity('productsupplierprice') . ")";
+		$sql .= " ORDER BY pfp.fk_product, pfp.ref_fourn";
 
 		$resql = $this->db->query($sql);
 		if (!$resql) {
