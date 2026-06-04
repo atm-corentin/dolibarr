@@ -56,8 +56,8 @@ final class SupplierPriceRepository
 	 */
 	public function fetchCandidatesForSupplier(int $thirdpartyId): array
 	{
-		// The packaging unit (extrafield) is loaded to detect a divergence with the API
-		// threshold unit at reconciliation time (unit-consistency warning).
+		// The packaging unit (extrafield) is loaded because it is the reconciliation key:
+		// the service matches the line to the API threshold whose price unit equals it.
 		$sql = "SELECT pfp.rowid, pfp.fk_product, p.ref as product_ref, pfp.fk_soc,";
 		$sql .= " pfp.ref_fourn, pfp.quantity, pfp.unitprice, pfp.status,";
 		$sql .= " ef.conditionnement_unite_de_prix as packaging_unit";

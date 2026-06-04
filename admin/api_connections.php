@@ -125,7 +125,9 @@ if ($action == 'update' && !empty($user->admin)) {
 }
 
 if ($action == 'setantalispassword' && !empty($user->admin)) {
-	$newPassword = GETPOST(SupplierPriceSyncConstants::CONST_HTTP_PASSWORD, 'alphanohtml');
+	// 'password' type: no sanitisation (case 'password' just breaks in GETPOST) so a
+	// secret containing <, > or & is stored verbatim — 'alphanohtml' would strip them.
+	$newPassword = GETPOST(SupplierPriceSyncConstants::CONST_HTTP_PASSWORD, 'password');
 	if ($newPassword !== '') {
 		// Store the secret reversibly encrypted (dolEncrypt); conf auto-decrypts it
 		// on load (conf.class.php), so getDolGlobalString() still returns it in clear.

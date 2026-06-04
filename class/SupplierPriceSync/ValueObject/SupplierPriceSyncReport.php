@@ -63,16 +63,6 @@ final class SupplierPriceSyncReport
 	}
 
 	/**
-	 * Increment the scanned counter.
-	 *
-	 * @return void
-	 */
-	public function incrementScanned(): void
-	{
-		$this->scanned++;
-	}
-
-	/**
 	 * Increment the requested counter.
 	 *
 	 * @return void
