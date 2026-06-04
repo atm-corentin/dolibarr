@@ -111,6 +111,8 @@ final class SupplierPriceSyncService
 		$discovery = $connector->supportsTierDiscovery();
 		$batchSize = max(1, $connector->getRecommendedBatchSize());
 
+		$consecutiveFailedBatches = 0;
+
 		foreach (array_chunk($products, $batchSize) as $chunk) {
 			$productByRef = array();
 			foreach ($chunk as $product) {
@@ -127,10 +129,24 @@ final class SupplierPriceSyncService
 			}
 
 			if ($fetch->fatalError) {
-				dol_syslog('SupplierPriceSyncService::run stopped on fatal API error', LOG_ERR);
+				$consecutiveFailedBatches++;
+				dol_syslog(
+					'SupplierPriceSyncService::run batch failed, consecutive=' . $consecutiveFailedBatches,
+					LOG_WARNING
+				);
+				if ($consecutiveFailedBatches >= SupplierPriceSyncConstants::BATCH_FAILURE_CIRCUIT_BREAKER) {
+					dol_syslog(
+						'SupplierPriceSyncService::run circuit breaker tripped after '
+						. $consecutiveFailedBatches . ' consecutive failed batches, aborting run',
+						LOG_ERR
+					);
 
-				return $report;
+					return $report;
+				}
+				// Skip this batch; its products will be retried on the next run.
+				continue;
 			}
+			$consecutiveFailedBatches = 0;
 
 			foreach ($fetch->grids as $grid) {
 				$product = $productByRef[$grid->supplierRef] ?? null;

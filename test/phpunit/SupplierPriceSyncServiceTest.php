@@ -106,6 +106,75 @@ class FakeGridConnector implements SupplierPriceConnectorInterface
 }
 
 /**
+ * Connector test double returning a queued sequence of results (one per batch call).
+ *
+ * Batch size is 1 so each product becomes its own batch. When the queue is exhausted
+ * it returns a non-fatal empty result, which the service treats as a successful batch.
+ */
+class SequencedGridConnector implements SupplierPriceConnectorInterface
+{
+	/** @var SupplierPriceGridFetchResult[] Remaining queued results. */
+	private array $queue;
+
+	/** @var int Number of fetchPriceGrids() calls received. */
+	public int $calls = 0;
+
+	/**
+	 * @param SupplierPriceGridFetchResult[] $queue Queued results, consumed in order.
+	 */
+	public function __construct(array $queue)
+	{
+		$this->queue = $queue;
+	}
+
+	/**
+	 * Return the supplier code.
+	 *
+	 * @return string
+	 */
+	public function getCode(): string
+	{
+		return 'ANTALIS';
+	}
+
+	/**
+	 * One product per batch, to maximise the number of batches.
+	 *
+	 * @return int
+	 */
+	public function getRecommendedBatchSize(): int
+	{
+		return 1;
+	}
+
+	/**
+	 * Update-only connector.
+	 *
+	 * @return bool
+	 */
+	public function supportsTierDiscovery(): bool
+	{
+		return false;
+	}
+
+	/**
+	 * Return the next queued result, or a non-fatal empty result when exhausted.
+	 *
+	 * @param SupplierProductRequest[] $products Products received from the service.
+	 * @return SupplierPriceGridFetchResult
+	 *
+	 * @phpcsSuppress SlevomatCodingStandard.Functions.UnusedParameter
+	 */
+	public function fetchPriceGrids(array $products): SupplierPriceGridFetchResult // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter
+	{
+		$this->calls++;
+		$next = array_shift($this->queue);
+
+		return $next ?? new SupplierPriceGridFetchResult(array(), array(), false);
+	}
+}
+
+/**
  * Minimal supplier configuration for tests.
  */
 class FakeSupplierConfig implements SupplierConfigInterface
@@ -301,6 +370,59 @@ class SupplierPriceSyncServiceTest extends CommonClassTest
 		$productFournisseur->fetch_product_fournisseur_price($newId);
 		$productFournisseur->id = $this->productId;
 		$productFournisseur->update_buyprice($quantity, 0.05 * $quantity, $user, 'HT', $this->supplierId, 0, $this->supplierRef, 20.0);
+	}
+
+	/**
+	 * Create a supplier owning $count distinct products (one active line each).
+	 *
+	 * @param int $count Number of products to attach to the supplier.
+	 * @return void
+	 */
+	private function createSupplierWithProducts(int $count): void
+	{
+		global $db, $user;
+
+		$supplier = new Societe($db);
+		$supplier->name = 'TEST SVC MULTI';
+		$supplier->fournisseur = 1;
+		$supplier->code_fournisseur = 'TESTMULTI' . uniqid();
+		$this->supplierId = (int) $supplier->create($user);
+
+		for ($i = 0; $i < $count; $i++) {
+			$product = new Product($db);
+			$product->ref = 'TEST_MULTI_' . $this->supplierId . '_' . $i;
+			$product->label = 'Test product multi ' . $i;
+			$product->type = Product::TYPE_PRODUCT;
+			$product->status_buy = 1;
+			$productId = (int) $product->create($user);
+			$product->add_fournisseur($user, $this->supplierId, 'MULTIREF_' . $productId, 1.0);
+		}
+	}
+
+	/**
+	 * Build a non-fatal, empty fetch result (a "successful" batch with no grid).
+	 *
+	 * @return SupplierPriceGridFetchResult
+	 */
+	private function okBatch(): SupplierPriceGridFetchResult
+	{
+		return new SupplierPriceGridFetchResult(array(), array(), false);
+	}
+
+	/**
+	 * Build a fatal fetch result (API unavailable).
+	 *
+	 * @return SupplierPriceGridFetchResult
+	 */
+	private function fatalBatch(): SupplierPriceGridFetchResult
+	{
+		$issue = new SupplierPriceSyncIssue(
+			SupplierPriceSyncIssue::SEVERITY_ERROR,
+			SupplierPriceSyncConstants::ISSUE_API_UNAVAILABLE,
+			'down'
+		);
+
+		return new SupplierPriceGridFetchResult(array(), array($issue), true);
 	}
 
 	/**
@@ -536,5 +658,54 @@ class SupplierPriceSyncServiceTest extends CommonClassTest
 		$this->assertSame(0, $report->created);
 		$this->assertGreaterThanOrEqual(1, $report->countWarnings());
 		$this->assertEqualsWithDelta(0.01, (float) $this->readLine()->unitprice, 0.0001);
+	}
+
+	/**
+	 * The run aborts after BATCH_FAILURE_CIRCUIT_BREAKER consecutive failed batches.
+	 *
+	 * @return void
+	 */
+	public function testCircuitBreakerStopsAfterConsecutiveFailures(): void
+	{
+		global $db, $user;
+		$this->createSupplierWithProducts(10);
+
+		$queue = array();
+		for ($i = 0; $i < 10; $i++) {
+			$queue[] = $this->fatalBatch();
+		}
+		$connector = new SequencedGridConnector($queue);
+
+		$service = new SupplierPriceSyncService($db);
+		$report = $service->run(new FakeSupplierConfig($this->supplierId), $connector, $user, false);
+
+		$this->assertSame(SupplierPriceSyncConstants::BATCH_FAILURE_CIRCUIT_BREAKER, $connector->calls);
+		$this->assertTrue($report->hasFailures());
+	}
+
+	/**
+	 * Sparse failures (never N consecutive) never abort: every batch is processed.
+	 *
+	 * @return void
+	 */
+	public function testSparseFailuresNeverStop(): void
+	{
+		global $db, $user;
+		$this->createSupplierWithProducts(6);
+
+		$connector = new SequencedGridConnector(array(
+			$this->fatalBatch(),
+			$this->okBatch(),
+			$this->fatalBatch(),
+			$this->okBatch(),
+			$this->fatalBatch(),
+			$this->okBatch(),
+		));
+
+		$service = new SupplierPriceSyncService($db);
+		$report = $service->run(new FakeSupplierConfig($this->supplierId), $connector, $user, false);
+
+		$this->assertSame(6, $connector->calls);
+		$this->assertTrue($report->hasFailures());
 	}
 }
