@@ -22,6 +22,9 @@
 - FIX : Harden the ST-8 supplier-order mail workflow and replace the initial CLI checker with a real case-based non-regression script featuring dry-run SQL rollback, branch assertions, and agenda verification. *27/04/2026* - 1.15.0
 - NEW : Extend subcontractor selection to convert the chosen supplier proposal into a validated supplier order, generate its PDF, send it by email with a dedicated configurable template, and trace the successful send in the agenda. *27/04/2026* - 1.15.0
 
+## 1.21
+- NEW : ACHT-2-ANTALIS: Add per-batch resilience: SOAP faults are retried once (3 s backoff); a circuit-breaker stops the run after 5 consecutive failing batches (clean shutdown, resumes next night). A progress heartbeat is logged to syslog every 25 batches. The last-sync summary is persisted and displayed on the configuration page. Collapsible connector section, password help tooltip, and config tooltip fixes. Go-live runbook added to class/SupplierPriceSync/README.md. Tests: cron integration, SOAP retry, circuit-breaker. *04/06/2026* - 1.21.0
+
 ## 1.14
 - FIX : Prevent supplier portal line prices from being saved when mandatory attachment validation fails, both on AJAX price updates and final response submission. *28/04/2026* - 1.14.1
 - NEW : Add a supplier response date extrafield on supplier proposals and populate it when a supplier submits a response from the portal. *23/04/2026* - 1.14.0

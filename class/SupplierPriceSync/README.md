@@ -101,3 +101,25 @@ Exemple : `OVOL`.
 La normalisation des réponses se teste via `ReflectionMethod` sur `normalizeResponse`
 (logique pure, sans appel réseau). Un `FakeConnector` (cf. `SupplierPriceSyncServiceTest`)
 permet de tester le Service sans API réelle.
+
+## Mise en route (go-live)
+
+1. **Configurer le connecteur** — page *Configuration → Connexions API* : URL SOAP,
+   login/mot de passe HTTP, identifiant client, code utilisateur, adresse de livraison,
+   et tiers fournisseur ANTALIS. Survoler l'icône d'info de chaque champ pour le détail.
+2. **Tester la connexion** — bouton *Tester la connexion* : doit répondre OK.
+3. **Activer la simulation** — passer `CLICHAUMEIL_SUPPLIER_PRICE_SYNC_DRY_RUN` à 1.
+   En simulation, le run calcule tout mais n'écrit rien.
+4. **Lancer la tâche manuellement** — page *Cron*, exécuter la tâche ANTALIS une fois.
+   ⚠️ Le run complet dure ~2,6 h (catalogue entier, lots de 10). La progression est
+   visible dans le syslog (heartbeat tous les 25 lots).
+5. **Relire le rapport** — le résumé et les anomalies apparaissent dans la sortie du cron
+   et sur la page de configuration (ligne *Dernière synchronisation*). Vérifier :
+   unités correctement mappées (pas de `UNMAPPED_ORDER_UNIT` massif, ex. `PAK`),
+   absence d'erreurs systémiques, volume d'updates cohérent.
+6. **Désactiver la simulation** — remettre `CLICHAUMEIL_SUPPLIER_PRICE_SYNC_DRY_RUN` à 0.
+7. **Activer le cron** — planifier la tâche en horaire nocturne.
+
+**Résilience** : un fault SOAP transitoire est rejoué une fois (backoff 3 s) ; un lot en échec
+n'interrompt pas le run, sauf 5 lots consécutifs en échec (disjoncteur → arrêt propre, reprise
+la nuit suivante). Le garde-fou de fermeture limite à 50 % des lignes fermées en un run.
