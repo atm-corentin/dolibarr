@@ -63,6 +63,18 @@ final class SupplierPriceSyncConstants
 	/** @var int Default max share (%) of scanned lines that a single run may close. */
 	public const DEFAULT_MAX_CLOSURE_RATIO = 50;
 
+	/** @var int Number of SOAP retries on a transient fault (1 => two attempts total). */
+	public const SOAP_RETRIES = 1;
+
+	/** @var int Backoff in seconds between two SOAP attempts. */
+	public const SOAP_RETRY_BACKOFF_SECONDS = 3;
+
+	/** @var int Consecutive failed batches that trip the run-abort circuit breaker. */
+	public const BATCH_FAILURE_CIRCUIT_BREAKER = 5;
+
+	/** @var int Emit a progress heartbeat log every N processed batches. */
+	public const HEARTBEAT_EVERY_BATCHES = 25;
+
 	// --- ANTALIS customerPricesCheck error codes (doc AntalisCustomerPrices V1.2 §3.5) ---
 	/** @var string No error. */
 	public const API_OK = '00';
@@ -118,6 +130,8 @@ final class SupplierPriceSyncConstants
 	public const CONST_DRY_RUN = 'CLICHAUMEIL_SUPPLIER_PRICE_SYNC_DRY_RUN';
 	/** @var string Max share (%) of scanned lines a single run may close (>=100 disables the guard). */
 	public const CONST_MAX_CLOSURE_RATIO = 'CLICHAUMEIL_SUPPLIER_PRICE_SYNC_MAX_CLOSURE_RATIO';
+	/** @var string Prefix of the per-supplier persisted "last run" constant (suffix = supplier code). */
+	public const CONST_LASTRUN_PREFIX = 'CLICHAUMEIL_SUPPLIER_PRICE_SYNC_LASTRUN_';
 
 	/**
 	 * Pure constants holder — must never be instantiated.
