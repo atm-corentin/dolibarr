@@ -30,6 +30,7 @@ require_once __DIR__ . '/../Contract/SupplierPriceConnectorInterface.php';
 require_once __DIR__ . '/../Service/SupplierPriceSyncService.php';
 require_once __DIR__ . '/../Service/SupplierPriceSyncMailer.php';
 require_once __DIR__ . '/../ValueObject/CronRecipients.php';
+require_once DOL_DOCUMENT_ROOT . '/core/lib/admin.lib.php';
 
 /**
  * Generic supplier price sync cron job.
@@ -117,6 +118,8 @@ abstract class AbstractSupplierPriceSyncCronJob
 			$service = new SupplierPriceSyncService($this->db);
 			$report = $service->run($config, $connector, $executionUser, $dryRun);
 
+			$this->persistLastRun($config, $report, $dryRun);
+
 			// Send the mail before building the output so mail-sending issues
 			// (invalid sender, send failure) are reflected in the cron output.
 			if ($report->hasFailures() && !$recipients->isEmpty()) {
@@ -134,6 +137,28 @@ abstract class AbstractSupplierPriceSyncCronJob
 
 			return -1;
 		}
+	}
+
+	/**
+	 * Persist a JSON snapshot of the last run as a per-supplier constant.
+	 *
+	 * Written on success and on failure so the admin page always shows the latest
+	 * outcome without digging into the cron logs.
+	 *
+	 * @param SupplierConfigInterface $config Supplier configuration.
+	 * @param SupplierPriceSyncReport $report Run report.
+	 * @param bool                    $dryRun Whether the run was a dry-run.
+	 * @return void
+	 */
+	private function persistLastRun(SupplierConfigInterface $config, SupplierPriceSyncReport $report, bool $dryRun): void
+	{
+		$name = SupplierPriceSyncConstants::CONST_LASTRUN_PREFIX . strtoupper($config->getCode());
+		$payload = json_encode(array(
+			'date' => (int) dol_now(),
+			'dryRun' => $dryRun,
+			'summary' => $report->summaryLine(),
+		));
+		dolibarr_set_const($this->db, $name, $payload, 'chaine', 0, '', $this->entity);
 	}
 
 	/**
