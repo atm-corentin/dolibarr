@@ -607,22 +607,17 @@ final class SupplierPriceSyncReport
 	}
 
 	/**
-	 * Join sections (arrays of lines), dropping empty ones and inserting an optional
-	 * blank line between consecutive non-empty sections.
+	 * Join sections (arrays of lines), dropping the empty ones.
 	 *
-	 * @param string[][] $sections     Sections, each an array of lines.
-	 * @param bool       $blankBetween Insert a blank line between sections.
+	 * @param string[][] $sections Sections, each an array of lines.
 	 * @return string
 	 */
-	private function joinSections(array $sections, bool $blankBetween): string
+	private function joinSections(array $sections): string
 	{
 		$lines = array();
 		foreach ($sections as $section) {
 			if ($section === array()) {
 				continue;
-			}
-			if ($lines !== array() && $blankBetween) {
-				$lines[] = '';
 			}
 			$lines = array_merge($lines, $section);
 		}
@@ -644,8 +639,7 @@ final class SupplierPriceSyncReport
 				$this->headerLines($langs),
 				$this->renderIssueLines($langs, self::MAX_DETAILED_ISSUES),
 				$this->renderChangeLines($langs, self::MAX_DETAILED_CHANGES),
-			),
-			false
+			)
 		);
 	}
 
@@ -663,24 +657,6 @@ final class SupplierPriceSyncReport
 		}
 
 		return $subject;
-	}
-
-	/**
-	 * Build the full mail body (dry-run banner + summary + changes + all issues).
-	 *
-	 * @param Translate $langs Translator (already loaded with the module file).
-	 * @return string
-	 */
-	public function buildMailBody(Translate $langs): string
-	{
-		return $this->joinSections(
-			array(
-				$this->headerLines($langs),
-				$this->renderIssueLines($langs, self::MAX_DETAILED_ISSUES_MAIL),
-				$this->renderChangeLines($langs, self::MAX_DETAILED_CHANGES),
-			),
-			true
-		);
 	}
 
 	/**
@@ -751,7 +727,9 @@ final class SupplierPriceSyncReport
 	}
 
 	/**
-	 * Build the HTML mail body (same content as buildMailBody(), richer presentation).
+	 * Build the HTML mail body (dry-run banner + summary table + anomalies + changes).
+	 *
+	 * CMailFile (msgishtml=1) derives the plain-text alternative from this HTML itself.
 	 *
 	 * @param Translate $langs Translator (module file loaded).
 	 * @return string

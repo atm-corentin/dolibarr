@@ -136,7 +136,7 @@ class SupplierPriceSyncReportTest extends CommonClassTest
 	}
 
 	/**
-	 * The mail body lists anomalies before the per-line changes and shows the variation.
+	 * The text output lists anomalies before the per-line changes and shows the variation.
 	 *
 	 * @return void
 	 */
@@ -162,7 +162,7 @@ class SupplierPriceSyncReportTest extends CommonClassTest
 			1.0
 		));
 
-		$body = $report->buildMailBody($langs);
+		$body = $report->buildCronOutput($langs);
 		$issuesPos = strpos($body, $langs->transnoentities('CliChaumeil_SupplierPriceSyncIssuesHeader'));
 		$changesPos = strpos($body, $langs->transnoentities('CliChaumeil_SupplierPriceSyncChangesHeader'));
 		$this->assertIsInt($issuesPos);
