@@ -64,10 +64,11 @@ final class SupplierPriceSyncMailer
 		}
 
 		$subject = $report->buildMailSubject($langs);
-		$body = $report->buildMailBody($langs);
+		$body = $report->buildMailBodyHtml($langs);
 		$to = implode(',', $recipients->all());
 
-		$mail = new CMailFile($subject, $to, $from, $body);
+		// msgishtml=1 (11th arg): CMailFile derives the plain-text alternative itself.
+		$mail = new CMailFile($subject, $to, $from, $body, array(), array(), array(), '', '', 0, 1);
 		$result = $mail->sendfile();
 		if (!$result) {
 			dol_syslog('SupplierPriceSyncMailer::send failed: ' . $mail->error, LOG_ERR);

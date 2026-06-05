@@ -173,6 +173,47 @@ class SupplierPriceSyncReportTest extends CommonClassTest
 	}
 
 	/**
+	 * The HTML mail body wraps the content in markup, escapes text and keeps the
+	 * anomalies-before-changes order.
+	 *
+	 * @return void
+	 */
+	public function testHtmlMailBodyIsStructuredAndEscaped(): void
+	{
+		global $langs;
+		$langs->loadLangs(array('clichaumeil@clichaumeil'));
+		$report = new SupplierPriceSyncReport('ANTALIS');
+		$report->dryRun = true;
+		$report->recordChange(
+			SupplierPriceSyncConstants::CHANGE_UPDATE,
+			'A&B<264910>',
+			'P1',
+			0.048,
+			0.0321,
+			'Feuille'
+		);
+		$report->addIssue(new SupplierPriceSyncIssue(
+			SupplierPriceSyncIssue::SEVERITY_ERROR,
+			SupplierPriceSyncConstants::ISSUE_REFERENCE_NOT_FOUND,
+			'',
+			'999',
+			'P9',
+			1.0
+		));
+
+		$html = $report->buildMailBodyHtml($langs);
+		$this->assertStringContainsString('<ul', $html);
+		$this->assertStringContainsString('<li>', $html);
+		// Raw special chars from the supplier ref must be escaped, never injected as-is.
+		$this->assertStringNotContainsString('A&B<264910>', $html);
+		$this->assertStringContainsString('&lt;264910&gt;', $html);
+		// Anomalies section comes before the changes section.
+		$issuesPos = strpos($html, $langs->transnoentities('CliChaumeil_SupplierPriceSyncIssuesHeader'));
+		$changesPos = strpos($html, $langs->transnoentities('CliChaumeil_SupplierPriceSyncChangesHeader'));
+		$this->assertLessThan($changesPos, $issuesPos);
+	}
+
+	/**
 	 * shouldNotify() honours each mail policy against errors/warnings/clean runs.
 	 *
 	 * @return void

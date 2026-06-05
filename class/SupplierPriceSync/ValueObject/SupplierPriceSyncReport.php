@@ -553,4 +553,68 @@ final class SupplierPriceSyncReport
 			true
 		);
 	}
+
+	/**
+	 * Render a section (header line + "- " bullet lines) as an escaped HTML block.
+	 *
+	 * Reuses the same text renderers as the plain body (caps and markers stay in sync);
+	 * only the presentation differs.
+	 *
+	 * @param string[] $lines       Section lines (first = header, rest = bullets).
+	 * @param string   $headerColor CSS colour for the header.
+	 * @return string
+	 */
+	private function sectionHtml(array $lines, string $headerColor): string
+	{
+		if ($lines === array()) {
+			return '';
+		}
+		$header = array_shift($lines);
+		$html = '<h3 style="margin:14px 0 4px;font-size:14px;color:' . $headerColor . '">' . dol_escape_htmltag($header) . '</h3>';
+		$html .= '<ul style="margin:0;padding-left:18px">';
+		foreach ($lines as $line) {
+			$text = preg_replace('/^- /', '', $line);
+			$html .= '<li>' . dol_escape_htmltag($text) . '</li>';
+		}
+		$html .= '</ul>';
+
+		return $html;
+	}
+
+	/**
+	 * Build the HTML mail body (same content as buildMailBody(), richer presentation).
+	 *
+	 * @param Translate $langs Translator (module file loaded).
+	 * @return string
+	 */
+	public function buildMailBodyHtml(Translate $langs): string
+	{
+		$html = '<div style="font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#333">';
+
+		if ($this->dryRun) {
+			$html .= '<div style="background:#fff3cd;border:1px solid #ffeeba;padding:8px;margin-bottom:10px"><strong>'
+				. dol_escape_htmltag($langs->transnoentities('CliChaumeil_SupplierPriceSyncDryRunNotice', (string) count($this->changes))) . '</strong></div>';
+		}
+		if ($this->executedAt > 0) {
+			$html .= '<p style="color:#888;margin:0 0 8px">' . dol_escape_htmltag($langs->transnoentities(
+				'CliChaumeil_SupplierPriceSyncRunMeta',
+				dol_print_date($this->executedAt, 'dayhour'),
+				(string) round($this->durationSeconds, 1)
+			)) . '</p>';
+		}
+
+		// Summary block (first line emphasised).
+		$summary = $this->translatedSummary($langs);
+		$html .= '<div style="margin-bottom:6px"><strong>' . dol_escape_htmltag(array_shift($summary)) . '</strong></div>';
+		foreach ($summary as $summaryLine) {
+			$html .= '<div>' . dol_escape_htmltag($summaryLine) . '</div>';
+		}
+
+		// Anomalies first (the reason the mail is sent), then the per-line changes.
+		$html .= $this->sectionHtml($this->renderIssueLines($langs, self::MAX_DETAILED_ISSUES_MAIL), '#c0392b');
+		$html .= $this->sectionHtml($this->renderChangeLines($langs, self::MAX_DETAILED_CHANGES), '#2c3e50');
+		$html .= '</div>';
+
+		return $html;
+	}
 }
