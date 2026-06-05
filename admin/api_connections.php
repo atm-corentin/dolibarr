@@ -116,11 +116,12 @@ $mailPolicyOptions = array(
 $globalFormSetup->newItem(SupplierPriceSyncConstants::CONST_MAIL_POLICY)->setAsSelect($mailPolicyOptions);
 $globalFormSetup->newItem(SupplierPriceSyncConstants::CONST_MAIL_RECIPIENTS)->setAsString();
 
-// ANTALIS connector block. The HTTP password is deliberately NOT managed by FormSetup:
-// FormSetup renders the stored value in the HTML "value" attribute (clear text in the
-// page source); it is handled by a dedicated, never-prefilled form below.
+// ANTALIS connector — "Connection" sub-block (identity: who/where we connect).
+// The HTTP password is deliberately NOT managed by FormSetup: FormSetup renders the
+// stored value in the HTML "value" attribute (clear text in the page source); it is
+// handled by a dedicated, never-prefilled form rendered right after this block so all
+// connection credentials stay grouped together.
 $formSetup = new FormSetup($db);
-// Section 1: connection identity (who/where we connect).
 $formSetup->newItem('CliChaumeil_AntalisSectionConnection')->setAsTitle();
 $formSetup->newItem(SupplierPriceSyncConstants::CONST_BASE_URL)->setAsString();
 $formSetup->newItem(SupplierPriceSyncConstants::CONST_HTTP_LOGIN)->setAsString();
@@ -128,11 +129,15 @@ $formSetup->newItem(SupplierPriceSyncConstants::CONST_THIRDPARTY_ID)->setAsSelec
 $formSetup->newItem(SupplierPriceSyncConstants::CONST_CUSTOMER_ID)->setAsString();
 $formSetup->newItem(SupplierPriceSyncConstants::CONST_USER_CODE)->setAsString();
 $formSetup->newItem(SupplierPriceSyncConstants::CONST_DELIVERY_ADDRESS_ID)->setAsString();
-// Section 2: behaviour (how this connector's sync runs).
-$formSetup->newItem('CliChaumeil_AntalisSectionBehaviour')->setAsTitle();
-$formSetup->newItem(SupplierPriceSyncConstants::CONST_DRY_RUN)->setAsYesNo();
-$formSetup->newItem(SupplierPriceSyncConstants::CONST_MAX_CLOSURE_RATIO)->setAsString();
-$formSetup->newItem(SupplierPriceSyncConstants::CONST_PRODUCT_LIMIT)->setAsString();
+
+// ANTALIS connector — "Behaviour" sub-block (how this connector's sync runs). Its own
+// form action so saving behaviour never blanks the connection fields, and vice versa.
+$behaviourFormSetup = new FormSetup($db);
+$behaviourFormSetup->formHiddenInputs['action'] = 'updatebehaviour';
+$behaviourFormSetup->newItem('CliChaumeil_AntalisSectionBehaviour')->setAsTitle();
+$behaviourFormSetup->newItem(SupplierPriceSyncConstants::CONST_DRY_RUN)->setAsYesNo();
+$behaviourFormSetup->newItem(SupplierPriceSyncConstants::CONST_MAX_CLOSURE_RATIO)->setAsString();
+$behaviourFormSetup->newItem(SupplierPriceSyncConstants::CONST_PRODUCT_LIMIT)->setAsString();
 
 /*
  * Actions
@@ -147,6 +152,13 @@ if ($action == 'updateglobalsettings' && !empty($user->admin)) {
 
 if ($action == 'update' && !empty($user->admin)) {
 	$formSetup->saveConfFromPost();
+
+	header('Location: ' . $_SERVER["PHP_SELF"]);
+	exit;
+}
+
+if ($action == 'updatebehaviour' && !empty($user->admin)) {
+	$behaviourFormSetup->saveConfFromPost();
 
 	header('Location: ' . $_SERVER["PHP_SELF"]);
 	exit;
@@ -283,22 +295,28 @@ print '</td><td class="right"><input type="submit" class="button button-save" va
 print '</table></form>';
 print '<br>';
 
+// "Behaviour" sub-block, rendered after the grouped connection credentials.
+print $behaviourFormSetup->generateOutput(true);
+print '<br>';
+
 // "Test connection" button: a read-only probe so config errors surface here and
-// now, instead of being discovered at the next nightly cron run.
+// now, instead of being discovered at the next nightly cron run. It is a diagnostic
+// action (not a save), hence a neutral button rather than the green save button.
 print '<form method="POST" action="' . dol_escape_htmltag($_SERVER["PHP_SELF"]) . '">';
 print '<input type="hidden" name="token" value="' . newToken() . '">';
 print '<input type="hidden" name="action" value="testantalisconnection">';
-print '<input type="submit" class="button button-save" value="' . dol_escape_htmltag($langs->trans('CliChaumeil_AntalisTestConnectionButton')) . '">';
+print '<input type="submit" class="button" value="' . dol_escape_htmltag($langs->trans('CliChaumeil_AntalisTestConnectionButton')) . '">';
 print ' <span class="opacitymedium">' . $langs->trans('CliChaumeil_AntalisTestConnectionHint') . '</span>';
 print '</form>';
 print '<br>';
 
 // "Send test email" button: deliver a sample report to the configured recipients
 // to validate sender/SMTP/addresses without waiting for a failing nightly run.
+// Diagnostic action, neutral button.
 print '<form method="POST" action="' . dol_escape_htmltag($_SERVER["PHP_SELF"]) . '">';
 print '<input type="hidden" name="token" value="' . newToken() . '">';
 print '<input type="hidden" name="action" value="sendtestantalismail">';
-print '<input type="submit" class="button button-save" value="' . dol_escape_htmltag($langs->trans('CliChaumeil_AntalisTestMailButton')) . '">';
+print '<input type="submit" class="button" value="' . dol_escape_htmltag($langs->trans('CliChaumeil_AntalisTestMailButton')) . '">';
 print ' <span class="opacitymedium">' . $langs->trans('CliChaumeil_AntalisTestMailHint') . '</span>';
 print '</form>';
 print '<br>';
