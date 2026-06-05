@@ -106,14 +106,20 @@ $form = new Form($db);
 // It uses its own form action so saving it never blanks the connector fields.
 $globalFormSetup = new FormSetup($db);
 $globalFormSetup->formHiddenInputs['action'] = 'updateglobalsettings';
-$globalFormSetup->newItem('CliChaumeil_ApiGlobalSectionTitle')->setAsTitle();
+// Scope caption next to the save button: the native FormSetup button label is a plain
+// "Save", so this disambiguates which block each of the several save buttons persists.
+$globalFormSetup->htmlOutputMoreButton = '<span class="opacitymedium paddingright">' . dol_escape_htmltag($langs->trans('CliChaumeil_ScopeCommon')) . '</span>';
 $mailPolicyOptions = array(
 	SupplierPriceSyncConstants::MAIL_POLICY_NEVER => $langs->trans('CliChaumeil_AntalisMailPolicyNever'),
 	SupplierPriceSyncConstants::MAIL_POLICY_ERRORS => $langs->trans('CliChaumeil_AntalisMailPolicyErrors'),
 	SupplierPriceSyncConstants::MAIL_POLICY_ERRORS_WARNINGS => $langs->trans('CliChaumeil_AntalisMailPolicyErrorsWarnings'),
 	SupplierPriceSyncConstants::MAIL_POLICY_ALWAYS => $langs->trans('CliChaumeil_AntalisMailPolicyAlways'),
 );
-$globalFormSetup->newItem(SupplierPriceSyncConstants::CONST_MAIL_POLICY)->setAsSelect($mailPolicyOptions);
+// Default the select to the effective default policy when unset, so the displayed value
+// matches what the cron actually does (getDolGlobalString(..., DEFAULT_MAIL_POLICY)).
+$mailPolicyItem = $globalFormSetup->newItem(SupplierPriceSyncConstants::CONST_MAIL_POLICY);
+$mailPolicyItem->defaultFieldValue = SupplierPriceSyncConstants::DEFAULT_MAIL_POLICY;
+$mailPolicyItem->setAsSelect($mailPolicyOptions);
 $globalFormSetup->newItem(SupplierPriceSyncConstants::CONST_MAIL_RECIPIENTS)->setAsString();
 
 // ANTALIS connector — "Connection" sub-block (identity: who/where we connect).
@@ -122,6 +128,7 @@ $globalFormSetup->newItem(SupplierPriceSyncConstants::CONST_MAIL_RECIPIENTS)->se
 // handled by a dedicated, never-prefilled form rendered right after this block so all
 // connection credentials stay grouped together.
 $formSetup = new FormSetup($db);
+$formSetup->htmlOutputMoreButton = '<span class="opacitymedium paddingright">' . dol_escape_htmltag($langs->trans('CliChaumeil_ScopeConnection')) . '</span>';
 $formSetup->newItem('CliChaumeil_AntalisSectionConnection')->setAsTitle();
 $formSetup->newItem(SupplierPriceSyncConstants::CONST_BASE_URL)->setAsString();
 $formSetup->newItem(SupplierPriceSyncConstants::CONST_HTTP_LOGIN)->setAsString();
@@ -134,6 +141,7 @@ $formSetup->newItem(SupplierPriceSyncConstants::CONST_DELIVERY_ADDRESS_ID)->setA
 // form action so saving behaviour never blanks the connection fields, and vice versa.
 $behaviourFormSetup = new FormSetup($db);
 $behaviourFormSetup->formHiddenInputs['action'] = 'updatebehaviour';
+$behaviourFormSetup->htmlOutputMoreButton = '<span class="opacitymedium paddingright">' . dol_escape_htmltag($langs->trans('CliChaumeil_ScopeBehaviour')) . '</span>';
 $behaviourFormSetup->newItem('CliChaumeil_AntalisSectionBehaviour')->setAsTitle();
 $behaviourFormSetup->newItem(SupplierPriceSyncConstants::CONST_DRY_RUN)->setAsYesNo();
 $behaviourFormSetup->newItem(SupplierPriceSyncConstants::CONST_MAX_CLOSURE_RATIO)->setAsString();
@@ -257,7 +265,11 @@ print dol_get_fiche_head($head, 'api_connections', $langs->trans("CliChaumeil_An
 echo '<span class="opacitymedium">' . $langs->trans("CliChaumeil_AntalisApiIntro") . '</span><br><br>';
 
 // Global block: settings shared by every API connector (notification policy + recipients).
+// Wrapped in its own <details> for visual symmetry with the connector block below.
+print '<details open><summary class="cursorpointer"><strong>' . dol_escape_htmltag($langs->trans('CliChaumeil_ApiGlobalSectionTitle')) . '</strong></summary>';
+print '<div style="margin-top:10px">';
 print $globalFormSetup->generateOutput(true);
+print '</div></details>';
 print '<br>';
 
 // Connector section, collapsible so future connectors (GEODIS, OVOL...) each get
@@ -265,15 +277,24 @@ print '<br>';
 print '<details open><summary class="cursorpointer"><strong>' . dol_escape_htmltag($langs->trans('CliChaumeil_AntalisConnectorSectionTitle')) . '</strong></summary>';
 print '<div style="margin-top:10px">';
 
-// Per-connector banners: dry-run and product-limit describe THIS connector's run
-// settings (they may be enabled for ANTALIS alone), so they belong inside its section
-// rather than at page level.
+// Single "test mode active" banner gathering every test-only setting currently on
+// (dry-run, product limit): they alter how THIS connector runs and must never be left
+// on in production. One box keeps the hierarchy clear instead of stacked warnings.
+$testModeNotes = array();
 if (getDolGlobalInt(SupplierPriceSyncConstants::CONST_DRY_RUN) === 1) {
-	print '<div class="warning">' . img_warning() . ' ' . $langs->trans('CliChaumeil_AntalisDryRunBanner') . '</div><br>';
+	$testModeNotes[] = $langs->trans('CliChaumeil_AntalisDryRunBanner');
 }
 $productLimitActive = getDolGlobalInt(SupplierPriceSyncConstants::CONST_PRODUCT_LIMIT);
 if ($productLimitActive > 0) {
-	print '<div class="warning">' . img_warning() . ' ' . $langs->trans('CliChaumeil_AntalisProductLimitBanner', $productLimitActive) . '</div><br>';
+	$testModeNotes[] = $langs->trans('CliChaumeil_AntalisProductLimitBanner', $productLimitActive);
+}
+if (!empty($testModeNotes)) {
+	print '<div class="warning">' . img_warning() . ' <strong>' . dol_escape_htmltag($langs->trans('CliChaumeil_AntalisTestModeActive')) . '</strong>';
+	print '<ul style="margin:4px 0 0">';
+	foreach ($testModeNotes as $testModeNote) {
+		print '<li>' . $testModeNote . '</li>';
+	}
+	print '</ul></div><br>';
 }
 
 print $formSetup->generateOutput(true);
