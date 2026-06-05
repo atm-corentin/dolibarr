@@ -523,6 +523,27 @@ class SupplierPriceSyncServiceTest extends CommonClassTest
 	}
 
 	/**
+	 * A tier with a non-positive quantity is rejected (no line created, failure recorded)
+	 * instead of crashing on the core division by quantity in update_buyprice().
+	 *
+	 * @return void
+	 */
+	public function testNonPositiveQuantityTierIsRejected(): void
+	{
+		$this->createLine(0.0321);
+		$before = $this->countLines();
+
+		$report = $this->runService($this->foundGrid(array(
+			new SupplierPriceTier($this->quantity, '', 0.0321),
+			new SupplierPriceTier(0.0, '', 0.028),
+		)));
+
+		$this->assertSame(0, $report->created);
+		$this->assertSame($before, $this->countLines());
+		$this->assertTrue($report->hasFailures());
+	}
+
+	/**
 	 * A tier absent from an authoritative grid closes the existing line.
 	 *
 	 * @return void

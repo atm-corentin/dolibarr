@@ -465,6 +465,15 @@ final class SupplierPriceSyncService
 			return;
 		}
 
+		// A zero/negative quantity would create a broken supplier line and then make
+		// update_buyprice() divide by zero: reject it as a write failure up front.
+		if ($tier->quantity <= 0) {
+			dol_syslog('SupplierPriceSyncService::createTier skipped, non-positive quantity ref=' . $product->supplierRef, LOG_WARNING);
+			$report->addIssue($this->updateFailedIssue($product->supplierRef, $product->productRef, $tier->quantity));
+
+			return;
+		}
+
 		$productFournisseur = new ProductFournisseur($this->db);
 		$productFournisseur->id = $product->productId;
 
@@ -604,6 +613,15 @@ final class SupplierPriceSyncService
 	 */
 	private function updateBuyPrice(SupplierPriceCandidate $candidate, float $normalizedPrice, User $user): bool
 	{
+		// Guard against a corrupt zero/negative quantity: update_buyprice() divides the
+		// total by the quantity (core fournisseur.product.class.php) and would raise a
+		// fatal DivisionByZeroError. Treat it as a write failure instead.
+		if ($candidate->quantity <= 0) {
+			dol_syslog('SupplierPriceSyncService::updateBuyPrice skipped, non-positive quantity for line id=' . $candidate->supplierPriceId, LOG_WARNING);
+
+			return false;
+		}
+
 		$productFournisseur = new ProductFournisseur($this->db);
 		$fetch = $productFournisseur->fetch_product_fournisseur_price($candidate->supplierPriceId);
 		if ($fetch == 0) {

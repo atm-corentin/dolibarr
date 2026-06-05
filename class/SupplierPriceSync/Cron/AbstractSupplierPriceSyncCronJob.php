@@ -154,8 +154,9 @@ abstract class AbstractSupplierPriceSyncCronJob
 	/**
 	 * Persist a JSON snapshot of the last run as a per-supplier constant.
 	 *
-	 * Written on success and on failure so the admin page always shows the latest
-	 * outcome without digging into the cron logs.
+	 * Written for every completed run — success or business failure (errors in the
+	 * report) — so the admin page shows the latest outcome without digging into the
+	 * cron logs. An unexpected exception aborts the run before this point.
 	 *
 	 * @param SupplierConfigInterface $config Supplier configuration.
 	 * @param SupplierPriceSyncReport $report Run report.

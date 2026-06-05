@@ -262,7 +262,7 @@ print load_fiche_titre($langs->trans($title), $linkback, 'title_setup');
 $head = clichaumeilAdminPrepareHead();
 print dol_get_fiche_head($head, 'api_connections', $langs->trans("CliChaumeil_AntalisApiTitle"), -1, "clichaumeil@clichaumeil");
 
-echo '<span class="opacitymedium">' . $langs->trans("CliChaumeil_AntalisApiIntro") . '</span><br><br>';
+echo '<span class="opacitymedium">' . dol_escape_htmltag($langs->trans("CliChaumeil_AntalisApiIntro")) . '</span><br><br>';
 
 // Global block: settings shared by every API connector (notification policy + recipients).
 // Same card shell as the connectors, without a status badge.
@@ -296,7 +296,7 @@ if (!empty($testModeNotes)) {
 	print '<div class="warning">' . img_warning() . ' <strong>' . dol_escape_htmltag($langs->trans('CliChaumeil_AntalisTestModeActive')) . '</strong>';
 	print '<ul style="margin:4px 0 0">';
 	foreach ($testModeNotes as $testModeNote) {
-		print '<li>' . $testModeNote . '</li>';
+		print '<li>' . dol_escape_htmltag($testModeNote) . '</li>';
 	}
 	print '</ul></div><br>';
 }
@@ -411,7 +411,7 @@ if (is_array($lastRun) && isset($lastRun['date'])) {
 print '<br><details><summary class="cursorpointer">' . dol_escape_htmltag($langs->trans('CliChaumeil_AntalisPriceSyncHelpTitle')) . '</summary>';
 print '<div class="opacitymedium" style="margin-top:8px"><ul>';
 for ($helpLine = 1; $helpLine <= 7; $helpLine++) {
-	print '<li>' . $langs->trans('CliChaumeil_AntalisPriceSyncHelp' . $helpLine) . '</li>';
+	print '<li>' . dol_escape_htmltag($langs->trans('CliChaumeil_AntalisPriceSyncHelp' . $helpLine)) . '</li>';
 }
 print '</ul></div></details>';
 
