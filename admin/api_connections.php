@@ -100,11 +100,26 @@ if ($resql) {
 	$db->free($resql);
 }
 
-// The HTTP password is deliberately NOT managed by FormSetup: FormSetup renders
-// the stored value in the HTML "value" attribute (clear text in the page source).
-// It is handled by a dedicated, never-prefilled form below (see action setantalispassword).
-$formSetup = new FormSetup($db);
 $form = new Form($db);
+
+// Global block: settings shared by every API connector (notification policy + recipients).
+// It uses its own form action so saving it never blanks the connector fields.
+$globalFormSetup = new FormSetup($db);
+$globalFormSetup->formHiddenInputs['action'] = 'updateglobalsettings';
+$globalFormSetup->newItem('CliChaumeil_ApiGlobalSectionTitle')->setAsTitle();
+$mailPolicyOptions = array(
+	SupplierPriceSyncConstants::MAIL_POLICY_NEVER => $langs->trans('CliChaumeil_AntalisMailPolicyNever'),
+	SupplierPriceSyncConstants::MAIL_POLICY_ERRORS => $langs->trans('CliChaumeil_AntalisMailPolicyErrors'),
+	SupplierPriceSyncConstants::MAIL_POLICY_ERRORS_WARNINGS => $langs->trans('CliChaumeil_AntalisMailPolicyErrorsWarnings'),
+	SupplierPriceSyncConstants::MAIL_POLICY_ALWAYS => $langs->trans('CliChaumeil_AntalisMailPolicyAlways'),
+);
+$globalFormSetup->newItem(SupplierPriceSyncConstants::CONST_MAIL_POLICY)->setAsSelect($mailPolicyOptions);
+$globalFormSetup->newItem(SupplierPriceSyncConstants::CONST_MAIL_RECIPIENTS)->setAsString();
+
+// ANTALIS connector block. The HTTP password is deliberately NOT managed by FormSetup:
+// FormSetup renders the stored value in the HTML "value" attribute (clear text in the
+// page source); it is handled by a dedicated, never-prefilled form below.
+$formSetup = new FormSetup($db);
 // Section 1: connection identity (who/where we connect).
 $formSetup->newItem('CliChaumeil_AntalisSectionConnection')->setAsTitle();
 $formSetup->newItem(SupplierPriceSyncConstants::CONST_BASE_URL)->setAsString();
@@ -113,23 +128,22 @@ $formSetup->newItem(SupplierPriceSyncConstants::CONST_THIRDPARTY_ID)->setAsSelec
 $formSetup->newItem(SupplierPriceSyncConstants::CONST_CUSTOMER_ID)->setAsString();
 $formSetup->newItem(SupplierPriceSyncConstants::CONST_USER_CODE)->setAsString();
 $formSetup->newItem(SupplierPriceSyncConstants::CONST_DELIVERY_ADDRESS_ID)->setAsString();
-// Section 2: behaviour (how the sync runs).
+// Section 2: behaviour (how this connector's sync runs).
 $formSetup->newItem('CliChaumeil_AntalisSectionBehaviour')->setAsTitle();
 $formSetup->newItem(SupplierPriceSyncConstants::CONST_DRY_RUN)->setAsYesNo();
 $formSetup->newItem(SupplierPriceSyncConstants::CONST_MAX_CLOSURE_RATIO)->setAsString();
 $formSetup->newItem(SupplierPriceSyncConstants::CONST_PRODUCT_LIMIT)->setAsString();
-$mailPolicyOptions = array(
-	SupplierPriceSyncConstants::MAIL_POLICY_NEVER => $langs->trans('CliChaumeil_AntalisMailPolicyNever'),
-	SupplierPriceSyncConstants::MAIL_POLICY_ERRORS => $langs->trans('CliChaumeil_AntalisMailPolicyErrors'),
-	SupplierPriceSyncConstants::MAIL_POLICY_ERRORS_WARNINGS => $langs->trans('CliChaumeil_AntalisMailPolicyErrorsWarnings'),
-	SupplierPriceSyncConstants::MAIL_POLICY_ALWAYS => $langs->trans('CliChaumeil_AntalisMailPolicyAlways'),
-);
-$formSetup->newItem(SupplierPriceSyncConstants::CONST_MAIL_POLICY)->setAsSelect($mailPolicyOptions);
-$formSetup->newItem(SupplierPriceSyncConstants::CONST_MAIL_RECIPIENTS)->setAsString();
 
 /*
  * Actions
  */
+
+if ($action == 'updateglobalsettings' && !empty($user->admin)) {
+	$globalFormSetup->saveConfFromPost();
+
+	header('Location: ' . $_SERVER["PHP_SELF"]);
+	exit;
+}
 
 if ($action == 'update' && !empty($user->admin)) {
 	$formSetup->saveConfFromPost();
@@ -230,23 +244,25 @@ print dol_get_fiche_head($head, 'api_connections', $langs->trans("CliChaumeil_An
 
 echo '<span class="opacitymedium">' . $langs->trans("CliChaumeil_AntalisApiIntro") . '</span><br><br>';
 
-// Prominent banner when the dry-run (simulation) mode is active: no price is ever
-// written, which is easy to forget and would otherwise look like a silent failure.
-if (getDolGlobalInt(SupplierPriceSyncConstants::CONST_DRY_RUN) === 1) {
-	print '<div class="warning">' . img_warning() . ' ' . $langs->trans('CliChaumeil_AntalisDryRunBanner') . '</div><br>';
-}
-
-// Prominent banner when the product limit (test knob) is active: only a subset of the
-// catalogue is synced, which must never be left on in production.
-$productLimitActive = getDolGlobalInt(SupplierPriceSyncConstants::CONST_PRODUCT_LIMIT);
-if ($productLimitActive > 0) {
-	print '<div class="warning">' . img_warning() . ' ' . $langs->trans('CliChaumeil_AntalisProductLimitBanner', $productLimitActive) . '</div><br>';
-}
+// Global block: settings shared by every API connector (notification policy + recipients).
+print $globalFormSetup->generateOutput(true);
+print '<br>';
 
 // Connector section, collapsible so future connectors (GEODIS, OVOL...) each get
 // their own <details> block on this single page rather than an extra admin tab.
 print '<details open><summary class="cursorpointer"><strong>' . dol_escape_htmltag($langs->trans('CliChaumeil_AntalisConnectorSectionTitle')) . '</strong></summary>';
 print '<div style="margin-top:10px">';
+
+// Per-connector banners: dry-run and product-limit describe THIS connector's run
+// settings (they may be enabled for ANTALIS alone), so they belong inside its section
+// rather than at page level.
+if (getDolGlobalInt(SupplierPriceSyncConstants::CONST_DRY_RUN) === 1) {
+	print '<div class="warning">' . img_warning() . ' ' . $langs->trans('CliChaumeil_AntalisDryRunBanner') . '</div><br>';
+}
+$productLimitActive = getDolGlobalInt(SupplierPriceSyncConstants::CONST_PRODUCT_LIMIT);
+if ($productLimitActive > 0) {
+	print '<div class="warning">' . img_warning() . ' ' . $langs->trans('CliChaumeil_AntalisProductLimitBanner', $productLimitActive) . '</div><br>';
+}
 
 print $formSetup->generateOutput(true);
 print '<br>';

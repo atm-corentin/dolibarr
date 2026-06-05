@@ -434,6 +434,7 @@ CliChaumeilSupplierResponseMailBody=Bonjour,<br><br>Une réponse a été dépos�
 CliChaumeil_ApiConnectionsTab=Connexion API
 CliChaumeil_AntalisApiTitle=Configuration de la connexion à l'API ANTALIS
 CliChaumeil_AntalisApiIntro=Les paramètres de connexion ci-dessous (URL, identifiant, mot de passe, numéro de client, code utilisateur) vous sont fournis par ANTALIS — passez par leur service intégration/EDI en cas de doute. Survolez l'icône d'info de chaque champ pour le détail.
+CliChaumeil_ApiGlobalSectionTitle=Réglages communs à toutes les connexions API
 CliChaumeil_AntalisConnectorSectionTitle=ANTALIS — synchronisation des prix d'achats
 CliChaumeil_AntalisSectionConnection=Connexion (identifiants et endpoint)
 CliChaumeil_AntalisSectionBehaviour=Comportement de la synchronisation
