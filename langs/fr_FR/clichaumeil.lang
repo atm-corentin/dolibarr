@@ -492,7 +492,9 @@ CliChaumeil_AntalisPriceSyncHelp4=4. Anomalies fréquentes : « Aucun tarif dans
 CliChaumeil_AntalisPriceSyncHelp5=5. Le garde-fou de clôture limite la part de lignes clôturables par exécution (défaut 50 %, valeur de 0 à 100, 100 = désactivé). « Seuil de clôture atteint » signale une réponse partielle suspecte, à investiguer avant de relancer.
 CliChaumeil_AntalisPriceSyncHelp6=6. Quand tout est cohérent, désactivez le mode simulation : la synchronisation s'applique alors réellement aux prochaines exécutions.
 CliChaumeil_AntalisPriceSyncHelp7=7. Les anciens prix restent historisés (journal des prix d'achat) ; une ligne clôturée à tort peut être réactivée manuellement.
-CliChaumeil_SupplierPriceSyncMailSubject=Rapport de synchronisation des prix %s — %s anomalie(s)
+CliChaumeil_SupplierPriceSyncMailSubject=Rapport de synchronisation des prix %s — %s erreur(s), %s alerte(s)
+CliChaumeil_SupplierPriceSyncMailFooter=Rapport généré automatiquement par la synchronisation des prix d'achats.
+CliChaumeil_SupplierPriceSyncMailFooterLink=Ouvrir la configuration des connexions API
 CliChaumeil_SupplierPriceSyncSummaryHead=Fournisseur {sup} — {scanned} références analysées
 CliChaumeil_SupplierPriceSyncSummaryChanges=Modifications : {updated} mises à jour, {created} créées, {closed} clôturées, {reactivated} réactivées
 CliChaumeil_SupplierPriceSyncSummaryNeutral=Inchangées : {unchanged} — Ignorées : {skipped}

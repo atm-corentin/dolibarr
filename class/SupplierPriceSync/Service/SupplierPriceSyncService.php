@@ -359,7 +359,8 @@ final class SupplierPriceSyncService
 				$candidate->productRef,
 				$candidate->currentUnitPrice,
 				$tier->normalizedUnitPrice,
-				$unit
+				$unit,
+				$candidate->productId
 			);
 		} else {
 			$report->incrementUnchanged();
@@ -374,7 +375,8 @@ final class SupplierPriceSyncService
 					$candidate->productRef,
 					null,
 					null,
-					$unit
+					$unit,
+					$candidate->productId
 				);
 			} else {
 				$report->addIssue($this->updateFailedIssue($candidate->supplierRef, $candidate->productRef, $candidate->quantity));
@@ -456,7 +458,8 @@ final class SupplierPriceSyncService
 				$product->productRef,
 				null,
 				$tier->normalizedUnitPrice,
-				$tier->unitLabel
+				$tier->unitLabel,
+				$product->productId
 			);
 
 			return;
@@ -511,7 +514,8 @@ final class SupplierPriceSyncService
 				$product->productRef,
 				null,
 				$tier->normalizedUnitPrice,
-				$tier->unitLabel
+				$tier->unitLabel,
+				$product->productId
 			);
 		} else {
 			$report->incrementUpdated();
@@ -521,7 +525,8 @@ final class SupplierPriceSyncService
 				$product->productRef,
 				null,
 				$tier->normalizedUnitPrice,
-				$tier->unitLabel
+				$tier->unitLabel,
+				$product->productId
 			);
 		}
 	}
@@ -562,7 +567,8 @@ final class SupplierPriceSyncService
 					$line->productRef,
 					null,
 					null,
-					$line->packagingUnit
+					$line->packagingUnit,
+					$line->productId
 				);
 			} else {
 				$report->addIssue($this->updateFailedIssue($line->supplierRef, $line->productRef, $line->quantity));

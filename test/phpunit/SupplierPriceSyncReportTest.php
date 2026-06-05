@@ -190,7 +190,8 @@ class SupplierPriceSyncReportTest extends CommonClassTest
 			'P1',
 			0.048,
 			0.0321,
-			'Feuille'
+			'Feuille',
+			42
 		);
 		$report->addIssue(new SupplierPriceSyncIssue(
 			SupplierPriceSyncIssue::SEVERITY_ERROR,
@@ -207,10 +208,34 @@ class SupplierPriceSyncReportTest extends CommonClassTest
 		// Raw special chars from the supplier ref must be escaped, never injected as-is.
 		$this->assertStringNotContainsString('A&B<264910>', $html);
 		$this->assertStringContainsString('&lt;264910&gt;', $html);
+		// The product ref links to its card via an absolute URL.
+		$this->assertStringContainsString('/product/card.php?id=42', $html);
+		// A price drop is coloured (green) and shown with its variation.
+		$this->assertStringContainsString('#27ae60', $html);
+		$this->assertStringContainsString('-33%', $html);
 		// Anomalies section comes before the changes section.
 		$issuesPos = strpos($html, $langs->transnoentities('CliChaumeil_SupplierPriceSyncIssuesHeader'));
 		$changesPos = strpos($html, $langs->transnoentities('CliChaumeil_SupplierPriceSyncChangesHeader'));
 		$this->assertLessThan($changesPos, $issuesPos);
+	}
+
+	/**
+	 * The mail subject reports errors and warnings separately.
+	 *
+	 * @return void
+	 */
+	public function testMailSubjectSplitsErrorsAndWarnings(): void
+	{
+		global $langs;
+		$langs->loadLangs(array('clichaumeil@clichaumeil'));
+		$report = new SupplierPriceSyncReport('ANTALIS');
+		$report->addIssue(new SupplierPriceSyncIssue(SupplierPriceSyncIssue::SEVERITY_ERROR, 'A', ''));
+		$report->addIssue(new SupplierPriceSyncIssue(SupplierPriceSyncIssue::SEVERITY_WARNING, 'B', ''));
+		$report->addIssue(new SupplierPriceSyncIssue(SupplierPriceSyncIssue::SEVERITY_WARNING, 'C', ''));
+
+		$subject = $report->buildMailSubject($langs);
+		$this->assertStringContainsString('1 erreur(s)', $subject);
+		$this->assertStringContainsString('2 alerte(s)', $subject);
 	}
 
 	/**

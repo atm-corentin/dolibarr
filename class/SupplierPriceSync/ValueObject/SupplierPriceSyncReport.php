@@ -171,9 +171,10 @@ final class SupplierPriceSyncReport
 	 * @param float|null $oldPrice    Previous unit price (null when not applicable).
 	 * @param float|null $newPrice    New unit price (null when not applicable).
 	 * @param string     $unit        Packaging/price unit label.
+	 * @param int        $productId   Dolibarr product id (0 = none; used to link the card in HTML).
 	 * @return void
 	 */
-	public function recordChange(string $type, string $supplierRef, string $productRef, ?float $oldPrice, ?float $newPrice, string $unit): void
+	public function recordChange(string $type, string $supplierRef, string $productRef, ?float $oldPrice, ?float $newPrice, string $unit, int $productId = 0): void
 	{
 		$this->changes[] = array(
 			'type' => $type,
@@ -182,6 +183,7 @@ final class SupplierPriceSyncReport
 			'oldPrice' => $oldPrice,
 			'newPrice' => $newPrice,
 			'unit' => $unit,
+			'productId' => $productId,
 		);
 	}
 
@@ -392,6 +394,40 @@ final class SupplierPriceSyncReport
 	}
 
 	/**
+	 * Translate a change type into its short label.
+	 *
+	 * @param string    $type  One of SupplierPriceSyncConstants::CHANGE_*.
+	 * @param Translate $langs Translator.
+	 * @return string
+	 */
+	private function changeLabel(string $type, Translate $langs): string
+	{
+		$labels = array(
+			SupplierPriceSyncConstants::CHANGE_UPDATE => 'CliChaumeil_SupplierPriceSyncChangeUpdate',
+			SupplierPriceSyncConstants::CHANGE_CREATE => 'CliChaumeil_SupplierPriceSyncChangeCreate',
+			SupplierPriceSyncConstants::CHANGE_CLOSE => 'CliChaumeil_SupplierPriceSyncChangeClose',
+			SupplierPriceSyncConstants::CHANGE_REACTIVATE => 'CliChaumeil_SupplierPriceSyncChangeReactivate',
+		);
+
+		return $langs->transnoentities($labels[$type] ?? $type);
+	}
+
+	/**
+	 * Compute the price variation percentage of a change (0 when not computable).
+	 *
+	 * @param array<string,mixed> $change Recorded change.
+	 * @return float|null Variation in percent, or null when not applicable.
+	 */
+	private function changeVariationPercent(array $change): ?float
+	{
+		if ($change['oldPrice'] === null || $change['newPrice'] === null || (float) $change['oldPrice'] === 0.0) {
+			return null;
+		}
+
+		return (($change['newPrice'] - $change['oldPrice']) / $change['oldPrice']) * 100;
+	}
+
+	/**
 	 * Format a recorded change as a readable, translated text line.
 	 *
 	 * @param array<string,mixed> $change Recorded change.
@@ -400,13 +436,7 @@ final class SupplierPriceSyncReport
 	 */
 	private function formatChange(array $change, Translate $langs): string
 	{
-		$labels = array(
-			SupplierPriceSyncConstants::CHANGE_UPDATE => 'CliChaumeil_SupplierPriceSyncChangeUpdate',
-			SupplierPriceSyncConstants::CHANGE_CREATE => 'CliChaumeil_SupplierPriceSyncChangeCreate',
-			SupplierPriceSyncConstants::CHANGE_CLOSE => 'CliChaumeil_SupplierPriceSyncChangeClose',
-			SupplierPriceSyncConstants::CHANGE_REACTIVATE => 'CliChaumeil_SupplierPriceSyncChangeReactivate',
-		);
-		$label = $langs->transnoentities($labels[$change['type']] ?? $change['type']);
+		$label = $this->changeLabel($change['type'], $langs);
 		$ref = $change['supplierRef'];
 		if ($change['productRef'] !== '') {
 			$ref .= ' / ' . $change['productRef'];
@@ -414,10 +444,8 @@ final class SupplierPriceSyncReport
 		$unit = $change['unit'] !== '' ? ' ' . $change['unit'] : '';
 
 		if ($change['oldPrice'] !== null && $change['newPrice'] !== null) {
-			$variation = '';
-			if ((float) $change['oldPrice'] !== 0.0) {
-				$variation = sprintf(' (%+.0f%%)', (($change['newPrice'] - $change['oldPrice']) / $change['oldPrice']) * 100);
-			}
+			$percent = $this->changeVariationPercent($change);
+			$variation = $percent === null ? '' : sprintf(' (%+.0f%%)', $percent);
 
 			return sprintf('- %s %s : %s → %s%s%s', $label, $ref, $this->formatPrice($change['oldPrice']), $this->formatPrice($change['newPrice']), $unit, $variation);
 		}
@@ -426,6 +454,86 @@ final class SupplierPriceSyncReport
 		}
 
 		return sprintf('- %s %s%s', $label, $ref, $change['unit'] !== '' ? ' (' . $change['unit'] . ')' : '');
+	}
+
+	/**
+	 * Build the change reference for HTML: supplier ref, then the product ref linked to
+	 * its card (absolute URL, so the link works inside a mail client) when an id is known.
+	 *
+	 * @param array<string,mixed> $change Recorded change.
+	 * @return string
+	 */
+	private function changeRefHtml(array $change): string
+	{
+		$ref = dol_escape_htmltag($change['supplierRef']);
+		if ($change['productRef'] === '') {
+			return $ref;
+		}
+		$productRef = dol_escape_htmltag($change['productRef']);
+		if (!empty($change['productId'])) {
+			$url = DOL_MAIN_URL_ROOT . '/product/card.php?id=' . ((int) $change['productId']);
+			$productRef = '<a href="' . $url . '">' . $productRef . '</a>';
+		}
+
+		return $ref . ' / ' . $productRef;
+	}
+
+	/**
+	 * Format a recorded change as an HTML list item (linked product, coloured variation).
+	 *
+	 * @param array<string,mixed> $change Recorded change.
+	 * @param Translate           $langs  Translator.
+	 * @return string
+	 */
+	private function formatChangeHtml(array $change, Translate $langs): string
+	{
+		$label = '<strong>' . dol_escape_htmltag($this->changeLabel($change['type'], $langs)) . '</strong>';
+		$ref = $this->changeRefHtml($change);
+		$unit = $change['unit'] !== '' ? ' ' . dol_escape_htmltag($change['unit']) : '';
+
+		if ($change['oldPrice'] !== null && $change['newPrice'] !== null) {
+			$prices = dol_escape_htmltag($this->formatPrice($change['oldPrice'])) . ' &rarr; ' . dol_escape_htmltag($this->formatPrice($change['newPrice']));
+			$percent = $this->changeVariationPercent($change);
+			$variation = '';
+			if ($percent !== null) {
+				// Purchasing view: a price rise is unfavourable (red), a drop favourable (green).
+				$color = $percent > 0 ? '#c0392b' : ($percent < 0 ? '#27ae60' : '#888');
+				$variation = ' <span style="color:' . $color . '">' . sprintf('(%+.0f%%)', $percent) . '</span>';
+			}
+
+			return '<li>' . $label . ' ' . $ref . ' : ' . $prices . $unit . $variation . '</li>';
+		}
+		if ($change['newPrice'] !== null) {
+			return '<li>' . $label . ' ' . $ref . ' : ' . dol_escape_htmltag($this->formatPrice($change['newPrice'])) . $unit . '</li>';
+		}
+
+		return '<li>' . $label . ' ' . $ref . ($change['unit'] !== '' ? ' (' . dol_escape_htmltag($change['unit']) . ')' : '') . '</li>';
+	}
+
+	/**
+	 * Render the change-detail section as HTML (header + linked list), empty when none.
+	 *
+	 * @param Translate $langs Translator.
+	 * @param int       $cap   Maximum change lines to render.
+	 * @return string
+	 */
+	private function renderChangesSectionHtml(Translate $langs, int $cap): string
+	{
+		if ($this->changes === array()) {
+			return '';
+		}
+		$html = '<h3 style="margin:14px 0 4px;font-size:14px;color:#2c3e50">' . dol_escape_htmltag($langs->transnoentities('CliChaumeil_SupplierPriceSyncChangesHeader')) . '</h3>';
+		$html .= '<ul style="margin:0;padding-left:18px">';
+		foreach (array_slice($this->changes, 0, $cap) as $change) {
+			$html .= $this->formatChangeHtml($change, $langs);
+		}
+		$total = count($this->changes);
+		if ($total > $cap) {
+			$html .= '<li>' . dol_escape_htmltag($langs->transnoentities('CliChaumeil_SupplierPriceSyncChangesMore', (string) ($total - $cap))) . '</li>';
+		}
+		$html .= '</ul>';
+
+		return $html;
 	}
 
 	/**
@@ -528,7 +636,7 @@ final class SupplierPriceSyncReport
 	 */
 	public function buildMailSubject(Translate $langs): string
 	{
-		$subject = $langs->transnoentities('CliChaumeil_SupplierPriceSyncMailSubject', $this->supplierCode, count($this->issues));
+		$subject = $langs->transnoentities('CliChaumeil_SupplierPriceSyncMailSubject', $this->supplierCode, (string) $this->countErrors(), (string) $this->countWarnings());
 		if ($this->dryRun) {
 			$subject = $langs->transnoentities('CliChaumeil_SupplierPriceSyncDryRunTag') . ' ' . $subject;
 		}
@@ -612,7 +720,13 @@ final class SupplierPriceSyncReport
 
 		// Anomalies first (the reason the mail is sent), then the per-line changes.
 		$html .= $this->sectionHtml($this->renderIssueLines($langs, self::MAX_DETAILED_ISSUES_MAIL), '#c0392b');
-		$html .= $this->sectionHtml($this->renderChangeLines($langs, self::MAX_DETAILED_CHANGES), '#2c3e50');
+		$html .= $this->renderChangesSectionHtml($langs, self::MAX_DETAILED_CHANGES);
+
+		// Footer: where this comes from and where to act on it.
+		$adminUrl = DOL_MAIN_URL_ROOT . '/custom/clichaumeil/admin/api_connections.php';
+		$html .= '<p style="margin-top:14px;padding-top:8px;border-top:1px solid #eee;color:#888;font-size:11px">'
+			. dol_escape_htmltag($langs->transnoentities('CliChaumeil_SupplierPriceSyncMailFooter'))
+			. ' <a href="' . $adminUrl . '">' . dol_escape_htmltag($langs->transnoentities('CliChaumeil_SupplierPriceSyncMailFooterLink')) . '</a></p>';
 		$html .= '</div>';
 
 		return $html;
