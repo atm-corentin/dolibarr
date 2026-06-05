@@ -102,7 +102,7 @@ class SupplierPriceSyncReportTest extends CommonClassTest
 		$out = $report->buildCronOutput($langs);
 		// 50 capped issue bullets are rendered, plus an overflow marker.
 		$this->assertSame(50, substr_count($out, "\n- "));
-		$this->assertStringContainsString('cap 50', $out);
+		$this->assertStringContainsString('+10 autre(s) anomalie(s)', $out);
 	}
 
 	/**
@@ -133,6 +133,43 @@ class SupplierPriceSyncReportTest extends CommonClassTest
 		$this->assertStringContainsString('0.0321', $out);
 		$this->assertStringContainsString('Feuille', $out);
 		$this->assertSame(1, $report->countChanges());
+	}
+
+	/**
+	 * The mail body lists anomalies before the per-line changes and shows the variation.
+	 *
+	 * @return void
+	 */
+	public function testIssuesRenderBeforeChangesWithVariation(): void
+	{
+		global $langs;
+		$langs->loadLangs(array('clichaumeil@clichaumeil'));
+		$report = new SupplierPriceSyncReport('ANTALIS');
+		$report->recordChange(
+			SupplierPriceSyncConstants::CHANGE_UPDATE,
+			'264910',
+			'P1',
+			0.048,
+			0.0321,
+			'Feuille'
+		);
+		$report->addIssue(new SupplierPriceSyncIssue(
+			SupplierPriceSyncIssue::SEVERITY_ERROR,
+			SupplierPriceSyncConstants::ISSUE_REFERENCE_NOT_FOUND,
+			'',
+			'999',
+			'P9',
+			1.0
+		));
+
+		$body = $report->buildMailBody($langs);
+		$issuesPos = strpos($body, $langs->transnoentities('CliChaumeil_SupplierPriceSyncIssuesHeader'));
+		$changesPos = strpos($body, $langs->transnoentities('CliChaumeil_SupplierPriceSyncChangesHeader'));
+		$this->assertIsInt($issuesPos);
+		$this->assertIsInt($changesPos);
+		$this->assertLessThan($changesPos, $issuesPos);
+		// 0.0321 vs 0.048 is a 33% drop.
+		$this->assertStringContainsString('-33%', $body);
 	}
 
 	/**

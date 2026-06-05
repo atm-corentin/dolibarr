@@ -36,6 +36,9 @@ final class SupplierPriceSyncReport
 	/** @var int Maximum number of detailed issues rendered in the cron output. */
 	private const MAX_DETAILED_ISSUES = 50;
 
+	/** @var int Maximum number of detailed issues rendered in the mail body. */
+	private const MAX_DETAILED_ISSUES_MAIL = 200;
+
 	/** @var int Maximum number of detailed change lines rendered. */
 	private const MAX_DETAILED_CHANGES = 100;
 
@@ -58,6 +61,12 @@ final class SupplierPriceSyncReport
 
 	/** @var bool Whether the run was a dry-run (computed but nothing written). */
 	public bool $dryRun = false;
+
+	/** @var int Run timestamp (set by the cron; 0 when not provided). */
+	public int $executedAt = 0;
+
+	/** @var float Run duration in seconds (set by the cron; 0 when not provided). */
+	public float $durationSeconds = 0.0;
 
 	/** @var SupplierPriceSyncIssue[] Issues raised during the run. */
 	private array $issues = array();
@@ -268,17 +277,18 @@ final class SupplierPriceSyncReport
 	}
 
 	/**
-	 * Build the human-readable, translated summary line (for cron output and mail).
+	 * Substitute the run counters into a {token} template.
 	 *
-	 * @param Translate $langs Translator (module file loaded).
+	 * Token substitution (not trans() %s placeholders): trans() sprintf()s its own
+	 * up-to-4 params, so a 10-placeholder template would throw inside trans().
+	 *
+	 * @param string $template Template containing {sup}, {scanned}, ... tokens.
 	 * @return string
 	 */
-	private function translatedSummary(Translate $langs): string
+	private function fillCounters(string $template): string
 	{
-		// Token substitution (not trans() %s placeholders): trans() sprintf()s its
-		// own up-to-4 params, so a 10-placeholder template would throw inside trans().
 		return strtr(
-			$langs->transnoentities('CliChaumeil_SupplierPriceSyncSummary'),
+			$template,
 			array(
 				'{sup}' => $this->supplierCode,
 				'{scanned}' => (string) $this->scanned,
@@ -292,6 +302,33 @@ final class SupplierPriceSyncReport
 				'{warnings}' => (string) $this->countWarnings(),
 			)
 		);
+	}
+
+	/**
+	 * Build the human-readable, translated summary block (several lines).
+	 *
+	 * @param Translate $langs Translator (module file loaded).
+	 * @return string[]
+	 */
+	private function translatedSummary(Translate $langs): array
+	{
+		return array(
+			$this->fillCounters($langs->transnoentities('CliChaumeil_SupplierPriceSyncSummaryHead')),
+			$this->fillCounters($langs->transnoentities('CliChaumeil_SupplierPriceSyncSummaryChanges')),
+			$this->fillCounters($langs->transnoentities('CliChaumeil_SupplierPriceSyncSummaryNeutral')),
+			$this->fillCounters($langs->transnoentities('CliChaumeil_SupplierPriceSyncSummaryIssues')),
+		);
+	}
+
+	/**
+	 * Build a one-line readable summary (persisted and shown on the admin page).
+	 *
+	 * @param Translate $langs Translator (module file loaded).
+	 * @return string
+	 */
+	public function compactSummary(Translate $langs): string
+	{
+		return $this->fillCounters($langs->transnoentities('CliChaumeil_SupplierPriceSyncCompactSummary'));
 	}
 
 	/**
@@ -327,9 +364,15 @@ final class SupplierPriceSyncReport
 		if ($this->dryRun) {
 			$lines[] = $langs->transnoentities('CliChaumeil_SupplierPriceSyncDryRunNotice', (string) count($this->changes));
 		}
-		$lines[] = $this->translatedSummary($langs);
+		if ($this->executedAt > 0) {
+			$lines[] = $langs->transnoentities(
+				'CliChaumeil_SupplierPriceSyncRunMeta',
+				dol_print_date($this->executedAt, 'dayhour'),
+				(string) round($this->durationSeconds, 1)
+			);
+		}
 
-		return $lines;
+		return array_merge($lines, $this->translatedSummary($langs));
 	}
 
 	/**
@@ -371,7 +414,12 @@ final class SupplierPriceSyncReport
 		$unit = $change['unit'] !== '' ? ' ' . $change['unit'] : '';
 
 		if ($change['oldPrice'] !== null && $change['newPrice'] !== null) {
-			return sprintf('- %s %s : %s → %s%s', $label, $ref, $this->formatPrice($change['oldPrice']), $this->formatPrice($change['newPrice']), $unit);
+			$variation = '';
+			if ((float) $change['oldPrice'] !== 0.0) {
+				$variation = sprintf(' (%+.0f%%)', (($change['newPrice'] - $change['oldPrice']) / $change['oldPrice']) * 100);
+			}
+
+			return sprintf('- %s %s : %s → %s%s%s', $label, $ref, $this->formatPrice($change['oldPrice']), $this->formatPrice($change['newPrice']), $unit, $variation);
 		}
 		if ($change['newPrice'] !== null) {
 			return sprintf('- %s %s : %s%s', $label, $ref, $this->formatPrice($change['newPrice']), $unit);
@@ -423,25 +471,53 @@ final class SupplierPriceSyncReport
 		}
 		$total = count($this->issues);
 		if ($cap !== null && $total > $cap) {
-			$lines[] = sprintf('... +%d (cap %d)', $total - $cap, $cap);
+			$lines[] = $langs->transnoentities('CliChaumeil_SupplierPriceSyncIssuesMore', (string) ($total - $cap));
 		}
 
 		return $lines;
 	}
 
 	/**
-	 * Build the cron output (dry-run banner + summary + changes + capped issues).
+	 * Join sections (arrays of lines), dropping empty ones and inserting an optional
+	 * blank line between consecutive non-empty sections.
+	 *
+	 * @param string[][] $sections     Sections, each an array of lines.
+	 * @param bool       $blankBetween Insert a blank line between sections.
+	 * @return string
+	 */
+	private function joinSections(array $sections, bool $blankBetween): string
+	{
+		$lines = array();
+		foreach ($sections as $section) {
+			if ($section === array()) {
+				continue;
+			}
+			if ($lines !== array() && $blankBetween) {
+				$lines[] = '';
+			}
+			$lines = array_merge($lines, $section);
+		}
+
+		return implode("\n", $lines);
+	}
+
+	/**
+	 * Build the cron output. Anomalies come first (they are the reason to look), then
+	 * the per-line changes (dry-run banner + summary header on top).
 	 *
 	 * @param Translate $langs Translator.
 	 * @return string
 	 */
 	public function buildCronOutput(Translate $langs): string
 	{
-		$lines = $this->headerLines($langs);
-		$lines = array_merge($lines, $this->renderChangeLines($langs, self::MAX_DETAILED_CHANGES));
-		$lines = array_merge($lines, $this->renderIssueLines($langs, self::MAX_DETAILED_ISSUES));
-
-		return implode("\n", $lines);
+		return $this->joinSections(
+			array(
+				$this->headerLines($langs),
+				$this->renderIssueLines($langs, self::MAX_DETAILED_ISSUES),
+				$this->renderChangeLines($langs, self::MAX_DETAILED_CHANGES),
+			),
+			false
+		);
 	}
 
 	/**
@@ -468,11 +544,13 @@ final class SupplierPriceSyncReport
 	 */
 	public function buildMailBody(Translate $langs): string
 	{
-		$lines = $this->headerLines($langs);
-		$lines[] = '';
-		$lines = array_merge($lines, $this->renderChangeLines($langs, self::MAX_DETAILED_CHANGES));
-		$lines = array_merge($lines, $this->renderIssueLines($langs, null));
-
-		return implode("\n", $lines);
+		return $this->joinSections(
+			array(
+				$this->headerLines($langs),
+				$this->renderIssueLines($langs, self::MAX_DETAILED_ISSUES_MAIL),
+				$this->renderChangeLines($langs, self::MAX_DETAILED_CHANGES),
+			),
+			true
+		);
 	}
 }

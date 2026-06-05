@@ -121,7 +121,10 @@ abstract class AbstractSupplierPriceSyncCronJob
 		try {
 			$dryRun = getDolGlobalInt(SupplierPriceSyncConstants::CONST_DRY_RUN) === 1;
 			$service = new SupplierPriceSyncService($this->db);
+			$startedAt = microtime(true);
 			$report = $service->run($config, $connector, $executionUser, $dryRun);
+			$report->executedAt = (int) dol_now();
+			$report->durationSeconds = microtime(true) - $startedAt;
 
 			$this->persistLastRun($config, $report, $dryRun);
 
@@ -165,7 +168,7 @@ abstract class AbstractSupplierPriceSyncCronJob
 		$payload = json_encode(array(
 			'date' => (int) dol_now(),
 			'dryRun' => $dryRun,
-			'summary' => $report->summaryLine(),
+			'summary' => $report->compactSummary($this->langs),
 		));
 		dolibarr_set_const($this->db, $name, $payload, 'chaine', 0, '', $this->entity);
 	}
