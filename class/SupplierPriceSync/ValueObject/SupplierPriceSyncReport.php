@@ -208,6 +208,27 @@ final class SupplierPriceSyncReport
 	}
 
 	/**
+	 * Return the run counters as a flat structured array (persisted and rendered as
+	 * badges/tables; numbers, not prose, so each side can present them its own way).
+	 *
+	 * @return array<string,int>
+	 */
+	public function counts(): array
+	{
+		return array(
+			'scanned' => $this->scanned,
+			'updated' => $this->updated,
+			'created' => $this->created,
+			'closed' => $this->closed,
+			'reactivated' => $this->reactivated,
+			'unchanged' => $this->unchanged,
+			'skipped' => $this->skipped,
+			'errors' => $this->countErrors(),
+			'warnings' => $this->countWarnings(),
+		);
+	}
+
+	/**
 	 * Count blocking (error) issues.
 	 *
 	 * @return int
@@ -690,6 +711,46 @@ final class SupplierPriceSyncReport
 	}
 
 	/**
+	 * Build the summary as an email-safe table with inline styles only.
+	 *
+	 * @param Translate $langs Translator.
+	 * @return string
+	 */
+	private function summaryTableHtml(Translate $langs): string
+	{
+		// label key, value, text colour. Errors/warnings are coloured to stand out.
+		$rows = array(
+			array('CliChaumeil_SupplierPriceSyncMetricUpdated', $this->updated, '#333333'),
+			array('CliChaumeil_SupplierPriceSyncMetricCreated', $this->created, '#333333'),
+			array('CliChaumeil_SupplierPriceSyncMetricClosed', $this->closed, '#333333'),
+			array('CliChaumeil_SupplierPriceSyncMetricReactivated', $this->reactivated, '#333333'),
+			array('CliChaumeil_SupplierPriceSyncMetricUnchanged', $this->unchanged, '#888888'),
+			array('CliChaumeil_SupplierPriceSyncMetricSkipped', $this->skipped, '#888888'),
+			array('CliChaumeil_SupplierPriceSyncMetricErrors', $this->countErrors(), '#c0392b'),
+			array('CliChaumeil_SupplierPriceSyncMetricWarnings', $this->countWarnings(), '#e67e22'),
+		);
+
+		$head = $this->fillCounters($langs->transnoentities('CliChaumeil_SupplierPriceSyncSummaryHead'));
+		$html = '<table cellpadding="0" cellspacing="0" width="100%" style="border-collapse:collapse;margin-bottom:12px;font-size:13px">';
+		$html .= '<tr><td colspan="2" style="padding:8px 10px;background:#2c3e50;color:#ffffff;font-weight:bold">' . dol_escape_htmltag($head) . '</td></tr>';
+		foreach ($rows as $row) {
+			$label = dol_escape_htmltag($langs->transnoentities($row[0]));
+			$labelStyle = 'padding:5px 10px;border:1px solid #eeeeee;color:' . $row[2];
+			$valueStyle = 'padding:5px 10px;border:1px solid #eeeeee;text-align:right;font-weight:bold;color:' . $row[2];
+			$html .= sprintf(
+				'<tr><td style="%s">%s</td><td style="%s">%d</td></tr>',
+				$labelStyle,
+				$label,
+				$valueStyle,
+				(int) $row[1]
+			);
+		}
+		$html .= '</table>';
+
+		return $html;
+	}
+
+	/**
 	 * Build the HTML mail body (same content as buildMailBody(), richer presentation).
 	 *
 	 * @param Translate $langs Translator (module file loaded).
@@ -711,12 +772,8 @@ final class SupplierPriceSyncReport
 			)) . '</p>';
 		}
 
-		// Summary block (first line emphasised).
-		$summary = $this->translatedSummary($langs);
-		$html .= '<div style="margin-bottom:6px"><strong>' . dol_escape_htmltag(array_shift($summary)) . '</strong></div>';
-		foreach ($summary as $summaryLine) {
-			$html .= '<div>' . dol_escape_htmltag($summaryLine) . '</div>';
-		}
+		// Summary as an email-safe inline-styled table (classes are stripped by mail clients).
+		$html .= $this->summaryTableHtml($langs);
 
 		// Anomalies first (the reason the mail is sent), then the per-line changes.
 		$html .= $this->sectionHtml($this->renderIssueLines($langs, self::MAX_DETAILED_ISSUES_MAIL), '#c0392b');

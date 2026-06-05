@@ -365,11 +365,40 @@ if ($cronJobId > 0) {
 // Last recorded run (persisted by the cron after each execution).
 $lastRunRaw = getDolGlobalString(SupplierPriceSyncConstants::CONST_LASTRUN_PREFIX . SupplierPriceSyncConstants::SUPPLIER_ANTALIS);
 $lastRun = $lastRunRaw !== '' ? json_decode($lastRunRaw, true) : null;
-if (is_array($lastRun) && isset($lastRun['date'], $lastRun['summary'])) {
-	$dryRunTag = !empty($lastRun['dryRun']) ? ' ' . $langs->trans('CliChaumeil_AntalisLastRunDryRun') : '';
-	print '<div class="info">' . dol_escape_htmltag($langs->trans('CliChaumeil_AntalisLastRunLabel')) . ' : '
-		. dol_escape_htmltag(dol_print_date((int) $lastRun['date'], 'dayhour')) . dol_escape_htmltag($dryRunTag)
-		. ' — ' . dol_escape_htmltag((string) $lastRun['summary']) . '</div>';
+if (is_array($lastRun) && isset($lastRun['date'])) {
+	print '<div class="info">';
+	print '<strong>' . dol_escape_htmltag($langs->trans('CliChaumeil_AntalisLastRunLabel')) . '</strong> : '
+		. dol_escape_htmltag(dol_print_date((int) $lastRun['date'], 'dayhour'));
+	if (!empty($lastRun['dryRun'])) {
+		print ' <span class="badge badge-warning">' . dol_escape_htmltag($langs->trans('CliChaumeil_AntalisLastRunDryRun')) . '</span>';
+	}
+
+	if (isset($lastRun['counts']) && is_array($lastRun['counts'])) {
+		$counts = $lastRun['counts'];
+		// Action counters as coloured badges; errors/warnings stand out.
+		$badges = array(
+			array((int) ($counts['updated'] ?? 0), 'badge-info', 'CliChaumeil_SupplierPriceSyncMetricUpdated'),
+			array((int) ($counts['created'] ?? 0), 'badge-success', 'CliChaumeil_SupplierPriceSyncMetricCreated'),
+			array((int) ($counts['closed'] ?? 0), 'badge-secondary', 'CliChaumeil_SupplierPriceSyncMetricClosed'),
+			array((int) ($counts['reactivated'] ?? 0), 'badge-success', 'CliChaumeil_SupplierPriceSyncMetricReactivated'),
+			array((int) ($counts['errors'] ?? 0), 'badge-danger', 'CliChaumeil_SupplierPriceSyncMetricErrors'),
+			array((int) ($counts['warnings'] ?? 0), 'badge-warning', 'CliChaumeil_SupplierPriceSyncMetricWarnings'),
+		);
+		print '<div style="margin-top:6px">';
+		foreach ($badges as $badge) {
+			print '<span class="badge ' . $badge[1] . ' marginrightonlyshort">' . $badge[0] . ' ' . dol_escape_htmltag($langs->trans($badge[2])) . '</span> ';
+		}
+		print '</div>';
+		print '<div class="opacitymedium" style="margin-top:4px">'
+			. ((int) ($counts['scanned'] ?? 0)) . ' ' . dol_escape_htmltag($langs->trans('CliChaumeil_SupplierPriceSyncMetricScanned'))
+			. ' · ' . ((int) ($counts['unchanged'] ?? 0)) . ' ' . dol_escape_htmltag($langs->trans('CliChaumeil_SupplierPriceSyncMetricUnchanged'))
+			. ' · ' . ((int) ($counts['skipped'] ?? 0)) . ' ' . dol_escape_htmltag($langs->trans('CliChaumeil_SupplierPriceSyncMetricSkipped'))
+			. '</div>';
+	} elseif (isset($lastRun['summary'])) {
+		// Back-compat: a run persisted before the structured counts existed.
+		print ' — ' . dol_escape_htmltag((string) $lastRun['summary']);
+	}
+	print '</div>';
 } else {
 	print '<div class="opacitymedium">' . dol_escape_htmltag($langs->trans('CliChaumeil_AntalisLastRunNone')) . '</div>';
 }

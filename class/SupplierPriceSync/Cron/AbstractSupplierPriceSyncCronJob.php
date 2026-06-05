@@ -169,6 +169,7 @@ abstract class AbstractSupplierPriceSyncCronJob
 			'date' => (int) dol_now(),
 			'dryRun' => $dryRun,
 			'summary' => $report->compactSummary($this->langs),
+			'counts' => $report->counts(),
 		));
 		dolibarr_set_const($this->db, $name, $payload, 'chaine', 0, '', $this->entity);
 	}

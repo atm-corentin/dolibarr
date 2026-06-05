@@ -205,6 +205,11 @@ class SupplierPriceSyncReportTest extends CommonClassTest
 		$html = $report->buildMailBodyHtml($langs);
 		$this->assertStringContainsString('<ul', $html);
 		$this->assertStringContainsString('<li>', $html);
+		// The summary is rendered as an inline-styled table (header band + metric rows).
+		$this->assertStringContainsString('<table', $html);
+		$this->assertStringContainsString('background:#2c3e50', $html);
+		// "Erreurs" has no accent, so it survives dol_escape_htmltag unchanged.
+		$this->assertStringContainsString($langs->transnoentities('CliChaumeil_SupplierPriceSyncMetricErrors'), $html);
 		// Raw special chars from the supplier ref must be escaped, never injected as-is.
 		$this->assertStringNotContainsString('A&B<264910>', $html);
 		$this->assertStringContainsString('&lt;264910&gt;', $html);
@@ -217,6 +222,28 @@ class SupplierPriceSyncReportTest extends CommonClassTest
 		$issuesPos = strpos($html, $langs->transnoentities('CliChaumeil_SupplierPriceSyncIssuesHeader'));
 		$changesPos = strpos($html, $langs->transnoentities('CliChaumeil_SupplierPriceSyncChangesHeader'));
 		$this->assertLessThan($changesPos, $issuesPos);
+	}
+
+	/**
+	 * counts() exposes every counter, with errors/warnings derived from the issues.
+	 *
+	 * @return void
+	 */
+	public function testCountsExposesEveryCounter(): void
+	{
+		$report = new SupplierPriceSyncReport('ANTALIS');
+		$report->scanned = 50;
+		$report->incrementUpdated();
+		$report->incrementCreated();
+		$report->addIssue(new SupplierPriceSyncIssue(SupplierPriceSyncIssue::SEVERITY_ERROR, 'X', ''));
+		$report->addIssue(new SupplierPriceSyncIssue(SupplierPriceSyncIssue::SEVERITY_WARNING, 'Y', ''));
+
+		$counts = $report->counts();
+		$this->assertSame(50, $counts['scanned']);
+		$this->assertSame(1, $counts['updated']);
+		$this->assertSame(1, $counts['created']);
+		$this->assertSame(1, $counts['errors']);
+		$this->assertSame(1, $counts['warnings']);
 	}
 
 	/**
