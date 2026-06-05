@@ -464,6 +464,21 @@ CLICHAUMEIL_SUPPLIER_PRICE_SYNC_MAX_CLOSURE_RATIOTooltip=Quand ANTALIS ne renvoi
 CLICHAUMEIL_SUPPLIER_PRICE_SYNC_PRODUCT_LIMIT=Limite de réfs traitées (0 = toutes, pour tests)
 CLICHAUMEIL_SUPPLIER_PRICE_SYNC_PRODUCT_LIMITTooltip=Pour les tests uniquement : limite le nombre de références interrogées par exécution, afin de raccourcir un essai (sinon un run complet dure plusieurs heures). 0 = catalogue complet. À remettre à 0 en production.
 CliChaumeil_AntalisProductLimitBanner=Limite de test active : seules les %s premières références sont synchronisées. Remettez la limite à 0 pour traiter le catalogue complet.
+CLICHAUMEIL_SUPPLIER_PRICE_SYNC_MAIL_POLICY=Notifier par e-mail
+CLICHAUMEIL_SUPPLIER_PRICE_SYNC_MAIL_POLICYTooltip=Choisit quand un e-mail de rapport est envoyé aux destinataires ci-dessous. « Jamais » : aucun envoi. « Erreurs uniquement » : seulement en cas d'erreur bloquante. « Erreurs + avertissements » (recommandé) : aussi pour les anomalies non bloquantes (unité non mappée, prix négocié manquant…). « Toujours » : à chaque exécution (récapitulatif).
+CLICHAUMEIL_SUPPLIER_PRICE_SYNC_MAIL_RECIPIENTS=Destinataires des e-mails (séparés par ;)
+CLICHAUMEIL_SUPPLIER_PRICE_SYNC_MAIL_RECIPIENTSTooltip=Adresses e-mail recevant le rapport, séparées par des points-virgules (ex. achats@exemple.fr;responsable@exemple.fr). Si ce champ est vide, le paramètre de la tâche planifiée est utilisé en repli.
+CliChaumeil_AntalisMailPolicyNever=Jamais
+CliChaumeil_AntalisMailPolicyErrors=Erreurs uniquement
+CliChaumeil_AntalisMailPolicyErrorsWarnings=Erreurs + avertissements
+CliChaumeil_AntalisMailPolicyAlways=Toujours (à chaque exécution)
+CliChaumeil_AntalisTestMailButton=Envoyer un mail de test
+CliChaumeil_AntalisTestMailHint=Envoie un rapport d'exemple aux destinataires configurés pour vérifier la réception.
+CliChaumeil_AntalisTestMailOk=Mail de test envoyé à %s destinataire(s).
+CliChaumeil_AntalisTestMailKo=Échec de l'envoi du mail de test. Vérifiez l'adresse d'expéditeur (MAIN_MAIL_EMAIL_FROM) et la configuration e-mail.
+CliChaumeil_AntalisTestMailNoRecipient=Renseignez d'abord au moins un destinataire dans « Destinataires des e-mails ».
+CliChaumeil_AntalisTestMailInvalidRecipient=Adresse destinataire invalide.
+CliChaumeil_AntalisTestMailSampleProduct=PRODUIT-EXEMPLE
 CliChaumeil_AntalisPasswordHint=Laisser vide pour conserver le mot de passe actuel.
 CliChaumeil_AntalisPasswordConfigured=Un mot de passe est actuellement configuré.
 CliChaumeil_AntalisPriceSyncCronLabel=MAJ prix d'achats ANTALIS

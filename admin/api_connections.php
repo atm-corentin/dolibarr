@@ -61,6 +61,9 @@ require_once __DIR__ . '/../class/SupplierPriceSync/ValueObject/SupplierProductR
 require_once __DIR__ . '/../class/SupplierPriceSync/Antalis/AntalisConnectorConfig.php';
 require_once __DIR__ . '/../class/SupplierPriceSync/Antalis/AntalisCustomerPricesConnector.php';
 require_once __DIR__ . '/../class/SupplierPriceSync/Antalis/AntalisOrderUnitMapper.php';
+require_once __DIR__ . '/../class/SupplierPriceSync/ValueObject/CronRecipients.php';
+require_once __DIR__ . '/../class/SupplierPriceSync/ValueObject/SupplierPriceSyncReport.php';
+require_once __DIR__ . '/../class/SupplierPriceSync/Service/SupplierPriceSyncMailer.php';
 
 /**
  * @var Conf $conf
@@ -115,6 +118,14 @@ $formSetup->newItem('CliChaumeil_AntalisSectionBehaviour')->setAsTitle();
 $formSetup->newItem(SupplierPriceSyncConstants::CONST_DRY_RUN)->setAsYesNo();
 $formSetup->newItem(SupplierPriceSyncConstants::CONST_MAX_CLOSURE_RATIO)->setAsString();
 $formSetup->newItem(SupplierPriceSyncConstants::CONST_PRODUCT_LIMIT)->setAsString();
+$mailPolicyOptions = array(
+	SupplierPriceSyncConstants::MAIL_POLICY_NEVER => $langs->trans('CliChaumeil_AntalisMailPolicyNever'),
+	SupplierPriceSyncConstants::MAIL_POLICY_ERRORS => $langs->trans('CliChaumeil_AntalisMailPolicyErrors'),
+	SupplierPriceSyncConstants::MAIL_POLICY_ERRORS_WARNINGS => $langs->trans('CliChaumeil_AntalisMailPolicyErrorsWarnings'),
+	SupplierPriceSyncConstants::MAIL_POLICY_ALWAYS => $langs->trans('CliChaumeil_AntalisMailPolicyAlways'),
+);
+$formSetup->newItem(SupplierPriceSyncConstants::CONST_MAIL_POLICY)->setAsSelect($mailPolicyOptions);
+$formSetup->newItem(SupplierPriceSyncConstants::CONST_MAIL_RECIPIENTS)->setAsString();
 
 /*
  * Actions
@@ -162,6 +173,39 @@ if ($action == 'testantalisconnection' && !empty($user->admin)) {
 		setEventMessages($langs->trans('CliChaumeil_AntalisTestConnectionMissingConfig'), null, 'warnings');
 	} catch (Throwable $exception) {
 		setEventMessages($langs->trans('CliChaumeil_AntalisTestConnectionKo') . ' (' . dol_trunc($exception->getMessage(), 200) . ')', null, 'errors');
+	}
+
+	header('Location: ' . $_SERVER["PHP_SELF"]);
+	exit;
+}
+
+if ($action == 'sendtestantalismail' && !empty($user->admin)) {
+	// Send a sample report to the configured recipients to validate delivery
+	// (sender, SMTP, addresses) without having to wait for a failing nightly run.
+	$rawRecipients = getDolGlobalString(SupplierPriceSyncConstants::CONST_MAIL_RECIPIENTS);
+	try {
+		$testRecipients = CronRecipients::fromRaw($rawRecipients);
+		if ($testRecipients->isEmpty()) {
+			setEventMessages($langs->trans('CliChaumeil_AntalisTestMailNoRecipient'), null, 'warnings');
+		} else {
+			$testReport = new SupplierPriceSyncReport(SupplierPriceSyncConstants::SUPPLIER_ANTALIS);
+			$testReport->dryRun = true;
+			$testReport->recordChange(
+				SupplierPriceSyncConstants::CHANGE_UPDATE,
+				$langs->trans('CliChaumeil_AntalisTestMailSampleProduct'),
+				'',
+				1.0,
+				0.95,
+				'Feuille'
+			);
+			if ((new SupplierPriceSyncMailer())->send($testReport, $testRecipients, $langs)) {
+				setEventMessages($langs->trans('CliChaumeil_AntalisTestMailOk', count($testRecipients->all())), null, 'mesgs');
+			} else {
+				setEventMessages($langs->trans('CliChaumeil_AntalisTestMailKo'), null, 'errors');
+			}
+		}
+	} catch (InvalidArgumentException $exception) {
+		setEventMessages($langs->trans('CliChaumeil_AntalisTestMailInvalidRecipient') . ' (' . dol_trunc($exception->getMessage(), 120) . ')', null, 'errors');
 	}
 
 	header('Location: ' . $_SERVER["PHP_SELF"]);
@@ -230,6 +274,16 @@ print '<input type="hidden" name="token" value="' . newToken() . '">';
 print '<input type="hidden" name="action" value="testantalisconnection">';
 print '<input type="submit" class="button button-save" value="' . dol_escape_htmltag($langs->trans('CliChaumeil_AntalisTestConnectionButton')) . '">';
 print ' <span class="opacitymedium">' . $langs->trans('CliChaumeil_AntalisTestConnectionHint') . '</span>';
+print '</form>';
+print '<br>';
+
+// "Send test email" button: deliver a sample report to the configured recipients
+// to validate sender/SMTP/addresses without waiting for a failing nightly run.
+print '<form method="POST" action="' . dol_escape_htmltag($_SERVER["PHP_SELF"]) . '">';
+print '<input type="hidden" name="token" value="' . newToken() . '">';
+print '<input type="hidden" name="action" value="sendtestantalismail">';
+print '<input type="submit" class="button button-save" value="' . dol_escape_htmltag($langs->trans('CliChaumeil_AntalisTestMailButton')) . '">';
+print ' <span class="opacitymedium">' . $langs->trans('CliChaumeil_AntalisTestMailHint') . '</span>';
 print '</form>';
 print '<br>';
 

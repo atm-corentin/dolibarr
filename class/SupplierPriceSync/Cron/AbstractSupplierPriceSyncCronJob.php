@@ -92,8 +92,13 @@ abstract class AbstractSupplierPriceSyncCronJob
 	{
 		$executionUser = $this->resolveUser();
 
+		// Recipients come from the admin config constant; the cron parameter is kept
+		// as a back-compatible fallback when the constant is empty.
+		$configuredRecipients = getDolGlobalString(SupplierPriceSyncConstants::CONST_MAIL_RECIPIENTS);
+		$rawRecipients = trim($configuredRecipients) !== '' ? $configuredRecipients : $recipientsRaw;
+
 		try {
-			$recipients = CronRecipients::fromRaw($recipientsRaw);
+			$recipients = CronRecipients::fromRaw($rawRecipients);
 		} catch (InvalidArgumentException $exception) {
 			$this->error = $exception->getMessage();
 			$this->output = $this->langs->trans('CliChaumeil_SupplierPriceSync_INVALID_CRON_RECIPIENT');
@@ -122,7 +127,11 @@ abstract class AbstractSupplierPriceSyncCronJob
 
 			// Send the mail before building the output so mail-sending issues
 			// (invalid sender, send failure) are reflected in the cron output.
-			if ($report->hasFailures() && !$recipients->isEmpty()) {
+			$mailPolicy = getDolGlobalString(
+				SupplierPriceSyncConstants::CONST_MAIL_POLICY,
+				SupplierPriceSyncConstants::DEFAULT_MAIL_POLICY
+			);
+			if ($report->shouldNotify($mailPolicy) && !$recipients->isEmpty()) {
 				$mailer = new SupplierPriceSyncMailer();
 				$mailer->send($report, $recipients, $this->langs);
 			}

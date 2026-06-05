@@ -23,6 +23,7 @@
 
 declare(strict_types=1);
 
+require_once __DIR__ . '/../SupplierPriceSyncConstants.php';
 require_once __DIR__ . '/SupplierPriceSyncIssue.php';
 
 /**
@@ -220,6 +221,27 @@ final class SupplierPriceSyncReport
 	public function countWarnings(): int
 	{
 		return count($this->issues) - $this->countErrors();
+	}
+
+	/**
+	 * Decide whether the report should be emailed, given the configured policy.
+	 *
+	 * @param string $policy One of SupplierPriceSyncConstants::MAIL_POLICY_*.
+	 * @return bool
+	 */
+	public function shouldNotify(string $policy): bool
+	{
+		switch ($policy) {
+			case SupplierPriceSyncConstants::MAIL_POLICY_NEVER:
+				return false;
+			case SupplierPriceSyncConstants::MAIL_POLICY_ALWAYS:
+				return true;
+			case SupplierPriceSyncConstants::MAIL_POLICY_ERRORS_WARNINGS:
+				return $this->countErrors() > 0 || $this->countWarnings() > 0;
+			case SupplierPriceSyncConstants::MAIL_POLICY_ERRORS:
+			default:
+				return $this->countErrors() > 0;
+		}
 	}
 
 	/**

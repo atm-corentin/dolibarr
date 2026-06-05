@@ -63,6 +63,18 @@ final class SupplierPriceSyncConstants
 	/** @var int Default max share (%) of scanned lines that a single run may close. */
 	public const DEFAULT_MAX_CLOSURE_RATIO = 50;
 
+	// --- Mail notification policy (when to email the report) ---
+	/** @var string Never send the report email. */
+	public const MAIL_POLICY_NEVER = 'never';
+	/** @var string Email only when blocking errors occurred. */
+	public const MAIL_POLICY_ERRORS = 'errors';
+	/** @var string Email when errors or warnings occurred. */
+	public const MAIL_POLICY_ERRORS_WARNINGS = 'errors_warnings';
+	/** @var string Email after every run (recap). */
+	public const MAIL_POLICY_ALWAYS = 'always';
+	/** @var string Default mail policy. */
+	public const DEFAULT_MAIL_POLICY = self::MAIL_POLICY_ERRORS_WARNINGS;
+
 	/** @var int Number of SOAP retries on a transient fault (1 => two attempts total). */
 	public const SOAP_RETRIES = 1;
 
@@ -142,6 +154,10 @@ final class SupplierPriceSyncConstants
 	public const CONST_MAX_CLOSURE_RATIO = 'CLICHAUMEIL_SUPPLIER_PRICE_SYNC_MAX_CLOSURE_RATIO';
 	/** @var string Test knob: cap the number of products processed per run (0 = whole catalogue). */
 	public const CONST_PRODUCT_LIMIT = 'CLICHAUMEIL_SUPPLIER_PRICE_SYNC_PRODUCT_LIMIT';
+	/** @var string Report email recipients (';'-separated); falls back to the cron parameter. */
+	public const CONST_MAIL_RECIPIENTS = 'CLICHAUMEIL_SUPPLIER_PRICE_SYNC_MAIL_RECIPIENTS';
+	/** @var string When to email the report (one of MAIL_POLICY_*). */
+	public const CONST_MAIL_POLICY = 'CLICHAUMEIL_SUPPLIER_PRICE_SYNC_MAIL_POLICY';
 	/** @var string Prefix of the per-supplier persisted "last run" constant (suffix = supplier code). */
 	public const CONST_LASTRUN_PREFIX = 'CLICHAUMEIL_SUPPLIER_PRICE_SYNC_LASTRUN_';
 

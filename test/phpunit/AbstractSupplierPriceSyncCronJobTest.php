@@ -237,6 +237,8 @@ class AbstractSupplierPriceSyncCronJobTest extends CommonClassTest
 		// so an ambient dry-run flag or product limit cannot skew the assertions.
 		$conf->global->{SupplierPriceSyncConstants::CONST_DRY_RUN} = 0;
 		$conf->global->{SupplierPriceSyncConstants::CONST_PRODUCT_LIMIT} = 0;
+		$conf->global->{SupplierPriceSyncConstants::CONST_MAIL_RECIPIENTS} = '';
+		$conf->global->{SupplierPriceSyncConstants::CONST_MAIL_POLICY} = SupplierPriceSyncConstants::MAIL_POLICY_ERRORS;
 
 		$cron = new TestableSupplierPriceSyncCronJob($db);
 		$cron->injectedConfig = new CronTestConfig($this->supplierId);
@@ -325,5 +327,25 @@ class AbstractSupplierPriceSyncCronJobTest extends CommonClassTest
 		$result = $cron->run('');
 
 		$this->assertSame(-1, $result);
+	}
+
+	/**
+	 * The mail recipients are read from the config constant (here: invalid => -1).
+	 *
+	 * @return void
+	 */
+	public function testRecipientsReadFromConfigConstant(): void
+	{
+		global $conf;
+		$this->createLine();
+		$cron = $this->buildCron(new SupplierPriceGridFetchResult(array(), array(), false));
+
+		$key = SupplierPriceSyncConstants::CONST_MAIL_RECIPIENTS;
+		$conf->global->$key = 'not-an-email';
+		try {
+			$this->assertSame(-1, $cron->run(''));
+		} finally {
+			$conf->global->$key = '';
+		}
 	}
 }

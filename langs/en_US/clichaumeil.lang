@@ -458,6 +458,21 @@ CLICHAUMEIL_SUPPLIER_PRICE_SYNC_MAX_CLOSURE_RATIOTooltip=When ANTALIS no longer 
 CLICHAUMEIL_SUPPLIER_PRICE_SYNC_PRODUCT_LIMIT=Processed refs limit (0 = all, for testing)
 CLICHAUMEIL_SUPPLIER_PRICE_SYNC_PRODUCT_LIMITTooltip=For testing only: caps the number of references queried per run to shorten a trial (a full run otherwise takes hours). 0 = whole catalogue. Reset to 0 in production.
 CliChaumeil_AntalisProductLimitBanner=Test limit active: only the first %s references are synchronised. Reset the limit to 0 to process the whole catalogue.
+CLICHAUMEIL_SUPPLIER_PRICE_SYNC_MAIL_POLICY=Email notification
+CLICHAUMEIL_SUPPLIER_PRICE_SYNC_MAIL_POLICYTooltip=Chooses when a report email is sent to the recipients below. "Never": no email. "Errors only": only on a blocking error. "Errors + warnings" (recommended): also for non-blocking anomalies (unmapped unit, missing negotiated price...). "Always": after every run (recap).
+CLICHAUMEIL_SUPPLIER_PRICE_SYNC_MAIL_RECIPIENTS=Email recipients (separated by ;)
+CLICHAUMEIL_SUPPLIER_PRICE_SYNC_MAIL_RECIPIENTSTooltip=Email addresses receiving the report, separated by semicolons (e.g. buying@example.com;manager@example.com). If empty, the scheduled task parameter is used as a fallback.
+CliChaumeil_AntalisMailPolicyNever=Never
+CliChaumeil_AntalisMailPolicyErrors=Errors only
+CliChaumeil_AntalisMailPolicyErrorsWarnings=Errors + warnings
+CliChaumeil_AntalisMailPolicyAlways=Always (every run)
+CliChaumeil_AntalisTestMailButton=Send a test email
+CliChaumeil_AntalisTestMailHint=Sends a sample report to the configured recipients to check delivery.
+CliChaumeil_AntalisTestMailOk=Test email sent to %s recipient(s).
+CliChaumeil_AntalisTestMailKo=Test email sending failed. Check the sender address (MAIN_MAIL_EMAIL_FROM) and email configuration.
+CliChaumeil_AntalisTestMailNoRecipient=Set at least one recipient in "Email recipients" first.
+CliChaumeil_AntalisTestMailInvalidRecipient=Invalid recipient address.
+CliChaumeil_AntalisTestMailSampleProduct=SAMPLE-PRODUCT
 CliChaumeil_AntalisPasswordHint=Leave empty to keep the current password.
 CliChaumeil_AntalisPasswordConfigured=A password is currently configured.
 CliChaumeil_AntalisPriceSyncCronLabel=ANTALIS purchase price update

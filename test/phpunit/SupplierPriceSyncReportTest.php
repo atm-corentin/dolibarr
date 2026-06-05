@@ -134,4 +134,29 @@ class SupplierPriceSyncReportTest extends CommonClassTest
 		$this->assertStringContainsString('Feuille', $out);
 		$this->assertSame(1, $report->countChanges());
 	}
+
+	/**
+	 * shouldNotify() honours each mail policy against errors/warnings/clean runs.
+	 *
+	 * @return void
+	 */
+	public function testShouldNotifyHonoursPolicy(): void
+	{
+		$clean = new SupplierPriceSyncReport('ANTALIS');
+		$warned = new SupplierPriceSyncReport('ANTALIS');
+		$warned->addIssue(new SupplierPriceSyncIssue(SupplierPriceSyncIssue::SEVERITY_WARNING, 'X', ''));
+		$failed = new SupplierPriceSyncReport('ANTALIS');
+		$failed->addIssue(new SupplierPriceSyncIssue(SupplierPriceSyncIssue::SEVERITY_ERROR, 'Y', ''));
+
+		$this->assertFalse($clean->shouldNotify(SupplierPriceSyncConstants::MAIL_POLICY_NEVER));
+		$this->assertFalse($failed->shouldNotify(SupplierPriceSyncConstants::MAIL_POLICY_NEVER));
+
+		$this->assertFalse($warned->shouldNotify(SupplierPriceSyncConstants::MAIL_POLICY_ERRORS));
+		$this->assertTrue($failed->shouldNotify(SupplierPriceSyncConstants::MAIL_POLICY_ERRORS));
+
+		$this->assertFalse($clean->shouldNotify(SupplierPriceSyncConstants::MAIL_POLICY_ERRORS_WARNINGS));
+		$this->assertTrue($warned->shouldNotify(SupplierPriceSyncConstants::MAIL_POLICY_ERRORS_WARNINGS));
+
+		$this->assertTrue($clean->shouldNotify(SupplierPriceSyncConstants::MAIL_POLICY_ALWAYS));
+	}
 }

@@ -43,12 +43,12 @@ final class SupplierPriceSyncMailer
 	 * @param SupplierPriceSyncReport $report     Run report.
 	 * @param CronRecipients          $recipients Validated recipients.
 	 * @param Translate               $langs      Translator (module file loaded).
-	 * @return void
+	 * @return bool True when the mail was sent, false otherwise (nothing to send, invalid sender, send failure).
 	 */
-	public function send(SupplierPriceSyncReport $report, CronRecipients $recipients, Translate $langs): void
+	public function send(SupplierPriceSyncReport $report, CronRecipients $recipients, Translate $langs): bool
 	{
 		if ($recipients->isEmpty()) {
-			return;
+			return false;
 		}
 
 		$from = getDolGlobalString('MAIN_MAIL_EMAIL_FROM');
@@ -60,7 +60,7 @@ final class SupplierPriceSyncMailer
 				''
 			));
 
-			return;
+			return false;
 		}
 
 		$subject = $report->buildMailSubject($langs);
@@ -76,6 +76,10 @@ final class SupplierPriceSyncMailer
 				SupplierPriceSyncConstants::ISSUE_MAIL_FAILED,
 				$mail->error
 			));
+
+			return false;
 		}
+
+		return true;
 	}
 }
