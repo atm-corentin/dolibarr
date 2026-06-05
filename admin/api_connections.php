@@ -122,13 +122,14 @@ $mailPolicyItem->defaultFieldValue = SupplierPriceSyncConstants::DEFAULT_MAIL_PO
 $mailPolicyItem->setAsSelect($mailPolicyOptions);
 $globalFormSetup->newItem(SupplierPriceSyncConstants::CONST_MAIL_RECIPIENTS)->setAsString();
 
-// ANTALIS connector — "Connection" sub-block (identity: who/where we connect).
-// The HTTP password is deliberately NOT managed by FormSetup: FormSetup renders the
-// stored value in the HTML "value" attribute (clear text in the page source); it is
-// handled by a dedicated, never-prefilled form rendered right after this block so all
-// connection credentials stay grouped together.
+// ANTALIS connector configuration: a single FormSetup with two titled sections
+// (connection identity, then run behaviour) saved by one button. The HTTP password is
+// deliberately NOT managed by FormSetup: FormSetup renders the stored value in the HTML
+// "value" attribute (clear text in the page source); it is handled by a dedicated,
+// never-prefilled form rendered after this block.
 $formSetup = new FormSetup($db);
-$formSetup->htmlOutputMoreButton = '<span class="opacitymedium paddingright">' . dol_escape_htmltag($langs->trans('CliChaumeil_ScopeConnection')) . '</span>';
+$formSetup->htmlOutputMoreButton = '<span class="opacitymedium paddingright">' . dol_escape_htmltag($langs->trans('CliChaumeil_ScopeConnector')) . '</span>';
+// Section 1: connection identity (who/where we connect).
 $formSetup->newItem('CliChaumeil_AntalisSectionConnection')->setAsTitle();
 $formSetup->newItem(SupplierPriceSyncConstants::CONST_BASE_URL)->setAsString();
 $formSetup->newItem(SupplierPriceSyncConstants::CONST_HTTP_LOGIN)->setAsString();
@@ -136,16 +137,11 @@ $formSetup->newItem(SupplierPriceSyncConstants::CONST_THIRDPARTY_ID)->setAsSelec
 $formSetup->newItem(SupplierPriceSyncConstants::CONST_CUSTOMER_ID)->setAsString();
 $formSetup->newItem(SupplierPriceSyncConstants::CONST_USER_CODE)->setAsString();
 $formSetup->newItem(SupplierPriceSyncConstants::CONST_DELIVERY_ADDRESS_ID)->setAsString();
-
-// ANTALIS connector — "Behaviour" sub-block (how this connector's sync runs). Its own
-// form action so saving behaviour never blanks the connection fields, and vice versa.
-$behaviourFormSetup = new FormSetup($db);
-$behaviourFormSetup->formHiddenInputs['action'] = 'updatebehaviour';
-$behaviourFormSetup->htmlOutputMoreButton = '<span class="opacitymedium paddingright">' . dol_escape_htmltag($langs->trans('CliChaumeil_ScopeBehaviour')) . '</span>';
-$behaviourFormSetup->newItem('CliChaumeil_AntalisSectionBehaviour')->setAsTitle();
-$behaviourFormSetup->newItem(SupplierPriceSyncConstants::CONST_DRY_RUN)->setAsYesNo();
-$behaviourFormSetup->newItem(SupplierPriceSyncConstants::CONST_MAX_CLOSURE_RATIO)->setAsString();
-$behaviourFormSetup->newItem(SupplierPriceSyncConstants::CONST_PRODUCT_LIMIT)->setAsString();
+// Section 2: behaviour (how this connector's sync runs).
+$formSetup->newItem('CliChaumeil_AntalisSectionBehaviour')->setAsTitle();
+$formSetup->newItem(SupplierPriceSyncConstants::CONST_DRY_RUN)->setAsYesNo();
+$formSetup->newItem(SupplierPriceSyncConstants::CONST_MAX_CLOSURE_RATIO)->setAsString();
+$formSetup->newItem(SupplierPriceSyncConstants::CONST_PRODUCT_LIMIT)->setAsString();
 
 /*
  * Actions
@@ -160,13 +156,6 @@ if ($action == 'updateglobalsettings' && !empty($user->admin)) {
 
 if ($action == 'update' && !empty($user->admin)) {
 	$formSetup->saveConfFromPost();
-
-	header('Location: ' . $_SERVER["PHP_SELF"]);
-	exit;
-}
-
-if ($action == 'updatebehaviour' && !empty($user->admin)) {
-	$behaviourFormSetup->saveConfFromPost();
 
 	header('Location: ' . $_SERVER["PHP_SELF"]);
 	exit;
@@ -318,10 +307,6 @@ if ($hasPassword) {
 }
 print '</td><td class="right"><input type="submit" class="button button-save" value="' . dol_escape_htmltag($langs->trans('Save')) . '"></td></tr>';
 print '</table></form>';
-print '<br>';
-
-// "Behaviour" sub-block, rendered after the grouped connection credentials.
-print $behaviourFormSetup->generateOutput(true);
 print '<br>';
 
 // "Test connection" button: a read-only probe so config errors surface here and
