@@ -265,17 +265,21 @@ print dol_get_fiche_head($head, 'api_connections', $langs->trans("CliChaumeil_An
 echo '<span class="opacitymedium">' . $langs->trans("CliChaumeil_AntalisApiIntro") . '</span><br><br>';
 
 // Global block: settings shared by every API connector (notification policy + recipients).
-// Wrapped in its own <details> for visual symmetry with the connector block below.
-print '<details open><summary class="cursorpointer"><strong>' . dol_escape_htmltag($langs->trans('CliChaumeil_ApiGlobalSectionTitle')) . '</strong></summary>';
-print '<div style="margin-top:10px">';
+// Same card shell as the connectors, without a status badge.
+print clichaumeilConnectorCardStart($langs->trans('CliChaumeil_ApiGlobalSectionTitle'), 'email');
 print $globalFormSetup->generateOutput(true);
-print '</div></details>';
+print clichaumeilConnectorCardEnd();
 print '<br>';
 
-// Connector section, collapsible so future connectors (GEODIS, OVOL...) each get
-// their own <details> block on this single page rather than an extra admin tab.
-print '<details open><summary class="cursorpointer"><strong>' . dol_escape_htmltag($langs->trans('CliChaumeil_AntalisConnectorSectionTitle')) . '</strong></summary>';
-print '<div style="margin-top:10px">';
+// Connector section as a reusable card (future GEODIS/OVOL connectors call the same
+// clichaumeilConnectorCardStart()/End() helpers to get the identical look).
+// Status badge: a connector is "configured" once its endpoint and secret are set.
+$antalisConfigured = getDolGlobalString(SupplierPriceSyncConstants::CONST_BASE_URL) !== ''
+	&& getDolGlobalString(SupplierPriceSyncConstants::CONST_HTTP_PASSWORD) !== '';
+$antalisBadge = $antalisConfigured
+	? '<span class="badge badge-success">' . dol_escape_htmltag($langs->trans('CliChaumeil_ConnectorConfigured')) . '</span>'
+	: '<span class="badge badge-warning">' . dol_escape_htmltag($langs->trans('CliChaumeil_ConnectorNotConfigured')) . '</span>';
+print clichaumeilConnectorCardStart($langs->trans('CliChaumeil_AntalisConnectorSectionTitle'), 'bill', $antalisBadge);
 
 // Single "test mode active" banner gathering every test-only setting currently on
 // (dry-run, product limit): they alter how THIS connector runs and must never be left
@@ -411,8 +415,8 @@ for ($helpLine = 1; $helpLine <= 7; $helpLine++) {
 }
 print '</ul></div></details>';
 
-// Close the ANTALIS connector section.
-print '</div></details>';
+// Close the ANTALIS connector card.
+print clichaumeilConnectorCardEnd();
 
 print dol_get_fiche_end();
 

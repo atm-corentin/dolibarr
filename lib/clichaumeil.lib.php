@@ -25,6 +25,45 @@ require_once DOL_DOCUMENT_ROOT . '/core/class/extrafields.class.php';
 require_once DOL_DOCUMENT_ROOT . '/core/class/translate.class.php';
 
 /**
+ * Open a collapsible "card" section (styled <details>) for the API connections page.
+ *
+ * Presentational shell only: it is reused by every API connector block (ANTALIS today,
+ * GEODIS/OVOL later). Each connector wraps its own body — which stays connector-specific
+ * — between this call and clichaumeilConnectorCardEnd(), so the look stays consistent
+ * without forcing a one-size-fits-all configuration schema on connectors that differ.
+ *
+ * @param string $title     Section title (already translated, escaped here).
+ * @param string $picto     img_picto code rendered before the title (e.g. 'bill').
+ * @param string $badgeHtml Optional trailing badge HTML built by the caller (status). Must be safe HTML.
+ * @param bool   $open      Whether the card is expanded by default.
+ * @return string HTML opening the card (must be closed with clichaumeilConnectorCardEnd()).
+ */
+function clichaumeilConnectorCardStart(string $title, string $picto, string $badgeHtml = '', bool $open = true): string
+{
+	$out = '<details' . ($open ? ' open' : '') . ' style="margin-bottom:8px">';
+	$out .= '<summary class="cursorpointer" style="padding:8px 12px;background:#f4f4f4;border:1px solid #e0e0e0;border-radius:4px">';
+	$out .= img_picto('', $picto, 'class="pictofixedwidth"');
+	$out .= '<strong>' . dol_escape_htmltag($title) . '</strong>';
+	if ($badgeHtml !== '') {
+		$out .= ' ' . $badgeHtml;
+	}
+	$out .= '</summary>';
+	$out .= '<div style="padding:12px;border:1px solid #e0e0e0;border-top:none;border-radius:0 0 4px 4px">';
+
+	return $out;
+}
+
+/**
+ * Close a card opened with clichaumeilConnectorCardStart().
+ *
+ * @return string
+ */
+function clichaumeilConnectorCardEnd(): string
+{
+	return '</div></details>';
+}
+
+/**
  * Prepare admin pages header
  *
  * @return array<array{string,string,string}>
