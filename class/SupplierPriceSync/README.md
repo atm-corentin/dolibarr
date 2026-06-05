@@ -84,11 +84,20 @@ Exemple : `OVOL`.
    `buildConnector()` (= `new OvolConnector(...)`). Rien d'autre : le `run()` est hérité.
 5. **Descripteur** — déclarer le cron dans `modClichaumeil.class.php` (`$this->cronjobs[]`)
    et ajouter la déduplication si nécessaire.
-6. **Admin** — ajouter la configuration OVOL (constantes + champs FormSetup) dans
-   `admin/api_connections.php`. Le **mot de passe** se gère hors FormSetup (formulaire
-   dédié jamais pré-rempli — cf. ANTALIS) pour ne pas exposer le secret dans la source HTML,
-   et il est stocké **chiffré** via `dolEncrypt()` (conf le déchiffre automatiquement au chargement,
-   donc `getDolGlobalString()` le renvoie en clair).
+6. **Admin** — ajouter la configuration OVOL dans `admin/api_connections.php`. Envelopper
+   le bloc dans la **carte réutilisable** : `clichaumeilConnectorCardStart($titre, $picto, $badgeStatut)`
+   … `clichaumeilConnectorCardEnd()` (habillage commun à tous les connecteurs ; le corps reste
+   propre au connecteur). Conventions :
+   - Le **mot de passe** se gère hors FormSetup (formulaire dédié jamais pré-rempli — cf. ANTALIS)
+     pour ne pas exposer le secret dans la source HTML, et il est stocké **chiffré** via
+     `dolEncrypt()` (conf le déchiffre au chargement, donc `getDolGlobalString()` le renvoie en clair).
+   - **Réglages communs** (politique de notification mail + destinataires) : ils sont **transverses**
+     à tous les connecteurs → bloc global en haut de page, ne pas les redéfinir par connecteur.
+   - **Piège FormSetup** : `saveConfFromPost()` réécrit *tous* les items du FormSetup avec `GETPOST`
+     (vide si absent). Deux FormSetup sur la même page **doivent** avoir une action distincte
+     (`$formSetup->formHiddenInputs['action']`) sinon l'enregistrement de l'un vide les champs de l'autre.
+   - Un `select` à valeur par défaut : poser `$item->defaultFieldValue` (appliqué quand la constante
+     est *non définie*) pour que l'affichage corresponde au comportement réel du cron.
 7. **Langues** — clés `fr_FR` + `en_US` (libellés des constantes, label/commentaire du cron).
    Les messages d'anomalie `CliChaumeil_SupplierPriceSync_<CODE>` sont **partagés** et déjà
    traduits : un nouveau connecteur les réutilise automatiquement.
@@ -108,17 +117,25 @@ permet de tester le Service sans API réelle.
    login/mot de passe HTTP, identifiant client, code utilisateur, adresse de livraison,
    et tiers fournisseur ANTALIS. Survoler l'icône d'info de chaque champ pour le détail.
 2. **Tester la connexion** — bouton *Tester la connexion* : doit répondre OK.
-3. **Activer la simulation** — passer `CLICHAUMEIL_SUPPLIER_PRICE_SYNC_DRY_RUN` à 1.
-   En simulation, le run calcule tout mais n'écrit rien.
-4. **Lancer la tâche manuellement** — page *Cron*, exécuter la tâche ANTALIS une fois.
-   ⚠️ Le run complet dure ~2,6 h (catalogue entier, lots de 10). La progression est
-   visible dans le syslog (heartbeat tous les 25 lots).
-5. **Relire le rapport** — le résumé et les anomalies apparaissent dans la sortie du cron
-   et sur la page de configuration (ligne *Dernière synchronisation*). Vérifier :
+3. **Réglages communs** — bloc *Réglages communs à toutes les connexions API* :
+   politique de notification (*Notifier par mail*) et destinataires. Par défaut le cron
+   notifie sur erreurs + alertes.
+4. **Activer la simulation** — passer `CLICHAUMEIL_SUPPLIER_PRICE_SYNC_DRY_RUN` à 1.
+   En simulation, le run calcule tout mais n'écrit rien (sujet de mail préfixé `[SIMULATION]`).
+5. **Échantillon rapide (recommandé pour la 1re validation)** — poser
+   `CLICHAUMEIL_SUPPLIER_PRICE_SYNC_PRODUCT_LIMIT=10` : le run ne traite que les 10 premiers
+   produits (≈ secondes au lieu de ~2,6 h), une bannière l'indique sur la page de conf.
+   Valider le rapport sur cet échantillon, puis remettre la limite à 0 pour le run complet.
+6. **Lancer la tâche manuellement** — page *Cron*, exécuter la tâche ANTALIS une fois.
+   ⚠️ Le run complet (limite à 0) dure ~2,6 h (catalogue entier, lots de 10). La progression
+   est visible dans le syslog (heartbeat tous les 25 lots).
+7. **Relire le rapport** — le résumé et les anomalies apparaissent dans la sortie du cron
+   et sur la page de configuration (ligne *Dernière synchronisation* : badges colorés). Vérifier :
    unités correctement mappées (pas de `UNMAPPED_ORDER_UNIT` massif, ex. `PAK`),
    absence d'erreurs systémiques, volume d'updates cohérent.
-6. **Désactiver la simulation** — remettre `CLICHAUMEIL_SUPPLIER_PRICE_SYNC_DRY_RUN` à 0.
-7. **Activer le cron** — planifier la tâche en horaire nocturne.
+8. **Désactiver la simulation** — remettre `CLICHAUMEIL_SUPPLIER_PRICE_SYNC_DRY_RUN` à 0
+   et `CLICHAUMEIL_SUPPLIER_PRICE_SYNC_PRODUCT_LIMIT` à 0.
+9. **Activer le cron** — planifier la tâche en horaire nocturne.
 
 **Résilience** : un fault SOAP transitoire est rejoué une fois (backoff 3 s) ; un lot en échec
 n'interrompt pas le run, sauf 5 lots consécutifs en échec (disjoncteur → arrêt propre, reprise
