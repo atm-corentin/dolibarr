@@ -464,6 +464,29 @@ class SupplierPriceSyncServiceTest extends CommonClassTest
 	}
 
 	/**
+	 * Re-running on identical data is idempotent: the supplier price has more decimals
+	 * than Dolibarr stores, so without rounding the comparison to the persisted precision
+	 * every run would re-update the same line. The first run aligns the price, the second
+	 * must change nothing.
+	 *
+	 * @return void
+	 */
+	public function testReRunIsIdempotent(): void
+	{
+		$this->createLine(0.05);
+		$grid = $this->foundGrid(array(
+			new SupplierPriceTier($this->quantity, '', 0.0320901234),
+		));
+
+		$first = $this->runService($grid);
+		$this->assertSame(1, $first->updated);
+
+		$second = $this->runService($grid);
+		$this->assertSame(0, $second->updated);
+		$this->assertSame(1, $second->unchanged);
+	}
+
+	/**
 	 * An absent grid deactivates the active lines.
 	 *
 	 * @return void

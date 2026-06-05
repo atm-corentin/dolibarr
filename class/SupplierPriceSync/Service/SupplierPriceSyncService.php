@@ -345,9 +345,12 @@ final class SupplierPriceSyncService
 		SupplierPriceSyncReport $report
 	): void {
 		$unit = $tier->unitLabel !== '' ? $tier->unitLabel : $candidate->packagingUnit;
+		// Round to the precision Dolibarr persists, otherwise the stored 4/5-decimal price
+		// never equals the raw division and every run re-updates the same line.
+		$normalizedPrice = $this->roundUnitPrice($tier->normalizedUnitPrice);
 
-		if ($this->priceDiffers($candidate->currentUnitPrice, $tier->normalizedUnitPrice)) {
-			if (!$this->dryRun && !$this->updateBuyPrice($candidate, $tier->normalizedUnitPrice, $user)) {
+		if ($this->priceDiffers($candidate->currentUnitPrice, $normalizedPrice)) {
+			if (!$this->dryRun && !$this->updateBuyPrice($candidate, $normalizedPrice, $user)) {
 				$report->addIssue($this->updateFailedIssue($candidate->supplierRef, $candidate->productRef, $candidate->quantity));
 
 				return;
@@ -358,7 +361,7 @@ final class SupplierPriceSyncService
 				$candidate->supplierRef,
 				$candidate->productRef,
 				$candidate->currentUnitPrice,
-				$tier->normalizedUnitPrice,
+				$normalizedPrice,
 				$unit,
 				$candidate->productId
 			);
@@ -450,6 +453,9 @@ final class SupplierPriceSyncService
 		User $user,
 		SupplierPriceSyncReport $report
 	): void {
+		// Round to the persisted precision so a re-run sees no spurious difference.
+		$normalizedPrice = $this->roundUnitPrice($tier->normalizedUnitPrice);
+
 		if ($this->dryRun) {
 			$report->incrementCreated();
 			$report->recordChange(
@@ -457,7 +463,7 @@ final class SupplierPriceSyncService
 				$product->supplierRef,
 				$product->productRef,
 				null,
-				$tier->normalizedUnitPrice,
+				$normalizedPrice,
 				$tier->unitLabel,
 				$product->productId
 			);
@@ -500,7 +506,7 @@ final class SupplierPriceSyncService
 			SupplierPriceSyncConstants::STATUS_ACTIVE
 		);
 
-		if (!$this->updateBuyPrice($candidate, $tier->normalizedUnitPrice, $user)) {
+		if (!$this->updateBuyPrice($candidate, $normalizedPrice, $user)) {
 			$this->db->rollback();
 			$report->addIssue($this->updateFailedIssue($product->supplierRef, $product->productRef, $tier->quantity));
 
@@ -522,7 +528,7 @@ final class SupplierPriceSyncService
 				$product->supplierRef,
 				$product->productRef,
 				null,
-				$tier->normalizedUnitPrice,
+				$normalizedPrice,
 				$tier->unitLabel,
 				$product->productId
 			);
@@ -533,7 +539,7 @@ final class SupplierPriceSyncService
 				$product->supplierRef,
 				$product->productRef,
 				null,
-				$tier->normalizedUnitPrice,
+				$normalizedPrice,
 				$tier->unitLabel,
 				$product->productId
 			);
@@ -676,6 +682,20 @@ final class SupplierPriceSyncService
 	private function priceDiffers(float $current, float $candidate): bool
 	{
 		return abs($current - $candidate) > SupplierPriceSyncConstants::PRICE_EPSILON;
+	}
+
+	/**
+	 * Round a unit price to the precision Dolibarr actually persists
+	 * (MAIN_MAX_DECIMALS_UNIT, via price2num 'MU'). Comparing and writing the raw
+	 * supplier division (more decimals than stored) would make every run re-update the
+	 * same line; rounding first keeps the synchronisation idempotent.
+	 *
+	 * @param float $price Raw unit price.
+	 * @return float
+	 */
+	private function roundUnitPrice(float $price): float
+	{
+		return (float) price2num($price, 'MU');
 	}
 
 	/**
