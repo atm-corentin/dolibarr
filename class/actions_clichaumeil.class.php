@@ -90,8 +90,6 @@ class ActionsClichaumeil extends CommonHookActions
 
 	private const PROPAL_CARD_CONTEXT = 'propalcard';
 
-	private const ORDER_CARD_CONTEXT = 'ordercard';
-
 	private const PROPAL_LIST_CONTEXT = 'propallist';
 
 	private const VALIDATE_ACTION = 'validate';
@@ -375,7 +373,7 @@ class ActionsClichaumeil extends CommonHookActions
 		$currentAction = GETPOST('action', 'aZ09');
 
 		if ($currentAction === self::VALIDATE_ACTION) {
-			return $this->renderMinimumMarginWarning($parameters, $object, $context);
+			return $this->renderMinimumMarginWarning($parameters, $object);
 		}
 
 		if ($currentAction !== 'clone') {
@@ -451,17 +449,15 @@ class ActionsClichaumeil extends CommonHookActions
 	 *
 	 * @param array<string,mixed> $parameters Hook parameters (must carry 'formConfirm').
 	 * @param CommonObject        $object     Current object (proposal or order).
-	 * @param string              $context    Current hook context.
 	 * @return int 1 when the modal HTML is replaced with the injected warning, 0 otherwise.
 	 */
-	private function renderMinimumMarginWarning(array $parameters, CommonObject $object, string $context): int
+	private function renderMinimumMarginWarning(array $parameters, CommonObject $object): int
 	{
 		global $langs;
 
-		if (strpos($context, self::PROPAL_CARD_CONTEXT) === false && strpos($context, self::ORDER_CARD_CONTEXT) === false) {
-			return 0;
-		}
-
+		// The formConfirm hook only fires on card pages and is already gated on
+		// action=validate; scoping on the object type (Propal/Commande) is enough
+		// without depending on which hook context executeHooks() ran us under.
 		if (!$object instanceof Propal && !$object instanceof Commande) {
 			return 0;
 		}
