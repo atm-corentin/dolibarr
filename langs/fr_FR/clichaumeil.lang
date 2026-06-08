@@ -411,6 +411,7 @@ CliChaumeil_PropalMassMarginValidationBlockedList=Les devis suivants ont un ou p
 CliChaumeil_PropalMassMarginValidationBlockedForProposal=Le devis %s a un ou plusieurs prix de vente inférieurs au prix de revient, merci d’ajuster les prix pour valider ces devis.
 CliChaumeil_PropalMarginValidationUnexpectedError=Une erreur technique est survenue lors du contrôle des marges du devis.
 CliChaumeil_PropalMassMarginValidationFetchError=Une erreur technique est survenue lors du chargement d’un devis à valider en masse.
+CliChaumeil_MinimumMarginValidationWarning=Attention ! Certaines marges sont inférieures au taux minimum souhaité !
 CliChaumeilErrorMissingFgPercent=Import impossible : le champ Frais généraux (%) est obligatoire pour le produit %s.
 CliChaumeilInfoMissingFgPercent=Calcul final non effectué : le champ Frais généraux (%) est vide.
 CLICHAUMEIL_INFO_MISSING_FG_PERCENT=Calcul final non effectué : le champ Frais généraux (%) est vide.

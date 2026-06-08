@@ -3,6 +3,7 @@
 
 ## Unreleased
 
+- NEW : R2-VT-12: Display a red bold warning in proposal and order validation modals when at least one line is below the configured Discountrules minimum margin/mark rate. *08/06/2026* - 1.17.0
 - NEW : R1-ST-8: Trigger PROPOSAL_SUPPLIER_SIGN to run the subcontractor selection workflow (create validated CF, refuse other proposals, send email) when a supplier proposal is signed from the standard Dolibarr acceptance button, not only from the custom choose-subcontractor button. *27/05/2026* - 1.16.0
 - FIX : Split the single module settings page into dedicated tabs (General, Products, Contracts, Subcontracting) with reformulated labels and tooltips for contract revision parameters. *26/05/2026* - 1.15.1
 - FIX : Remove tooltip from RFA getNomUrl links and clean up resulting dead code. *26/05/2026* - 1.15.1
