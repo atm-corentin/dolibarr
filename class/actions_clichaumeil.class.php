@@ -42,6 +42,8 @@ require_once __DIR__ . '/../lib/clichaumeil.lib.php';
 require_once DOL_DOCUMENT_ROOT . '/categories/class/categorie.class.php';
 require_once __DIR__ . '/SupplierProposalService.class.php';
 require_once __DIR__ . '/Subcontracting/CliChaumeilSupplierProposalGuard.class.php';
+require_once __DIR__ . '/CliChaumeilMinimumMarginWarningGuard.class.php';
+require_once DOL_DOCUMENT_ROOT . '/commande/class/commande.class.php';
 
 /**
  * Class ActionsClichaumeil
@@ -123,6 +125,9 @@ class ActionsClichaumeil extends CommonHookActions
 
 	/** @var CliChaumeilSupplierProposalGuard|null */
 	private $supplierProposalGuard;
+
+	/** @var CliChaumeilMinimumMarginWarningGuard|null */
+	private $minimumMarginWarningGuard;
 
 	/** @var bool|null Native propal.creer captured in restrictedArea (clichaumeil priority 40) before MC (priority 50) zeroes it. Null until the hook fires. */
 	private $nativePropalCreer = null;
@@ -365,7 +370,13 @@ class ActionsClichaumeil extends CommonHookActions
 
 		$context = (string) ($parameters['context'] ?? ($parameters['currentcontext'] ?? ''));
 
-		if (GETPOST('action', 'aZ09') !== 'clone') {
+		$currentAction = GETPOST('action', 'aZ09');
+
+		if ($currentAction === self::VALIDATE_ACTION) {
+			return $this->renderMinimumMarginWarning($parameters, $object);
+		}
+
+		if ($currentAction !== 'clone') {
 			return 0;
 		}
 
@@ -414,6 +425,87 @@ class ActionsClichaumeil extends CommonHookActions
 		);
 
 		return 1;
+	}
+
+	/**
+	 * Lazily build the minimum margin warning guard.
+	 *
+	 * @return CliChaumeilMinimumMarginWarningGuard
+	 */
+	private function getMinimumMarginWarningGuard(): CliChaumeilMinimumMarginWarningGuard
+	{
+		if ($this->minimumMarginWarningGuard === null) {
+			$this->minimumMarginWarningGuard = new CliChaumeilMinimumMarginWarningGuard($this->db);
+		}
+
+		return $this->minimumMarginWarningGuard;
+	}
+
+	/**
+	 * Inject a red bold warning into the proposal/order validation modal when at
+	 * least one line is below the configured Discountrules minimum margin/mark rate.
+	 *
+	 * UI-only: never blocks validation.
+	 *
+	 * @param array<string,mixed> $parameters Hook parameters (must carry 'formConfirm').
+	 * @param CommonObject        $object     Current object (proposal or order).
+	 * @return int 1 when the modal HTML is replaced with the injected warning, 0 otherwise.
+	 */
+	private function renderMinimumMarginWarning(array $parameters, CommonObject $object): int
+	{
+		global $langs;
+
+		// The formConfirm hook only fires on card pages and is already gated on
+		// action=validate; scoping on the object type (Propal/Commande) is enough
+		// without depending on which hook context executeHooks() ran us under.
+		if (!$object instanceof Propal && !$object instanceof Commande) {
+			return 0;
+		}
+
+		$formConfirmHtml = (string) ($parameters['formConfirm'] ?? '');
+		if ($formConfirmHtml === '') {
+			return 0;
+		}
+
+		if (!$this->getMinimumMarginWarningGuard()->hasLineBelowMinimumRate($object)) {
+			return 0;
+		}
+
+		$langs->load('clichaumeil@clichaumeil');
+		$warningHtml = $this->getMinimumMarginWarningGuard()->getWarningHtml($langs);
+
+		$this->resprints = $this->injectMinimumMarginWarningIntoFormConfirm($formConfirmHtml, $warningHtml);
+
+		return 1;
+	}
+
+	/**
+	 * Insert the warning fragment inside the formconfirm modal markup.
+	 *
+	 * The native modal markup ends the dialog container with a </div> right before
+	 * the "begin code of popup" comment; the warning is inserted before that
+	 * closing tag so it renders inside the modal. A non-destructive fallback
+	 * prepends the warning when the expected marker is missing.
+	 *
+	 * @param string $html        Native formconfirm HTML.
+	 * @param string $warningHtml Warning fragment to inject.
+	 * @return string Modified HTML.
+	 */
+	private function injectMinimumMarginWarningIntoFormConfirm(string $html, string $warningHtml): string
+	{
+		$popupMarker = '<!-- begin code of popup for formconfirm';
+		$popupPosition = strpos($html, $popupMarker);
+
+		if ($popupPosition !== false) {
+			$closingDivPosition = strrpos(substr($html, 0, $popupPosition), '</div>');
+			if ($closingDivPosition !== false) {
+				return substr($html, 0, $closingDivPosition) . $warningHtml . substr($html, $closingDivPosition);
+			}
+		}
+
+		dol_syslog(__METHOD__ . ' formconfirm popup marker not found, prepending warning as fallback', LOG_WARNING);
+
+		return $warningHtml . $html;
 	}
 
 	/**
