@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wsdl:definitions xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
+                  xmlns:stns1="urn:Services.customerPricesService.Classes"
+                  xmlns:tns="urn:customerPricesPortType"
+                  xmlns:http="http://schemas.xmlsoap.org/soap/http"
+                  xmlns:xs="http://www.w3.org/2001/XMLSchema"
+                  xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+                  xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/"
+                  name="customerPricesPortType"
+                  targetNamespace="urn:customerPricesPortType">
+   <wsdl:types>
+      <xs:schema targetNamespace="urn:Services.customerPricesService.Classes">
+         <xs:complexType name="InputParameters">
+            <xs:all>
+               <xs:element name="enquiryType" type="xs:string"/>
+               <xs:element name="userCode" type="xs:string"/>
+               <xs:element name="customerID" type="xs:string"/>
+               <xs:element name="AntalisDeliveryAddressID" type="xs:string"/>
+               <xs:element name="detailRow" type="stns1:InputDetailRowArray"/>
+            </xs:all>
+         </xs:complexType>
+         <xs:complexType name="InputDetailRow">
+            <xs:all>
+               <xs:element name="lineNr" type="xs:integer"/>
+               <xs:element name="productID" type="xs:string"/>
+            </xs:all>
+         </xs:complexType>
+         <xs:complexType name="OutputParameters">
+            <xs:all>
+               <xs:element name="enquiryType" type="xs:string"/>
+               <xs:element name="customerID" type="xs:string"/>
+               <xs:element name="AntalisDeliveryAddressID" type="xs:string"/>
+               <xs:element name="currency" type="xs:string"/>
+               <xs:element name="errorID" type="xs:string"/>
+               <xs:element name="detailRow" type="stns1:OutputDetailRowArray"/>
+            </xs:all>
+         </xs:complexType>
+         <xs:complexType name="OutputDetailRow">
+            <xs:all>
+               <xs:element name="lineNr" type="xs:integer"/>
+               <xs:element name="productID" type="xs:string"/>
+               <xs:element name="pricesValidTill" type="xs:dateTime"/>
+               <xs:element name="errorID" type="xs:string"/>
+               <xs:element name="threshold" type="stns1:OutputThresholdsArray"/>
+            </xs:all>
+         </xs:complexType>
+         <xs:complexType name="OutputThresholds">
+            <xs:all>
+               <xs:element name="lineNr" type="xs:integer"/>
+               <xs:element name="thresholdQty" type="xs:float"/>
+               <xs:element name="thresholdQtyUnit" type="xs:string"/>
+               <xs:element name="personalUnitPrice" type="xs:float"/>
+               <xs:element name="personalPriceQty" type="xs:integer"/>
+               <xs:element name="personalPriceUnit" type="xs:string"/>
+               <xs:element name="catalogUnitPrice" type="xs:float"/>
+               <xs:element name="catalogPriceQty" type="xs:integer"/>
+               <xs:element name="catalogPriceUnit" type="xs:string"/>
+            </xs:all>
+         </xs:complexType>
+         <xs:complexType name="InputDetailRowArray">
+            <xs:complexContent>
+               <xs:restriction base="soapenc:Array">
+                  <xs:attribute ref="soapenc:arrayType" wsdl:arrayType="stns1:InputDetailRow[]"/>
+               </xs:restriction>
+            </xs:complexContent>
+         </xs:complexType>
+         <xs:complexType name="OutputDetailRowArray">
+            <xs:complexContent>
+               <xs:restriction base="soapenc:Array">
+                  <xs:attribute ref="soapenc:arrayType" wsdl:arrayType="stns1:OutputDetailRow[]"/>
+               </xs:restriction>
+            </xs:complexContent>
+         </xs:complexType>
+         <xs:complexType name="OutputThresholdsArray">
+            <xs:complexContent>
+               <xs:restriction base="soapenc:Array">
+                  <xs:attribute ref="soapenc:arrayType" wsdl:arrayType="stns1:OutputThresholds[]"/>
+               </xs:restriction>
+            </xs:complexContent>
+         </xs:complexType>
+      </xs:schema>
+   </wsdl:types>
+   <wsdl:message name="customerPricesPortType_customerPricesCheck_Request">
+      <wsdl:part name="customerPricesInput" type="stns1:InputParameters"/>
+   </wsdl:message>
+   <wsdl:message name="customerPricesPortType_customerPricesCheck_Response">
+      <wsdl:part name="customerPricesOutput" type="stns1:OutputParameters"/>
+   </wsdl:message>
+   <wsdl:portType name="customerPricesPortType">
+      <wsdl:documentation>Returns stock and price info.</wsdl:documentation>
+      <wsdl:operation name="customerPricesCheck">
+         <wsdl:documentation>Returns  price info.</wsdl:documentation>
+         <wsdl:input message="tns:customerPricesPortType_customerPricesCheck_Request"/>
+         <wsdl:output message="tns:customerPricesPortType_customerPricesCheck_Response"/>
+      </wsdl:operation>
+   </wsdl:portType>
+   <wsdl:binding name="customerPricesPortType_SOAPBinding" type="tns:customerPricesPortType">
+      <soap:binding style="rpc" transport="http://schemas.xmlsoap.org/soap/http"/>
+      <wsdl:operation name="customerPricesCheck">
+         <soap:operation soapAction=""/>
+         <wsdl:input>
+            <soap:body encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"
+                       namespace="urn:Services.customerPricesService.customerPricesPortType.customerPricesPortType"
+                       use="encoded"/>
+         </wsdl:input>
+         <wsdl:output>
+            <soap:body encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"
+                       namespace="urn:Services.customerPricesService.customerPricesPortType.customerPricesPortType"
+                       use="encoded"/>
+         </wsdl:output>
+      </wsdl:operation>
+   </wsdl:binding>
+   <wsdl:service name="customerPricesPortType">
+      <wsdl:port binding="tns:customerPricesPortType_SOAPBinding" name="customerPricesPortType">
+         <soap:address location="https://etrade.antalis-commerce.com:1000/localhost/ProdSecureCustomerPrices/SOAPServiceInstance1/Services/customerPricesService/customerPricesPortType/customerPricesPortType"/>
+      </wsdl:port>
+   </wsdl:service>
+</wsdl:definitions>

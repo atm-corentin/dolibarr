@@ -20,3 +20,5 @@
 *.back
 /.editorconfig
 /.gitattributes
+# PHPUnit
+/.phpunit.result.cache
