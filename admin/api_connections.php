@@ -300,7 +300,12 @@ print '<input type="hidden" name="token" value="' . newToken() . '">';
 print '<input type="hidden" name="action" value="setantalispassword">';
 print '<table class="noborder centpercent"><tr class="liste_titre"><td>' . $form->textwithpicto($langs->trans('CLICHAUMEIL_SUPPLIER_ANTALIS_HTTP_PASSWORD'), $langs->trans('CliChaumeil_AntalisPasswordTooltip')) . '</td><td></td></tr>';
 print '<tr class="oddeven"><td>';
-print '<input type="password" name="' . SupplierPriceSyncConstants::CONST_HTTP_PASSWORD . '" value="" autocomplete="new-password" class="flat">';
+// Placeholder is a state cue only (never the real value): signals whether a password
+// is already stored, so an empty field is not mistaken for "no password configured".
+$passwordPlaceholder = $hasPassword
+	? $langs->trans('CliChaumeil_AntalisPasswordPlaceholderSet')
+	: $langs->trans('CliChaumeil_AntalisPasswordPlaceholderEmpty');
+print '<input type="password" name="' . SupplierPriceSyncConstants::CONST_HTTP_PASSWORD . '" value="" size="30" placeholder="' . dol_escape_htmltag($passwordPlaceholder) . '" autocomplete="new-password" class="flat">';
 print ' <span class="opacitymedium">' . $langs->trans('CliChaumeil_AntalisPasswordHint') . '</span>';
 if ($hasPassword) {
 	print ' ' . img_picto('', 'tick', 'class="paddingleft"') . ' ' . $langs->trans('CliChaumeil_AntalisPasswordConfigured');
