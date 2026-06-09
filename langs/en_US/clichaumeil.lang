@@ -405,6 +405,7 @@ CliChaumeil_PropalMassMarginValidationBlockedList=The following proposals have o
 CliChaumeil_PropalMassMarginValidationBlockedForProposal=Proposal %s has one or more sale prices lower than the cost price. Please adjust the prices before validating these proposals.
 CliChaumeil_PropalMarginValidationUnexpectedError=An unexpected error occurred while checking proposal margins.
 CliChaumeil_PropalMassMarginValidationFetchError=An unexpected error occurred while loading a proposal for mass validation.
+CliChaumeil_MinimumMarginValidationWarning=Warning! Some margins are below the desired minimum rate!
 CliChaumeilErrorMissingFgPercent=Import failed: Overhead rate (%) is required for product %s.
 CliChaumeilInfoMissingFgPercent=Final calculation skipped: the Overhead rate (%) field is empty.
 CLICHAUMEIL_INFO_MISSING_FG_PERCENT=Final calculation skipped: the Overhead rate (%) field is empty.

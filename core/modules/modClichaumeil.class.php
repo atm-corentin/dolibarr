@@ -170,6 +170,7 @@ class modClichaumeil extends DolibarrModules
 				'externalaccesssetup',
 				'externalaccess',
 				'propalcard',
+				'ordercard',
 				'propallist',
 				'massactionshowlines',
 				'massactionsplitlines',
