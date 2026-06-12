@@ -117,7 +117,7 @@ class modClichaumeil extends DolibarrModules
 		$this->editor_squarred_logo = '';					// Must be image filename into the module/img directory followed with @modulename. Example: 'myimage.png@clichaumeil'
 
 		// Possible values for version are: 'development', 'experimental', 'dolibarr', 'dolibarr_deprecated', 'experimental_deprecated' or a version string like 'x.y.z'
-		$this->version = '1.17.0';
+		$this->version = '1.18.0';
 
 		// Url to the file with your last numberversion of this module
 		//$this->url_last_version = 'http://www.example.com/versionmodule.txt';
@@ -216,7 +216,6 @@ class modClichaumeil extends DolibarrModules
 		$this->warnings_activation = array(); // Warning to show when we activate module. array('always'='text') or array('FR'='textfr','MX'='textmx'...)
 		$this->warnings_activation_ext = array(); // Warning to show when we activate an external module. array('always'='text') or array('FR'='textfr','MX'='textmx'...)
 		$this->const = array();
-		$this->rfa_tab_added = false;
 		if (!isModEnabled("clichaumeil")) {
 			$conf->clichaumeil = new stdClass();
 			$conf->clichaumeil->enabled = 0;
@@ -333,6 +332,21 @@ class modClichaumeil extends DolibarrModules
 				'datenextrun' => $cronStart,
 				'status' => 0,
 				'priority' => 50,
+			),
+			5 => array(
+				'label' => $langs->trans('CliChaumeil_RfaClientSummaryCronLabel'),
+				'jobtype' => 'method',
+				'class' => '/clichaumeil/class/Cron/RfaSummaryRebuildCronJob.php',
+				'objectname' => 'RfaSummaryRebuildCronJob',
+				'method' => 'run',
+				'parameters' => 'rfa_type=1',
+				'comment' => $langs->trans('CliChaumeil_RfaClientSummaryCronDescription'),
+				'frequency' => 1,
+				'unitfrequency' => 86400,
+				'datestart' => $cronStart,
+				'datenextrun' => $cronStart,
+				'status' => 0,
+				'priority' => 50,
 			)
 		);
 
@@ -381,7 +395,7 @@ class modClichaumeil extends DolibarrModules
 		$this->menu[$r++] = array(
 			'fk_menu' => 'fk_mainmenu=companies',
 			'type' => 'left',
-			'titre' => 'ChaumeilRfa',
+			'titre' => 'ClichaumeilRfaFournMenuLabel',
 			'prefix' => img_picto('', $this->picto, 'class="paddingright pictofixedwidth valignmiddle"'),
 			'mainmenu' => 'companies',
 			'leftmenu' => 'chaumeilrfa',
@@ -390,6 +404,22 @@ class modClichaumeil extends DolibarrModules
 			'position' => 1000 + $r,
 			'enabled' => 'isModEnabled("clichaumeil")',
 			'perms' => '$user->hasRight("clichaumeil", "chaumeilrfa", "read") && $user->hasRight("fournisseur", "facture", "lire")',
+			'target' => '',
+			'user' => 2,
+			'object' => 'ChaumeilRfa'
+		);
+		$this->menu[$r++] = array(
+			'fk_menu' => 'fk_mainmenu=companies',
+			'type' => 'left',
+			'titre' => 'ClichaumeilRfaClientMenuLabel',
+			'prefix' => img_picto('', $this->picto, 'class="paddingright pictofixedwidth valignmiddle"'),
+			'mainmenu' => 'companies',
+			'leftmenu' => 'clichaumeil_chaumeilrfa_list_client',
+			'url' => '/clichaumeil/chaumeilrfa_list_fourn.php?rfa_type=1',
+			'langs' => 'clichaumeil@clichaumeil',
+			'position' => 1000 + $r,
+			'enabled' => 'isModEnabled("clichaumeil")',
+			'perms' => '$user->hasRight("clichaumeil", "chaumeilrfa", "read") && $user->hasRight("facture", "lire")',
 			'target' => '',
 			'user' => 2,
 			'object' => 'ChaumeilRfa'
@@ -467,6 +497,11 @@ class modClichaumeil extends DolibarrModules
 		}
 
 		$result = $this->ensureRfaRootAggregationIndex();
+		if ($result < 0) {
+			return -1;
+		}
+
+		$result = $this->ensureRfaTypeColumns();
 		if ($result < 0) {
 			return -1;
 		}
@@ -611,6 +646,75 @@ class modClichaumeil extends DolibarrModules
 	}
 
 	/**
+	 * Ensure rfa_type columns exist in both RFA tables and the unique index includes rfa_type.
+	 *
+	 * @return int<-1,1> 1 on success, -1 on failure.
+	 */
+	private function ensureRfaTypeColumns(): int
+	{
+		$tables = array(
+			$this->db->prefix().'clichaumeil_chaumeilrfa',
+			$this->db->prefix().'clichaumeil_rfa_summary',
+		);
+
+		foreach ($tables as $tableName) {
+			$sql = 'SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS';
+			$sql .= " WHERE TABLE_SCHEMA = DATABASE()";
+			$sql .= " AND TABLE_NAME = '".$this->db->escape($tableName)."'";
+			$sql .= " AND COLUMN_NAME = 'rfa_type'";
+			$resql = $this->db->query($sql);
+			if (!$resql) {
+				dol_syslog(__METHOD__.' unable to inspect column rfa_type: '.$this->db->lasterror(), LOG_ERR);
+				$this->error = $this->db->lasterror();
+				return -1;
+			}
+			$columnExists = ($this->db->num_rows($resql) > 0);
+			$this->db->free($resql);
+
+			if (!$columnExists) {
+				$sqlAdd = 'ALTER TABLE '.$tableName.' ADD COLUMN rfa_type TINYINT NOT NULL DEFAULT 0';
+				$resql = $this->db->query($sqlAdd);
+				if (!$resql) {
+					dol_syslog(__METHOD__.' unable to add rfa_type column: '.$this->db->lasterror(), LOG_ERR);
+					$this->error = $this->db->lasterror();
+					return -1;
+				}
+			}
+		}
+
+		$summaryTable = $this->db->prefix().'clichaumeil_rfa_summary';
+		$oldIndexName = 'uk_clichaumeil_rfa_summary_entity_year_soc';
+		$newIndexName = 'uk_clichaumeil_rfa_summary_entity_year_soc_type';
+
+		$sqlCheckNew = 'SELECT INDEX_NAME FROM INFORMATION_SCHEMA.STATISTICS';
+		$sqlCheckNew .= " WHERE TABLE_SCHEMA = DATABASE()";
+		$sqlCheckNew .= " AND TABLE_NAME = '".$this->db->escape($summaryTable)."'";
+		$sqlCheckNew .= " AND INDEX_NAME = '".$this->db->escape($newIndexName)."'";
+		$resql = $this->db->query($sqlCheckNew);
+		if (!$resql) {
+			dol_syslog(__METHOD__.' unable to inspect summary index: '.$this->db->lasterror(), LOG_ERR);
+			$this->error = $this->db->lasterror();
+			return -1;
+		}
+		$newIndexExists = ($this->db->num_rows($resql) > 0);
+		$this->db->free($resql);
+
+		if (!$newIndexExists) {
+			$this->db->query('ALTER TABLE '.$summaryTable.' DROP INDEX '.$oldIndexName);
+			$sqlIdx = 'ALTER TABLE '.$summaryTable;
+			$sqlIdx .= ' ADD UNIQUE INDEX '.$newIndexName.' (entity, year, fk_soc, rfa_type)';
+			$resql = $this->db->query($sqlIdx);
+			if (!$resql) {
+				dol_syslog(__METHOD__.' unable to create summary unique index: '.$this->db->lasterror(), LOG_ERR);
+				$this->error = $this->db->lasterror();
+				return -1;
+			}
+		}
+
+		return 1;
+	}
+
+	/**
 	 * Ensure the index used by the aggregated RFA list exists.
 	 *
 	 * @return int<-1,1> 1 on success, -1 on failure.
@@ -674,7 +778,29 @@ class modClichaumeil extends DolibarrModules
 	}
 
 	/**
-	 *	Function called when module is disabled.
+	 * Function called on module upgrade.
+	 * Applies idempotent schema migrations so existing deployments get the same
+	 * schema as a fresh activation without requiring a deactivation/reactivation cycle.
+	 *
+	 * @param  string $options Options
+	 * @return int<-1,1>       1 if OK, -1 on failure
+	 */
+	public function upgrade($options = '')
+	{
+		$result = $this->ensureRfaRootAggregationIndex();
+		if ($result < 0) {
+			return -1;
+		}
+
+		$result = $this->ensureRfaTypeColumns();
+		if ($result < 0) {
+			return -1;
+		}
+
+		return 1;
+	}
+
+	/**
 	 *	Remove from database constants, boxes and permissions from Dolibarr database.
 	 *	Data directories are not deleted
 	 *

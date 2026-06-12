@@ -92,6 +92,7 @@ $optioncss = GETPOST('optioncss', 'aZ'); // Option for the css output (always ''
 $dol_openinpopup = GETPOST('dol_openinpopup', 'aZ09');
 $socid = GETPOSTINT('socid');
 $fksoc = GETPOSTINT('fk_soc');
+$rfaTypeFromUrl = GETPOSTISSET('rfa_type') ? GETPOSTINT('rfa_type') : ChaumeilRfa::TYPE_SUPPLIER;
 
 if (!empty($backtopagejsfields)) {
 	$tmpbacktopagejsfields = explode(':', $backtopagejsfields);
@@ -237,6 +238,7 @@ if ($action == 'create') {
 		accessforbidden('NotEnoughPermissions', 0, 1);
 	}
 	$object->fk_soc = $socid;
+	$object->rfa_type = $rfaTypeFromUrl;
 	print load_fiche_titre($title, '', $object->picto);
 	print '<form method="POST" action="'.$_SERVER["PHP_SELF"].'">';
 	print '<input type="hidden" name="token" value="'.newToken().'">';

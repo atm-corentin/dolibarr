@@ -13,7 +13,8 @@ declare(strict_types=1);
 /**
  * \file       chaumeilrfa_list_fourn.php
  * \ingroup    clichaumeil
- * \brief      Global supplier RFA list backed by the yearly summary table.
+ * \brief      Global RFA list (supplier or client) backed by the yearly summary table.
+ *             Pass rfa_type=1 in the URL to display the client view.
  */
 
 $res = 0;
@@ -78,11 +79,15 @@ if (empty($page) || $page < 0 || GETPOST('button_search', 'alpha') || GETPOST('b
 $offset = $limit * $page;
 
 $object = new ChaumeilRfa($db);
-$hookmanager->initHooks(array($contextpage, 'globalrfalist'));
+
+$rfaType = GETPOSTISSET('rfa_type') ? GETPOSTINT('rfa_type') : ChaumeilRfa::TYPE_SUPPLIER;
+$isClient = ($rfaType === ChaumeilRfa::TYPE_CLIENT);
+$hookContext = $isClient ? 'globalrfaclientlist' : 'globalrfalist';
+$hookmanager->initHooks(array($contextpage, $hookContext));
 
 $arrayfields = array(
 	'fk_soc' => array(
-		'label' => $langs->trans('Suppliers'),
+		'label' => $langs->trans($isClient ? 'Customers' : 'Suppliers'),
 		'checked' => 1,
 		'type' => 'integer',
 		'enabled' => 1,
@@ -145,6 +150,7 @@ $search = array(
 	'taux_rfa' => GETPOST('search_taux_rfa', 'alphanohtml'),
 	'discount_amount_rfa' => GETPOST('search_discount_amount_rfa', 'alphanohtml'),
 	'status' => GETPOST('search_status', 'alphanohtml'),
+	'rfa_type' => (string) $rfaType,
 );
 
 if ($search['status'] === '-1') {
@@ -183,6 +189,7 @@ if (empty($reshook) && (GETPOST('button_removefilter_x', 'alpha') || GETPOST('bu
 	foreach (array_keys($search) as $searchKey) {
 		$search[$searchKey] = '';
 	}
+	$search['rfa_type'] = (string) $rfaType;
 }
 
 $repository = new RfaSummarySourceRepository($db);
@@ -197,8 +204,8 @@ if (empty($reshook)) {
 		$isSummaryStorageReady = $repository->isSummaryStorageReady();
 		$num = $repository->countSummaryRowsForYear($searchYear, $search);
 		$listRows = $repository->fetchSummaryRowsForYear($searchYear, $search, $sortfield, $sortorder, $offset, $limit);
-		$hasSummaryForYear = $repository->hasSummaryForYear($searchYear);
-		$summaryLastCalculatedTimestamp = $repository->getSummaryLastCalculatedTimestamp($searchYear);
+		$hasSummaryForYear = $repository->hasSummaryForYear($searchYear, $rfaType);
+		$summaryLastCalculatedTimestamp = $repository->getSummaryLastCalculatedTimestamp($searchYear, $rfaType);
 	} catch (Throwable $exception) {
 		dol_syslog(__FILE__.' '.$exception->getMessage(), LOG_ERR);
 		setEventMessages($langs->trans('CliChaumeil_RfaListLoadError'), null, 'errors');
@@ -212,7 +219,7 @@ if (empty($reshook)) {
 
 $form = new Form($db);
 $formother = new FormOther($db);
-$title = $langs->trans('ChaumeilRfas');
+$title = $langs->trans($isClient ? 'ClichaumeilRfaListClientTitle' : 'ChaumeilRfas');
 
 llxHeader('', $title, '', '', 0, 0, array(), array(), '', 'mod-clichaumeil page-list bodyforlist');
 
@@ -238,6 +245,7 @@ foreach ($search as $searchKey => $searchValue) {
 	}
 }
 $param .= '&yearid='.(int) $searchYear;
+$param .= '&rfa_type='.$rfaType;
 
 print '<form method="POST" id="searchFormList" action="'.dol_escape_htmltag($_SERVER['PHP_SELF']).'">'."\n";
 if ($optioncss !== '') {
@@ -252,13 +260,15 @@ print '<input type="hidden" name="page" value="'.((int) $page).'">';
 print '<input type="hidden" name="contextpage" value="'.dol_escape_htmltag($contextpage).'">';
 print '<input type="hidden" name="page_y" value="">';
 print '<input type="hidden" name="mode" value="'.dol_escape_htmltag($mode).'">';
+print '<input type="hidden" name="rfa_type" value="'.$rfaType.'">';
 
 $newcardbutton = dolGetButtonTitle($langs->trans('ViewList'), '', 'fa fa-bars imgforviewmode', $_SERVER['PHP_SELF'].'?mode=common'.preg_replace('/(&|\?)*mode=[^&]+/', '', $param), '', (empty($mode) || $mode === 'common') ? 2 : 1, array('morecss' => 'reposition'));
 $rebuildUrl = '';
 if ($canRebuildSummary) {
-	$rebuildUrl = dol_buildpath('/clichaumeil/scripts/rebuild_rfa_summary.php', 1);
-	$rebuildButtonLabel = $langs->transnoentitiesnoconv('CliChaumeil_RfaSummaryRebuildActionForYear', $searchYear);
-	$rebuildLoadingLabel = $langs->transnoentitiesnoconv('CliChaumeil_RfaSummaryRebuildLoadingForYear', $searchYear);
+	$rebuildUrl = dol_buildpath('/clichaumeil/scripts/rebuild_rfa_summary.php?rfa_type='.$rfaType, 1);
+	$rebuildLangPrefix = $isClient ? 'CliChaumeil_RfaClientSummaryRebuild' : 'CliChaumeil_RfaSummaryRebuild';
+	$rebuildButtonLabel = $langs->transnoentitiesnoconv($rebuildLangPrefix.'ActionForYear', $searchYear);
+	$rebuildLoadingLabel = $langs->transnoentitiesnoconv($rebuildLangPrefix.'LoadingForYear', $searchYear);
 	$newcardbutton .= '<a id="clichaumeil-rfa-summary-rebuild-button" class="butAction reposition" href="#"';
 	$newcardbutton .= ' data-url="'.dol_escape_htmltag($rebuildUrl).'"';
 	$newcardbutton .= ' data-year="'.((int) $searchYear).'"';
@@ -270,13 +280,14 @@ if ($canRebuildSummary) {
 
 print_barre_liste($title, $page, $_SERVER['PHP_SELF'], $param, $sortfield, $sortorder, '', $num, 0, $object->picto, 0, $newcardbutton, '', $limit, 0, 0, 1);
 
+$infoLangPrefix = $isClient ? 'CliChaumeil_RfaClientSummary' : 'CliChaumeil_RfaSummary';
 if (!$isSummaryStorageReady) {
 	print info_admin($langs->trans('CliChaumeil_RfaSummaryStorageMissing'), 0, 0, 'warning');
 } elseif (!$hasSummaryForYear) {
-	print info_admin($langs->trans('CliChaumeil_RfaSummaryMissingForYear', $searchYear), 0, 0, 'warning');
+	print info_admin($langs->trans($infoLangPrefix.'MissingForYear', $searchYear), 0, 0, 'warning');
 } elseif ($summaryLastCalculatedTimestamp > 0) {
 	$formattedDate = dol_print_date($summaryLastCalculatedTimestamp, 'dayhour', 'tzuser');
-	print info_admin($langs->trans('CliChaumeil_RfaSummaryLastCalculatedAt', $formattedDate), 0, 0, 'info');
+	print info_admin($langs->trans($infoLangPrefix.'LastCalculatedAt', $formattedDate), 0, 0, 'info');
 }
 
 if ($canRebuildSummary) {
@@ -327,7 +338,8 @@ foreach ($arrayfields as $key => $val) {
 
 	print '<td class="liste_titre'.($cssforfield !== '' ? ' '.$cssforfield : '').'">';
 	if ($key === 'fk_soc') {
-		print $form->select_company($search['fk_soc'], 'search_fk_soc', '(s.fournisseur:=:1)', 'SelectThirdParty', 0, 0, array(), 0, 'maxwidth250');
+		$socFilter = $isClient ? '(s.client:>=:1)' : '(s.fournisseur:=:1)';
+		print $form->select_company($search['fk_soc'], 'search_fk_soc', $socFilter, 'SelectThirdParty', 0, 0, array(), 0, 'maxwidth250');
 	} elseif ($key === 'status') {
 		print $form->selectarray('search_status', $val['arrayofkeyval'], $search['status'], 1, 0, 0, '', 1, 0, 0, '', 'maxwidth100 search_status width100', 1);
 	} else {
@@ -409,14 +421,24 @@ foreach ($listRows as $listRow) {
 			if (!empty($rowObject->is_aggregated)) {
 				print '<span title="'.dol_escape_htmltag($langs->trans('CliChaumeil_RfaListAggregatedAmountNoLinkHelp')).'">'.price((float) $rowObject->ca_achats).'</span>';
 			} else {
-				$url = sprintf(
-					'%s/fourn/facture/list.php?socid=%d&search_date_startday=1&search_date_startmonth=1&search_date_startyear=%d&search_date_endday=31&search_date_endmonth=12&search_date_endyear=%d&search_status=%d',
-					DOL_URL_ROOT,
-					(int) $rowObject->fk_soc,
-					(int) $searchYear,
-					(int) $searchYear,
-					(int) FactureFournisseur::STATUS_CLOSED
-				);
+				if ($isClient) {
+					$url = sprintf(
+						'%s/compta/facture/list.php?socid=%d&search_date_startday=1&search_date_startmonth=1&search_date_startyear=%d&search_date_endday=31&search_date_endmonth=12&search_date_endyear=%d&search_status=2',
+						DOL_URL_ROOT,
+						(int) $rowObject->fk_soc,
+						(int) $searchYear,
+						(int) $searchYear
+					);
+				} else {
+					$url = sprintf(
+						'%s/fourn/facture/list.php?socid=%d&search_date_startday=1&search_date_startmonth=1&search_date_startyear=%d&search_date_endday=31&search_date_endmonth=12&search_date_endyear=%d&search_status=%d',
+						DOL_URL_ROOT,
+						(int) $rowObject->fk_soc,
+						(int) $searchYear,
+						(int) $searchYear,
+						(int) FactureFournisseur::STATUS_CLOSED
+					);
+				}
 				print '<a href="'.dol_escape_htmltag($url).'">'.price((float) $rowObject->ca_achats).'</a>';
 			}
 		} elseif ($key === 'taux_rfa') {

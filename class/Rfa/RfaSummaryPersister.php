@@ -10,6 +10,7 @@ declare(strict_types=1);
 
 require_once __DIR__.'/RfaSummaryBuilder.php';
 require_once __DIR__.'/RfaSummaryStorageManager.php';
+require_once __DIR__.'/../chaumeilrfa.class.php';
 
 /**
  * Persister used to rebuild the yearly RFA summary table.
@@ -60,11 +61,12 @@ class RfaSummaryPersister
 	/**
 	 * Rebuild the summary for one year.
 	 *
-	 * @param int $year Target year.
+	 * @param int $year    Target year.
+	 * @param int $rfaType RFA type (ChaumeilRfa::TYPE_SUPPLIER or TYPE_CLIENT).
 	 * @return int Number of persisted rows.
 	 * @throws RuntimeException When the rebuild fails.
 	 */
-	public function rebuildYear(int $year): int
+	public function rebuildYear(int $year, int $rfaType = ChaumeilRfa::TYPE_SUPPLIER): int
 	{
 		if ($year < 2000 || $year > 2100) {
 			throw new RuntimeException('Invalid summary rebuild year: '.$year);
@@ -75,7 +77,7 @@ class RfaSummaryPersister
 		$this->db->begin();
 
 		try {
-			$this->deleteYearRows($year);
+			$this->deleteYearRows($year, $rfaType);
 
 			foreach ($summaryRows as $summaryRow) {
 				$this->insertSummaryRow($summaryRow);
@@ -93,15 +95,17 @@ class RfaSummaryPersister
 	/**
 	 * Delete all summary rows for one year.
 	 *
-	 * @param int $year Target year.
+	 * @param int $year    Target year.
+	 * @param int $rfaType RFA type (ChaumeilRfa::TYPE_SUPPLIER or TYPE_CLIENT).
 	 * @return void
 	 * @throws RuntimeException When the delete fails.
 	 */
-	private function deleteYearRows(int $year): void
+	private function deleteYearRows(int $year, int $rfaType): void
 	{
 		$sql = 'DELETE FROM '.$this->db->prefix().self::TABLE_SUMMARY;
 		$sql .= ' WHERE entity = '.$this->entity;
 		$sql .= ' AND year = '.((int) $year);
+		$sql .= ' AND rfa_type = '.((int) $rfaType);
 		$resql = $this->db->query($sql);
 		if (!$resql) {
 			throw new RuntimeException('Unable to delete yearly summary rows: '.$this->db->lasterror());
@@ -118,10 +122,11 @@ class RfaSummaryPersister
 	private function insertSummaryRow(array $summaryRow): void
 	{
 		$sql = 'INSERT INTO '.$this->db->prefix().self::TABLE_SUMMARY.' (';
-		$sql .= 'entity, year, fk_soc, fk_root_soc, fk_chaumeilrfa, is_aggregated, contributor_count, ca_achats, taux_rfa, discount_amount_rfa, rfa_status, date_calculated';
+		$sql .= 'entity, year, rfa_type, fk_soc, fk_root_soc, fk_chaumeilrfa, is_aggregated, contributor_count, ca_achats, taux_rfa, discount_amount_rfa, rfa_status, date_calculated';
 		$sql .= ') VALUES (';
 		$sql .= $this->entity;
 		$sql .= ', '.(int) $summaryRow['year'];
+		$sql .= ', '.(int) ($summaryRow['rfa_type'] ?? 0);
 		$sql .= ', '.(int) $summaryRow['fk_soc'];
 		$sql .= ', '.(int) $summaryRow['fk_root_soc'];
 		$sql .= ', '.(int) $summaryRow['fk_chaumeilrfa'];
@@ -136,7 +141,7 @@ class RfaSummaryPersister
 
 		$resql = $this->db->query($sql);
 		if (!$resql) {
-			throw new RuntimeException('Unable to insert summary row for supplier #'.((int) $summaryRow['fk_soc']).': '.$this->db->lasterror());
+			throw new RuntimeException('Unable to insert summary row for thirdparty #'.((int) $summaryRow['fk_soc']).': '.$this->db->lasterror());
 		}
 	}
 

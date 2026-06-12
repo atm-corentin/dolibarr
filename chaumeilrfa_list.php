@@ -117,6 +117,7 @@ $groupby = GETPOST('groupby', 'aZ09');	// Example: $groupby = 'p.fk_opp_status' 
 $id = GETPOSTINT('id');
 $ref = GETPOST('ref', 'alpha');
 $socid = GETPOSTINT('socid');
+$rfaType = GETPOSTISSET('rfa_type') ? GETPOSTINT('rfa_type') : ChaumeilRfa::TYPE_SUPPLIER;
 
 // Load variable for pagination
 $limit = GETPOSTINT('limit') ? GETPOSTINT('limit') : $conf->liste_limit;
@@ -164,6 +165,8 @@ foreach ($object->fields as $key => $val) {
 		$search[$key.'_dtend'] = dol_mktime(23, 59, 59, GETPOSTINT('search_'.$key.'_dtendmonth'), GETPOSTINT('search_'.$key.'_dtendday'), GETPOSTINT('search_'.$key.'_dtendyear'));
 	}
 }
+
+$search['rfa_type'] = $rfaType;
 
 $fieldstosearchall = array();
 // List of fields to search into when doing a "search in all"
@@ -268,6 +271,7 @@ if (empty($reshook)) {
 		$toselect = array();
 		$search_array_options = array();
 	}
+	$search['rfa_type'] = $rfaType;
 	if (GETPOST('button_removefilter_x', 'alpha') || GETPOST('button_removefilter.x', 'alpha') || GETPOST('button_removefilter', 'alpha')
 		|| GETPOST('button_search_x', 'alpha') || GETPOST('button_search.x', 'alpha') || GETPOST('button_search', 'alpha')) {
 		$massaction = ''; // Protection to avoid mass action if we force a new search during a mass action confirmation
@@ -429,7 +433,7 @@ $nbtotalofrecords = '';
 if (!getDolGlobalInt('MAIN_DISABLE_FULL_SCANLIST')) {
 	/* The fast and low memory method to get and count full list converts the sql into a sql count */
 	$sqlforcount = preg_replace('/^'.preg_quote($sqlfields, '/').'/', 'SELECT COUNT(*) as nbtotalofrecords', $sql);
-	if (!empty($socid)){
+	if (!empty($socid)) {
 		$sqlforcount .= " AND t.fk_soc = ".$socid;
 	}
 	$sqlforcount = preg_replace('/GROUP BY .*$/', '', $sqlforcount);
@@ -449,7 +453,7 @@ if (!getDolGlobalInt('MAIN_DISABLE_FULL_SCANLIST')) {
 	$db->free($resql);
 }
 
-if (!empty($socid)){
+if (!empty($socid)) {
 	$sql .= " AND t.fk_soc = ".$socid;
 }
 
@@ -482,11 +486,12 @@ if ($num == 1 && getDolGlobalInt('MAIN_SEARCH_DIRECT_OPEN_IF_ONLY_ONE') && $sear
 
 llxHeader('', $title, $help_url, '', 0, 0, $morejs, $morecss, '', 'mod-clichaumeil page-list bodyforlist');	// Can use also classforhorizontalscrolloftabs instead of bodyforlist for a horizontal scroll in the table instead of page
 
-if (!empty($socid)){
+if (!empty($socid)) {
 	$objSoc = new Societe($db);
 	$objSoc->fetch($socid);
 	$head = societe_prepare_head($objSoc);
-	print dol_get_fiche_head($head, 'clichaumeilrfa', $langs->trans("ChaumeilRfa"), 0, 'company');
+	$activeTab = ($rfaType === ChaumeilRfa::TYPE_CLIENT) ? 'clichaumeilrfa_client' : 'clichaumeilrfa_fourn';
+	print dol_get_fiche_head($head, $activeTab, $langs->trans("ChaumeilRfa"), 0, 'company');
 	$linkback = '<a href="'.DOL_URL_ROOT.'/societe/list.php?restore_lastsearch_values=1">'.$langs->trans("BackToList").'</a>';
 	dol_banner_tab($objSoc, 'socid', $linkback, ($user->socid ? 0 : 1), 'rowid', 'nom', '', '', 0, '', '', 1);
 }
@@ -542,6 +547,7 @@ foreach ($search as $key => $val) {
 	}
 }
 $param .= '&socid='.$socid;
+$param .= '&rfa_type='.$rfaType;
 // Add $param from extra fields
 include DOL_DOCUMENT_ROOT.'/core/tpl/extrafields_list_search_param.tpl.php';
 // Add $param from hooks
@@ -584,7 +590,7 @@ $newcardbutton = '';
 $newcardbutton .= dolGetButtonTitle($langs->trans('ViewList'), '', 'fa fa-bars imgforviewmode', $_SERVER["PHP_SELF"].'?mode=common'.preg_replace('/(&|\?)*mode=[^&]+/', '', $param), '', ((empty($mode) || $mode == 'common') ? 2 : 1), array('morecss' => 'reposition'));
 $newcardbutton .= dolGetButtonTitle($langs->trans('ViewKanban'), '', 'fa fa-th-list imgforviewmode', $_SERVER["PHP_SELF"].'?mode=kanban'.preg_replace('/(&|\?)*mode=[^&]+/', '', $param), '', ($mode == 'kanban' ? 2 : 1), array('morecss' => 'reposition'));
 $newcardbutton .= dolGetButtonTitleSeparator();
-$newcardbutton .= dolGetButtonTitle($langs->trans('New'), '', 'fa fa-plus-circle', dol_buildpath('/clichaumeil/chaumeilrfa_card.php', 1).'?action=create&socid='.$socid.'&backtopage='.urlencode($_SERVER['PHP_SELF'].'?socid='.$socid), '', $permissiontoadd);
+$newcardbutton .= dolGetButtonTitle($langs->trans('New'), '', 'fa fa-plus-circle', dol_buildpath('/clichaumeil/chaumeilrfa_card.php', 1).'?action=create&socid='.$socid.'&rfa_type='.$rfaType.'&backtopage='.urlencode($_SERVER['PHP_SELF'].'?socid='.$socid.'&rfa_type='.$rfaType), '', $permissiontoadd);
 
 print_barre_liste($title, $page, $_SERVER["PHP_SELF"], $param, $sortfield, $sortorder, $massactionbutton, $num, $nbtotalofrecords, $object->picto, 0, $newcardbutton, '', $limit, 0, 0, 1);
 

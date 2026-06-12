@@ -63,6 +63,12 @@ class ChaumeilRfa extends CommonObject
 	const STATUS_WON = 1;
 	const STATUS_LOST = 9;
 
+	/** @var int RFA linked to supplier invoices */
+	public const TYPE_SUPPLIER = 0;
+
+	/** @var int RFA linked to customer invoices */
+	public const TYPE_CLIENT = 1;
+
 	/**
 	 *  'type' field format:
 	 *  	'integer', 'integer:ObjectClass:PathToClass[:AddCreateButtonOrNot[:Filter[:Sortfield]]]',
@@ -126,6 +132,20 @@ class ChaumeilRfa extends CommonObject
 		"dateend" => array("type" => "date", "label" => "DateEnd", "enabled" => "1", 'position' => 40, 'notnull' => 1, "visible" => "1",),
 		"palier" => array("type" => "price", "label" => "Palier", "enabled" => "1", 'position' => 50, 'notnull' => 1, "visible" => "1",),
 		"raterfa" => array("type" => "double(24,2)", "label" => "RateRfa", "enabled" => "1", 'position' => 60, 'notnull' => 1, "visible" => "1",),
+		"rfa_type" => array(
+			"type" => "integer",
+			"label" => "ClichaumeilRfaTypeLabel",
+			"enabled" => "1",
+			'position' => 65,
+			'notnull' => 1,
+			"visible" => "1",
+			"default" => "0",
+			"index" => "1",
+			"arrayofkeyval" => array(
+				0 => "ClichaumeilRfaTypeSupplier",
+				1 => "ClichaumeilRfaTypeClient",
+			),
+		),
 	);
 	public $rowid;
 	public $ref;
@@ -141,6 +161,7 @@ class ChaumeilRfa extends CommonObject
 	public $dateend;
 	public $palier;
 	public $raterfa;
+	public $rfa_type = 0;
 	// END MODULEBUILDER PROPERTIES
 
 	/**
