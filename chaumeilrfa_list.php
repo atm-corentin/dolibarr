@@ -166,7 +166,7 @@ foreach ($object->fields as $key => $val) {
 	}
 }
 
-$search['rfa_type'] = $rfaType;
+$search['rfa_type'] = (string) $rfaType;
 
 $fieldstosearchall = array();
 // List of fields to search into when doing a "search in all"
@@ -271,7 +271,7 @@ if (empty($reshook)) {
 		$toselect = array();
 		$search_array_options = array();
 	}
-	$search['rfa_type'] = $rfaType;
+	$search['rfa_type'] = (string) $rfaType;
 	if (GETPOST('button_removefilter_x', 'alpha') || GETPOST('button_removefilter.x', 'alpha') || GETPOST('button_removefilter', 'alpha')
 		|| GETPOST('button_search_x', 'alpha') || GETPOST('button_search.x', 'alpha') || GETPOST('button_search', 'alpha')) {
 		$massaction = ''; // Protection to avoid mass action if we force a new search during a mass action confirmation
