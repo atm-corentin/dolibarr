@@ -145,10 +145,10 @@ class ActionsClichaumeil extends CommonHookActions
 	}
 
 	/** @var bool */
-	public $rfa_fourn_tab_added = false;
+	public $rfaFournTabAdded = false;
 
 	/** @var bool */
-	public $rfa_client_tab_added = false;
+	public $rfaClientTabAdded = false;
 
 	/**
 	 * Execute action
@@ -1321,48 +1321,48 @@ class ActionsClichaumeil extends CommonHookActions
 			if ($element == 'societe' && $user->hasRight('clichaumeil', 'chaumeilrfa', 'read')) {
 				$rfaTable = $this->db->prefix().'clichaumeil_chaumeilrfa';
 
-				if ($object->fournisseur && !$this->rfa_fourn_tab_added) {
-					$fourn_count = 0;
+				if ($object->fournisseur && !$this->rfaFournTabAdded) {
+					$fournCount = 0;
 					$sql = 'SELECT COUNT(*) AS cnt FROM '.$rfaTable.' WHERE fk_soc = '.(int) $id.' AND rfa_type = 0';
 					$resql = $this->db->query($sql);
 					if ($resql) {
 						$obj = $this->db->fetch_object($resql);
-						$fourn_count = (int) $obj->cnt;
+						$fournCount = (int) $obj->cnt;
 						$this->db->free($resql);
 					} else {
 						dol_syslog(__METHOD__.' unable to count supplier RFA: '.$this->db->lasterror(), LOG_ERR);
 					}
 					$label = $langs->trans('ClichaumeilTabRfaFourn');
-					if ($fourn_count > 0) {
-						$label .= '<span class="badge marginleftonlyshort">'.$fourn_count.'</span>';
+					if ($fournCount > 0) {
+						$label .= '<span class="badge marginleftonlyshort">'.$fournCount.'</span>';
 					}
 					$parameters['head'][$counter][0] = dol_buildpath('/clichaumeil/chaumeilrfa_list.php', 1).'?socid='.$id.'&rfa_type=0';
 					$parameters['head'][$counter][1] = $label;
 					$parameters['head'][$counter][2] = 'clichaumeilrfa_fourn';
 					$counter++;
-					$this->rfa_fourn_tab_added = true;
+					$this->rfaFournTabAdded = true;
 				}
 
-				if ($object->client >= 1 && !$this->rfa_client_tab_added) {
-					$client_count = 0;
+				if ($object->client >= 1 && !$this->rfaClientTabAdded) {
+					$clientCount = 0;
 					$sql = 'SELECT COUNT(*) AS cnt FROM '.$rfaTable.' WHERE fk_soc = '.(int) $id.' AND rfa_type = 1';
 					$resql = $this->db->query($sql);
 					if ($resql) {
 						$obj = $this->db->fetch_object($resql);
-						$client_count = (int) $obj->cnt;
+						$clientCount = (int) $obj->cnt;
 						$this->db->free($resql);
 					} else {
 						dol_syslog(__METHOD__.' unable to count client RFA: '.$this->db->lasterror(), LOG_ERR);
 					}
 					$label = $langs->trans('ClichaumeilTabRfaClient');
-					if ($client_count > 0) {
-						$label .= '<span class="badge marginleftonlyshort">'.$client_count.'</span>';
+					if ($clientCount > 0) {
+						$label .= '<span class="badge marginleftonlyshort">'.$clientCount.'</span>';
 					}
 					$parameters['head'][$counter][0] = dol_buildpath('/clichaumeil/chaumeilrfa_list.php', 1).'?socid='.$id.'&rfa_type=1';
 					$parameters['head'][$counter][1] = $label;
 					$parameters['head'][$counter][2] = 'clichaumeilrfa_client';
 					$counter++;
-					$this->rfa_client_tab_added = true;
+					$this->rfaClientTabAdded = true;
 				}
 			}
 			if ($counter > 0 && (int) DOL_VERSION < 14) {  // @phpstan-ignore-line
