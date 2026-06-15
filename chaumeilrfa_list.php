@@ -584,6 +584,7 @@ print '<input type="hidden" name="contextpage" value="'.$contextpage.'">';
 print '<input type="hidden" name="page_y" value="">';
 print '<input type="hidden" name="mode" value="'.$mode.'">';
 print '<input type="hidden" name="socid" value="'.$socid.'">';
+print '<input type="hidden" name="rfa_type" value="'.(int) $rfaType.'">';
 
 
 $newcardbutton = '';
