@@ -86,7 +86,7 @@ class RfaSummaryRebuildCronJob
 			$repository = new RfaSummarySourceRepository($this->db);
 			$builder = $isClient ? new RfaClientSummaryBuilder($repository) : new RfaSummaryBuilder($repository);
 			$persister = new RfaSummaryPersister($this->db, $builder);
-			$targetYears = ($yearStr !== '') ? array((int) $yearStr) : $repository->fetchRelevantSummaryYears();
+			$targetYears = ($yearStr !== '') ? array((int) $yearStr) : $repository->fetchRelevantSummaryYears($rfaType);
 
 			if (empty($targetYears)) {
 				$noYearKey = $isClient ? 'CliChaumeil_RfaClientSummaryCronNoYear' : 'CliChaumeil_RfaSummaryCronNoYear';

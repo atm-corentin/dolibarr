@@ -240,15 +240,17 @@ class RfaSummarySourceRepository
 	/**
 	 * Load the list of years that should be rebuilt by the cron job.
 	 *
+	 * @param int $rfaType RFA type (ChaumeilRfa::TYPE_SUPPLIER or TYPE_CLIENT).
 	 * @return array<int,int> Sorted list of relevant years.
 	 * @throws RuntimeException When the SQL query fails.
 	 */
-	public function fetchRelevantSummaryYears(): array
+	public function fetchRelevantSummaryYears(int $rfaType): array
 	{
 		$years = array();
 
 		$sql = 'SELECT r.datestart, r.dateend';
 		$sql .= ' FROM '.$this->db->prefix().self::TABLE_RFA.' AS r';
+		$sql .= ' WHERE r.rfa_type = '.$rfaType;
 		$resql = $this->db->query($sql);
 		if (!$resql) {
 			throw new RuntimeException('Unable to fetch RFA year ranges: '.$this->db->lasterror());
@@ -272,6 +274,7 @@ class RfaSummarySourceRepository
 			$sql = 'SELECT DISTINCT rs.year';
 			$sql .= ' FROM '.$this->db->prefix().self::TABLE_SUMMARY.' AS rs';
 			$sql .= ' WHERE rs.entity = '.$this->entity;
+			$sql .= ' AND rs.rfa_type = '.$rfaType;
 			$sql .= ' ORDER BY rs.year ASC';
 			$resql = $this->db->query($sql);
 			if (!$resql) {
