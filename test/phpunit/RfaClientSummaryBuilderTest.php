@@ -137,11 +137,8 @@ class RfaClientSummaryBuilderTest extends CommonClassTest
 	 */
 	public function testBuildYearSummaryReturnsEmptyWhenNoClientRfa(): void
 	{
-		$rows = $this->buildSummary($this->testYear);
-		$this->assertIsArray($rows);
-		foreach ($rows as $row) {
-			$this->assertEquals(ChaumeilRfa::TYPE_CLIENT, $row['rfa_type'] ?? -1);
-		}
+		$rows = $this->buildSummary(9999);
+		$this->assertSame([], $rows);
 	}
 
 	/**
