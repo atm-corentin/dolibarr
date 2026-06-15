@@ -1307,10 +1307,6 @@ class ActionsClichaumeil extends CommonHookActions
 	{
 		global $langs, $conf, $user;
 
-		if ($this->rfa_fourn_tab_added && $this->rfa_client_tab_added) {
-			return 0;
-		}
-
 		if (!isset($parameters['object']->element)) {
 			return 0;
 		}
