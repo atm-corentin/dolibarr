@@ -658,11 +658,7 @@ class modClichaumeil extends DolibarrModules
 		);
 
 		foreach ($tables as $tableName) {
-			$sql = 'SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS';
-			$sql .= " WHERE TABLE_SCHEMA = DATABASE()";
-			$sql .= " AND TABLE_NAME = '".$this->db->escape($tableName)."'";
-			$sql .= " AND COLUMN_NAME = 'rfa_type'";
-			$resql = $this->db->query($sql);
+			$resql = $this->db->query($this->getColumnExistenceSql($tableName, 'rfa_type'));
 			if (!$resql) {
 				dol_syslog(__METHOD__.' unable to inspect column rfa_type: '.$this->db->lasterror(), LOG_ERR);
 				$this->error = $this->db->lasterror();
@@ -672,8 +668,7 @@ class modClichaumeil extends DolibarrModules
 			$this->db->free($resql);
 
 			if (!$columnExists) {
-				$sqlAdd = 'ALTER TABLE '.$tableName.' ADD COLUMN rfa_type TINYINT NOT NULL DEFAULT 0';
-				$resql = $this->db->query($sqlAdd);
+				$resql = $this->db->query($this->getAddSmallIntColumnSql($tableName, 'rfa_type'));
 				if (!$resql) {
 					dol_syslog(__METHOD__.' unable to add rfa_type column: '.$this->db->lasterror(), LOG_ERR);
 					$this->error = $this->db->lasterror();
@@ -706,7 +701,7 @@ class modClichaumeil extends DolibarrModules
 			$this->db->free($resqlOld);
 
 			if ($oldIndexExists) {
-				$resqlDrop = $this->db->query('ALTER TABLE '.$summaryTable.' DROP INDEX '.$oldIndexName);
+				$resqlDrop = $this->db->query($this->getDropIndexSql($summaryTable, $oldIndexName));
 				if (!$resqlDrop) {
 					dol_syslog(__METHOD__.' unable to drop old summary index: '.$this->db->lasterror(), LOG_ERR);
 					$this->error = $this->db->lasterror();
@@ -714,9 +709,7 @@ class modClichaumeil extends DolibarrModules
 				}
 			}
 
-			$sqlIdx = 'ALTER TABLE '.$summaryTable;
-			$sqlIdx .= ' ADD UNIQUE INDEX '.$newIndexName.' (entity, year, fk_soc, rfa_type)';
-			$resql = $this->db->query($sqlIdx);
+			$resql = $this->db->query($this->getAddUniqueIndexSql($summaryTable, $newIndexName, 'entity, year, fk_soc, rfa_type'));
 			if (!$resql) {
 				dol_syslog(__METHOD__.' unable to create summary unique index: '.$this->db->lasterror(), LOG_ERR);
 				$this->error = $this->db->lasterror();
@@ -788,6 +781,75 @@ class modClichaumeil extends DolibarrModules
 		$sql .= " AND index_name = '".$this->db->escape($indexName)."'";
 
 		return $sql;
+	}
+
+	/**
+	 * Build a DB-specific SQL query to inspect column existence.
+	 *
+	 * @param string $tableName  Full SQL table name with prefix.
+	 * @param string $columnName Column name.
+	 * @return string
+	 */
+	private function getColumnExistenceSql(string $tableName, string $columnName): string
+	{
+		if ($this->db->type === 'pgsql') {
+			$sql = 'SELECT column_name FROM information_schema.columns';
+			$sql .= " WHERE table_schema = 'public'";
+			$sql .= " AND table_name = '".$this->db->escape($tableName)."'";
+			$sql .= " AND column_name = '".$this->db->escape($columnName)."'";
+			return $sql;
+		}
+
+		$sql = 'SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS';
+		$sql .= ' WHERE TABLE_SCHEMA = DATABASE()';
+		$sql .= " AND TABLE_NAME = '".$this->db->escape($tableName)."'";
+		$sql .= " AND COLUMN_NAME = '".$this->db->escape($columnName)."'";
+		return $sql;
+	}
+
+	/**
+	 * Build a DB-specific ALTER TABLE statement to add a small integer column
+	 * (TINYINT on MySQL/MariaDB, SMALLINT on PostgreSQL) NOT NULL DEFAULT 0.
+	 *
+	 * @param string $tableName  Full SQL table name with prefix.
+	 * @param string $columnName Column name.
+	 * @return string
+	 */
+	private function getAddSmallIntColumnSql(string $tableName, string $columnName): string
+	{
+		$type = ($this->db->type === 'pgsql') ? 'SMALLINT' : 'TINYINT';
+		return 'ALTER TABLE '.$tableName.' ADD COLUMN '.$columnName.' '.$type.' NOT NULL DEFAULT 0';
+	}
+
+	/**
+	 * Build a DB-specific SQL statement to drop a named index.
+	 *
+	 * @param string $tableName Full SQL table name with prefix.
+	 * @param string $indexName Index name.
+	 * @return string
+	 */
+	private function getDropIndexSql(string $tableName, string $indexName): string
+	{
+		if ($this->db->type === 'pgsql') {
+			return 'DROP INDEX '.$this->db->escape($indexName);
+		}
+		return 'ALTER TABLE '.$tableName.' DROP INDEX '.$indexName;
+	}
+
+	/**
+	 * Build a DB-specific SQL statement to add a unique index.
+	 *
+	 * @param string $tableName Full SQL table name with prefix.
+	 * @param string $indexName Index name.
+	 * @param string $columns   Comma-separated column list.
+	 * @return string
+	 */
+	private function getAddUniqueIndexSql(string $tableName, string $indexName, string $columns): string
+	{
+		if ($this->db->type === 'pgsql') {
+			return 'CREATE UNIQUE INDEX '.$indexName.' ON '.$tableName.' ('.$columns.')';
+		}
+		return 'ALTER TABLE '.$tableName.' ADD UNIQUE INDEX '.$indexName.' ('.$columns.')';
 	}
 
 	/**
