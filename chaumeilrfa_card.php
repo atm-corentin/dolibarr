@@ -93,6 +93,9 @@ $dol_openinpopup = GETPOST('dol_openinpopup', 'aZ09');
 $socid = GETPOSTINT('socid');
 $fksoc = GETPOSTINT('fk_soc');
 $rfaTypeFromUrl = GETPOSTISSET('rfa_type') ? GETPOSTINT('rfa_type') : ChaumeilRfa::TYPE_SUPPLIER;
+if (!in_array($rfaTypeFromUrl, array(ChaumeilRfa::TYPE_SUPPLIER, ChaumeilRfa::TYPE_CLIENT), true)) {
+	$rfaTypeFromUrl = ChaumeilRfa::TYPE_SUPPLIER;
+}
 
 if (!empty($backtopagejsfields)) {
 	$tmpbacktopagejsfields = explode(':', $backtopagejsfields);
@@ -181,6 +184,33 @@ if (empty($reshook)) {
 	}
 
 	$triggermodname = 'CHAUMEILRFA_MODIFY'; // Name of trigger action code to execute when we modify record
+
+	// Validate rfa_type domain and business coherence before create/update
+	if (!$error && empty($cancel) && in_array($action, array('add', 'update'), true) && $permissiontoadd) {
+		$submittedRfaType = GETPOSTINT('rfa_type');
+		$allowedRfaTypes = array(ChaumeilRfa::TYPE_SUPPLIER, ChaumeilRfa::TYPE_CLIENT);
+		if (!in_array($submittedRfaType, $allowedRfaTypes, true)) {
+			setEventMessages($langs->trans('CliChaumeil_RfaTypeInvalid'), null, 'errors');
+			$error++;
+			$action = ($action === 'add') ? 'create' : 'edit';
+		} else {
+			$rfaValidationSocId = ($action === 'add') ? GETPOSTINT('fk_soc') : (int) $object->fk_soc;
+			if ($rfaValidationSocId > 0) {
+				$rfaValidationSoc = new Societe($db);
+				if ($rfaValidationSoc->fetch($rfaValidationSocId) > 0) {
+					if ($submittedRfaType === ChaumeilRfa::TYPE_CLIENT && (int) $rfaValidationSoc->client < 1) {
+						setEventMessages($langs->trans('CliChaumeil_RfaTypeClientButNotCustomer'), null, 'errors');
+						$error++;
+						$action = ($action === 'add') ? 'create' : 'edit';
+					} elseif ($submittedRfaType === ChaumeilRfa::TYPE_SUPPLIER && !(int) $rfaValidationSoc->fournisseur) {
+						setEventMessages($langs->trans('CliChaumeil_RfaTypeSupplierButNotSupplier'), null, 'errors');
+						$error++;
+						$action = ($action === 'add') ? 'create' : 'edit';
+					}
+				}
+			}
+		}
+	}
 
 	// Actions cancel, add, update, update_extras, confirm_validate, confirm_delete, confirm_deleteline, confirm_clone, confirm_close, confirm_setdraft, confirm_reopen
 	include DOL_DOCUMENT_ROOT.'/core/actions_addupdatedelete.inc.php';
