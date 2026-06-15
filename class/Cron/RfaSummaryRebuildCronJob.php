@@ -64,6 +64,7 @@ class RfaSummaryRebuildCronJob
 	 */
 	public function run(string $params = ''): int
 	{
+		$errorKey = 'CliChaumeil_RfaSummaryCronError';
 		try {
 			$rfaType = ChaumeilRfa::TYPE_SUPPLIER;
 			$yearStr = '';
@@ -81,6 +82,7 @@ class RfaSummaryRebuildCronJob
 			}
 
 			$isClient = ($rfaType === ChaumeilRfa::TYPE_CLIENT);
+			$errorKey = $isClient ? 'CliChaumeil_RfaClientSummaryCronError' : 'CliChaumeil_RfaSummaryCronError';
 			$repository = new RfaSummarySourceRepository($this->db);
 			$builder = $isClient ? new RfaClientSummaryBuilder($repository) : new RfaSummaryBuilder($repository);
 			$persister = new RfaSummaryPersister($this->db, $builder);
@@ -103,7 +105,7 @@ class RfaSummaryRebuildCronJob
 			return 0;
 		} catch (Throwable $exception) {
 			$this->error = $exception->getMessage();
-			$this->output = $this->langs->trans('CliChaumeil_RfaSummaryCronError', $this->error);
+			$this->output = $this->langs->trans($errorKey, $this->error);
 			dol_syslog(__METHOD__.' '.$this->error, LOG_ERR);
 			return -1;
 		}
