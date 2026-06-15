@@ -52,6 +52,7 @@ require_once DOL_DOCUMENT_ROOT.'/core/class/html.form.class.php';
 require_once DOL_DOCUMENT_ROOT.'/core/class/html.formcompany.class.php';
 require_once DOL_DOCUMENT_ROOT.'/core/class/html.formother.class.php';
 require_once DOL_DOCUMENT_ROOT.'/fourn/class/fournisseur.facture.class.php';
+require_once DOL_DOCUMENT_ROOT.'/compta/facture/class/facture.class.php';
 require_once __DIR__.'/class/chaumeilrfa.class.php';
 require_once __DIR__.'/class/Rfa/RfaSummarySourceRepository.php';
 require_once __DIR__.'/class/Rfa/RfaSummaryStorageManager.php';
@@ -432,11 +433,12 @@ foreach ($listRows as $listRow) {
 			} else {
 				if ($isClient) {
 					$url = sprintf(
-						'%s/compta/facture/list.php?socid=%d&search_date_startday=1&search_date_startmonth=1&search_date_startyear=%d&search_date_endday=31&search_date_endmonth=12&search_date_endyear=%d&search_status=2',
+						'%s/compta/facture/list.php?socid=%d&search_date_startday=1&search_date_startmonth=1&search_date_startyear=%d&search_date_endday=31&search_date_endmonth=12&search_date_endyear=%d&search_status=%d',
 						DOL_URL_ROOT,
 						(int) $rowObject->fk_soc,
 						(int) $searchYear,
-						(int) $searchYear
+						(int) $searchYear,
+						(int) Facture::STATUS_CLOSED
 					);
 				} else {
 					$url = sprintf(

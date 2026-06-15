@@ -51,7 +51,7 @@ class RfaSummarySourceRepository
 	/**
 	 * @var int
 	 */
-	private const CLOSED_CUSTOMER_INVOICE_STATUS = 2; // Facture::STATUS_CLOSED
+	private const CLOSED_CUSTOMER_INVOICE_STATUS = Facture::STATUS_CLOSED;
 
 	/**
 	 * @var string
