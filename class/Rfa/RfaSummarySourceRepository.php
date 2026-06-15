@@ -24,6 +24,12 @@ class RfaSummarySourceRepository
 	private const SUPPLIER_FLAG = 1;
 
 	/**
+	 * Invoices included in RFA turnover: STATUS_CLOSED (= 2).
+	 * This covers both fully-paid invoices (paye=1) and invoices manually
+	 * closed without full payment (bad debt, write-off — close_code set).
+	 * Deliberate choice: mirrors how the client RFA side is handled.
+	 * If only fully-paid invoices should count, add AND ff.paye = 1 to the query.
+	 *
 	 * @var int
 	 */
 	private const CLOSED_SUPPLIER_INVOICE_STATUS = FactureFournisseur::STATUS_CLOSED;
@@ -49,6 +55,12 @@ class RfaSummarySourceRepository
 	private const CUSTOMER_FLAG = 1;
 
 	/**
+	 * Invoices included in RFA turnover: STATUS_CLOSED (= 2).
+	 * This covers both fully-paid invoices (paye=1) and invoices manually
+	 * closed without full payment (bad debt, write-off — close_code set).
+	 * Deliberate choice: mirrors how the supplier RFA side is handled.
+	 * If only fully-paid invoices should count, add AND f.paye = 1 to the query.
+	 *
 	 * @var int
 	 */
 	private const CLOSED_CUSTOMER_INVOICE_STATUS = Facture::STATUS_CLOSED;
@@ -126,7 +138,8 @@ class RfaSummarySourceRepository
 	}
 
 	/**
-	 * Load supplier own turnover for one year.
+	 * Load supplier own turnover for one year based on closed invoices (STATUS_CLOSED).
+	 * See CLOSED_SUPPLIER_INVOICE_STATUS for the business rationale.
 	 *
 	 * @param int $year Target year.
 	 * @return array<int,float> Turnover indexed by supplier id.
@@ -160,7 +173,8 @@ class RfaSummarySourceRepository
 	}
 
 	/**
-	 * Load customer own turnover for one year.
+	 * Load customer own turnover for one year based on closed invoices (STATUS_CLOSED).
+	 * See CLOSED_CUSTOMER_INVOICE_STATUS for the business rationale.
 	 *
 	 * @param int $year Target year.
 	 * @return array<int,float> Turnover indexed by customer id.
