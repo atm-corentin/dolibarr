@@ -170,6 +170,12 @@ if ($user->socid > 0) {
 if (!isModEnabled('clichaumeil') || !$permissiontoread) {
 	accessforbidden();
 }
+if ($isClient && !$user->hasRight('facture', 'lire')) {
+	accessforbidden();
+}
+if (!$isClient && !$user->hasRight('fournisseur', 'facture', 'lire')) {
+	accessforbidden();
+}
 
 if ($cancel) {
 	$action = 'list';
