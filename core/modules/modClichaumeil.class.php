@@ -686,11 +686,7 @@ class modClichaumeil extends DolibarrModules
 		$oldIndexName = 'uk_clichaumeil_rfa_summary_entity_year_soc';
 		$newIndexName = 'uk_clichaumeil_rfa_summary_entity_year_soc_type';
 
-		$sqlCheckNew = 'SELECT INDEX_NAME FROM INFORMATION_SCHEMA.STATISTICS';
-		$sqlCheckNew .= " WHERE TABLE_SCHEMA = DATABASE()";
-		$sqlCheckNew .= " AND TABLE_NAME = '".$this->db->escape($summaryTable)."'";
-		$sqlCheckNew .= " AND INDEX_NAME = '".$this->db->escape($newIndexName)."'";
-		$resql = $this->db->query($sqlCheckNew);
+		$resql = $this->db->query($this->getIndexExistenceSql($summaryTable, $newIndexName));
 		if (!$resql) {
 			dol_syslog(__METHOD__.' unable to inspect summary index: '.$this->db->lasterror(), LOG_ERR);
 			$this->error = $this->db->lasterror();
@@ -700,7 +696,24 @@ class modClichaumeil extends DolibarrModules
 		$this->db->free($resql);
 
 		if (!$newIndexExists) {
-			$this->db->query('ALTER TABLE '.$summaryTable.' DROP INDEX '.$oldIndexName);
+			$resqlOld = $this->db->query($this->getIndexExistenceSql($summaryTable, $oldIndexName));
+			if (!$resqlOld) {
+				dol_syslog(__METHOD__.' unable to inspect old summary index: '.$this->db->lasterror(), LOG_ERR);
+				$this->error = $this->db->lasterror();
+				return -1;
+			}
+			$oldIndexExists = ($this->db->num_rows($resqlOld) > 0);
+			$this->db->free($resqlOld);
+
+			if ($oldIndexExists) {
+				$resqlDrop = $this->db->query('ALTER TABLE '.$summaryTable.' DROP INDEX '.$oldIndexName);
+				if (!$resqlDrop) {
+					dol_syslog(__METHOD__.' unable to drop old summary index: '.$this->db->lasterror(), LOG_ERR);
+					$this->error = $this->db->lasterror();
+					return -1;
+				}
+			}
+
 			$sqlIdx = 'ALTER TABLE '.$summaryTable;
 			$sqlIdx .= ' ADD UNIQUE INDEX '.$newIndexName.' (entity, year, fk_soc, rfa_type)';
 			$resql = $this->db->query($sqlIdx);
