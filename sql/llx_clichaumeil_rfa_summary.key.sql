@@ -5,7 +5,7 @@
 -- the Free Software Foundation, either version 3 of the License, or
 -- (at your option) any later version.
 
-ALTER TABLE llx_clichaumeil_rfa_summary ADD UNIQUE INDEX uk_clichaumeil_rfa_summary_entity_year_soc (`entity`, `year`, fk_soc);
+ALTER TABLE llx_clichaumeil_rfa_summary ADD UNIQUE INDEX uk_clichaumeil_rfa_summary_entity_year_soc_type (`entity`, `year`, fk_soc, rfa_type);
 ALTER TABLE llx_clichaumeil_rfa_summary ADD INDEX idx_clichaumeil_rfa_summary_entity_year_root (`entity`, `year`, fk_root_soc);
 ALTER TABLE llx_clichaumeil_rfa_summary ADD INDEX idx_clichaumeil_rfa_summary_entity_year_ca (`entity`, `year`, ca_achats);
 ALTER TABLE llx_clichaumeil_rfa_summary ADD INDEX idx_clichaumeil_rfa_summary_entity_year_rate (`entity`, `year`, taux_rfa);

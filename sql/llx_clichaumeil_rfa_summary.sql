@@ -18,5 +18,6 @@ CREATE TABLE llx_clichaumeil_rfa_summary(
 	taux_rfa double NOT NULL DEFAULT 0,
 	discount_amount_rfa double NOT NULL DEFAULT 0,
 	rfa_status integer NOT NULL DEFAULT 0,
+	rfa_type tinyint NOT NULL DEFAULT 0,
 	date_calculated DATETIME NOT NULL
 ) ENGINE=INNODB;

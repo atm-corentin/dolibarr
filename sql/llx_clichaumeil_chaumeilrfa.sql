@@ -16,19 +16,20 @@
 
 CREATE TABLE llx_clichaumeil_chaumeilrfa(
 	-- BEGIN MODULEBUILDER FIELDS
-	rowid integer AUTO_INCREMENT PRIMARY KEY NOT NULL, 
-	ref varchar(128) NOT NULL, 
-	label varchar(255) NOT NULL, 
-	fk_soc integer NOT NULL, 
-	date_creation datetime NOT NULL, 
-	tms timestamp DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, 
-	fk_user_creat integer NOT NULL, 
-	fk_user_modif integer, 
-	import_key varchar(14), 
-	status integer NOT NULL, 
-	datestart date NOT NULL, 
-	dateend date NOT NULL, 
-	palier double NOT NULL, 
-	raterfa double NOT NULL
+	`rowid` INTEGER AUTO_INCREMENT PRIMARY KEY NOT NULL,
+	`ref` VARCHAR(128) NOT NULL,
+	label VARCHAR(255) NOT NULL,
+	fk_soc INTEGER NOT NULL,
+	date_creation DATETIME NOT NULL,
+	tms TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+	fk_user_creat INTEGER NOT NULL,
+	fk_user_modif INTEGER,
+	import_key VARCHAR(14),
+	`status` INTEGER NOT NULL,
+	datestart DATE NOT NULL,
+	dateend DATE NOT NULL,
+	palier DOUBLE NOT NULL,
+	raterfa DOUBLE NOT NULL,
+	rfa_type TINYINT NOT NULL DEFAULT 0
 	-- END MODULEBUILDER FIELDS
 ) ENGINE=innodb;

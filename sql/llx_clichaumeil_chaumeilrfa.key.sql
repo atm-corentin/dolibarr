@@ -18,6 +18,7 @@
 ALTER TABLE llx_clichaumeil_chaumeilrfa ADD INDEX idx_clichaumeil_chaumeilrfa_rowid (rowid);
 ALTER TABLE llx_clichaumeil_chaumeilrfa ADD UNIQUE INDEX uk_clichaumeil_chaumeilrfa_ref (ref);
 ALTER TABLE llx_clichaumeil_chaumeilrfa ADD INDEX idx_clichaumeil_chaumeilrfa_status (status);
+ALTER TABLE llx_clichaumeil_chaumeilrfa ADD INDEX idx_clichaumeil_chaumeilrfa_soc_year_palier (fk_soc, datestart, dateend, palier);
 -- END MODULEBUILDER INDEXES
 
 -- Delete cascade RFA on delete soc
