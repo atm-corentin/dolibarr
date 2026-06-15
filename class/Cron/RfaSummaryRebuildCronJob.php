@@ -75,6 +75,11 @@ class RfaSummaryRebuildCronJob
 				}
 			}
 
+			$allowedTypes = array(ChaumeilRfa::TYPE_SUPPLIER, ChaumeilRfa::TYPE_CLIENT);
+			if (!in_array($rfaType, $allowedTypes, true)) {
+				throw new RuntimeException('Invalid rfa_type value: '.$rfaType);
+			}
+
 			$isClient = ($rfaType === ChaumeilRfa::TYPE_CLIENT);
 			$repository = new RfaSummarySourceRepository($this->db);
 			$builder = $isClient ? new RfaClientSummaryBuilder($repository) : new RfaSummaryBuilder($repository);

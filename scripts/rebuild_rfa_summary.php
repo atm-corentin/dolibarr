@@ -158,6 +158,10 @@ try {
 	}
 
 	$rfaType = $isCli ? (int) getCliOption($argv, 'rfa_type', (string) ChaumeilRfa::TYPE_SUPPLIER) : GETPOSTINT('rfa_type');
+	$allowedRfaTypes = array(ChaumeilRfa::TYPE_SUPPLIER, ChaumeilRfa::TYPE_CLIENT);
+	if (!in_array($rfaType, $allowedRfaTypes, true)) {
+		throw new RuntimeException('Invalid rfa_type value: '.$rfaType);
+	}
 	$isClient = ($rfaType === ChaumeilRfa::TYPE_CLIENT);
 	$langPrefix = $isClient ? 'CliChaumeil_RfaClientSummary' : 'CliChaumeil_RfaSummary';
 	$listPage = $isClient ? 'chaumeilrfa_list_fourn.php?rfa_type=1&yearid=' : 'chaumeilrfa_list_fourn.php?yearid=';

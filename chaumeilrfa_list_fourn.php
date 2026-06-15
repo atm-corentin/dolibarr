@@ -81,6 +81,9 @@ $offset = $limit * $page;
 $object = new ChaumeilRfa($db);
 
 $rfaType = GETPOSTISSET('rfa_type') ? GETPOSTINT('rfa_type') : ChaumeilRfa::TYPE_SUPPLIER;
+if (!in_array($rfaType, array(ChaumeilRfa::TYPE_SUPPLIER, ChaumeilRfa::TYPE_CLIENT), true)) {
+	$rfaType = ChaumeilRfa::TYPE_SUPPLIER;
+}
 $isClient = ($rfaType === ChaumeilRfa::TYPE_CLIENT);
 $hookContext = $isClient ? 'globalrfaclientlist' : 'globalrfalist';
 $hookmanager->initHooks(array($contextpage, $hookContext));
