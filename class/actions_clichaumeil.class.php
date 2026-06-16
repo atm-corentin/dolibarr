@@ -144,7 +144,11 @@ class ActionsClichaumeil extends CommonHookActions
 		$this->db = $db;
 	}
 
-	public $rfa_tab_added = false;
+	/** @var bool */
+	public $rfaFournTabAdded = false;
+
+	/** @var bool */
+	public $rfaClientTabAdded = false;
 
 	/**
 	 * Execute action
@@ -1303,61 +1307,71 @@ class ActionsClichaumeil extends CommonHookActions
 	{
 		global $langs, $conf, $user;
 
-		if ($this->rfa_tab_added == true) {
-			return 0; // déjà passé une fois
-		}
-
 		if (!isset($parameters['object']->element)) {
 			return 0;
 		}
 		if ($parameters['mode'] == 'remove') {
-			// used to make some tabs removed
 			return 0;
 		} elseif ($parameters['mode'] == 'add') {
 			$langs->load('clichaumeil@clichaumeil');
-			// used when we want to add some tabs
 			$counter = count($parameters['head']);
 			$element = $parameters['object']->element;
 			$id = $parameters['object']->id;
-			// verifier le type d'onglet comme member_stats où ça ne doit pas apparaitre
-			// if (in_array($element, ['societe', 'member', 'contrat', 'fichinter', 'project', 'propal', 'commande', 'facture', 'order_supplier', 'invoice_supplier'])) {
+
 			if ($element == 'societe' && $user->hasRight('clichaumeil', 'chaumeilrfa', 'read')) {
-				$datacount = 0;
+				$rfaTable = $this->db->prefix().'clichaumeil_chaumeilrfa';
 
-				//SQL COUNT RFA by socid
-				$rfaCountsql = "SELECT COUNT(*) as count FROM " . $this->db->prefix() . "clichaumeil_chaumeilrfa WHERE fk_soc = " . (int) $id;
-
-				$resql = $this->db->query($rfaCountsql);
-				if ($resql) {
-					$obj = $this->db->fetch_object($resql);
-					$datacount = $obj->count;
-					$this->db->free($resql);
-				} else {
-					dol_print_error($this->db);
+				if ($object->fournisseur && !$this->rfaFournTabAdded) {
+					$fournCount = 0;
+					$sql = 'SELECT COUNT(*) AS cnt FROM '.$rfaTable.' WHERE fk_soc = '.(int) $id.' AND rfa_type = 0';
+					$resql = $this->db->query($sql);
+					if ($resql) {
+						$obj = $this->db->fetch_object($resql);
+						$fournCount = (int) $obj->cnt;
+						$this->db->free($resql);
+					} else {
+						dol_syslog(__METHOD__.' unable to count supplier RFA: '.$this->db->lasterror(), LOG_ERR);
+					}
+					$label = $langs->trans('ClichaumeilTabRfaFourn');
+					if ($fournCount > 0) {
+						$label .= '<span class="badge marginleftonlyshort">'.$fournCount.'</span>';
+					}
+					$parameters['head'][$counter][0] = dol_buildpath('/clichaumeil/chaumeilrfa_list.php', 1).'?socid='.$id.'&rfa_type=0';
+					$parameters['head'][$counter][1] = $label;
+					$parameters['head'][$counter][2] = 'clichaumeilrfa_fourn';
+					$counter++;
+					$this->rfaFournTabAdded = true;
 				}
 
-				if ($object->fournisseur && $this->rfa_tab_added == false) {
-					$parameters['head'][$counter][0] = dol_buildpath('/clichaumeil/chaumeilrfa_list.php', 1) . '?socid=' . $id;
-					$parameters['head'][$counter][1] = $langs->trans('ClichaumeilTabRfa');
-					$this->rfa_tab_added = true;
+				if ($object->client >= 1 && !$this->rfaClientTabAdded) {
+					$clientCount = 0;
+					$sql = 'SELECT COUNT(*) AS cnt FROM '.$rfaTable.' WHERE fk_soc = '.(int) $id.' AND rfa_type = 1';
+					$resql = $this->db->query($sql);
+					if ($resql) {
+						$obj = $this->db->fetch_object($resql);
+						$clientCount = (int) $obj->cnt;
+						$this->db->free($resql);
+					} else {
+						dol_syslog(__METHOD__.' unable to count client RFA: '.$this->db->lasterror(), LOG_ERR);
+					}
+					$label = $langs->trans('ClichaumeilTabRfaClient');
+					if ($clientCount > 0) {
+						$label .= '<span class="badge marginleftonlyshort">'.$clientCount.'</span>';
+					}
+					$parameters['head'][$counter][0] = dol_buildpath('/clichaumeil/chaumeilrfa_list.php', 1).'?socid='.$id.'&rfa_type=1';
+					$parameters['head'][$counter][1] = $label;
+					$parameters['head'][$counter][2] = 'clichaumeilrfa_client';
+					$counter++;
+					$this->rfaClientTabAdded = true;
 				}
-
-				if ($datacount > 0) {
-					$parameters['head'][$counter][1] .= '<span class="badge marginleftonlyshort">' . $datacount . '</span>';
-				}
-				$parameters['head'][$counter][2] = 'clichaumeilrfa';
-				$counter++;
 			}
 			if ($counter > 0 && (int) DOL_VERSION < 14) {  // @phpstan-ignore-line
 				$this->results = $parameters['head'];
-				// return 1 to replace standard code
 				return 1;
 			} else {
-				// From V14 onwards, $parameters['head'] is modifiable by reference
 				return 0;
 			}
 		} else {
-			// Bad value for $parameters['mode']
 			return -1;
 		}
 	}

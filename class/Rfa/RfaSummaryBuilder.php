@@ -9,6 +9,7 @@ declare(strict_types=1);
  */
 
 require_once __DIR__.'/RfaSummarySourceRepository.php';
+require_once __DIR__.'/../chaumeilrfa.class.php';
 
 /**
  * Builder used to compute yearly RFA summary rows.
@@ -28,7 +29,7 @@ class RfaSummaryBuilder
 	/**
 	 * @var RfaSummarySourceRepository
 	 */
-	private RfaSummarySourceRepository $repository;
+	protected RfaSummarySourceRepository $repository;
 
 	/**
 	 * Constructor.
@@ -83,6 +84,7 @@ class RfaSummaryBuilder
 
 			$summaryRows[] = array(
 				'year' => $year,
+				'rfa_type' => ChaumeilRfa::TYPE_SUPPLIER,
 				'fk_soc' => $supplierId,
 				'fk_root_soc' => $this->resolveRootSupplierId($supplierId, $thirdParties),
 				'fk_chaumeilrfa' => (int) $bestReachedRfa['rowid'],
@@ -105,7 +107,7 @@ class RfaSummaryBuilder
 	 * @param array<int,array<string,mixed>> $thirdParties Third parties indexed by id.
 	 * @return array<int,array<int,int>>
 	 */
-	private function buildChildrenByParent(array $thirdParties): array
+	protected function buildChildrenByParent(array $thirdParties): array
 	{
 		$childrenByParent = array();
 
@@ -137,7 +139,7 @@ class RfaSummaryBuilder
 	 * @return array<string,mixed>
 	 * @throws RuntimeException When a cycle is detected.
 	 */
-	private function computeSubtreeData(int $supplierId, array $childrenByParent, array $ownTurnoverBySupplier, array &$turnoverMemo, array &$contributorMemo, array $currentStack): array
+	protected function computeSubtreeData(int $supplierId, array $childrenByParent, array $ownTurnoverBySupplier, array &$turnoverMemo, array &$contributorMemo, array $currentStack): array
 	{
 		if (isset($turnoverMemo[$supplierId], $contributorMemo[$supplierId])) {
 			return array(
@@ -188,7 +190,7 @@ class RfaSummaryBuilder
 	 * @param float $aggregatedTurnover Aggregated turnover.
 	 * @return array<string,mixed>|null
 	 */
-	private function findBestReachedRfa(array $rfaRows, float $aggregatedTurnover): ?array
+	protected function findBestReachedRfa(array $rfaRows, float $aggregatedTurnover): ?array
 	{
 		foreach ($rfaRows as $rfaRow) {
 			if ((float) $rfaRow['palier'] <= $aggregatedTurnover) {
@@ -207,7 +209,7 @@ class RfaSummaryBuilder
 	 * @return int
 	 * @throws RuntimeException When a cycle is detected.
 	 */
-	private function resolveRootSupplierId(int $supplierId, array $thirdParties): int
+	protected function resolveRootSupplierId(int $supplierId, array $thirdParties): int
 	{
 		$currentId = $supplierId;
 		$visited = array();

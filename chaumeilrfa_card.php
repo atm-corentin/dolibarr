@@ -92,6 +92,10 @@ $optioncss = GETPOST('optioncss', 'aZ'); // Option for the css output (always ''
 $dol_openinpopup = GETPOST('dol_openinpopup', 'aZ09');
 $socid = GETPOSTINT('socid');
 $fksoc = GETPOSTINT('fk_soc');
+$rfaTypeFromUrl = GETPOSTISSET('rfa_type') ? GETPOSTINT('rfa_type') : ChaumeilRfa::TYPE_SUPPLIER;
+if (!in_array($rfaTypeFromUrl, array(ChaumeilRfa::TYPE_SUPPLIER, ChaumeilRfa::TYPE_CLIENT), true)) {
+	$rfaTypeFromUrl = ChaumeilRfa::TYPE_SUPPLIER;
+}
 
 if (!empty($backtopagejsfields)) {
 	$tmpbacktopagejsfields = explode(':', $backtopagejsfields);
@@ -181,6 +185,45 @@ if (empty($reshook)) {
 
 	$triggermodname = 'CHAUMEILRFA_MODIFY'; // Name of trigger action code to execute when we modify record
 
+	// Validate rfa_type domain and business coherence before create/update
+	if (!$error && empty($cancel) && in_array($action, array('add', 'update'), true) && $permissiontoadd) {
+		$submittedRfaType = GETPOSTINT('rfa_type');
+		$allowedRfaTypes = array(ChaumeilRfa::TYPE_SUPPLIER, ChaumeilRfa::TYPE_CLIENT);
+		if (!in_array($submittedRfaType, $allowedRfaTypes, true)) {
+			setEventMessages($langs->trans('CliChaumeil_RfaTypeInvalid'), null, 'errors');
+			$error++;
+			$action = ($action === 'add') ? 'create' : 'edit';
+		} else {
+			$rfaValidationSocId = ($action === 'add') ? GETPOSTINT('fk_soc') : (int) $object->fk_soc;
+			if ($rfaValidationSocId <= 0) {
+				setEventMessages($langs->trans('ErrorFieldRequired', $langs->transnoentitiesnoconv('ThirdParty')), null, 'errors');
+				$error++;
+				$action = ($action === 'add') ? 'create' : 'edit';
+			} else {
+				$rfaValidationSoc = new Societe($db);
+				$fetchResult = $rfaValidationSoc->fetch($rfaValidationSocId);
+				if ($fetchResult < 0) {
+					dol_syslog(__FILE__.' unable to fetch thirdparty #'.$rfaValidationSocId.': '.$rfaValidationSoc->error, LOG_ERR);
+					setEventMessages($langs->trans('Error'), $rfaValidationSoc->errors, 'errors');
+					$error++;
+					$action = ($action === 'add') ? 'create' : 'edit';
+				} elseif ($fetchResult === 0) {
+					setEventMessages($langs->trans('ErrorRecordNotFound'), null, 'errors');
+					$error++;
+					$action = ($action === 'add') ? 'create' : 'edit';
+				} elseif ($submittedRfaType === ChaumeilRfa::TYPE_CLIENT && (int) $rfaValidationSoc->client < 1) {
+					setEventMessages($langs->trans('CliChaumeil_RfaTypeClientButNotCustomer'), null, 'errors');
+					$error++;
+					$action = ($action === 'add') ? 'create' : 'edit';
+				} elseif ($submittedRfaType === ChaumeilRfa::TYPE_SUPPLIER && !(int) $rfaValidationSoc->fournisseur) {
+					setEventMessages($langs->trans('CliChaumeil_RfaTypeSupplierButNotSupplier'), null, 'errors');
+					$error++;
+					$action = ($action === 'add') ? 'create' : 'edit';
+				}
+			}
+		}
+	}
+
 	// Actions cancel, add, update, update_extras, confirm_validate, confirm_delete, confirm_deleteline, confirm_clone, confirm_close, confirm_setdraft, confirm_reopen
 	include DOL_DOCUMENT_ROOT.'/core/actions_addupdatedelete.inc.php';
 
@@ -237,6 +280,7 @@ if ($action == 'create') {
 		accessforbidden('NotEnoughPermissions', 0, 1);
 	}
 	$object->fk_soc = $socid;
+	$object->rfa_type = $rfaTypeFromUrl;
 	print load_fiche_titre($title, '', $object->picto);
 	print '<form method="POST" action="'.$_SERVER["PHP_SELF"].'">';
 	print '<input type="hidden" name="token" value="'.newToken().'">';

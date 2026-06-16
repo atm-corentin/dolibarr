@@ -18,8 +18,10 @@ if ($isCli && !defined('NOBROWSERNOTIF')) {
 
 require __DIR__.'/../../../main.inc.php';
 
+require_once __DIR__.'/../class/chaumeilrfa.class.php';
 require_once __DIR__.'/../class/Rfa/RfaSummarySourceRepository.php';
 require_once __DIR__.'/../class/Rfa/RfaSummaryBuilder.php';
+require_once __DIR__.'/../class/Rfa/RfaClientSummaryBuilder.php';
 require_once __DIR__.'/../class/Rfa/RfaSummaryPersister.php';
 require_once __DIR__.'/../class/Rfa/RfaSummaryStorageManager.php';
 
@@ -155,6 +157,32 @@ try {
 		}
 	}
 
+	$rfaType = $isCli ? (int) getCliOption($argv, 'rfa_type', (string) ChaumeilRfa::TYPE_SUPPLIER) : GETPOSTINT('rfa_type');
+	$allowedRfaTypes = array(ChaumeilRfa::TYPE_SUPPLIER, ChaumeilRfa::TYPE_CLIENT);
+	$isClient = ($rfaType === ChaumeilRfa::TYPE_CLIENT);
+	$langPrefix = $isClient ? 'CliChaumeil_RfaClientSummary' : 'CliChaumeil_RfaSummary';
+	if (!in_array($rfaType, $allowedRfaTypes, true)) {
+		throw new RuntimeException('Invalid rfa_type value: '.$rfaType);
+	}
+
+	if (!isModEnabled('clichaumeil')) {
+		accessforbidden();
+	}
+	if (!$isCli) {
+		$hasInvoiceReadRight = $isClient ? $user->hasRight('facture', 'lire') : $user->hasRight('fournisseur', 'facture', 'lire');
+		if (!$hasInvoiceReadRight) {
+			if ($isAjax) {
+				sendJsonResponse(403, array(
+					'success' => false,
+					'message' => $langs->transnoentitiesnoconv('ErrorForbidden'),
+				));
+			}
+			accessforbidden();
+		}
+	}
+
+	$listPage = $isClient ? 'chaumeilrfa_list_fourn.php?rfa_type=1&yearid=' : 'chaumeilrfa_list_fourn.php?yearid=';
+
 	$targetYear = $isCli ? (int) getCliOption($argv, 'year', dol_print_date(dol_now(), '%Y')) : GETPOSTINT('yearid');
 	if ($targetYear <= 0) {
 		$targetYear = (int) dol_print_date(dol_now(), '%Y');
@@ -163,12 +191,12 @@ try {
 	$backToPage = $isCli ? '' : GETPOST('backtopage', 'alphanohtml');
 	$isConfirmed = (!$isCli && GETPOST('confirm', 'alpha') === 'yes');
 	if (!$isCli && !$isConfirmed) {
-		llxHeader('', $langs->trans('CliChaumeil_RfaSummaryRebuildTitle'));
+		llxHeader('', $langs->trans($langPrefix.'RebuildTitle'));
 		print renderRfaSummaryStyles();
 		print '<div class="clichaumeil-summary-tool">';
 		print '<div class="summary-card">';
-		print '<h1>'.$langs->trans('CliChaumeil_RfaSummaryRebuildTitle').'</h1>';
-		print '<p>'.$langs->trans('CliChaumeil_RfaSummaryRebuildIntro').'</p>';
+		print '<h1>'.$langs->trans($langPrefix.'RebuildTitle').'</h1>';
+		print '<p>'.$langs->trans($langPrefix.'RebuildIntro').'</p>';
 		print '<div class="summary-grid">';
 		print '<div class="summary-card">';
 		print '<div class="summary-title">'.$langs->trans('ByYear').'</div>';
@@ -179,9 +207,10 @@ try {
 		print '<input type="hidden" name="token" value="'.newToken().'">';
 		print '<input type="hidden" name="confirm" value="yes">';
 		print '<input type="hidden" name="yearid" value="'.((int) $targetYear).'">';
+		print '<input type="hidden" name="rfa_type" value="'.$rfaType.'">';
 		print '<input type="hidden" name="backtopage" value="'.dol_escape_htmltag($backToPage).'">';
 		print '<div class="summary-actions">';
-		print '<input class="button button-save" type="submit" value="'.$langs->trans('CliChaumeil_RfaSummaryRebuildAction').'">';
+		print '<input class="button button-save" type="submit" value="'.$langs->trans($langPrefix.'RebuildAction').'">';
 		if ($backToPage !== '') {
 			print '<a class="button button-cancel" href="'.dol_escape_htmltag($backToPage).'">'.$langs->trans('Back').'</a>';
 		}
@@ -197,35 +226,35 @@ try {
 	}
 
 	$repository = new RfaSummarySourceRepository($db);
-	$builder = new RfaSummaryBuilder($repository);
+	$builder = $isClient ? new RfaClientSummaryBuilder($repository) : new RfaSummaryBuilder($repository);
 	$persister = new RfaSummaryPersister($db, $builder);
-	$rowCount = $persister->rebuildYear($targetYear);
+	$rowCount = $persister->rebuildYear($targetYear, $rfaType);
 
-	printSummaryLine($langs->trans('CliChaumeil_RfaSummaryRebuildTitle'));
+	printSummaryLine($langs->trans($langPrefix.'RebuildTitle'));
 	printSummaryLine($langs->trans('ByYear').': '.$targetYear);
-	printSummaryLine($langs->trans('CliChaumeil_RfaSummaryRebuildResult', $rowCount));
+	printSummaryLine($langs->trans($langPrefix.'RebuildResult', $rowCount));
 
 	if ($isAjax) {
 		sendJsonResponse(200, array(
 			'success' => true,
-			'message' => $langs->transnoentitiesnoconv('CliChaumeil_RfaSummaryRebuildSuccessMessage', $targetYear, $rowCount),
+			'message' => $langs->transnoentitiesnoconv($langPrefix.'RebuildSuccessMessage', $targetYear, $rowCount),
 			'row_count' => $rowCount,
 			'year' => $targetYear,
 		));
 	}
 
 	if (!$isCli) {
-		llxHeader('', $langs->trans('CliChaumeil_RfaSummaryRebuildTitle'));
+		llxHeader('', $langs->trans($langPrefix.'RebuildTitle'));
 		print renderRfaSummaryStyles();
 		print '<div class="clichaumeil-summary-tool">';
 		print '<div class="summary-card">';
-		print '<h1>'.$langs->trans('CliChaumeil_RfaSummaryRebuildTitle').'</h1>';
-		print '<p>'.$langs->trans('CliChaumeil_RfaSummaryRebuildSuccessMessage', $targetYear, $rowCount).'</p>';
+		print '<h1>'.$langs->trans($langPrefix.'RebuildTitle').'</h1>';
+		print '<p>'.$langs->trans($langPrefix.'RebuildSuccessMessage', $targetYear, $rowCount).'</p>';
 		print '<div class="summary-actions">';
 		if ($backToPage !== '') {
 			print '<a class="button button-save" href="'.dol_escape_htmltag($backToPage).'">'.$langs->trans('Back').'</a>';
 		}
-		print '<a class="button" href="'.dol_buildpath('/clichaumeil/chaumeilrfa_list_fourn.php?yearid='.$targetYear, 1).'">'.$langs->trans('CliChaumeil_RfaSummaryOpenList').'</a>';
+		print '<a class="button" href="'.dol_buildpath('/clichaumeil/'.$listPage.$targetYear, 1).'">'.$langs->trans('CliChaumeil_RfaSummaryOpenList').'</a>';
 		print '</div>';
 		print '<div class="summary-card" style="margin-top:18px;">';
 		print '<div class="summary-title">'.$langs->trans('CliChaumeil_RfaSummaryRebuildOutput').'</div>';
@@ -251,11 +280,11 @@ try {
 		));
 	}
 	setEventMessages($errorMessage, null, 'errors');
-	llxHeader('', $langs->trans('CliChaumeil_RfaSummaryRebuildTitle'));
+	llxHeader('', $langs->trans($langPrefix.'RebuildTitle'));
 	print renderRfaSummaryStyles();
 	print '<div class="clichaumeil-summary-tool">';
 	print '<div class="summary-card">';
-	print '<h1>'.$langs->trans('CliChaumeil_RfaSummaryRebuildTitle').'</h1>';
+	print '<h1>'.$langs->trans($langPrefix.'RebuildTitle').'</h1>';
 	print '<div class="summary-output">'.dol_escape_htmltag($errorMessage).'</div>';
 	print '</div>';
 	print '</div>';

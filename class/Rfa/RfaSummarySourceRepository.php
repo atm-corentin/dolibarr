@@ -9,7 +9,9 @@ declare(strict_types=1);
  */
 
 require_once DOL_DOCUMENT_ROOT.'/fourn/class/fournisseur.facture.class.php';
+require_once DOL_DOCUMENT_ROOT.'/compta/facture/class/facture.class.php';
 require_once __DIR__.'/RfaSummaryStorageManager.php';
+require_once __DIR__.'/../chaumeilrfa.class.php';
 
 /**
  * Repository used to load RFA summary source data and summary list rows.
@@ -22,6 +24,12 @@ class RfaSummarySourceRepository
 	private const SUPPLIER_FLAG = 1;
 
 	/**
+	 * Invoices included in RFA turnover: STATUS_CLOSED (= 2).
+	 * This covers both fully-paid invoices (paye=1) and invoices manually
+	 * closed without full payment (bad debt, write-off — close_code set).
+	 * Deliberate choice: mirrors how the client RFA side is handled.
+	 * If only fully-paid invoices should count, add AND ff.paye = 1 to the query.
+	 *
 	 * @var int
 	 */
 	private const CLOSED_SUPPLIER_INVOICE_STATUS = FactureFournisseur::STATUS_CLOSED;
@@ -35,6 +43,27 @@ class RfaSummarySourceRepository
 	 * @var string
 	 */
 	private const TABLE_SUPPLIER_INVOICE = 'facture_fourn';
+
+	/**
+	 * @var string
+	 */
+	private const TABLE_CUSTOMER_INVOICE = 'facture';
+
+	/**
+	 * @var int
+	 */
+	private const CUSTOMER_FLAG = 1;
+
+	/**
+	 * Invoices included in RFA turnover: STATUS_CLOSED (= 2).
+	 * This covers both fully-paid invoices (paye=1) and invoices manually
+	 * closed without full payment (bad debt, write-off — close_code set).
+	 * Deliberate choice: mirrors how the supplier RFA side is handled.
+	 * If only fully-paid invoices should count, add AND f.paye = 1 to the query.
+	 *
+	 * @var int
+	 */
+	private const CLOSED_CUSTOMER_INVOICE_STATUS = Facture::STATUS_CLOSED;
 
 	/**
 	 * @var string
@@ -84,7 +113,7 @@ class RfaSummarySourceRepository
 	public function fetchThirdParties(): array
 	{
 		$rows = array();
-		$sql = 'SELECT s.rowid, s.nom, s.parent, s.fournisseur';
+		$sql = 'SELECT s.rowid, s.nom, s.parent, s.fournisseur, s.client';
 		$sql .= ' FROM '.$this->db->prefix().self::TABLE_THIRDPARTY.' AS s';
 		$sql .= ' WHERE s.entity IN ('.getEntity('societe').')';
 
@@ -99,6 +128,7 @@ class RfaSummarySourceRepository
 				'nom' => (string) $obj->nom,
 				'parent' => (int) $obj->parent,
 				'fournisseur' => (int) $obj->fournisseur,
+				'client' => (int) $obj->client,
 			);
 		}
 
@@ -108,7 +138,8 @@ class RfaSummarySourceRepository
 	}
 
 	/**
-	 * Load supplier own turnover for one year.
+	 * Load supplier own turnover for one year based on closed invoices (STATUS_CLOSED).
+	 * See CLOSED_SUPPLIER_INVOICE_STATUS for the business rationale.
 	 *
 	 * @param int $year Target year.
 	 * @return array<int,float> Turnover indexed by supplier id.
@@ -142,18 +173,55 @@ class RfaSummarySourceRepository
 	}
 
 	/**
-	 * Load all RFA rows active for one year.
+	 * Load customer own turnover for one year based on closed invoices (STATUS_CLOSED).
+	 * See CLOSED_CUSTOMER_INVOICE_STATUS for the business rationale.
 	 *
 	 * @param int $year Target year.
+	 * @return array<int,float> Turnover indexed by customer id.
+	 * @throws RuntimeException When the SQL query fails.
+	 */
+	public function fetchOwnTurnoverByClientYear(int $year): array
+	{
+		$rows = array();
+		$sql = 'SELECT f.fk_soc, SUM(f.total_ht) AS own_turnover';
+		$sql .= ' FROM '.$this->db->prefix().self::TABLE_CUSTOMER_INVOICE.' AS f';
+		$sql .= ' INNER JOIN '.$this->db->prefix().self::TABLE_THIRDPARTY.' AS s ON s.rowid = f.fk_soc';
+		$sql .= ' WHERE f.entity IN ('.getEntity('facture').')';
+		$sql .= ' AND s.entity IN ('.getEntity('societe').')';
+		$sql .= ' AND s.client >= '.self::CUSTOMER_FLAG;
+		$sql .= ' AND f.fk_statut = '.self::CLOSED_CUSTOMER_INVOICE_STATUS;
+		$sql .= ' AND YEAR(f.datef) = '.((int) $year);
+		$sql .= ' GROUP BY f.fk_soc';
+
+		$resql = $this->db->query($sql);
+		if (!$resql) {
+			throw new RuntimeException('Unable to fetch customer turnover: '.$this->db->lasterror());
+		}
+
+		while (($obj = $this->db->fetch_object($resql)) !== null) {
+			$rows[(int) $obj->fk_soc] = (float) $obj->own_turnover;
+		}
+
+		$this->db->free($resql);
+
+		return $rows;
+	}
+
+	/**
+	 * Load all RFA rows active for one year.
+	 *
+	 * @param int $year    Target year.
+	 * @param int $rfaType RFA type (ChaumeilRfa::TYPE_SUPPLIER or TYPE_CLIENT).
 	 * @return array<int,array<int,array<string,mixed>>> RFA rows grouped by supplier id.
 	 * @throws RuntimeException When the SQL query fails.
 	 */
-	public function fetchActiveRfaRowsForYear(int $year): array
+	public function fetchActiveRfaRowsForYear(int $year, int $rfaType = ChaumeilRfa::TYPE_SUPPLIER): array
 	{
 		$rows = array();
 		$sql = 'SELECT r.rowid, r.fk_soc, r.palier, r.raterfa, r.status, r.datestart, r.dateend';
 		$sql .= ' FROM '.$this->db->prefix().self::TABLE_RFA.' AS r';
 		$sql .= ' WHERE '.((int) $year).' BETWEEN YEAR(r.datestart) AND YEAR(r.dateend)';
+		$sql .= ' AND r.rfa_type = '.((int) $rfaType);
 		$sql .= ' ORDER BY r.fk_soc ASC, r.palier DESC, r.rowid DESC';
 
 		$resql = $this->db->query($sql);
@@ -186,15 +254,17 @@ class RfaSummarySourceRepository
 	/**
 	 * Load the list of years that should be rebuilt by the cron job.
 	 *
+	 * @param int $rfaType RFA type (ChaumeilRfa::TYPE_SUPPLIER or TYPE_CLIENT).
 	 * @return array<int,int> Sorted list of relevant years.
 	 * @throws RuntimeException When the SQL query fails.
 	 */
-	public function fetchRelevantSummaryYears(): array
+	public function fetchRelevantSummaryYears(int $rfaType): array
 	{
 		$years = array();
 
 		$sql = 'SELECT r.datestart, r.dateend';
 		$sql .= ' FROM '.$this->db->prefix().self::TABLE_RFA.' AS r';
+		$sql .= ' WHERE r.rfa_type = '.$rfaType;
 		$resql = $this->db->query($sql);
 		if (!$resql) {
 			throw new RuntimeException('Unable to fetch RFA year ranges: '.$this->db->lasterror());
@@ -218,6 +288,7 @@ class RfaSummarySourceRepository
 			$sql = 'SELECT DISTINCT rs.year';
 			$sql .= ' FROM '.$this->db->prefix().self::TABLE_SUMMARY.' AS rs';
 			$sql .= ' WHERE rs.entity = '.$this->entity;
+			$sql .= ' AND rs.rfa_type = '.$rfaType;
 			$sql .= ' ORDER BY rs.year ASC';
 			$resql = $this->db->query($sql);
 			if (!$resql) {
@@ -329,29 +400,31 @@ class RfaSummarySourceRepository
 	}
 
 	/**
-	 * Check whether a summary exists for a given year.
+	 * Check whether a summary exists for a given year and type.
 	 *
-	 * @param int $year Target year.
+	 * @param int $year    Target year.
+	 * @param int $rfaType RFA type (ChaumeilRfa::TYPE_SUPPLIER or TYPE_CLIENT).
 	 * @return bool
 	 * @throws RuntimeException When the SQL query fails.
 	 */
-	public function hasSummaryForYear(int $year): bool
+	public function hasSummaryForYear(int $year, int $rfaType = ChaumeilRfa::TYPE_SUPPLIER): bool
 	{
 		if (!$this->summaryTableExists()) {
 			return false;
 		}
 
-		return $this->countSummaryRowsForYear($year, array()) > 0;
+		return $this->countSummaryRowsForYear($year, array('rfa_type' => (string) $rfaType)) > 0;
 	}
 
 	/**
-	 * Return the latest calculation timestamp stored for one summary year.
+	 * Return the latest calculation timestamp stored for one summary year and type.
 	 *
-	 * @param int $year Target year.
+	 * @param int $year    Target year.
+	 * @param int $rfaType RFA type (ChaumeilRfa::TYPE_SUPPLIER or TYPE_CLIENT).
 	 * @return int Unix timestamp, 0 when unavailable.
 	 * @throws RuntimeException When the SQL query fails.
 	 */
-	public function getSummaryLastCalculatedTimestamp(int $year): int
+	public function getSummaryLastCalculatedTimestamp(int $year, int $rfaType = ChaumeilRfa::TYPE_SUPPLIER): int
 	{
 		if (!$this->summaryTableExists()) {
 			return 0;
@@ -361,6 +434,7 @@ class RfaSummarySourceRepository
 		$sql .= ' FROM '.$this->db->prefix().self::TABLE_SUMMARY.' AS rs';
 		$sql .= ' WHERE rs.entity = '.$this->entity;
 		$sql .= ' AND rs.year = '.((int) $year);
+		$sql .= ' AND rs.rfa_type = '.((int) $rfaType);
 
 		$resql = $this->db->query($sql);
 		if (!$resql) {
@@ -423,6 +497,9 @@ class RfaSummarySourceRepository
 		}
 		if (isset($filters['discount_amount_rfa']) && $filters['discount_amount_rfa'] !== '') {
 			$sql .= natural_search('rs.discount_amount_rfa', (string) $filters['discount_amount_rfa'], 1);
+		}
+		if (isset($filters['rfa_type']) && $filters['rfa_type'] !== '') {
+			$sql .= ' AND rs.rfa_type = '.((int) $filters['rfa_type']);
 		}
 
 		return $sql;

@@ -216,7 +216,6 @@ class modClichaumeil extends DolibarrModules
 		$this->warnings_activation = array(); // Warning to show when we activate module. array('always'='text') or array('FR'='textfr','MX'='textmx'...)
 		$this->warnings_activation_ext = array(); // Warning to show when we activate an external module. array('always'='text') or array('FR'='textfr','MX'='textmx'...)
 		$this->const = array();
-		$this->rfa_tab_added = false;
 		if (!isModEnabled("clichaumeil")) {
 			$conf->clichaumeil = new stdClass();
 			$conf->clichaumeil->enabled = 0;
@@ -333,6 +332,21 @@ class modClichaumeil extends DolibarrModules
 				'datenextrun' => $cronStart,
 				'status' => 0,
 				'priority' => 50,
+			),
+			5 => array(
+				'label' => $langs->trans('CliChaumeil_RfaClientSummaryCronLabel'),
+				'jobtype' => 'method',
+				'class' => '/clichaumeil/class/Cron/RfaSummaryRebuildCronJob.php',
+				'objectname' => 'RfaSummaryRebuildCronJob',
+				'method' => 'run',
+				'parameters' => 'rfa_type=1',
+				'comment' => $langs->trans('CliChaumeil_RfaClientSummaryCronDescription'),
+				'frequency' => 1,
+				'unitfrequency' => 86400,
+				'datestart' => $cronStart,
+				'datenextrun' => $cronStart,
+				'status' => 0,
+				'priority' => 50,
 			)
 		);
 
@@ -381,7 +395,7 @@ class modClichaumeil extends DolibarrModules
 		$this->menu[$r++] = array(
 			'fk_menu' => 'fk_mainmenu=companies',
 			'type' => 'left',
-			'titre' => 'ChaumeilRfa',
+			'titre' => 'ClichaumeilRfaFournMenuLabel',
 			'prefix' => img_picto('', $this->picto, 'class="paddingright pictofixedwidth valignmiddle"'),
 			'mainmenu' => 'companies',
 			'leftmenu' => 'chaumeilrfa',
@@ -390,6 +404,22 @@ class modClichaumeil extends DolibarrModules
 			'position' => 1000 + $r,
 			'enabled' => 'isModEnabled("clichaumeil")',
 			'perms' => '$user->hasRight("clichaumeil", "chaumeilrfa", "read") && $user->hasRight("fournisseur", "facture", "lire")',
+			'target' => '',
+			'user' => 2,
+			'object' => 'ChaumeilRfa'
+		);
+		$this->menu[$r++] = array(
+			'fk_menu' => 'fk_mainmenu=companies',
+			'type' => 'left',
+			'titre' => 'ClichaumeilRfaClientMenuLabel',
+			'prefix' => img_picto('', $this->picto, 'class="paddingright pictofixedwidth valignmiddle"'),
+			'mainmenu' => 'companies',
+			'leftmenu' => 'clichaumeil_chaumeilrfa_list_client',
+			'url' => '/clichaumeil/chaumeilrfa_list_fourn.php?rfa_type=1',
+			'langs' => 'clichaumeil@clichaumeil',
+			'position' => 1000 + $r,
+			'enabled' => 'isModEnabled("clichaumeil")',
+			'perms' => '$user->hasRight("clichaumeil", "chaumeilrfa", "read") && $user->hasRight("facture", "lire")',
 			'target' => '',
 			'user' => 2,
 			'object' => 'ChaumeilRfa'
@@ -467,6 +497,11 @@ class modClichaumeil extends DolibarrModules
 		}
 
 		$result = $this->ensureRfaRootAggregationIndex();
+		if ($result < 0) {
+			return -1;
+		}
+
+		$result = $this->ensureRfaTypeColumns();
 		if ($result < 0) {
 			return -1;
 		}
@@ -611,6 +646,81 @@ class modClichaumeil extends DolibarrModules
 	}
 
 	/**
+	 * Ensure rfa_type columns exist in both RFA tables and the unique index includes rfa_type.
+	 *
+	 * @return int<-1,1> 1 on success, -1 on failure.
+	 */
+	private function ensureRfaTypeColumns(): int
+	{
+		$tables = array(
+			$this->db->prefix().'clichaumeil_chaumeilrfa',
+			$this->db->prefix().'clichaumeil_rfa_summary',
+		);
+
+		foreach ($tables as $tableName) {
+			$resql = $this->db->query($this->getColumnExistenceSql($tableName, 'rfa_type'));
+			if (!$resql) {
+				dol_syslog(__METHOD__.' unable to inspect column rfa_type: '.$this->db->lasterror(), LOG_ERR);
+				$this->error = $this->db->lasterror();
+				return -1;
+			}
+			$columnExists = ($this->db->num_rows($resql) > 0);
+			$this->db->free($resql);
+
+			if (!$columnExists) {
+				$resql = $this->db->query($this->getAddSmallIntColumnSql($tableName, 'rfa_type'));
+				if (!$resql) {
+					dol_syslog(__METHOD__.' unable to add rfa_type column: '.$this->db->lasterror(), LOG_ERR);
+					$this->error = $this->db->lasterror();
+					return -1;
+				}
+			}
+		}
+
+		$summaryTable = $this->db->prefix().'clichaumeil_rfa_summary';
+		$oldIndexName = 'uk_clichaumeil_rfa_summary_entity_year_soc';
+		$newIndexName = 'uk_clichaumeil_rfa_summary_entity_year_soc_type';
+
+		$resql = $this->db->query($this->getIndexExistenceSql($summaryTable, $newIndexName));
+		if (!$resql) {
+			dol_syslog(__METHOD__.' unable to inspect summary index: '.$this->db->lasterror(), LOG_ERR);
+			$this->error = $this->db->lasterror();
+			return -1;
+		}
+		$newIndexExists = ($this->db->num_rows($resql) > 0);
+		$this->db->free($resql);
+
+		if (!$newIndexExists) {
+			$resqlOld = $this->db->query($this->getIndexExistenceSql($summaryTable, $oldIndexName));
+			if (!$resqlOld) {
+				dol_syslog(__METHOD__.' unable to inspect old summary index: '.$this->db->lasterror(), LOG_ERR);
+				$this->error = $this->db->lasterror();
+				return -1;
+			}
+			$oldIndexExists = ($this->db->num_rows($resqlOld) > 0);
+			$this->db->free($resqlOld);
+
+			if ($oldIndexExists) {
+				$resqlDrop = $this->db->query($this->getDropIndexSql($summaryTable, $oldIndexName));
+				if (!$resqlDrop) {
+					dol_syslog(__METHOD__.' unable to drop old summary index: '.$this->db->lasterror(), LOG_ERR);
+					$this->error = $this->db->lasterror();
+					return -1;
+				}
+			}
+
+			$resql = $this->db->query($this->getAddUniqueIndexSql($summaryTable, $newIndexName, 'entity, year, fk_soc, rfa_type'));
+			if (!$resql) {
+				dol_syslog(__METHOD__.' unable to create summary unique index: '.$this->db->lasterror(), LOG_ERR);
+				$this->error = $this->db->lasterror();
+				return -1;
+			}
+		}
+
+		return 1;
+	}
+
+	/**
 	 * Ensure the index used by the aggregated RFA list exists.
 	 *
 	 * @return int<-1,1> 1 on success, -1 on failure.
@@ -674,7 +784,98 @@ class modClichaumeil extends DolibarrModules
 	}
 
 	/**
-	 *	Function called when module is disabled.
+	 * Build a DB-specific SQL query to inspect column existence.
+	 *
+	 * @param string $tableName  Full SQL table name with prefix.
+	 * @param string $columnName Column name.
+	 * @return string
+	 */
+	private function getColumnExistenceSql(string $tableName, string $columnName): string
+	{
+		if ($this->db->type === 'pgsql') {
+			$sql = 'SELECT column_name FROM information_schema.columns';
+			$sql .= " WHERE table_schema = 'public'";
+			$sql .= " AND table_name = '".$this->db->escape($tableName)."'";
+			$sql .= " AND column_name = '".$this->db->escape($columnName)."'";
+			return $sql;
+		}
+
+		$sql = 'SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS';
+		$sql .= ' WHERE TABLE_SCHEMA = DATABASE()';
+		$sql .= " AND TABLE_NAME = '".$this->db->escape($tableName)."'";
+		$sql .= " AND COLUMN_NAME = '".$this->db->escape($columnName)."'";
+		return $sql;
+	}
+
+	/**
+	 * Build a DB-specific ALTER TABLE statement to add a small integer column
+	 * (TINYINT on MySQL/MariaDB, SMALLINT on PostgreSQL) NOT NULL DEFAULT 0.
+	 *
+	 * @param string $tableName  Full SQL table name with prefix.
+	 * @param string $columnName Column name.
+	 * @return string
+	 */
+	private function getAddSmallIntColumnSql(string $tableName, string $columnName): string
+	{
+		$type = ($this->db->type === 'pgsql') ? 'SMALLINT' : 'TINYINT';
+		return 'ALTER TABLE '.$tableName.' ADD COLUMN '.$columnName.' '.$type.' NOT NULL DEFAULT 0';
+	}
+
+	/**
+	 * Build a DB-specific SQL statement to drop a named index.
+	 *
+	 * @param string $tableName Full SQL table name with prefix.
+	 * @param string $indexName Index name.
+	 * @return string
+	 */
+	private function getDropIndexSql(string $tableName, string $indexName): string
+	{
+		if ($this->db->type === 'pgsql') {
+			return 'DROP INDEX '.$this->db->escape($indexName);
+		}
+		return 'ALTER TABLE '.$tableName.' DROP INDEX '.$indexName;
+	}
+
+	/**
+	 * Build a DB-specific SQL statement to add a unique index.
+	 *
+	 * @param string $tableName Full SQL table name with prefix.
+	 * @param string $indexName Index name.
+	 * @param string $columns   Comma-separated column list.
+	 * @return string
+	 */
+	private function getAddUniqueIndexSql(string $tableName, string $indexName, string $columns): string
+	{
+		if ($this->db->type === 'pgsql') {
+			return 'CREATE UNIQUE INDEX '.$indexName.' ON '.$tableName.' ('.$columns.')';
+		}
+		return 'ALTER TABLE '.$tableName.' ADD UNIQUE INDEX '.$indexName.' ('.$columns.')';
+	}
+
+	/**
+	 * Function called on module upgrade.
+	 * Applies idempotent schema migrations so existing deployments get the same
+	 * schema as a fresh activation without requiring a deactivation/reactivation cycle.
+	 *
+	 * @param  string $options Options
+	 * @return int<-1,1>       1 if OK, -1 on failure
+	 */
+	public function upgrade($options = '')
+	{
+		$result = $this->ensureRfaRootAggregationIndex();
+		if ($result < 0) {
+			return -1;
+		}
+
+		$result = $this->ensureRfaTypeColumns();
+		if ($result < 0) {
+			return -1;
+		}
+
+		return 1;
+	}
+
+	/**
 	 *	Remove from database constants, boxes and permissions from Dolibarr database.
 	 *	Data directories are not deleted
 	 *

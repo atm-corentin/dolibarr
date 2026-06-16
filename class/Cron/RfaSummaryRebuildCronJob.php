@@ -6,12 +6,19 @@ if (!$res) {
 	$res = @include_once __DIR__.'/../../../../main.inc.php';
 }
 
+require_once __DIR__.'/../chaumeilrfa.class.php';
 require_once __DIR__.'/../Rfa/RfaSummarySourceRepository.php';
 require_once __DIR__.'/../Rfa/RfaSummaryBuilder.php';
+require_once __DIR__.'/../Rfa/RfaClientSummaryBuilder.php';
 require_once __DIR__.'/../Rfa/RfaSummaryPersister.php';
 
 /**
  * Cron job used to rebuild the yearly RFA summary cache.
+ *
+ * Accepts an optional parameter string with the following format:
+ *   [year] [rfa_type=N]
+ * Examples: "", "2025", "rfa_type=1", "2025 rfa_type=1"
+ * rfa_type defaults to ChaumeilRfa::TYPE_SUPPLIER when omitted.
  */
 class RfaSummaryRebuildCronJob
 {
@@ -52,36 +59,54 @@ class RfaSummaryRebuildCronJob
 	/**
 	 * Execute the rebuild.
 	 *
-	 * @param string $year Raw year parameter passed by the cron engine.
+	 * @param string $params Space-separated params: optional year and/or rfa_type=N.
 	 * @return int 0 on success, -1 on failure.
 	 */
-	public function run(string $year = ''): int
+	public function run(string $params = ''): int
 	{
+		$errorKey = 'CliChaumeil_RfaSummaryCronError';
 		try {
-			$repository = new RfaSummarySourceRepository($this->db);
-			$builder = new RfaSummaryBuilder($repository);
-			$persister = new RfaSummaryPersister($this->db, $builder);
-			$targetYears = ($year !== '') ? array((int) $year) : $repository->fetchRelevantSummaryYears();
-			if (empty($targetYears)) {
-				$this->output = $this->langs->trans('CliChaumeil_RfaSummaryCronNoYear');
+			$rfaType = ChaumeilRfa::TYPE_SUPPLIER;
+			$yearStr = '';
+			foreach (explode(' ', trim($params)) as $token) {
+				if (strpos($token, 'rfa_type=') === 0) {
+					$rfaType = (int) substr($token, 9);
+				} elseif ($token !== '') {
+					$yearStr = $token;
+				}
+			}
 
+			$allowedTypes = array(ChaumeilRfa::TYPE_SUPPLIER, ChaumeilRfa::TYPE_CLIENT);
+			if (!in_array($rfaType, $allowedTypes, true)) {
+				throw new RuntimeException('Invalid rfa_type value: '.$rfaType);
+			}
+
+			$isClient = ($rfaType === ChaumeilRfa::TYPE_CLIENT);
+			$errorKey = $isClient ? 'CliChaumeil_RfaClientSummaryCronError' : 'CliChaumeil_RfaSummaryCronError';
+			$repository = new RfaSummarySourceRepository($this->db);
+			$builder = $isClient ? new RfaClientSummaryBuilder($repository) : new RfaSummaryBuilder($repository);
+			$persister = new RfaSummaryPersister($this->db, $builder);
+			$targetYears = ($yearStr !== '') ? array((int) $yearStr) : $repository->fetchRelevantSummaryYears($rfaType);
+
+			if (empty($targetYears)) {
+				$noYearKey = $isClient ? 'CliChaumeil_RfaClientSummaryCronNoYear' : 'CliChaumeil_RfaSummaryCronNoYear';
+				$this->output = $this->langs->trans($noYearKey);
 				return 0;
 			}
 
+			$successKey = $isClient ? 'CliChaumeil_RfaClientSummaryCronSuccess' : 'CliChaumeil_RfaSummaryCronSuccess';
 			$outputLines = array();
 			foreach ($targetYears as $targetYear) {
-				$count = $persister->rebuildYear((int) $targetYear);
-				$outputLines[] = $this->langs->trans('CliChaumeil_RfaSummaryCronSuccess', (int) $targetYear, $count);
+				$count = $persister->rebuildYear((int) $targetYear, $rfaType);
+				$outputLines[] = $this->langs->trans($successKey, (int) $targetYear, $count);
 			}
 
 			$this->output = implode("\n", $outputLines);
-
 			return 0;
 		} catch (Throwable $exception) {
 			$this->error = $exception->getMessage();
-			$this->output = $this->langs->trans('CliChaumeil_RfaSummaryCronError', $this->error);
+			$this->output = $this->langs->trans($errorKey, $this->error);
 			dol_syslog(__METHOD__.' '.$this->error, LOG_ERR);
-
 			return -1;
 		}
 	}
