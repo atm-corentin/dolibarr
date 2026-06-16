@@ -203,8 +203,7 @@ class CliChaumeilSupplierProposalLineLinkService
 		if (empty($parent->lines) || !is_array($parent->lines)) {
 			$result = method_exists($parent, 'fetch_lines') ? $parent->fetch_lines() : -1;
 			if ($result < 0) {
-				dol_syslog(__METHOD__.' fetch_lines failed on '.$parent->element.' #'.((int) $parent->id), LOG_ERR);
-				return array();
+				throw new RuntimeException('fetch_lines failed on '.$parent->element.' #'.((int) $parent->id).': '.$this->db->lasterror());
 			}
 		}
 		return is_array($parent->lines) ? array_values($parent->lines) : array();
