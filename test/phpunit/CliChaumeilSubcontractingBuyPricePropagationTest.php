@@ -278,4 +278,85 @@ class CliChaumeilSubcontractingBuyPricePropagationTest extends CommonClassTest
 
 		return array('propal' => $propal, 'line_ids' => $lineIds);
 	}
+
+	/**
+	 * Insert a validated commande (fk_statut=1) with one line sharing the same
+	 * fk_product/rang/special_code as the validated propal fixtures, so the heuristic
+	 * matching logic can pair them.
+	 *
+	 * @param array<int,array{subprice:float,buy_price_ht:float}> $lines One spec per line.
+	 * @return array{commande:Commande,line_ids:array<int,int>}
+	 */
+	private function insertValidatedCommande(array $lines): array
+	{
+		global $db;
+		$socId     = $this->ensureTestThirdparty();
+		$productId = $this->ensureTestProduct();
+		$sql = 'INSERT INTO '.$db->prefix().'commande (entity, ref, ref_client, datec, fk_soc, fk_statut)';
+		$sql .= " VALUES (1, 'TEST_ST6_CMD_".uniqid()."', '', NOW(), ".$socId.', 1)';
+		$this->assertTrue((bool) $db->query($sql), 'Insert commande failed: '.$db->lasterror());
+		$commandeId = (int) $db->last_insert_id($db->prefix().'commande');
+
+		$lineIds = array();
+		foreach ($lines as $line) {
+			$sql = 'INSERT INTO '.$db->prefix().'commandedet';
+			$sql .= ' (fk_commande, fk_product, label, description, qty, subprice, tva_tx, special_code, rang, product_type, buy_price_ht)';
+			$sql .= ' VALUES ('.$commandeId.', '.$productId.", 'ST-6 CMD', 'ST-6 CMD', 1, ".((float) $line['subprice']).', 20, 0, 100, 0, '.((float) $line['buy_price_ht']).')';
+			$this->assertTrue((bool) $db->query($sql), 'Insert commandedet failed: '.$db->lasterror());
+			$lineIds[] = (int) $db->last_insert_id($db->prefix().'commandedet');
+		}
+
+		$commande = new Commande($db);
+		$this->assertGreaterThan(0, $commande->fetch($commandeId));
+		$this->assertGreaterThanOrEqual(0, $commande->fetch_lines());
+
+		return array('commande' => $commande, 'line_ids' => $lineIds);
+	}
+
+	/**
+	 * Commande created from a propal: persistent link on supplier line points to propal,
+	 * propagation on the commande must fall back to heuristic and update commandedet.buy_price_ht.
+	 *
+	 * Setup:
+	 *  - validated propal with line A
+	 *  - validated commande with line B (same fk_product/rang/special_code as A)
+	 *  - supplier proposal linked to the propal
+	 *  - supplier proposal line extrafields: source_element='propal', source_line_id=A
+	 *
+	 * Expected: propagate($commande) ignores the propal link, matches via heuristic,
+	 * and writes buy_price_ht on the commande line.
+	 *
+	 * @return void
+	 */
+	public function testCommandeFromPropalWithPropalSourceElementUsesHeuristicFallback(): void
+	{
+		global $db, $user;
+
+		$propalContext   = $this->insertValidatedPropal(array(array('subprice' => 100.0, 'buy_price_ht' => 0.0)));
+		$propalLineId    = $propalContext['line_ids'][0];
+		$commandeContext = $this->insertValidatedCommande(array(array('subprice' => 100.0, 'buy_price_ht' => 0.0)));
+
+		$sp     = $this->insertSupplierProposalLinkedTo(70.0, $propalContext['propal']);
+		$spLine = $sp->lines[0];
+
+		// Simulate a link previously backfilled when the parent was the propal.
+		$sql = 'INSERT INTO '.$db->prefix().'supplier_proposaldet_extrafields';
+		$sql .= ' (fk_object, clichaumeil_source_element, clichaumeil_source_line_id)';
+		$sql .= " VALUES (".(int) $spLine->id.", 'propal', ".$propalLineId.')';
+		$this->assertTrue((bool) $db->query($sql), 'Insert supplier_proposaldet_extrafields failed: '.$db->lasterror());
+
+		$sp->getLinesArray();
+		foreach ($sp->lines as $line) {
+			$line->fetch_optionals();
+		}
+
+		$service = new CliChaumeilSubcontractingBuyPricePropagationService($db);
+		$report  = $service->propagate($commandeContext['commande'], $sp, $user);
+
+		$this->assertSame(1, $report['updated'], 'Heuristic fallback should have matched and updated the commande line');
+		$this->assertEmpty($report['missing'], 'No supplier lines should remain unmatched');
+
+		$row = $db->fetch_object($db->query('SELECT buy_price_ht FROM '.$db->prefix().'commandedet WHERE rowid='.$commandeContext['line_ids'][0]));
+		$this->assertEquals(70.0, (float) $row->buy_price_ht);
+	}
 }
