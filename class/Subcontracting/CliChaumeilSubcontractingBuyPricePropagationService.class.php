@@ -179,6 +179,11 @@ class CliChaumeilSubcontractingBuyPricePropagationService
 			$newSubprice = $this->minimumRateResolver->computeSellingPrice($buyPrice, $resolution['rate'], $resolution['type']);
 		}
 
+		$multicurrencySubprice = 0.0;
+		if (!empty($parent->multicurrency_tx) && (float) $parent->multicurrency_tx !== 1.0) {
+			$multicurrencySubprice = (float) price2num($newSubprice * (float) $parent->multicurrency_tx, 'CU');
+		}
+
 		if ($parent->element === 'propal') {
 			$result = $parent->updateline(
 				(int) $targetLine->id,
@@ -202,7 +207,7 @@ class CliChaumeilSubcontractingBuyPricePropagationService
 				$targetLine->date_end ?? '',
 				is_array($targetLine->array_options ?? null) ? $targetLine->array_options : array(),
 				$targetLine->fk_unit ?? null,
-				(float) ($targetLine->multicurrency_subprice ?? 0),
+				$multicurrencySubprice,
 				0,
 				(int) ($targetLine->rang ?? 0)
 			);
@@ -229,7 +234,7 @@ class CliChaumeilSubcontractingBuyPricePropagationService
 				(int) ($targetLine->special_code ?? 0),
 				is_array($targetLine->array_options ?? null) ? $targetLine->array_options : array(),
 				$targetLine->fk_unit ?? null,
-				(float) ($targetLine->multicurrency_subprice ?? 0),
+				$multicurrencySubprice,
 				0,
 				(string) ($targetLine->ref_ext ?? ''),
 				(int) ($targetLine->rang ?? 0)

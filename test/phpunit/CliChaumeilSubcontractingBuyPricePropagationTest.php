@@ -359,4 +359,39 @@ class CliChaumeilSubcontractingBuyPricePropagationTest extends CommonClassTest
 		$row = $db->fetch_object($db->query('SELECT buy_price_ht FROM '.$db->prefix().'commandedet WHERE rowid='.$commandeContext['line_ids'][0]));
 		$this->assertEquals(70.0, (float) $row->buy_price_ht);
 	}
+
+	/**
+	 * Draft parent with multicurrency_tx != 1: multicurrency_subprice must be recomputed
+	 * from newSubprice * multicurrency_tx, not carried over from the old line value.
+	 *
+	 * With discountrules disabled, newSubprice = targetLine->subprice = 250.
+	 * multicurrency_tx = 1.5 → expected multicurrency_subprice = 375.
+	 *
+	 * @return void
+	 */
+	public function testDraftMulticurrencySubpriceIsRecomputedFromNewSubprice(): void
+	{
+		global $db, $user;
+
+		$context = $this->insertDraftPropal(array(array('subprice' => 250.0, 'buy_price_ht' => 0.0)));
+		$propal  = $context['propal'];
+
+		$db->query('UPDATE '.$db->prefix().'propal SET multicurrency_tx = 1.5 WHERE rowid = '.(int) $propal->id);
+		$propal->multicurrency_tx = 1.5;
+
+		$sp = $this->insertSupplierProposalLinkedTo(80.0, $propal);
+
+		$service = new CliChaumeilSubcontractingBuyPricePropagationService($db);
+		$report  = $service->propagate($propal, $sp, $user);
+
+		$this->assertSame(1, $report['updated']);
+
+		$row = $db->fetch_object($db->query(
+			'SELECT subprice, multicurrency_subprice FROM '.$db->prefix().'propaldet WHERE rowid='.$context['line_ids'][0]
+		));
+		// subprice unchanged (no discountrules enabled)
+		$this->assertEquals(250.0, (float) $row->subprice);
+		// multicurrency_subprice = 250 * 1.5
+		$this->assertEquals(375.0, (float) $row->multicurrency_subprice);
+	}
 }
