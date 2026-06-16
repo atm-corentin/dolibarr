@@ -14,7 +14,9 @@ require_once __DIR__ . '/../SupplierProposalService.class.php';
  * Handles the PROPOSAL_SUPPLIER_CLOSE_SIGNED trigger for the ST-8 subcontracting workflow.
  *
  * Orchestrates: parent resolution → guard check → workflow execution → user notification.
- * Never returns < 0 so it never blocks Dolibarr's own status transition.
+ *
+ * Returns -1 on a critical workflow failure (RESULT_ERROR) so that cloture() rolls back
+ * the status transition. Returns 0 in all other cases (success, warning, skip).
  */
 class CliChaumeilSupplierProposalSignHandler
 {
@@ -22,21 +24,37 @@ class CliChaumeilSupplierProposalSignHandler
 	private DoliDB $db;
 
 	/**
-	 * @param DoliDB $db Database handler.
+	 * Optional pre-built workflow used for testing. When null (default), the handler
+	 * creates a fresh CliChaumeilSubcontractorSelectionWorkflow on each handle() call.
+	 *
+	 * @var CliChaumeilSubcontractorSelectionWorkflow|null
 	 */
-	public function __construct(DoliDB $db)
+	private ?CliChaumeilSubcontractorSelectionWorkflow $workflow;
+
+	/**
+	 * @param DoliDB                                          $db       Database handler.
+	 * @param CliChaumeilSubcontractorSelectionWorkflow|null  $workflow Optional pre-built workflow (testing only).
+	 */
+	public function __construct(DoliDB $db, ?CliChaumeilSubcontractorSelectionWorkflow $workflow = null)
 	{
-		$this->db = $db;
+		$this->db       = $db;
+		$this->workflow = $workflow;
 	}
 
 	/**
 	 * Handle the supplier proposal sign event.
 	 *
+	 * Returns -1 on critical workflow error so that cloture() rolls back the supplier
+	 * proposal status transition. cloture() checks call_trigger() < 0 to decide whether
+	 * to commit or rollback, so this is the only way to keep the object consistent when
+	 * ST-6/ST-8 fails — all writes from the workflow are nested inside cloture()'s
+	 * transaction and will be rolled back along with the status update.
+	 *
 	 * @param CommonObject $object Signed supplier proposal.
 	 * @param User         $user   Current user.
 	 * @param Translate    $langs  Translation handler.
 	 * @param Conf         $conf   Application configuration.
-	 * @return int Always 0.
+	 * @return int 0 on success/warning/skip, -1 on critical error.
 	 */
 	public function handle(CommonObject $object, User $user, Translate $langs, Conf $conf): int
 	{
@@ -68,7 +86,7 @@ class CliChaumeilSupplierProposalSignHandler
 			return 0;
 		}
 
-		$workflow = new CliChaumeilSubcontractorSelectionWorkflow($this->db, $conf, $langs);
+		$workflow = $this->workflow ?? new CliChaumeilSubcontractorSelectionWorkflow($this->db, $conf, $langs);
 		$result   = $workflow->execute($parent, (int) $object->id, $user);
 
 		// [] means execute() was skipped by the re-entrancy guard (button flow in progress) — silent skip.
@@ -81,13 +99,18 @@ class CliChaumeilSupplierProposalSignHandler
 		$status = $result['status'] ?? '';
 		if ($status === CliChaumeilSupplierOrderConfig::RESULT_SUCCESS) {
 			setEventMessages($langs->trans('CliChaumeil_St8WorkflowSuccess'), null, 'mesgs');
-		} elseif ($status === CliChaumeilSupplierOrderConfig::RESULT_WARNING) {
+			return 0;
+		}
+		if ($status === CliChaumeilSupplierOrderConfig::RESULT_WARNING) {
 			setEventMessages($langs->transnoentitiesnoconv('CliChaumeil_St8WorkflowWarning', (string) ($result['message'] ?? '')), null, 'warnings');
-		} else {
-			dol_syslog(__METHOD__.' ST-8 workflow non-success supplier_proposal_id='.((int) $object->id).' status='.$status.' message='.($result['message'] ?? ''), LOG_WARNING);
-			setEventMessages($langs->transnoentitiesnoconv('CliChaumeil_St8WorkflowError', (string) ($result['message'] ?? '')), null, 'errors');
+			return 0;
 		}
 
-		return 0;
+		// RESULT_ERROR: return -1 so cloture() rolls back the status transition.
+		// The workflow's nested transaction is inside cloture()'s transaction; the real
+		// SQL ROLLBACK only fires when the outermost caller (cloture) issues it.
+		dol_syslog(__METHOD__.' ST-8 workflow failed — blocking cloture() commit. supplier_proposal_id='.((int) $object->id).' status='.$status.' message='.($result['message'] ?? ''), LOG_ERR);
+		setEventMessages($langs->transnoentitiesnoconv('CliChaumeil_St8WorkflowError', (string) ($result['message'] ?? '')), null, 'errors');
+		return -1;
 	}
 }
