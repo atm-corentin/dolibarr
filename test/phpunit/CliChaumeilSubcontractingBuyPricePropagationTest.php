@@ -42,10 +42,29 @@ class CliChaumeilSubcontractingBuyPricePropagationTest extends CommonClassTest
 	}
 
 	/**
+	 * Return an existing product id usable as a foreign key, or 0 if no product exists.
+	 *
+	 * Returning 0 keeps the fk_product nullable side of the schema valid while letting the
+	 * matching logic still pair lines (both sides hold the same 0).
+	 *
+	 * @return int Product id (existing row or 0).
+	 */
+	private function ensureTestProduct(): int
+	{
+		global $db;
+		$resql = $db->query('SELECT rowid FROM '.$db->prefix().'product ORDER BY rowid ASC LIMIT 1');
+		if (!$resql) {
+			return 0;
+		}
+		$row = $db->fetch_object($resql);
+		return $row ? (int) $row->rowid : 0;
+	}
+
+	/**
 	 * Insert a validated propal with the given lines (one row per array entry).
 	 *
-	 * Each line shares fk_product=42, rang=100, special_code=0 — minimal setup
-	 * to drive the matching logic in the service.
+	 * Each line shares the same fk_product (first existing product or 0), rang=100,
+	 * special_code=0 — minimal setup to drive the matching logic in the service.
 	 *
 	 * @param array<int,array{subprice:float,buy_price_ht:float}> $lines One spec per line.
 	 * @return array{propal:Propal,line_ids:array<int,int>}
@@ -53,7 +72,8 @@ class CliChaumeilSubcontractingBuyPricePropagationTest extends CommonClassTest
 	private function insertValidatedPropal(array $lines): array
 	{
 		global $db;
-		$socId = $this->ensureTestThirdparty();
+		$socId     = $this->ensureTestThirdparty();
+		$productId = $this->ensureTestProduct();
 		$sql = 'INSERT INTO '.$db->prefix().'propal (entity, ref, ref_client, datec, fk_soc, fk_statut)';
 		$sql .= " VALUES (1, 'TEST_ST6_".uniqid()."', '', NOW(), ".$socId.', 1)';
 		$this->assertTrue((bool) $db->query($sql), 'Insert propal failed: '.$db->lasterror());
@@ -63,7 +83,7 @@ class CliChaumeilSubcontractingBuyPricePropagationTest extends CommonClassTest
 		foreach ($lines as $line) {
 			$sql = 'INSERT INTO '.$db->prefix().'propaldet';
 			$sql .= ' (fk_propal, fk_product, label, description, qty, subprice, tva_tx, special_code, rang, product_type, buy_price_ht)';
-			$sql .= ' VALUES ('.$propalId.", 42, 'ST-6 Test', 'ST-6 Test', 1, ".((float) $line['subprice']).', 20, 0, 100, 0, '.((float) $line['buy_price_ht']).')';
+			$sql .= ' VALUES ('.$propalId.', '.$productId.", 'ST-6 Test', 'ST-6 Test', 1, ".((float) $line['subprice']).', 20, 0, 100, 0, '.((float) $line['buy_price_ht']).')';
 			$this->assertTrue((bool) $db->query($sql), 'Insert propaldet failed: '.$db->lasterror());
 			$lineIds[] = (int) $db->last_insert_id($db->prefix().'propaldet');
 		}
@@ -86,7 +106,8 @@ class CliChaumeilSubcontractingBuyPricePropagationTest extends CommonClassTest
 	private function insertSupplierProposalLinkedTo(float $buyPrice, Propal $parent, ?float $buyPriceHtColumn = null): SupplierProposal
 	{
 		global $db;
-		$socId   = $this->ensureTestThirdparty();
+		$socId            = $this->ensureTestThirdparty();
+		$productId        = $this->ensureTestProduct();
 		$buyPriceHtColumn = $buyPriceHtColumn ?? $buyPrice;
 		$sql = 'INSERT INTO '.$db->prefix().'supplier_proposal (entity, ref, ref_supplier, datec, fk_soc, fk_statut)';
 		$sql .= " VALUES (1, 'TEST_ST6_SP_".uniqid()."', '', NOW(), ".$socId.', 1)';
@@ -95,7 +116,7 @@ class CliChaumeilSubcontractingBuyPricePropagationTest extends CommonClassTest
 
 		$sql = 'INSERT INTO '.$db->prefix().'supplier_proposaldet';
 		$sql .= ' (fk_supplier_proposal, fk_product, label, description, qty, subprice, tva_tx, special_code, rang, product_type, buy_price_ht)';
-		$sql .= ' VALUES ('.$spId.", 42, 'ST-6 SP', 'ST-6 SP', 1, ".((float) $buyPrice).', 20, 0, 100, 0, '.((float) $buyPriceHtColumn).')';
+		$sql .= ' VALUES ('.$spId.', '.$productId.", 'ST-6 SP', 'ST-6 SP', 1, ".((float) $buyPrice).', 20, 0, 100, 0, '.((float) $buyPriceHtColumn).')';
 		$this->assertTrue((bool) $db->query($sql), 'Insert supplier_proposaldet failed: '.$db->lasterror());
 
 		$sql = 'INSERT INTO '.$db->prefix().'element_element (fk_source, sourcetype, fk_target, targettype)';
@@ -235,7 +256,8 @@ class CliChaumeilSubcontractingBuyPricePropagationTest extends CommonClassTest
 	private function insertDraftPropal(array $lines): array
 	{
 		global $db;
-		$socId = $this->ensureTestThirdparty();
+		$socId     = $this->ensureTestThirdparty();
+		$productId = $this->ensureTestProduct();
 		$sql = 'INSERT INTO '.$db->prefix().'propal (entity, ref, ref_client, datec, fk_soc, fk_statut)';
 		$sql .= " VALUES (1, 'TEST_ST6_DRAFT_".uniqid()."', '', NOW(), ".$socId.', 0)';
 		$this->assertTrue((bool) $db->query($sql), 'Insert draft propal failed: '.$db->lasterror());
@@ -245,7 +267,7 @@ class CliChaumeilSubcontractingBuyPricePropagationTest extends CommonClassTest
 		foreach ($lines as $line) {
 			$sql = 'INSERT INTO '.$db->prefix().'propaldet';
 			$sql .= ' (fk_propal, fk_product, label, description, qty, subprice, tva_tx, special_code, rang, product_type, buy_price_ht)';
-			$sql .= ' VALUES ('.$propalId.", 42, 'ST-6 Draft', 'ST-6 Draft', 1, ".((float) $line['subprice']).', 20, 0, 100, 0, '.((float) $line['buy_price_ht']).')';
+			$sql .= ' VALUES ('.$propalId.', '.$productId.", 'ST-6 Draft', 'ST-6 Draft', 1, ".((float) $line['subprice']).', 20, 0, 100, 0, '.((float) $line['buy_price_ht']).')';
 			$this->assertTrue((bool) $db->query($sql), 'Insert draft propaldet failed: '.$db->lasterror());
 			$lineIds[] = (int) $db->last_insert_id($db->prefix().'propaldet');
 		}
