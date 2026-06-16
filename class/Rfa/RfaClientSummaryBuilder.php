@@ -13,7 +13,7 @@ require_once __DIR__.'/../chaumeilrfa.class.php';
 
 /**
  * Builder used to compute yearly client RFA summary rows.
- * Uses paid customer invoices instead of supplier invoices.
+ * Uses closed customer invoices (STATUS_CLOSED) instead of supplier invoices.
  */
 class RfaClientSummaryBuilder extends RfaSummaryBuilder
 {

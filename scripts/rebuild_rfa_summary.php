@@ -159,11 +159,28 @@ try {
 
 	$rfaType = $isCli ? (int) getCliOption($argv, 'rfa_type', (string) ChaumeilRfa::TYPE_SUPPLIER) : GETPOSTINT('rfa_type');
 	$allowedRfaTypes = array(ChaumeilRfa::TYPE_SUPPLIER, ChaumeilRfa::TYPE_CLIENT);
+	$isClient = ($rfaType === ChaumeilRfa::TYPE_CLIENT);
+	$langPrefix = $isClient ? 'CliChaumeil_RfaClientSummary' : 'CliChaumeil_RfaSummary';
 	if (!in_array($rfaType, $allowedRfaTypes, true)) {
 		throw new RuntimeException('Invalid rfa_type value: '.$rfaType);
 	}
-	$isClient = ($rfaType === ChaumeilRfa::TYPE_CLIENT);
-	$langPrefix = $isClient ? 'CliChaumeil_RfaClientSummary' : 'CliChaumeil_RfaSummary';
+
+	if (!isModEnabled('clichaumeil')) {
+		accessforbidden();
+	}
+	if (!$isCli) {
+		$hasInvoiceReadRight = $isClient ? $user->hasRight('facture', 'lire') : $user->hasRight('fournisseur', 'facture', 'lire');
+		if (!$hasInvoiceReadRight) {
+			if ($isAjax) {
+				sendJsonResponse(403, array(
+					'success' => false,
+					'message' => $langs->transnoentitiesnoconv('ErrorForbidden'),
+				));
+			}
+			accessforbidden();
+		}
+	}
+
 	$listPage = $isClient ? 'chaumeilrfa_list_fourn.php?rfa_type=1&yearid=' : 'chaumeilrfa_list_fourn.php?yearid=';
 
 	$targetYear = $isCli ? (int) getCliOption($argv, 'year', dol_print_date(dol_now(), '%Y')) : GETPOSTINT('yearid');

@@ -195,18 +195,30 @@ if (empty($reshook)) {
 			$action = ($action === 'add') ? 'create' : 'edit';
 		} else {
 			$rfaValidationSocId = ($action === 'add') ? GETPOSTINT('fk_soc') : (int) $object->fk_soc;
-			if ($rfaValidationSocId > 0) {
+			if ($rfaValidationSocId <= 0) {
+				setEventMessages($langs->trans('ErrorFieldRequired', $langs->transnoentitiesnoconv('ThirdParty')), null, 'errors');
+				$error++;
+				$action = ($action === 'add') ? 'create' : 'edit';
+			} else {
 				$rfaValidationSoc = new Societe($db);
-				if ($rfaValidationSoc->fetch($rfaValidationSocId) > 0) {
-					if ($submittedRfaType === ChaumeilRfa::TYPE_CLIENT && (int) $rfaValidationSoc->client < 1) {
-						setEventMessages($langs->trans('CliChaumeil_RfaTypeClientButNotCustomer'), null, 'errors');
-						$error++;
-						$action = ($action === 'add') ? 'create' : 'edit';
-					} elseif ($submittedRfaType === ChaumeilRfa::TYPE_SUPPLIER && !(int) $rfaValidationSoc->fournisseur) {
-						setEventMessages($langs->trans('CliChaumeil_RfaTypeSupplierButNotSupplier'), null, 'errors');
-						$error++;
-						$action = ($action === 'add') ? 'create' : 'edit';
-					}
+				$fetchResult = $rfaValidationSoc->fetch($rfaValidationSocId);
+				if ($fetchResult < 0) {
+					dol_syslog(__FILE__.' unable to fetch thirdparty #'.$rfaValidationSocId.': '.$rfaValidationSoc->error, LOG_ERR);
+					setEventMessages($langs->trans('Error'), $rfaValidationSoc->errors, 'errors');
+					$error++;
+					$action = ($action === 'add') ? 'create' : 'edit';
+				} elseif ($fetchResult === 0) {
+					setEventMessages($langs->trans('ErrorRecordNotFound'), null, 'errors');
+					$error++;
+					$action = ($action === 'add') ? 'create' : 'edit';
+				} elseif ($submittedRfaType === ChaumeilRfa::TYPE_CLIENT && (int) $rfaValidationSoc->client < 1) {
+					setEventMessages($langs->trans('CliChaumeil_RfaTypeClientButNotCustomer'), null, 'errors');
+					$error++;
+					$action = ($action === 'add') ? 'create' : 'edit';
+				} elseif ($submittedRfaType === ChaumeilRfa::TYPE_SUPPLIER && !(int) $rfaValidationSoc->fournisseur) {
+					setEventMessages($langs->trans('CliChaumeil_RfaTypeSupplierButNotSupplier'), null, 'errors');
+					$error++;
+					$action = ($action === 'add') ? 'create' : 'edit';
 				}
 			}
 		}

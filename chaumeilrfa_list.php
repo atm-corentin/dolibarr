@@ -118,6 +118,9 @@ $id = GETPOSTINT('id');
 $ref = GETPOST('ref', 'alpha');
 $socid = GETPOSTINT('socid');
 $rfaType = GETPOSTISSET('rfa_type') ? GETPOSTINT('rfa_type') : ChaumeilRfa::TYPE_SUPPLIER;
+if (!in_array($rfaType, array(ChaumeilRfa::TYPE_SUPPLIER, ChaumeilRfa::TYPE_CLIENT), true)) {
+	$rfaType = ChaumeilRfa::TYPE_SUPPLIER;
+}
 
 // Load variable for pagination
 $limit = GETPOSTINT('limit') ? GETPOSTINT('limit') : $conf->liste_limit;
