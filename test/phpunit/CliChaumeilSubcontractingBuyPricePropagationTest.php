@@ -8,6 +8,7 @@ require_once dirname(__FILE__).'/../../../../master.inc.php';
 require_once dirname(__FILE__).'/../../../../supplier_proposal/class/supplier_proposal.class.php';
 require_once dirname(__FILE__).'/../../../../comm/propal/class/propal.class.php';
 require_once dirname(__FILE__).'/../../class/Subcontracting/CliChaumeilSubcontractingBuyPricePropagationService.class.php';
+require_once dirname(__FILE__).'/../../core/triggers/interface_99_modClichaumeil_ClichaumeilTestLineTriggerCapture.class.php';
 require_once dirname(__FILE__).'/../../../../../test/phpunit/CommonClassTest.class.php';
 
 /**
@@ -109,8 +110,8 @@ class CliChaumeilSubcontractingBuyPricePropagationTest extends CommonClassTest
 		$socId            = $this->ensureTestThirdparty();
 		$productId        = $this->ensureTestProduct();
 		$buyPriceHtColumn = $buyPriceHtColumn ?? $buyPrice;
-		$sql = 'INSERT INTO '.$db->prefix().'supplier_proposal (entity, ref, ref_supplier, datec, fk_soc, fk_statut)';
-		$sql .= " VALUES (1, 'TEST_ST6_SP_".uniqid()."', '', NOW(), ".$socId.', 1)';
+		$sql = 'INSERT INTO '.$db->prefix().'supplier_proposal (entity, ref, datec, fk_soc, fk_statut)';
+		$sql .= " VALUES (1, 'TEST_ST6_SP_".uniqid()."', NOW(), ".$socId.', 1)';
 		$this->assertTrue((bool) $db->query($sql), 'Insert supplier_proposal failed: '.$db->lasterror());
 		$spId = (int) $db->last_insert_id($db->prefix().'supplier_proposal');
 
@@ -186,6 +187,43 @@ class CliChaumeilSubcontractingBuyPricePropagationTest extends CommonClassTest
 		$this->assertSame(1, $report['updated']);
 		$row = $db->fetch_object($db->query('SELECT buy_price_ht FROM '.$db->prefix().'propaldet WHERE rowid='.$context['line_ids'][0]));
 		$this->assertEquals(70.0, (float) $row->buy_price_ht);
+	}
+
+	/**
+	 * Validated parent: the line-modify trigger receives the PropaleLigne object itself with
+	 * its $oldline carrying the previous buy_price_ht (Dolibarr line-update contract).
+	 *
+	 * @return void
+	 */
+	public function testValidatedPropagationFiresLineTriggerOnTheLineObject(): void
+	{
+		global $db, $user, $conf;
+		$conf->global->CLICHAUMEIL_TEST_LINE_TRIGGER_CAPTURE = 1;
+		InterfaceClichaumeilTestLineTriggerCapture::reset();
+
+		try {
+			$context = $this->insertValidatedPropal(array(array('subprice' => 100.0, 'buy_price_ht' => 12.34)));
+			$sp      = $this->insertSupplierProposalLinkedTo(70.0, $context['propal']);
+
+			$service = new CliChaumeilSubcontractingBuyPricePropagationService($db);
+			$report  = $service->propagate($context['propal'], $sp, $user);
+
+			$this->assertSame(1, $report['updated']);
+
+			$captures = array_values(array_filter(
+				InterfaceClichaumeilTestLineTriggerCapture::$captures,
+				static fn(array $event): bool => $event['line_id'] === $context['line_ids'][0]
+			));
+			$this->assertCount(1, $captures, 'Expected exactly one LINEPROPAL_MODIFY capture for the propagated line.');
+			$this->assertSame('LINEPROPAL_MODIFY', $captures[0]['action']);
+			$this->assertSame(PropaleLigne::class, $captures[0]['class'], 'Trigger received the parent Propal instead of the PropaleLigne.');
+			$this->assertEquals(70.0, $captures[0]['buy_price_ht']);
+			$this->assertNotNull($captures[0]['old_buy_price_ht'], '$line->oldline must be set before the trigger fires.');
+			$this->assertEquals(12.34, $captures[0]['old_buy_price_ht']);
+		} finally {
+			unset($conf->global->CLICHAUMEIL_TEST_LINE_TRIGGER_CAPTURE);
+			InterfaceClichaumeilTestLineTriggerCapture::reset();
+		}
 	}
 
 	/**

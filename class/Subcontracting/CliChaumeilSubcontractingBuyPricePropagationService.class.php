@@ -252,9 +252,12 @@ class CliChaumeilSubcontractingBuyPricePropagationService
 	 * buy_price_ht only, then fire the corresponding Dolibarr line-modify trigger.
 	 *
 	 * updateline() is blocked by Dolibarr on non-draft documents (returns -2 "Order status
-	 * makes operation forbidden"), so a targeted SQL UPDATE is the only viable path. The
-	 * line object with oldline is placed back into $parent->lines before calling the trigger
-	 * so handlers that read the parent's line collection see both old and new state.
+	 * makes operation forbidden"), so a targeted SQL UPDATE is the only viable path. To
+	 * reproduce the Dolibarr line-update contract, the trigger is fired on the line object
+	 * itself (PropaleLigne::update() and OrderLine::update() invoke $this->call_trigger),
+	 * carrying $line->oldline so listeners receive the same shape as a native line update.
+	 * The mutated line is placed back into $parent->lines so handlers that traverse the
+	 * parent collection see both old and new state.
 	 *
 	 * @param CommonObject $parent       Parent document (Propal or Commande).
 	 * @param int          $parentLineId Parent line rowid.
@@ -301,7 +304,7 @@ class CliChaumeilSubcontractingBuyPricePropagationService
 		}
 
 		$triggerName = $parent->element === 'propal' ? 'LINEPROPAL_MODIFY' : 'LINEORDER_MODIFY';
-		$result      = $parent->call_trigger($triggerName, $user);
+		$result      = $line->call_trigger($triggerName, $user);
 		if ($result < 0) {
 			throw new RuntimeException('Trigger '.$triggerName.' failed for '.$table.' #'.$parentLineId.': '.$this->db->lasterror());
 		}
