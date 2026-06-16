@@ -291,6 +291,7 @@ CliChaumeil_St8PdfGenerationFailed=The supplier order PDF could not be generated
 CliChaumeil_St8AgendaCreationFailed=The email was sent but the agenda event could not be created automatically.
 CliChaumeil_St8ProposalStatusUpdateFailed=Unable to update supplier proposal statuses.
 CliChaumeil_St8UnexpectedError=An unexpected error occurred while selecting the subcontractor.
+CliChaumeil_St6PropagationMissingLines=Some supplier proposal lines could not be matched to client document lines. The subcontractor selection has been cancelled.
 
 
 

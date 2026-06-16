@@ -108,7 +108,7 @@ class CliChaumeilSubcontractingBuyPricePropagationService
 
 		foreach ($supplierLines as $supplierLine) {
 			$supplierLineId = (int) $supplierLine->id;
-			$match          = $this->lineLinkService->findParentLineMatch($supplierLine, $parentLines);
+			$match          = $this->lineLinkService->findParentLineMatch($supplierLine, $parentLines, $parent->element);
 
 			if ($match['ambiguous'] === true) {
 				throw new RuntimeException('Ambiguous supplier line #'.$supplierLineId.' on '.$parent->element.' #'.((int) $parent->id).' — multiple candidate parent lines match.');
@@ -127,7 +127,7 @@ class CliChaumeilSubcontractingBuyPricePropagationService
 				$resolution = $this->minimumRateResolver->resolve($parent, $targetLine);
 				$this->updateDraftLine($parent, $targetLine, $buyPrice, $resolution, $user);
 			} else {
-				$this->updateValidatedLine($parent->element, (int) $targetLine->id, $buyPrice);
+				$this->updateValidatedLine($parent, (int) $targetLine->id, $buyPrice, $user);
 			}
 			$report['updated']++;
 		}
@@ -243,18 +243,25 @@ class CliChaumeilSubcontractingBuyPricePropagationService
 	}
 
 	/**
-	 * Update a validated parent line: direct SQL UPDATE on buy_price_ht only.
+	 * Update a validated parent line: direct SQL UPDATE on buy_price_ht only, then fire the
+	 * corresponding Dolibarr line-modify trigger so hook integrations are notified.
 	 *
-	 * @param string $parentElement Parent element type ('propal' or 'commande').
-	 * @param int    $parentLineId  Parent line rowid.
-	 * @param float  $buyPrice      Buy price to write.
+	 * updateline() is blocked by Dolibarr on non-draft documents (returns -2 "Order status
+	 * makes operation forbidden"), so a targeted SQL UPDATE is the only viable path. The
+	 * in-memory line is patched before calling the trigger so handlers that read $parent->lines
+	 * see the current value.
+	 *
+	 * @param CommonObject $parent       Parent document (Propal or Commande).
+	 * @param int          $parentLineId Parent line rowid.
+	 * @param float        $buyPrice     Buy price to write.
+	 * @param User         $user         Current user.
 	 * @return void
 	 *
-	 * @throws RuntimeException When the SQL update fails.
+	 * @throws RuntimeException When the SQL update or trigger fails.
 	 */
-	private function updateValidatedLine(string $parentElement, int $parentLineId, float $buyPrice): void
+	private function updateValidatedLine(CommonObject $parent, int $parentLineId, float $buyPrice, User $user): void
 	{
-		$table = $parentElement === 'propal' ? 'propaldet' : 'commandedet';
+		$table = $parent->element === 'propal' ? 'propaldet' : 'commandedet';
 		$sql   = 'UPDATE '.$this->db->prefix().$table;
 		$sql  .= ' SET buy_price_ht = '.(float) price2num($buyPrice, 'MT');
 		$sql  .= ' WHERE rowid = '.((int) $parentLineId);
@@ -264,5 +271,21 @@ class CliChaumeilSubcontractingBuyPricePropagationService
 			throw new RuntimeException('SQL update failed on '.$table.' #'.$parentLineId.': '.$this->db->lasterror());
 		}
 		$this->db->free($resql);
+
+		if (is_array($parent->lines)) {
+			foreach ($parent->lines as $line) {
+				if ((int) ($line->id ?? $line->rowid ?? 0) === $parentLineId) {
+					$line->buy_price_ht = $buyPrice;
+					$line->pa_ht        = $buyPrice;
+					break;
+				}
+			}
+		}
+
+		$triggerName = $parent->element === 'propal' ? 'LINEPROPAL_MODIFY' : 'LINEORDER_MODIFY';
+		$result      = $parent->call_trigger($triggerName, $user);
+		if ($result < 0) {
+			throw new RuntimeException('Trigger '.$triggerName.' failed for '.$table.' #'.$parentLineId.': '.$this->db->lasterror());
+		}
 	}
 }

@@ -83,7 +83,7 @@ class CliChaumeilSupplierProposalLineLinkServiceTest extends CommonClassTest
 			$this->makeParentLine(777, 999, 9),
 		);
 
-		$result = $service->findParentLineMatch($supplierLine, $parentLines);
+		$result = $service->findParentLineMatch($supplierLine, $parentLines, 'propal');
 
 		$this->assertNotNull($result['line']);
 		$this->assertSame(777, $result['line']->id);
@@ -174,9 +174,42 @@ class CliChaumeilSupplierProposalLineLinkServiceTest extends CommonClassTest
 			$this->makeParentLine(100, 42, 1),
 		);
 
-		$result = $service->findParentLineMatch($supplierLine, $parentLines);
+		$result = $service->findParentLineMatch($supplierLine, $parentLines, 'propal');
 
 		$this->assertNull($result['line']);
+		$this->assertFalse($result['ambiguous']);
+	}
+
+	/**
+	 * When the persistent link targets a different element type than the current parent,
+	 * the heuristic fallback is used instead of looking up a mismatched ID.
+	 *
+	 * Scenario: supplier line was linked to propal line #777 (source_element='propal').
+	 * Propagation is now called on a commande whose line has a different ID (100) but the
+	 * same fk_product+rang+special_code. The persistent link should be ignored and the
+	 * heuristic should find line #100.
+	 *
+	 * @return void
+	 */
+	public function testPersistentLinkMismatchedElementFallsBackToHeuristic(): void
+	{
+		global $db;
+		$service = new CliChaumeilSupplierProposalLineLinkService($db);
+
+		$supplierLine = $this->makeSupplierLine(10, 42, 1, 0, array(
+			'options_clichaumeil_source_element' => 'propal',
+			'options_clichaumeil_source_line_id' => '777',
+		));
+		// Commande lines: ID 100 matches on fk_product+rang+special_code; ID 777 is absent.
+		$parentLines  = array(
+			$this->makeParentLine(100, 42, 1),
+			$this->makeParentLine(200, 99, 2),
+		);
+
+		$result = $service->findParentLineMatch($supplierLine, $parentLines, 'commande');
+
+		$this->assertNotNull($result['line'], 'Heuristic fallback should find the commande line');
+		$this->assertSame(100, $result['line']->id);
 		$this->assertFalse($result['ambiguous']);
 	}
 }

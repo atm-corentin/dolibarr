@@ -379,6 +379,7 @@ CliChaumeil_St8PdfGenerationFailed=Le PDF de la commande fournisseur n'a pas pu 
 CliChaumeil_St8AgendaCreationFailed=Le mail a été envoyé mais l'événement d'agenda n'a pas pu être créé automatiquement.
 CliChaumeil_St8ProposalStatusUpdateFailed=Impossible de mettre à jour le statut des demandes de prix fournisseur.
 CliChaumeil_St8UnexpectedError=Une erreur inattendue est survenue pendant la sélection du sous-traitant.
+CliChaumeil_St6PropagationMissingLines=Certaines lignes de la demande de prix fournisseur n'ont pas pu être appariées avec les lignes du document client. La sélection du sous-traitant a été annulée.
 
 #
 # Extrafields

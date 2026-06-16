@@ -285,7 +285,17 @@ class CliChaumeilSubcontractorSelectionWorkflow
 			$propagationReport = $this->buyPricePropagationService->propagate($parent, $selectedSupplierProposal, $user);
 			$debug['buy_price_propagation'] = $propagationReport;
 			if (!empty($propagationReport['missing'])) {
-				dol_syslog(__METHOD__.' R2-ST-6 propagation left unmatched supplier lines on '.$parent->element.' #'.((int) $parent->id).' supplier_line_ids='.implode(',', $propagationReport['missing']), LOG_WARNING);
+				$missingIds = implode(', ', $propagationReport['missing']);
+				dol_syslog(__METHOD__.' R2-ST-6 propagation missing lines '.$missingIds.' on '.$parent->element.' #'.((int) $parent->id).' — rolling back', LOG_ERR);
+				$this->db->rollback();
+				$transactionOpened = false;
+				return CliChaumeilSupplierOrderConfig::buildAjaxResponse(
+					CliChaumeilSupplierOrderConfig::RESULT_ERROR,
+					$this->langs->transnoentitiesnoconv('CliChaumeil_St6PropagationMissingLines'),
+					false,
+					false,
+					$debug
+				);
 			}
 			$supplierOrder = $this->supplierOrderFactory->createValidatedOrderFromProposal($selectedSupplierProposal, $user);
 			$this->markOtherProposalsAsRefused($allLinkedIds, (int) $selectedSupplierProposal->id, $user);

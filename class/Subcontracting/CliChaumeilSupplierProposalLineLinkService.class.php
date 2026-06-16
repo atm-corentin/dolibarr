@@ -136,24 +136,33 @@ class CliChaumeilSupplierProposalLineLinkService
 	 * Find the parent line linked to a given supplier proposal line, classifying the result.
 	 *
 	 * Reads the persistent extrafield first; falls back to a deterministic match by
-	 * fk_product + rang + special_code when the link is absent.
+	 * fk_product + rang + special_code when the link is absent or points to a different
+	 * element type than the current parent (e.g. a propal link on a commande parent).
 	 *
-	 * @param object             $supplierLine Supplier proposal line.
-	 * @param array<int,object>  $parentLines  Parent document lines.
+	 * @param object             $supplierLine  Supplier proposal line.
+	 * @param array<int,object>  $parentLines   Parent document lines.
+	 * @param string             $parentElement Parent element type ('propal' or 'commande').
 	 * @return array{line:?object,ambiguous:bool} Matched line (null on miss) and ambiguity flag.
 	 */
-	public function findParentLineMatch(object $supplierLine, array $parentLines): array
+	public function findParentLineMatch(object $supplierLine, array $parentLines, string $parentElement = ''): array
 	{
-		$linkedLineId = $this->getPersistentLineId($supplierLine);
-		if ($linkedLineId > 0) {
+		$linkedLineId  = $this->getPersistentLineId($supplierLine);
+		$sourceElement = $this->getPersistentElement($supplierLine);
+
+		$linkMatchesParent = $linkedLineId > 0 && ($sourceElement === '' || $sourceElement === $parentElement);
+
+		if ($linkMatchesParent) {
 			foreach ($parentLines as $parentLine) {
 				if ((int) $parentLine->id === $linkedLineId) {
 					return array('line' => $parentLine, 'ambiguous' => false);
 				}
 			}
+			// Definitive link for this element type but line no longer found — no fallback.
 			return array('line' => null, 'ambiguous' => false);
 		}
 
+		// No link, or link targets a different element type (e.g. propal link on a commande parent):
+		// fall back to heuristic matching.
 		$matches = $this->findMatchingParentLines($supplierLine, $parentLines);
 		if (count($matches) === 1) {
 			return array('line' => $matches[0], 'ambiguous' => false);
@@ -262,6 +271,24 @@ class CliChaumeilSupplierProposalLineLinkService
 			return 0;
 		}
 		return (int) $supplierLine->array_options[$key];
+	}
+
+	/**
+	 * Read the persistent parent element type stored in extrafields.
+	 *
+	 * @param object $supplierLine Supplier proposal line.
+	 * @return string Element type ('propal', 'commande') or empty string when not set.
+	 */
+	private function getPersistentElement(object $supplierLine): string
+	{
+		if (!isset($supplierLine->array_options) || !is_array($supplierLine->array_options)) {
+			return '';
+		}
+		$key = self::OPTIONS_PREFIX.self::EXTRAFIELD_ELEMENT;
+		if (!isset($supplierLine->array_options[$key]) || $supplierLine->array_options[$key] === '') {
+			return '';
+		}
+		return (string) $supplierLine->array_options[$key];
 	}
 
 	/**

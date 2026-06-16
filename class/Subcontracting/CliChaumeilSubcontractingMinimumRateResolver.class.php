@@ -129,8 +129,13 @@ class CliChaumeilSubcontractingMinimumRateResolver
 			if ($socId <= 0) {
 				return null;
 			}
-			$thirdparty = new Societe($this->db);
-			if ($thirdparty->fetch($socId) <= 0) {
+			$thirdparty  = new Societe($this->db);
+			$fetchResult = $thirdparty->fetch($socId);
+			if ($fetchResult < 0) {
+				dol_syslog(__METHOD__.' fetch Societe #'.$socId.' failed: '.$this->db->lasterror(), LOG_ERR);
+				return null;
+			}
+			if ($fetchResult === 0) {
 				return null;
 			}
 			$parent->thirdparty = $thirdparty;
@@ -161,8 +166,13 @@ class CliChaumeilSubcontractingMinimumRateResolver
 			return null;
 		}
 
-		$product = new Product($this->db);
-		if ($product->fetch($productId) <= 0) {
+		$product     = new Product($this->db);
+		$fetchResult = $product->fetch($productId);
+		if ($fetchResult < 0) {
+			dol_syslog(__METHOD__.' fetch Product #'.$productId.' failed: '.$this->db->lasterror(), LOG_ERR);
+			return null;
+		}
+		if ($fetchResult === 0) {
 			return null;
 		}
 		$product->fetch_optionals();
