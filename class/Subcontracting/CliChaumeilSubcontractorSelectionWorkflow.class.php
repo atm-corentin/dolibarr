@@ -26,6 +26,7 @@ require_once __DIR__.'/CliChaumeilSupplierOrderFactory.class.php';
 require_once __DIR__.'/CliChaumeilSupplierOrderRecipientResolver.class.php';
 require_once __DIR__.'/CliChaumeilSupplierOrderMailService.class.php';
 require_once __DIR__.'/CliChaumeilSupplierProposalGuard.class.php';
+require_once __DIR__.'/CliChaumeilSubcontractingBuyPricePropagationService.class.php';
 
 /**
  * Orchestrate the ST-6/ST-8 subcontractor selection workflow.
@@ -82,6 +83,13 @@ class CliChaumeilSubcontractorSelectionWorkflow
 	private CliChaumeilSupplierProposalGuard $supplierProposalGuard;
 
 	/**
+	 * Buy price propagation service.
+	 *
+	 * @var CliChaumeilSubcontractingBuyPricePropagationService
+	 */
+	private CliChaumeilSubcontractingBuyPricePropagationService $buyPricePropagationService;
+
+	/**
 	 * Re-entrancy guard: prevents double execution when the PROPOSAL_SUPPLIER_CLOSE_SIGNED trigger
 	 * fires synchronously inside markSelectedProposalAsSigned() → cloture() during a button-flow call.
 	 * The second execute() call must return immediately without doing any work.
@@ -117,6 +125,7 @@ class CliChaumeilSubcontractorSelectionWorkflow
 		$this->recipientResolver = $recipientResolver ?: new CliChaumeilSupplierOrderRecipientResolver();
 		$this->mailService = $mailService ?: new CliChaumeilSupplierOrderMailService($db, $conf, $langs);
 		$this->supplierProposalGuard = $supplierProposalGuard ?: new CliChaumeilSupplierProposalGuard();
+		$this->buyPricePropagationService = new CliChaumeilSubcontractingBuyPricePropagationService($db);
 	}
 
 	/**
@@ -273,6 +282,11 @@ class CliChaumeilSubcontractorSelectionWorkflow
 			$transactionOpened = true;
 
 			$this->markSelectedProposalAsSigned($selectedSupplierProposal, $user);
+			$propagationReport = $this->buyPricePropagationService->propagate($parent, $selectedSupplierProposal, $user);
+			$debug['buy_price_propagation'] = $propagationReport;
+			if (!empty($propagationReport['missing'])) {
+				dol_syslog(__METHOD__.' R2-ST-6 propagation left unmatched supplier lines on '.$parent->element.' #'.((int) $parent->id).' supplier_line_ids='.implode(',', $propagationReport['missing']), LOG_WARNING);
+			}
 			$supplierOrder = $this->supplierOrderFactory->createValidatedOrderFromProposal($selectedSupplierProposal, $user);
 			$this->markOtherProposalsAsRefused($allLinkedIds, (int) $selectedSupplierProposal->id, $user);
 			$this->markSelectedProposalAsProcessed($selectedSupplierProposal, $user);
