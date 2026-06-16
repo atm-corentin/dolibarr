@@ -319,7 +319,7 @@ class CliChaumeilSupplierOrderFactory
 	 */
 	private function mustSkipSourceLine(object $line): bool
 	{
-		if (empty($line->subprice)) {
+		if (!isset($line->subprice) || $line->subprice === '' || $line->subprice === null) {
 			return true;
 		}
 		if ((float) ($line->qty ?? 0) < 0) {
