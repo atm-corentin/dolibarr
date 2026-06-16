@@ -243,13 +243,13 @@ class CliChaumeilSubcontractingBuyPricePropagationService
 	}
 
 	/**
-	 * Update a validated parent line: direct SQL UPDATE on buy_price_ht only, then fire the
-	 * corresponding Dolibarr line-modify trigger so hook integrations are notified.
+	 * Update a validated parent line: load the line, set oldline, direct SQL UPDATE on
+	 * buy_price_ht only, then fire the corresponding Dolibarr line-modify trigger.
 	 *
 	 * updateline() is blocked by Dolibarr on non-draft documents (returns -2 "Order status
 	 * makes operation forbidden"), so a targeted SQL UPDATE is the only viable path. The
-	 * in-memory line is patched before calling the trigger so handlers that read $parent->lines
-	 * see the current value.
+	 * line object with oldline is placed back into $parent->lines before calling the trigger
+	 * so handlers that read the parent's line collection see both old and new state.
 	 *
 	 * @param CommonObject $parent       Parent document (Propal or Commande).
 	 * @param int          $parentLineId Parent line rowid.
@@ -257,10 +257,24 @@ class CliChaumeilSubcontractingBuyPricePropagationService
 	 * @param User         $user         Current user.
 	 * @return void
 	 *
-	 * @throws RuntimeException When the SQL update or trigger fails.
+	 * @throws RuntimeException When the line fetch, SQL update, or trigger fails.
 	 */
 	private function updateValidatedLine(CommonObject $parent, int $parentLineId, float $buyPrice, User $user): void
 	{
+		$line = $parent->element === 'propal' ? new PropaleLigne($this->db) : new OrderLine($this->db);
+
+		$fetchResult = $line->fetch($parentLineId);
+		if ($fetchResult < 0) {
+			throw new RuntimeException('Unable to fetch line #'.$parentLineId.': '.$this->db->lasterror());
+		}
+		if ($fetchResult === 0) {
+			throw new RuntimeException('Line #'.$parentLineId.' not found.');
+		}
+
+		$line->oldline      = clone $line;
+		$line->pa_ht        = (float) price2num($buyPrice, 'MT');
+		$line->buy_price_ht = (float) price2num($buyPrice, 'MT');
+
 		$table = $parent->element === 'propal' ? 'propaldet' : 'commandedet';
 		$sql   = 'UPDATE '.$this->db->prefix().$table;
 		$sql  .= ' SET buy_price_ht = '.(float) price2num($buyPrice, 'MT');
@@ -273,10 +287,9 @@ class CliChaumeilSubcontractingBuyPricePropagationService
 		$this->db->free($resql);
 
 		if (is_array($parent->lines)) {
-			foreach ($parent->lines as $line) {
-				if ((int) ($line->id ?? $line->rowid ?? 0) === $parentLineId) {
-					$line->buy_price_ht = $buyPrice;
-					$line->pa_ht        = $buyPrice;
+			foreach ($parent->lines as $key => $parentLine) {
+				if ((int) ($parentLine->id ?? $parentLine->rowid ?? 0) === $parentLineId) {
+					$parent->lines[$key] = $line;
 					break;
 				}
 			}
