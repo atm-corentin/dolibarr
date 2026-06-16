@@ -144,25 +144,20 @@ class CliChaumeilSupplierProposalLineLinkService
 	 * @param string             $parentElement Parent element type ('propal' or 'commande').
 	 * @return array{line:?object,ambiguous:bool} Matched line (null on miss) and ambiguity flag.
 	 */
-	public function findParentLineMatch(object $supplierLine, array $parentLines, string $parentElement = ''): array
+	public function findParentLineMatch(object $supplierLine, array $parentLines, string $parentElement): array
 	{
+		$linkedElement = $this->getPersistentElement($supplierLine);
 		$linkedLineId  = $this->getPersistentLineId($supplierLine);
-		$sourceElement = $this->getPersistentElement($supplierLine);
 
-		$linkMatchesParent = $linkedLineId > 0 && ($sourceElement === '' || $sourceElement === $parentElement);
-
-		if ($linkMatchesParent) {
+		if ($linkedLineId > 0 && $linkedElement === $parentElement) {
 			foreach ($parentLines as $parentLine) {
 				if ((int) $parentLine->id === $linkedLineId) {
 					return array('line' => $parentLine, 'ambiguous' => false);
 				}
 			}
-			// Definitive link for this element type but line no longer found — no fallback.
 			return array('line' => null, 'ambiguous' => false);
 		}
 
-		// No link, or link targets a different element type (e.g. propal link on a commande parent):
-		// fall back to heuristic matching.
 		$matches = $this->findMatchingParentLines($supplierLine, $parentLines);
 		if (count($matches) === 1) {
 			return array('line' => $matches[0], 'ambiguous' => false);

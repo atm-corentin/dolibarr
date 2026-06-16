@@ -106,7 +106,7 @@ class CliChaumeilSupplierProposalLineLinkServiceTest extends CommonClassTest
 			$this->makeParentLine(200, 99, 2),
 		);
 
-		$result = $service->findParentLineMatch($supplierLine, $parentLines);
+		$result = $service->findParentLineMatch($supplierLine, $parentLines, 'propal');
 
 		$this->assertNotNull($result['line']);
 		$this->assertSame(100, $result['line']->id);
@@ -129,7 +129,7 @@ class CliChaumeilSupplierProposalLineLinkServiceTest extends CommonClassTest
 			$this->makeParentLine(200, 42, 1),
 		);
 
-		$result = $service->findParentLineMatch($supplierLine, $parentLines);
+		$result = $service->findParentLineMatch($supplierLine, $parentLines, 'propal');
 
 		$this->assertNull($result['line']);
 		$this->assertTrue($result['ambiguous']);
@@ -150,7 +150,7 @@ class CliChaumeilSupplierProposalLineLinkServiceTest extends CommonClassTest
 			$this->makeParentLine(100, 99, 2),
 		);
 
-		$result = $service->findParentLineMatch($supplierLine, $parentLines);
+		$result = $service->findParentLineMatch($supplierLine, $parentLines, 'propal');
 
 		$this->assertNull($result['line']);
 		$this->assertFalse($result['ambiguous']);
