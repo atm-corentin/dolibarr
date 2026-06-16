@@ -132,8 +132,8 @@ class CliChaumeilSubcontractingMinimumRateResolver
 			$thirdparty  = new Societe($this->db);
 			$fetchResult = $thirdparty->fetch($socId);
 			if ($fetchResult < 0) {
-				dol_syslog(__METHOD__.' fetch Societe #'.$socId.' failed: '.$this->db->lasterror(), LOG_ERR);
-				return null;
+				dol_syslog(__METHOD__.' thirdparty fetch failed for socid='.$socId.' '.$thirdparty->error, LOG_ERR);
+				throw new RuntimeException('Unable to load thirdparty #'.$socId.' for discountrules rate resolution.');
 			}
 			if ($fetchResult === 0) {
 				return null;
@@ -169,8 +169,8 @@ class CliChaumeilSubcontractingMinimumRateResolver
 		$product     = new Product($this->db);
 		$fetchResult = $product->fetch($productId);
 		if ($fetchResult < 0) {
-			dol_syslog(__METHOD__.' fetch Product #'.$productId.' failed: '.$this->db->lasterror(), LOG_ERR);
-			return null;
+			dol_syslog(__METHOD__.' product fetch failed for id='.$productId.' '.$product->error, LOG_ERR);
+			throw new RuntimeException('Unable to load product #'.$productId.' for discountrules rate resolution.');
 		}
 		if ($fetchResult === 0) {
 			return null;
