@@ -45,6 +45,7 @@ require_once DOL_DOCUMENT_ROOT . '/societe/class/societe.class.php';
 require_once DOL_DOCUMENT_ROOT . '/supplier_proposal/class/supplier_proposal.class.php';
 require_once DOL_DOCUMENT_ROOT . '/user/class/user.class.php';
 require_once __DIR__ . '/../../class/Subcontracting/CliChaumeilSupplierProposalSignHandler.class.php';
+require_once __DIR__ . '/../../class/Subcontracting/CliChaumeilSupplierProposalLineLinkService.class.php';
 
 
 
@@ -226,6 +227,21 @@ class InterfaceClichaumeilTriggers extends DolibarrTriggers
 							setEventMessages($object->error, $object->errors, 'errors');
 							dol_syslog(__METHOD__ . ' ' . $object->error, LOG_ERR);
 							return -1;
+						}
+					}
+
+					// R2-ST-6: backfill the persistent link between supplier proposal lines and parent client lines.
+					$linkService  = new CliChaumeilSupplierProposalLineLinkService($this->db);
+					$linkedParent = $linkService->resolveParent($object);
+					if ($linkedParent !== null) {
+						$diag = $linkService->backfillLinks($object, $linkedParent, $user);
+						$contextSp = 'supplier_proposal #' . ((int) $object->id) . ' ↔ ' . $linkedParent->element . ' #' . ((int) $linkedParent->id);
+						dol_syslog(__METHOD__ . ' R2-ST-6 backfill on ' . $contextSp . ' linked=' . $diag['linked'] . ' already_linked=' . $diag['already_linked'] . ' ambiguous=' . count($diag['ambiguous']) . ' missing=' . count($diag['missing']), LOG_DEBUG);
+						if (!empty($diag['ambiguous'])) {
+							dol_syslog(__METHOD__ . ' R2-ST-6 backfill ambiguous lines on ' . $contextSp . ' supplier_line_ids=' . implode(',', $diag['ambiguous']), LOG_WARNING);
+						}
+						if (!empty($diag['missing'])) {
+							dol_syslog(__METHOD__ . ' R2-ST-6 backfill unresolved lines on ' . $contextSp . ' supplier_line_ids=' . implode(',', $diag['missing']), LOG_WARNING);
 						}
 					}
 				}

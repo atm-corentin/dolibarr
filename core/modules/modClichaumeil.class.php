@@ -530,6 +530,10 @@ class modClichaumeil extends DolibarrModules
 		$extrafields->addExtraField('clichaumeil_supplierstatut', 'CliChaumeilSupplierStatut', 'select', 100, '24', 'supplier_proposal', 0, 0, 'CLICHAUMEIL_PENDING_FILE', $param, 1, '', '1', '', '', 0, 'clichaumeil@clichaumeil', 'isModEnabled("clichaumeil")', 0, '0', array('css' => '', 'cssview' => '', 'csslist' => '', ));
 		$extrafields->addExtraField('clichaumeil_supplierresponsedate', 'CliChaumeilSupplierResponseDate', 'datetime', 101, '', 'supplier_proposal', 0, 0, '', array('options' => array('' => null, ), ), 1, '', '1', '', '', 0, 'clichaumeil@clichaumeil', 'isModEnabled("clichaumeil")', 0, '0', array('css' => '', 'cssview' => '', 'csslist' => '', ));
 
+		// R2-ST-6: persistent link from supplier proposal line to client parent line (hidden by default).
+		$extrafields->addExtraField('clichaumeil_source_element', 'CliChaumeil_St6SourceElement', 'varchar', 200, '32', 'supplier_proposaldet', 0, 0, '', array('options' => array('' => null, ), ), 1, '', 0, '', '', 0, 'clichaumeil@clichaumeil', 'isModEnabled("clichaumeil")', 0, '0', array('css' => '', 'cssview' => '', 'csslist' => '', ));
+		$extrafields->addExtraField('clichaumeil_source_line_id', 'CliChaumeil_St6SourceLineId', 'int', 201, '', 'supplier_proposaldet', 0, 0, '', array('options' => array('' => null, ), ), 1, '', 0, '', '', 0, 'clichaumeil@clichaumeil', 'isModEnabled("clichaumeil")', 0, '0', array('css' => '', 'cssview' => '', 'csslist' => '', ));
+
 		$permsCostComposition = '$user->hasRight(\'clichaumeil\',\'product\',\'read_cost_composition\') ? 1:0';
 		$permsPaFg = '$user->hasRight(\'clichaumeil\',\'product\',\'read_cost_composition\') ? 5:0';
 
