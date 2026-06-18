@@ -576,3 +576,6 @@ CliChaumeil_AntalisLastRunDryRun=(simulation)
 CliChaumeil_AntalisPasswordTooltip=Mot de passe technique du compte SOAP ANTALIS (HTTP Basic), à demander à ANTALIS. Il n'est jamais réaffiché : laissez vide pour le conserver.
 CliChaumeil_St6SourceElement=ST-6 — Type de document client source
 CliChaumeil_St6SourceLineId=ST-6 — ID de la ligne client source
+Documentation=Documentation
+CliChaumeilDocumentation=Documentation CliChaumeil
+CliChaumeilDocumentationFileNotFound=Le fichier source de la documentation (docs/configuration.md) est introuvable.

@@ -72,6 +72,20 @@ class CliChaumeilCommissionDictionarySeeder
 		global $langs;
 
 		$langs->loadLangs(array('clichaumeil@clichaumeil'));
+
+		// The constants->dictionary migration is a one-shot operation. Once the dictionary
+		// holds at least one row for this entity, the migration is considered done: we must
+		// not re-insert default rows on module re-activation. Doing so would collide with the
+		// (entity, role_code, customer_tag) unique key, and would fight back any code or tag
+		// the user has since customized through the editable dictionary.
+		$alreadySeeded = $this->dictionaryHasRows();
+		if ($alreadySeeded < 0) {
+			return -1;
+		}
+		if ($alreadySeeded > 0) {
+			return 1;
+		}
+
 		$this->db->begin();
 
 		/** @var array{code:string,role_code:string,customer_tag:string,label_key:string,coefficient:float,legacy_const:string} $row */
@@ -140,6 +154,31 @@ class CliChaumeilCommissionDictionarySeeder
 		$this->db->commit();
 
 		return 1;
+	}
+
+	/**
+	 * Tell whether the commission dictionary already holds rows for the current entity.
+	 *
+	 * @return int<-1,1> 1 if at least one row exists, 0 if empty, -1 on SQL error.
+	 */
+	private function dictionaryHasRows(): int
+	{
+		$sql = 'SELECT rowid';
+		$sql .= ' FROM '.$this->db->prefix().CliChaumeilCommissionConfig::DICTIONARY_TABLE;
+		$sql .= ' WHERE entity = '.((int) $this->entity);
+		$sql .= ' LIMIT 1';
+
+		$resql = $this->db->query($sql);
+		if (!$resql) {
+			$this->error = $this->db->lasterror();
+			dol_syslog(__METHOD__.' unable to inspect commission dictionary rows: '.$this->error, LOG_ERR);
+			return -1;
+		}
+
+		$hasRows = ($this->db->num_rows($resql) > 0);
+		$this->db->free($resql);
+
+		return $hasRows ? 1 : 0;
 	}
 
 	/**

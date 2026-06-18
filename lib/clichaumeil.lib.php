@@ -107,6 +107,11 @@ function clichaumeilAdminPrepareHead()
 	$head[$h][2] = 'api_connections';
 	$h++;
 
+	$head[$h][0] = dol_buildpath("/clichaumeil/admin/clichaumeil_documentation.php", 1);
+	$head[$h][1] = $langs->trans("Documentation");
+	$head[$h][2] = 'documentation';
+	$h++;
+
 	$head[$h][0] = dol_buildpath("/clichaumeil/admin/about.php", 1);
 	$head[$h][1] = $langs->trans("About");
 	$head[$h][2] = 'about';
