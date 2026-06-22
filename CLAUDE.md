@@ -156,6 +156,12 @@ phpunit -c phpunittest.xml <chemin-absolu-du-test>.php
   `module_parts['hooks']`, sinon le hook ne se déclenche jamais.
 - Double garde (DB via trigger renvoyant -1 + JS côté hook) sur les opérations
   risquées (validation propal, suppression de ligne protégée).
+- Hook `createFrom` : le core le fire AUSSI sur `Commande::createFromProposal()`
+  (transformation devis→commande, `objFrom`=Propal), pas seulement sur les clones.
+  Discriminer le vrai clone via `objFrom instanceof <même type que $object>` avant tout
+  post-traitement (cf. VT-25 `CliChaumeilCloneCostPriceService`), sinon la logique se
+  déclenche à tort sur la transformation devis→commande. Le hook tourne DANS la
+  transaction du clone core : un retour <0 (ou `$this->errors` non vide) rollback le clone.
 
 ## Conventions
 

@@ -40,6 +40,22 @@ par défaut :
 > de dossier, frais généraux) s'affiche et se saisit sur la fiche produit ; l'accès est
 > contrôlé par le droit « lecture de la composition de coût produit ».
 
+### Recalcul du prix de revient au clonage (VT-25)
+
+Comportement **automatique**, sans paramétrage. Lors du **clonage** d'un devis client
+(devis→devis) ou d'une commande client (commande→commande), chaque ligne clonée portant
+un produit voit son **prix d'achat** (`buy_price_ht`) recalculé depuis le **prix de revient
+du produit** (`cost_price`) : la valeur du produit si elle est strictement positive, sinon
+`0`. Le prix fournisseur lié à la ligne (`fk_product_fournisseur_price`) est vidé, et
+l'origine du recalcul est tracée dans un champ complémentaire caché de ligne
+(`clichaumeil_cost_source`).
+
+- Les lignes **sans produit** (lignes libres) ne sont pas modifiées.
+- Aucun repli sur le PMP, le fournisseur le moins cher ou la nomenclature : seul
+  `cost_price` est utilisé.
+- La **transformation** d'un devis en commande n'est **pas** concernée (seul le clonage
+  l'est).
+
 ## Contrats
 
 L'onglet **Contrats** pilote la **révision/reconduction tarifaire** des contrats :
