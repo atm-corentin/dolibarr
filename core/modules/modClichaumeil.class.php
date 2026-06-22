@@ -76,6 +76,13 @@ class modClichaumeil extends DolibarrModules
 	private const DEFAULT_PROPAL_LINE_EXTRAFIELD = 'clichaumeil_default_inserted';
 
 	/**
+	 * Hidden line extrafield tracing the VT-25 clone buy-price origin.
+	 *
+	 * @var string
+	 */
+	private const CLONE_COST_SOURCE_EXTRAFIELD = 'clichaumeil_cost_source';
+
+	/**
 	 * Constructor. Define names, constants, directories, boxes, permissions
 	 *
 	 * @param DoliDB $db Database handler
@@ -117,7 +124,7 @@ class modClichaumeil extends DolibarrModules
 		$this->editor_squarred_logo = '';					// Must be image filename into the module/img directory followed with @modulename. Example: 'myimage.png@clichaumeil'
 
 		// Possible values for version are: 'development', 'experimental', 'dolibarr', 'dolibarr_deprecated', 'experimental_deprecated' or a version string like 'x.y.z'
-		$this->version = '1.17.1';
+		$this->version = '1.18.0';
 
 		// Url to the file with your last numberversion of this module
 		//$this->url_last_version = 'http://www.example.com/versionmodule.txt';
@@ -551,6 +558,8 @@ class modClichaumeil extends DolibarrModules
 		$this->ensureProductExtrafield($extrafields, 'clichaumeil_fg_percent', 'CliChaumeilFgPercent', 'double', 110, '24,4', 0, 0, '', '', 1, $permsCostComposition, $permsCostComposition, 'CLICHAUMEIL_HELP_FG_PERCENT', '', 0, 'clichaumeil@clichaumeil', 1, 0, '0', array());
 		$this->ensureProductExtrafield($extrafields, 'clichaumeil_pa_fg', 'CliChaumeilPaFg', 'double', 111, '24,4', 0, 0, '', '', 0, $permsPaFg, $permsPaFg, 'CLICHAUMEIL_HELP_PA_FG', '', 0, 'clichaumeil@clichaumeil', 1, 0, '0', array());
 		$this->ensurePropalDefaultLineExtrafield($extrafields);
+		$this->ensureCloneCostSourceExtrafield($extrafields, 'propaldet');
+		$this->ensureCloneCostSourceExtrafield($extrafields, 'commandedet');
 
 		if (!getDolGlobalInt('CLICHAUMEIL_DEFAULT_OVERHEAD_RATE')) {
 			dolibarr_set_const($this->db, 'CLICHAUMEIL_DEFAULT_OVERHEAD_RATE', CliChaumeilProductCostCalculator::DEFAULT_RATE_VALUE, 'chaine', 0, '', $conf->entity);
@@ -1277,6 +1286,52 @@ class modClichaumeil extends DolibarrModules
 
 		if ($result <= 0) {
 			dol_syslog(__METHOD__ . ' failed to create propal default line extrafield ' . self::DEFAULT_PROPAL_LINE_EXTRAFIELD, LOG_ERR);
+		}
+	}
+
+	/**
+	 * Ensure the hidden VT-25 clone cost-source extrafield exists for a line element.
+	 *
+	 * Idempotent: skips creation when the attribute is already defined. Hidden (list=0)
+	 * so it never shows on cards/lists; only used to trace the clone buy-price origin.
+	 *
+	 * @param ExtraFields $extrafields Extrafields handler.
+	 * @param string      $elementType Line element type ('propaldet' or 'commandedet').
+	 * @return void
+	 */
+	private function ensureCloneCostSourceExtrafield(ExtraFields $extrafields, string $elementType): void
+	{
+		$extrafields->fetch_name_optionals_label($elementType, true);
+		if (isset($extrafields->attributes[$elementType]['label'][self::CLONE_COST_SOURCE_EXTRAFIELD])) {
+			return;
+		}
+
+		$result = $extrafields->addExtraField(
+			self::CLONE_COST_SOURCE_EXTRAFIELD,
+			'CLICHAUMEIL_CLONE_COST_SOURCE',
+			'varchar',
+			230,
+			'64',
+			$elementType,
+			0,
+			0,
+			'',
+			'',
+			1,
+			'',
+			'0',
+			'',
+			'',
+			0,
+			'clichaumeil@clichaumeil',
+			'isModEnabled("clichaumeil")',
+			0,
+			'0',
+			array('css' => '', 'cssview' => '', 'csslist' => '')
+		);
+
+		if ($result <= 0) {
+			dol_syslog(__METHOD__ . ' failed to create clone cost source extrafield ' . self::CLONE_COST_SOURCE_EXTRAFIELD . ' for ' . $elementType, LOG_ERR);
 		}
 	}
 }

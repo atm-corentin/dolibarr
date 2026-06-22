@@ -43,6 +43,7 @@ require_once DOL_DOCUMENT_ROOT . '/categories/class/categorie.class.php';
 require_once __DIR__ . '/SupplierProposalService.class.php';
 require_once __DIR__ . '/Subcontracting/CliChaumeilSupplierProposalGuard.class.php';
 require_once __DIR__ . '/CliChaumeilMinimumMarginWarningGuard.class.php';
+require_once __DIR__ . '/CliChaumeilCloneCostPriceService.class.php';
 require_once DOL_DOCUMENT_ROOT . '/commande/class/commande.class.php';
 
 /**
@@ -1644,15 +1645,28 @@ class ActionsClichaumeil extends CommonHookActions
 	{
 		global $user;
 
-		if (!$object instanceof Propal) {
+		$objFrom = isset($parameters['objFrom']) ? $parameters['objFrom'] : null;
+		$isPropalClone   = ($object instanceof Propal)   && ($objFrom instanceof Propal);
+		$isCommandeClone = ($object instanceof Commande) && ($objFrom instanceof Commande);
+
+		// Only genuine clones (propal->propal / commande->commande). Excludes the
+		// devis->commande transformation (Commande::createFromProposal, objFrom=Propal).
+		if (!$isPropalClone && !$isCommandeClone) {
 			return 0;
 		}
 
-		if (empty($parameters['objFrom']) || !$parameters['objFrom'] instanceof Propal) {
-			return 0;
+		// VT-25: recompute cloned-line buy price before the standard default-line marking.
+		$service = new CliChaumeilCloneCostPriceService($this->db);
+		if ($service->recalculateCloneLines($object, $user) < 0) {
+			$this->errors = array_merge($this->errors, $service->errors);
+			dol_syslog(__METHOD__ . ' VT-25 recompute failed for ' . get_class($object) . ' id=' . (int) $object->id, LOG_ERR);
+			return -1;
 		}
 
-		$this->getPropalDefaultLineService()->markConfiguredCloneLines($parameters['objFrom'], $object, $user);
+		// Existing behaviour: protected default proposal lines (devis only).
+		if ($isPropalClone) {
+			$this->getPropalDefaultLineService()->markConfiguredCloneLines($objFrom, $object, $user);
+		}
 
 		return 0;
 	}
