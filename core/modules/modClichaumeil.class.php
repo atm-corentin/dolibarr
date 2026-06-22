@@ -885,6 +885,13 @@ class modClichaumeil extends DolibarrModules
 			return -1;
 		}
 
+		// VT-25: ensure the hidden clone cost-source extrafield exists on existing
+		// installs upgraded without a full module reactivation. Without it, cloning a
+		// proposal/order with a product line would fail (updateExtraField error).
+		$extrafields = new ExtraFields($this->db);
+		$this->ensureCloneCostSourceExtrafield($extrafields, 'propaldet');
+		$this->ensureCloneCostSourceExtrafield($extrafields, 'commandedet');
+
 		return 1;
 	}
 
