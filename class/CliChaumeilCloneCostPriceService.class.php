@@ -33,10 +33,10 @@ class CliChaumeilCloneCostPriceService
 	public const EXTRAFIELD_COST_SOURCE_OPTION = 'options_clichaumeil_cost_source';
 
 	/** @var DoliDB Database handler. */
-	private $db;
+	private DoliDB $db;
 
 	/** @var string[] Error markers collected for the caller (hook -> hookmanager). */
-	public $errors = array();
+	public array $errors = array();
 
 	/**
 	 * Constructor.
@@ -120,7 +120,8 @@ class CliChaumeilCloneCostPriceService
 			$sql = 'UPDATE ' . $this->db->prefix() . $table;
 			$sql .= ' SET buy_price_ht = ' . ((float) $buyPrice) . ', fk_product_fournisseur_price = NULL';
 			$sql .= ' WHERE rowid = ' . ((int) $line->id);
-			if (!$this->db->query($sql)) {
+			$resql = $this->db->query($sql);
+			if (!$resql) {
 				$this->errors[] = $langs->trans('CLICHAUMEIL_CLONE_COST_RECALC_FAILED');
 				dol_syslog(__METHOD__ . ' SQL update failed: doc=' . get_class($clone) . ' id=' . (int) $clone->id
 					. ' line=' . (int) $line->id . ' error=' . $this->db->lasterror(), LOG_ERR);
